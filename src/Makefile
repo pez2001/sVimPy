@@ -8,15 +8,18 @@
 CC=gcc
 all: vm.o unit_tests.o unit_test 
 
-unit_test: vm.o
+unit_test: vm.o stack.o
 	$(CC)  unit_tests.o -o unit_test 
 unit_tests.o: unit_tests.c
 	$(CC) $(CFLAGS) -c unit_tests.c 
 vm.o: vm.c
 	$(CC) $(CFLAGS) -c vm.c 
+stack.o: stack.c
+	$(CC) $(CFLAGS) -c stack.c 
 	
 clean:
 	rm vm.o
+	rm stack.o
 	rm unit_test.exe
 	rm unit_tests.o
 

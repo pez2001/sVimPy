@@ -1,3 +1,4 @@
 def testf():
-	print("Hallo")
+	for x in range(1,3): 
+		print(x,"Hallo")
 	return

@@ -12,7 +12,7 @@ long ReadLong(FILE *f)
 char ReadChar(FILE *f)
 {
  char r = 0;
- int read = fread(&c,1,1,f);
+ int read = fread(&r,1,1,f);
  return(r);
 }
 

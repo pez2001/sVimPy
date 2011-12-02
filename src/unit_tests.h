@@ -17,4 +17,29 @@ static const char *pyc_tag = TAG;
 static short pyc_magic_short = 3180;
 
 
+#define TYPE_NULL               '0'
+#define TYPE_NONE               'N'
+#define TYPE_FALSE              'F'
+#define TYPE_TRUE               'T'
+#define TYPE_STOPITER           'S'
+#define TYPE_ELLIPSIS           '.'
+#define TYPE_INT                'i'
+#define TYPE_INT64              'I'
+#define TYPE_FLOAT              'f'
+#define TYPE_BINARY_FLOAT       'g'
+#define TYPE_COMPLEX            'x'
+#define TYPE_BINARY_COMPLEX     'y'
+#define TYPE_LONG               'l'
+#define TYPE_STRING             's'
+#define TYPE_TUPLE              '('
+#define TYPE_LIST               '['
+#define TYPE_DICT               '{'
+#define TYPE_CODE               'c'
+#define TYPE_UNICODE            'u'
+#define TYPE_UNKNOWN            '?'
+#define TYPE_SET                '<'
+#define TYPE_FROZENSET          '>'
+
+
+
 #endif
