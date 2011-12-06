@@ -1,3 +1,3 @@
-from test import * 
-print("compiled")
-testf()
+from test4 import * 
+#print("compiled")
+#testf()
