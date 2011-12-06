@@ -130,12 +130,32 @@ void OpenPYC()
    //printf("tos1.type:%c (%s)(%d)\n",tos1->type,((unicode_object*)tos1->ptr)->content,((object*)tos1->value_ptr)->ptr );
    long a = 0;
    long b = 0;
+   if(tos->type == TYPE_UNICODE && tos1->type == TYPE_UNICODE)
+   {
+     char *tos_tmp = ((unicode_object*)tos->ptr)->content;
+	 char *tos1_tmp = ((unicode_object*)tos1->ptr)->content;
+	 if(tos->value_ptr!=NULL && ((object*)tos->value_ptr)->type == TYPE_UNICODE)
+	  tos_tmp = ((unicode_object*)((object*)tos->value_ptr)->ptr)->content;
+	 if(tos1->value_ptr!=NULL && ((object*)tos1->value_ptr)->type == TYPE_UNICODE)
+	  tos1_tmp = ((unicode_object*)((object*)tos1->value_ptr)->ptr)->content;
+	 char *tmp = (char*)malloc(strlen(tos_tmp)+strlen(tos1_tmp)+1);
+	 memset(tmp,0,strlen(tos_tmp)+strlen(tos1_tmp)+1);
+	 memcpy(tmp,tos1_tmp,strlen(tos1_tmp));
+	 memcpy(tmp+strlen(tos1_tmp),tos_tmp,strlen(tos_tmp));
+	 
+     free(((unicode_object*)tos->ptr)->content);
+	 ((unicode_object*)tos->ptr)->content = tmp;
+	 printf("cat:[%s]\n",tmp);
+   }
+   else
+   {
    if(tos->type == TYPE_INT)
    {
     a = tos->ptr;
    }
    else if(tos->type == TYPE_UNICODE)
    {
+   //printf("tos:u:%s\n",((unicode_object*)tos->ptr)->content);
    a = ((object*)tos->value_ptr)->ptr;
    }
    if(tos1->type == TYPE_INT)
@@ -156,6 +176,7 @@ void OpenPYC()
     ((object*)tos1->value_ptr)->ptr = a + b;
 	}
 	printf("%d + %d = %d\n",a,b,a+b);
+	}
     stack_Push(tos);
    
    break;

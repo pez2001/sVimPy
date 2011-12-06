@@ -29,11 +29,20 @@
 #define TYPE_FROZENSET          '>'
 
 
+#define OFLAG_USES_VALUE_PTR 1
+#define OFLAG_IS_NAME 2
+#define OFLAG_IS_CONST 4
+#define OFLAG_IS_VARNAME 8
+
+
+
+
 typedef struct {
 char type;
 char *name;
 void *ptr;
 void *value_ptr;
+unsigned int flags;
 }object;
 
 typedef struct {
@@ -70,6 +79,13 @@ typedef struct {
 char *content;
 long len;
 }unicode_object;
+
+typedef struct {
+char *module_name;
+long pos;
+}caller_object;
+
+
 
 
 object *AllocObject();
