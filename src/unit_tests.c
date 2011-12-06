@@ -83,6 +83,7 @@ void OpenPYC()
   object *tos;
   object *tos1;
   object *tos2;
+  printf("\n[%d,%xh] opcode: [ %s ]\n",i,opcodes[index].opcode,opcodes[index].name);
   switch(opcodes[index].opcode)
   {
    case 0x65:
@@ -154,7 +155,7 @@ void OpenPYC()
     {
     ((object*)tos1->value_ptr)->ptr = a + b;
 	}
-	//printf("%d + %d = %d\n",a,b,a+b);
+	printf("%d + %d = %d\n",a,b,a+b);
     stack_Push(tos);
    
    break;
