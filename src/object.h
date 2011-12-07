@@ -4,6 +4,7 @@
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
+#include "memory.h"
 
 #define TYPE_NULL               '0'
 #define TYPE_NONE               'N'
@@ -33,6 +34,10 @@
 #define OFLAG_IS_NAME 2
 #define OFLAG_IS_CONST 4
 #define OFLAG_IS_VARNAME 8
+
+//internal types
+#define TYPE_FUNCTION 'f'
+#define TYPE_CALLER 'C'
 
 
 
@@ -81,10 +86,14 @@ long len;
 }unicode_object;
 
 typedef struct {
-char *module_name;
+object *module;
 long pos;
 }caller_object;
 
+typedef struct {
+object *code;
+//long pos;
+}function_object;
 
 
 
@@ -93,8 +102,18 @@ string_object *AllocStringObject();
 tuple_object *AllocTupleObject();
 unicode_object *AllocUnicodeObject();
 code_object *AllocCodeObject();
+caller_object *AllocCallerObject();
+function_object *AllocFunctionObject();
 object *ReadObject(FILE *f);
 
+string_object *AsStringObject(object *obj);
+code_object *AsCodeObject(object *obj);
+caller_object *AsCallerObject(object *obj);
+function_object *AsFunctionObject(object *obj);
+tuple_object *AsTupleObject(object *obj);
+unicode_object *AsUnicodeObject(object *obj);
+
+void FreeObject(object *obj);
 
 
 #endif

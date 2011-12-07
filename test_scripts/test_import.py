@@ -1,3 +1,3 @@
-from test5 import * 
+from test6 import * 
 #print("compiled")
 #testf()

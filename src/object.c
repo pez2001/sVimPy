@@ -2,24 +2,64 @@
 
 object *AllocObject()
 {
-return((object*)malloc(sizeof(object)));
+return((object*)mem_malloc(sizeof(object)));
 }
 code_object *AllocCodeObject()
 {
-return((code_object*)malloc(sizeof(code_object)));
+return((code_object*)mem_malloc(sizeof(code_object)));
+}
+caller_object *AllocCallerObject()
+{
+return((caller_object*)mem_malloc(sizeof(caller_object)));
+}
+function_object *AllocFunctionObject()
+{
+return((function_object*)mem_malloc(sizeof(function_object)));
 }
 string_object *AllocStringObject()
 {
-return((string_object*)malloc(sizeof(string_object)));
+return((string_object*)mem_malloc(sizeof(string_object)));
 }
 tuple_object *AllocTupleObject()
 {
-return((tuple_object*)malloc(sizeof(tuple_object)));
+return((tuple_object*)mem_malloc(sizeof(tuple_object)));
 }
 unicode_object *AllocUnicodeObject()
 {
-return((unicode_object*)malloc(sizeof(unicode_object)));
+return((unicode_object*)mem_malloc(sizeof(unicode_object)));
 }
+
+string_object *AsStringObject(object *obj)
+{
+return((string_object*)obj->ptr);
+}
+code_object *AsCodeObject(object *obj)
+{
+return((code_object*)obj->ptr);
+}
+caller_object *AsCallerObject(object *obj)
+{
+return((caller_object*)obj->ptr);
+}
+function_object *AsFunctionObject(object *obj)
+{
+return((function_object*)obj->ptr);
+}
+tuple_object *AsTupleObject(object *obj)
+{
+return((tuple_object*)obj->ptr);
+}
+unicode_object *AsUnicodeObject(object *obj)
+{
+return((unicode_object*)obj->ptr);
+}
+
+
+void FreeObject(object *obj)
+{
+
+}
+
 
 object *ReadObject(FILE *f)
 {
@@ -64,7 +104,7 @@ object *ReadObject(FILE *f)
    n= ReadLong(f);
    if(n>0)
    {
- char *string = (char*)malloc(n);
+ char *string = (char*)mem_malloc(n);
  //printf("str_ptr=%x\n",(unsigned long)string);
  int read = fread(string,n,1,f);
  string_object *so = AllocStringObject();
@@ -92,7 +132,7 @@ object *ReadObject(FILE *f)
  n = ReadLong(f);
  tuple_object *to = AllocTupleObject(); 
  //printf("items_num:%d\n",n);
- to->items = (object**)malloc(n*sizeof(object*));
+ to->items = (object**)mem_malloc(n*sizeof(object*));
  to->num = n;
  for(int i=0;i<n;i++)
  {
@@ -109,7 +149,7 @@ object *ReadObject(FILE *f)
  n = ReadLong(f);
  unicode_object *uo = AllocUnicodeObject(); 
  //printf("len:%d\n",n);
- char *unicode_string = (char*)malloc(n+1);
+ char *unicode_string = (char*)mem_malloc(n+1);
  memset(unicode_string,0,n+1);
  int uread = fread(unicode_string,n,1,f);
  uo->len = n;
@@ -123,7 +163,7 @@ object *ReadObject(FILE *f)
  n = ReadLong(f);
  //unicode_object *uo = AllocUnicodeObject(); 
  //printf("len:%d\n",n);
- //char *unicode_string = (char*)malloc(n+1);
+ //char *unicode_string = (char*)mem_malloc(n+1);
  //memset(unicode_string,0,n+1);
  //int uread = fread(unicode_string,n,1,f);
  //uo->len = n;

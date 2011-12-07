@@ -1,5 +1,5 @@
-#ifndef INPUT_BUFFER_H
-#define INPUT_BUFFER_H
+#ifndef STREAM_H
+#define STREAM_H
 
 
 

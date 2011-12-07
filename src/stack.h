@@ -7,6 +7,7 @@
 #define STACK_TYPE *object;
 
 #define STACK_MIN_ITEMS 200
+#define CALLSTACK_MIN_ITEMS 20
 #define STACK_SIZE_INCREASE 200
 
 void stack_Init();

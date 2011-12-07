@@ -8,10 +8,10 @@ long callstack_top = 0;
 
 void stack_Init()
 {
-stack_items = (object**)malloc(STACK_MIN_ITEMS*sizeof(object*));
+stack_items = (object**)mem_malloc(STACK_MIN_ITEMS*sizeof(object*));
 stack_top = 0;
 
-callstack_items = (object**)malloc(STACK_MIN_ITEMS*sizeof(object*));
+callstack_items = (object**)mem_malloc(CALLSTACK_MIN_ITEMS*sizeof(object*));
 callstack_top = 0;
 
 }
@@ -24,8 +24,11 @@ stack_top++;
 
 object *stack_Pop()
 {
-if(stack_top < 0)
+if(stack_top < 1)
+{
+ printf("stack underflow\n");
  return(NULL);
+ }
 object *r = stack_items[stack_top-1];
 stack_top--;
 //if(stack_top < 0)
@@ -42,7 +45,10 @@ callstack_top++;
 object *callstack_Pop()
 {
 if(callstack_top < 0)
- return(NULL);
+{
+ printf("callstack underflow\n");
+return(NULL);
+ }
 object *r = callstack_items[callstack_top-1];
 callstack_top--;
 //if(stack_top < 0)

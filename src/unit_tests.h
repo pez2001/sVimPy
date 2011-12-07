@@ -3,13 +3,13 @@
 
 #include "vm.h"
 #include "object.h"
-#include "opcodes.h"
-extern const opcode opcodes[];
-
+#include "memory.h"
 
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
+
+extern long mem_chunks_num;
 
 
 #define MAGIC (3180 | ((long)'\r'<<16) | ((long)'\n'<<24))
