@@ -59,6 +59,15 @@ void FreeObject(object *obj)
 {
 switch(obj->type)
 {
+case TYPE_NULL:
+   printf("freeing NULL object @%x\n",obj);
+   break;
+case TYPE_NONE:
+   printf("freeing NONE object @%x\n",obj);
+   break;
+case TYPE_INT:
+   printf("freeing int object @%x\n",obj);
+   break;
 case TYPE_UNICODE:
    printf("freeing unicode object @%x\n",obj);
    if(((unicode_object*)obj->ptr)->content != NULL)
@@ -91,9 +100,9 @@ case TYPE_CODE:
 }
 if(obj->type != TYPE_INT && obj->type != TYPE_NONE && obj->type != TYPE_NULL && obj->ptr != NULL)
  mem_free(obj->ptr);
-if(obj->value_ptr != NULL)
- FreeObject((object*)obj->value_ptr);
-printf("freed object @%x\n",obj);
+//if(obj->value_ptr != NULL)
+// FreeObject((object*)obj->value_ptr);
+printf("freed object(%c) @%x\n",obj->type,obj);
  mem_free(obj);
 }
 
