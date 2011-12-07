@@ -57,7 +57,44 @@ return((unicode_object*)obj->ptr);
 
 void FreeObject(object *obj)
 {
+switch(obj->type)
+{
+case TYPE_UNICODE:
+   printf("freeing unicode object @%x\n",obj);
+   if(((unicode_object*)obj->ptr)->content != NULL)
+    mem_free(((unicode_object*)obj->ptr)->content);
+   break;
+case TYPE_STRING:
+   printf("freeing string object @%x\n",obj);
+   mem_free(((string_object*)obj->ptr)->content);
+  break;
+case TYPE_TUPLE:
+   printf("freeing tuple object @%x\n",obj);
+ for(int i=0;i<((tuple_object*)obj->ptr)->num;i++)
+ {
+  FreeObject(((tuple_object*)obj->ptr)->items[i]);
+ }
+ break; 
+case TYPE_CODE:
+ printf("freeing code object @%x\n",obj);
+ mem_free(obj->name);
+ FreeObject(((code_object*)obj->ptr)->code);
+ FreeObject(((code_object*)obj->ptr)->consts);
+ FreeObject(((code_object*)obj->ptr)->names);
+ FreeObject(((code_object*)obj->ptr)->varnames);
+ FreeObject(((code_object*)obj->ptr)->freevars);
+ FreeObject(((code_object*)obj->ptr)->cellvars);
+ FreeObject(((code_object*)obj->ptr)->filename);
+ FreeObject(((code_object*)obj->ptr)->lnotab);
+ break; 
 
+}
+if(obj->type != TYPE_INT && obj->type != TYPE_NONE && obj->type != TYPE_NULL && obj->ptr != NULL)
+ mem_free(obj->ptr);
+if(obj->value_ptr != NULL)
+ FreeObject((object*)obj->value_ptr);
+printf("freed object @%x\n",obj);
+ mem_free(obj);
 }
 
 
@@ -67,6 +104,7 @@ object *ReadObject(FILE *f)
  //printf("type:%c\n",type);
  //long magic = ReadLong(f);
  object *obj = AllocObject();
+ obj->flags = 0;
  long n;
  switch(type)
  {

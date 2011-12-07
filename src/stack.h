@@ -17,5 +17,8 @@ void stack_Push(object *x);
 object *callstack_Pop();
 void callstack_Push(object *x);
 
+object *recycle_Pop();
+void recycle_Push(object *x);
+
 
 #endif

@@ -30,10 +30,14 @@
 #define TYPE_FROZENSET          '>'
 
 
-#define OFLAG_USES_VALUE_PTR 1
-#define OFLAG_IS_NAME 2
-#define OFLAG_IS_CONST 4
-#define OFLAG_IS_VARNAME 8
+//#define OFLAG_USES_VALUE_PTR 1
+//#define OFLAG_IS_NAME 2
+//#define OFLAG_IS_CONST 4
+//#define OFLAG_IS_VARNAME 8
+
+
+#define OFLAG_ON_STACK 1
+
 
 //internal types
 #define TYPE_FUNCTION 'f'

@@ -12,7 +12,6 @@ object *ExecuteObject(object *obj,object* caller,object *global)
   string_object *bytecodes = (string_object*)co->code->ptr;
   char *string = bytecodes->content;
   long n = bytecodes->len;
-  stack_Init();
   //printf("code length: %d\n",n);
   //printf("str_ptr=%x\n",(unsigned long)bytecodes->content);
  //printf("str_so_ptr=%x\n",(unsigned long)bytecodes);
@@ -158,6 +157,7 @@ object *ExecuteObject(object *obj,object* caller,object *global)
 	 //((unicode_object*)tos->ptr)->content = tmp;
 	 //printf("cat:[%s]\n",tmp);
 	 object *new_tos = AllocObject();
+	 new_tos->flags = OFLAG_ON_STACK;
 	 unicode_object* new_tos_value = AllocUnicodeObject();
 	 new_tos->type = TYPE_UNICODE;
 	 new_tos->ptr = new_tos_value;
@@ -170,6 +170,7 @@ object *ExecuteObject(object *obj,object* caller,object *global)
    long a = 0;
    long b = 0;
    object *new_tos = AllocObject();
+   new_tos->flags = OFLAG_ON_STACK;
    new_tos->type = TYPE_INT;
    new_tos->ptr = 0;
    if(tos->type == TYPE_INT)
@@ -225,6 +226,7 @@ object *ExecuteObject(object *obj,object* caller,object *global)
 	 char *tos1_tmp = ((unicode_object*)tos1->ptr)->content;
      char *tmp = str_Cat(tos1_tmp,tos_tmp);
 	 object *new_tos = AllocObject();
+	 new_tos->flags = OFLAG_ON_STACK;
 	 unicode_object* new_tos_value = AllocUnicodeObject();
 	 new_tos->type = TYPE_UNICODE;
 	 new_tos->ptr = new_tos_value;
@@ -237,6 +239,7 @@ object *ExecuteObject(object *obj,object* caller,object *global)
    long a = 0;
    long b = 0;
    object *new_tos = AllocObject();
+   new_tos->flags = OFLAG_ON_STACK;
    new_tos->type = TYPE_INT;
    new_tos->ptr = 0;
    if(tos->type == TYPE_INT)
