@@ -59,10 +59,12 @@ void OpenPYC()
 
 int main(int argc,char *argv[])
 {
+ mem_Init();
  stack_Init();
  printf("Calling all Unit Tests\n");
  OpenPYC();
  stack_Close();
+ mem_Close();
  printf("%d memory chunks leaked\n",mem_chunks_num);
  return(0);
 }
