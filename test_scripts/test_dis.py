@@ -1,4 +1,4 @@
 import dis
-import test4
+import test8
 
-dis.dis(test4)
+dis.dis(test8)

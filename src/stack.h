@@ -10,15 +10,28 @@
 #define CALLSTACK_MIN_ITEMS 20
 #define STACK_SIZE_INCREASE 200
 
-void stack_Init();
-object *stack_Pop();
-void stack_Push(object *x);
 
-object *callstack_Pop();
-void callstack_Push(object *x);
+typedef struct 
+{
+object **items;
+long top;
+}stack;
 
-object *recycle_Pop();
-void recycle_Push(object *x);
+extern stack *recycle;
+
+stack* stack_Init(long items_num);
+object *stack_Pop(stack *stack);
+void stack_Push(object *x,stack *stack);
+void stack_Close(stack *stack,int free_objects);
+int stack_Contains(object *x,stack *stack);
+object *stack_Top(stack *stack);
+void stack_SetTop(object *x,stack *stack);
+
+//object *callstack_Pop();
+//void callstack_Push(object *x);
+
+//object *recycle_Pop();
+//void recycle_Push(object *x);
 
 
 #endif

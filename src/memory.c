@@ -72,7 +72,7 @@ void *tmp = malloc(size);
  //return(NULL);
  }
  //else
- //printf("allocated %d bytes\n",size);
+ //printf("allocated %d bytes @%x\n",size,tmp);
 
 mem_Push(tmp,size);
 return(tmp);
@@ -101,9 +101,7 @@ for(int i=0;i<mem_chunks_top;i++)
 if(!mem_chunk_items[i]->is_freed)
  tmp_mem_chunks_max_size += mem_chunk_items[i]->size;
 }
-if(tmp_mem_chunks_max_size > mem_chunks_max_size)
- mem_chunks_max_size = tmp_mem_chunks_max_size;
 mem_chunks_actual_size = tmp_mem_chunks_max_size;
 //printf("actual heap usage:%d\n",mem_chunks_actual_size);
-
+//printf("freed bytes @%x\n",ptr);
 }

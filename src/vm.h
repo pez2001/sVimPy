@@ -4,9 +4,11 @@
 #define DEBUG
 #include "object.h"
 #include "opcodes.h"
+#include "stack.h"
 extern const opcode opcodes[];
 
-object *ExecuteObject(object *obj,object *caller,object *global);
+
+object *ExecuteObject(object *obj,object *caller,object *global,stack *locals,int argc);
 
 
 #endif

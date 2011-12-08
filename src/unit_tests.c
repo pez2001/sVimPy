@@ -2,7 +2,7 @@
 #include "unit_tests.h"
 
 //STEFFI 0174 656 9762
-
+stack *recycle;
 
 long ReadLong(FILE *f)
 {
@@ -25,6 +25,7 @@ void OpenPYC()
  //char *b = (char*)mem_malloc(3);
  //char *bh = (char*)mem_malloc(4);
  //memset(bh,0,4);
+
  printf("opening pyc file\n");
  FILE *f;
  f=fopen("test.pyc","rb");
@@ -51,7 +52,8 @@ void OpenPYC()
  object *obj = ReadObject(f);
 
  printf("read pyc file\n");
- object *ret = ExecuteObject(obj,NULL,obj);
+ DumpObject(obj,0);
+ object *ret = ExecuteObject(obj,NULL,obj,NULL,0);
  FreeObject(obj);
  fclose(f);
  //mem_free(b);
@@ -62,10 +64,11 @@ void OpenPYC()
 int main(int argc,char *argv[])
 {
  mem_Init();
- stack_Init();
+ recycle = stack_Init(20);
  printf("Calling all Unit Tests\n");
  OpenPYC();
- stack_Close();
+ printf("clearing recycle stack\n");
+ stack_Close(recycle,1);
  mem_Close();
  printf("%d memory chunks leaked\n",mem_chunks_num);
  return(0);

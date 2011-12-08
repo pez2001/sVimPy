@@ -45,13 +45,15 @@
 
 
 
+#pragma pack(push)  /* push current alignment to stack */
+#pragma pack(1)     /* set alignment to 1 byte boundary */
 
 typedef struct {
-char type;
 //char *name;
 void *ptr;
 void *value_ptr;
-unsigned int flags;
+char type;
+unsigned char flags;
 }object;
 
 typedef struct {
@@ -99,7 +101,7 @@ object *code;
 //long pos;
 }function_object;
 
-
+#pragma pack(pop)   /* restore original alignment from stack */
 
 object *AllocObject();
 string_object *AllocStringObject();
@@ -117,7 +119,17 @@ function_object *AsFunctionObject(object *obj);
 tuple_object *AsTupleObject(object *obj);
 unicode_object *AsUnicodeObject(object *obj);
 
+int IsIntObject(object *obj);
+int IsStringObject(object *obj);
+int IsUnicodeObject(object *obj);
+int IsCodeObject(object *obj);
+int IsTupleObject(object *obj);
+
 void FreeObject(object *obj);
 
+void DumpObject(object *obj,int level);
+
+//object *GetTupleItem(tuple_object *tuple,int index);
+object *FindTupleUnicodeItem(tuple_object *tuple,char *name);
 
 #endif

@@ -1,44 +1,106 @@
 #include "stack.h"
 
-object **stack_items;
-long stack_top = 0;
-//long stack_
-object **callstack_items;
-long callstack_top = 0;
-
-object **recycle_items;
-long recycle_top = 0;
-
-void stack_Init()
+stack* stack_Init(long items_num)
 {
-stack_items = (object**)mem_malloc(STACK_MIN_ITEMS*sizeof(object*));
-stack_top = 0;
+if(!items_num)
+ return(NULL);
+stack *tmp = (stack*)mem_malloc(sizeof(stack));
+tmp->items = (object**)mem_malloc(items_num*sizeof(object*));
+tmp->top = 0;
 
-callstack_items = (object**)mem_malloc(CALLSTACK_MIN_ITEMS*sizeof(object*));
-callstack_top = 0;
+//callstack_items = (object**)mem_malloc(CALLSTACK_MIN_ITEMS*sizeof(object*));
+//callstack_top = 0;
 
-recycle_items = (object**)mem_malloc(STACK_MIN_ITEMS*sizeof(object*));
-recycle_top = 0;
+//recycle_items = (object**)mem_malloc(STACK_MIN_ITEMS*sizeof(object*));
+//recycle_top = 0;
+return(tmp);
+}
+
+void stack_Close(stack *stack,int free_objects)
+{
+if(stack != NULL)
+{
+if(free_objects)
+{
+printf("freeing %d stack items\n",stack->top);
+for(int i=0;i<stack->top;i++)
+ if(stack->items[i]->flags & OFLAG_ON_STACK) 
+  FreeObject(stack->items[i]);
+ printf("freed stack\n");
+ }
+ else
+  if(stack->top>0)
+   printf("%d items left untouched on stack\n",stack->top);
+ 
+ mem_free(stack->items);
+ mem_free(stack);
+//for(int i=0;i<callstack_top;i++)
+// if(callstack_items[i]->flags & OFLAG_ON_STACK) 
+// FreeObject(callstack_items[i]);
+// mem_free(callstack_items);
+//for(int i=0;i<recycle_top;i++)
+// FreeObject(recycle_items[i]);
+// mem_free(recycle_items);
+}
+}
+
+void stack_Push(object *x,stack *stack)
+{
+stack->items[stack->top] = x;
+stack->top++;
+}
+
+object *stack_Top(stack *stack)
+{
+if(stack->top < 1)
+{
+ printf("stack underflow - no top\n");
+ return(NULL);
+ }
+object *r = stack->items[stack->top-1];
+return(r);
+}
+
+void stack_SetTop(object *x,stack *stack)
+{
+if(stack->top < 1)
+{
+ printf("stack underflow - no top\n");
+ return(NULL);
+ }
+ stack->items[stack->top-1] = x;
 
 }
 
-void stack_Close()
+object *stack_Pop(stack *stack)
 {
-printf("freeing %d stack items, %d callstack items, %d recycle items\n",stack_top,callstack_top,recycle_top);
-for(int i=0;i<stack_top;i++)
- if(stack_items[i]->flags & OFLAG_ON_STACK) 
-  FreeObject(stack_items[i]);
- mem_free(stack_items);
-for(int i=0;i<callstack_top;i++)
- if(callstack_items[i]->flags & OFLAG_ON_STACK) 
- FreeObject(callstack_items[i]);
- mem_free(callstack_items);
-for(int i=0;i<recycle_top;i++)
- FreeObject(recycle_items[i]);
- mem_free(recycle_items);
-
-
+if(stack->top < 1)
+{
+ printf("stack underflow\n");
+ return(NULL);
+ }
+object *r = stack->items[stack->top-1];
+if(r->flags & OFLAG_ON_STACK)
+ {
+ //printf("removed stack only item\n");
+ if(!stack_Contains(r,recycle))
+  stack_Push(r,recycle);
+ }
+stack->top--;
+//if(stack_top < 0)
+// stack_top = 0;
+return(r);
 }
+
+int stack_Contains(object *x,stack *stack)
+{
+for(int i=0;i<stack->top;i++)
+ if(stack->items[i] == x)
+  return(1);
+return(0);
+}
+
+/*
 void recycle_Remove(object *x)
 {
 for(int i =0;i<recycle_top;i++)
@@ -48,8 +110,8 @@ if(x == recycle_items[i])
 
 }
 }
-
-
+*/
+/*
 object *recycle_Pop()
 {
 if(recycle_top < 1)
@@ -68,33 +130,8 @@ void recycle_Push(object *x)
 recycle_items[recycle_top] = x;
 recycle_top++;
 }
-
-
-void stack_Push(object *x)
-{
-stack_items[stack_top] = x;
-stack_top++;
-}
-
-object *stack_Pop()
-{
-if(stack_top < 1)
-{
- printf("stack underflow\n");
- return(NULL);
- }
-object *r = stack_items[stack_top-1];
-if(r->flags & OFLAG_ON_STACK)
- {
- printf("removed stack only item\n");
- recycle_Push(r);
- }
-stack_top--;
-//if(stack_top < 0)
-// stack_top = 0;
-return(r);
-}
-
+*/
+/*
 void callstack_Push(object *x)
 {
 callstack_items[callstack_top] = x;
@@ -109,17 +146,19 @@ if(callstack_top < 0)
 return(NULL);
  }
 object *r = callstack_items[callstack_top-1];
-/*if(r->flags & OFLAG_ON_STACK)
- {
- printf("removed stack only item from callstack\n");
- recycle_Push(r);
- }
- */
+//if(r->flags & OFLAG_ON_STACK)
+// {
+// printf("removed stack only item from callstack\n");
+// recycle_Push(r);
+// }
+ 
 callstack_top--;
 //if(stack_top < 0)
 // stack_top = 0;
 return(r);
 }
+*/
+/*
 
 void stack_IncreaseSize()
 {
@@ -129,3 +168,4 @@ void stack_DecreaseSize()
 {
 
 }
+*/
