@@ -115,7 +115,7 @@ object *ExecuteObject(object *obj,object* caller,object *global)
     if(tos->type == TYPE_INT)
 	 printf("storing %d in %s\n",tos->ptr,name->content);
     if(tos->type == TYPE_CODE)
-	 printf("storing function %s in %s\n",tos->name,name->content);
+	 printf("storing function %s in %s\n",((code_object*)tos->ptr)->name,name->content);
 	co_names->items[name_i]->value_ptr = tos;
    break;
    case 0x7d://STORE_FAST
@@ -131,7 +131,7 @@ object *ExecuteObject(object *obj,object* caller,object *global)
     if(tos->type == TYPE_INT)
 	 printf("fast storing %d in %s\n",tos->ptr,varname->content);
     if(tos->type == TYPE_CODE)
-	 printf("fast storing function %s in %s\n",tos->name,varname->content);
+	 printf("fast storing function %s in %s\n",((code_object*)tos->ptr)->name,varname->content);
 	co_varnames->items[varname_i]->value_ptr = tos;
    break;
    case 0x17: //BINARY_ADD
@@ -162,7 +162,7 @@ object *ExecuteObject(object *obj,object* caller,object *global)
 	 new_tos->type = TYPE_UNICODE;
 	 new_tos->ptr = new_tos_value;
 	 new_tos_value->content = tmp;
-	 new_tos_value->len = strlen(tmp);
+	 //new_tos_value->len = strlen(tmp);
      stack_Push(new_tos);
    }
    else
@@ -231,7 +231,7 @@ object *ExecuteObject(object *obj,object* caller,object *global)
 	 new_tos->type = TYPE_UNICODE;
 	 new_tos->ptr = new_tos_value;
 	 new_tos_value->content = tmp;
-	 new_tos_value->len = strlen(tmp);
+	 //new_tos_value->len = strlen(tmp);
      stack_Push(new_tos);
    }
    else

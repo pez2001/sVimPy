@@ -26,9 +26,11 @@ void stack_Close()
 {
 printf("freeing %d stack items, %d callstack items, %d recycle items\n",stack_top,callstack_top,recycle_top);
 for(int i=0;i<stack_top;i++)
- FreeObject(stack_items[i]);
+ if(stack_items[i]->flags & OFLAG_ON_STACK) 
+  FreeObject(stack_items[i]);
  mem_free(stack_items);
 for(int i=0;i<callstack_top;i++)
+ if(callstack_items[i]->flags & OFLAG_ON_STACK) 
  FreeObject(callstack_items[i]);
  mem_free(callstack_items);
 for(int i=0;i<recycle_top;i++)
@@ -37,6 +39,16 @@ for(int i=0;i<recycle_top;i++)
 
 
 }
+void recycle_Remove(object *x)
+{
+for(int i =0;i<recycle_top;i++)
+{
+if(x == recycle_items[i])
+ printf("found object @%x\n",x);
+
+}
+}
+
 
 object *recycle_Pop()
 {
@@ -52,6 +64,7 @@ return(r);
 
 void recycle_Push(object *x)
 {
+//printf("added recycle item @%x\n",x);
 recycle_items[recycle_top] = x;
 recycle_top++;
 }
@@ -96,11 +109,12 @@ if(callstack_top < 0)
 return(NULL);
  }
 object *r = callstack_items[callstack_top-1];
-if(r->flags & OFLAG_ON_STACK)
+/*if(r->flags & OFLAG_ON_STACK)
  {
  printf("removed stack only item from callstack\n");
  recycle_Push(r);
  }
+ */
 callstack_top--;
 //if(stack_top < 0)
 // stack_top = 0;

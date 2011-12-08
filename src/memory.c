@@ -1,15 +1,16 @@
 #include "memory.h"
 
 long mem_chunks_num = 0;
-//long chunks_total_size;
+long mem_chunks_max_size = 0;
+long mem_chunks_actual_size = 0;
 
 
-void **mem_chunk_items;
+mem_chunk **mem_chunk_items;
 long mem_chunks_top = 0;
 
 void mem_Init()
 {
-mem_chunk_items = (void**)malloc(1000*sizeof(void*));
+mem_chunk_items = (mem_chunk**)malloc(1000*sizeof(mem_chunk*));
 mem_chunks_top = 0;
 
 
@@ -17,16 +18,46 @@ mem_chunks_top = 0;
 
 void mem_Close()
 {
-//for(int i=0;i<mem_chunks_top;i++)
+for(int i=0;i<mem_chunks_top;i++)
+{
+ if(!mem_chunk_items[i]->is_freed)
+ {
+  printf("leaked chunk(%d) @%x : ",mem_chunk_items[i]->size,mem_chunk_items[i]->ptr);
+   for(int ix=0;ix<mem_chunk_items[i]->size;ix++)
+ {
+  printf("%x ",*((unsigned char*)(mem_chunk_items[i]->ptr+ix)));
+ }
+ printf("\n");
 
- free(mem_chunk_items);
+  }
+ free(mem_chunk_items[i]);
+ 
+ }
+free(mem_chunk_items);
+
+printf("not freed heap bytes num:%d\n",mem_chunks_actual_size);
+printf("MAX HEAP USAGE:%d\n",mem_chunks_max_size);
 
 }
 
-void mem_Push(void *x)
+void mem_Push(void *x,long size)
 {
-mem_chunk_items[mem_chunks_top] = x;
+mem_chunk_items[mem_chunks_top] = (mem_chunk*)malloc(sizeof(mem_chunk));
+mem_chunk_items[mem_chunks_top]->ptr = x;
+mem_chunk_items[mem_chunks_top]->size = size;
+mem_chunk_items[mem_chunks_top]->is_freed = 0;
 mem_chunks_top++;
+
+long tmp_mem_chunks_max_size = 0;
+for(int i=0;i<mem_chunks_top;i++)
+{
+if(!mem_chunk_items[i]->is_freed)
+ tmp_mem_chunks_max_size += mem_chunk_items[i]->size;
+}
+if(tmp_mem_chunks_max_size > mem_chunks_max_size)
+ mem_chunks_max_size = tmp_mem_chunks_max_size;
+mem_chunks_actual_size = tmp_mem_chunks_max_size;
+//printf("actual heap usage:%d\n",mem_chunks_actual_size);
 }
 
 
@@ -35,7 +66,15 @@ void *mem_malloc(size_t size)
 {
 mem_chunks_num++;
 void *tmp = malloc(size);
-mem_Push(tmp);
+ if(size == 0)
+{
+ printf("allocated zero bytes\n");
+ //return(NULL);
+ }
+ //else
+ //printf("allocated %d bytes\n",size);
+
+mem_Push(tmp,size);
 return(tmp);
 }
 void mem_free(void *ptr)
@@ -43,14 +82,28 @@ void mem_free(void *ptr)
 int f = 0;
 for(int i=0;i<mem_chunks_top;i++)
 {
- if(mem_chunk_items[i] == ptr)
+ if(mem_chunk_items[i]->ptr == ptr && !mem_chunk_items[i]->is_freed)
  {
   f =1;
-  mem_chunk_items[i] = NULL;
+  mem_chunk_items[i]->is_freed = 1;
   }
 }
 if(!f)
  printf("chunk not found @%x\n",ptr);
 mem_chunks_num--;
+if(mem_chunks_num<0)
+ printf("more memory freed than allocated\n");
 free(ptr);
+
+long tmp_mem_chunks_max_size = 0;
+for(int i=0;i<mem_chunks_top;i++)
+{
+if(!mem_chunk_items[i]->is_freed)
+ tmp_mem_chunks_max_size += mem_chunk_items[i]->size;
+}
+if(tmp_mem_chunks_max_size > mem_chunks_max_size)
+ mem_chunks_max_size = tmp_mem_chunks_max_size;
+mem_chunks_actual_size = tmp_mem_chunks_max_size;
+//printf("actual heap usage:%d\n",mem_chunks_actual_size);
+
 }

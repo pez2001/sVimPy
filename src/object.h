@@ -48,7 +48,7 @@
 
 typedef struct {
 char type;
-char *name;
+//char *name;
 void *ptr;
 void *value_ptr;
 unsigned int flags;
@@ -68,7 +68,7 @@ object *freevars;
 object *cellvars;
 object *filename;
 //object *name;
-//char *name;
+char *name;
 //long codesize;
 long firstlineno;
 object *lnotab;
@@ -86,7 +86,7 @@ long num;
 
 typedef struct {
 char *content;
-long len;
+//long len;//TO DECREASE MEMORY USAGE
 }unicode_object;
 
 typedef struct {

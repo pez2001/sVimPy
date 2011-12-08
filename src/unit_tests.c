@@ -22,9 +22,9 @@ char ReadChar(FILE *f)
 
 void OpenPYC()
 {
- char *b = (char*)mem_malloc(3);
- char *bh = (char*)mem_malloc(4);
- memset(bh,0,4);
+ //char *b = (char*)mem_malloc(3);
+ //char *bh = (char*)mem_malloc(4);
+ //memset(bh,0,4);
  printf("opening pyc file\n");
  FILE *f;
  f=fopen("test.pyc","rb");
@@ -38,7 +38,7 @@ void OpenPYC()
  else
   printf("not a pyc file");
  long time = ReadLong(f); 
- struct tm *ti;
+ /*struct tm *ti; //TO DECREASE MEMORY USAGE
  ti = localtime((void*)&time);
  char *bt = (char*)mem_malloc(100);
  strftime(bt,100,"%Y.%m.%d ",ti);
@@ -47,13 +47,15 @@ void OpenPYC()
  printf("file time: %s\n", bt);
  mem_free(bt);
  //8 bytes into the file
+ */
  object *obj = ReadObject(f);
+
  printf("read pyc file\n");
  object *ret = ExecuteObject(obj,NULL,obj);
  FreeObject(obj);
  fclose(f);
- mem_free(b);
- mem_free(bh);
+ //mem_free(b);
+ //mem_free(bh);
 }
 
 

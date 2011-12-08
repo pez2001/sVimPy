@@ -5,6 +5,6 @@
 #include "memory.h"
 
 char *str_Cat(char *a,char *b);
-
+char *str_Copy(char *a);
 
 #endif

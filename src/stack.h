@@ -6,7 +6,7 @@
 //#define STACK_TYPE *void
 #define STACK_TYPE *object;
 
-#define STACK_MIN_ITEMS 200
+#define STACK_MIN_ITEMS 100
 #define CALLSTACK_MIN_ITEMS 20
 #define STACK_SIZE_INCREASE 200
 

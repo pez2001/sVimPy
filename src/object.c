@@ -60,50 +60,56 @@ void FreeObject(object *obj)
 switch(obj->type)
 {
 case TYPE_NULL:
-   printf("freeing NULL object @%x\n",obj);
+   //printf("freeing NULL object @%x\n",obj);
    break;
 case TYPE_NONE:
-   printf("freeing NONE object @%x\n",obj);
+   //printf("freeing NONE object @%x\n",obj);
    break;
 case TYPE_INT:
-   printf("freeing int object @%x\n",obj);
+   //printf("freeing int object @%x\n",obj);
    break;
 case TYPE_UNICODE:
-   printf("freeing unicode object @%x\n",obj);
+   //printf("freeing unicode object @%x\n",obj);
    if(((unicode_object*)obj->ptr)->content != NULL)
     mem_free(((unicode_object*)obj->ptr)->content);
    break;
 case TYPE_STRING:
-   printf("freeing string object @%x\n",obj);
+   //printf("freeing string object @%x\n",obj);
    mem_free(((string_object*)obj->ptr)->content);
   break;
 case TYPE_TUPLE:
-   printf("freeing tuple object @%x\n",obj);
+   //printf("freeing tuple object @%x\n",obj);
+   if(((tuple_object*)obj->ptr)->num>0)
+   {
  for(int i=0;i<((tuple_object*)obj->ptr)->num;i++)
  {
   FreeObject(((tuple_object*)obj->ptr)->items[i]);
  }
+  mem_free(((tuple_object*)obj->ptr)->items);
+  }
  break; 
 case TYPE_CODE:
- printf("freeing code object @%x\n",obj);
- mem_free(obj->name);
+ //printf("freeing code object @%x\n",obj);
+ mem_free(((code_object*)obj->ptr)->name);
  FreeObject(((code_object*)obj->ptr)->code);
  FreeObject(((code_object*)obj->ptr)->consts);
  FreeObject(((code_object*)obj->ptr)->names);
  FreeObject(((code_object*)obj->ptr)->varnames);
  FreeObject(((code_object*)obj->ptr)->freevars);
  FreeObject(((code_object*)obj->ptr)->cellvars);
- FreeObject(((code_object*)obj->ptr)->filename);
+ //FreeObject(((code_object*)obj->ptr)->filename); //TO DECREASE MEMORY USAGE
  FreeObject(((code_object*)obj->ptr)->lnotab);
  break; 
 
 }
+//recycle_Remove(obj);
+ 
 if(obj->type != TYPE_INT && obj->type != TYPE_NONE && obj->type != TYPE_NULL && obj->ptr != NULL)
  mem_free(obj->ptr);
 //if(obj->value_ptr != NULL)
 // FreeObject((object*)obj->value_ptr);
-printf("freed object(%c) @%x\n",obj->type,obj);
- mem_free(obj);
+//printf("freed object(%c) @%x\n",obj->type,obj);
+mem_free(obj);
 }
 
 
@@ -113,6 +119,7 @@ object *ReadObject(FILE *f)
  //printf("type:%c\n",type);
  //long magic = ReadLong(f);
  object *obj = AllocObject();
+ //printf("allocated object @%x\n",obj);
  obj->flags = 0;
  long n;
  switch(type)
@@ -135,11 +142,13 @@ object *ReadObject(FILE *f)
   co->freevars = ReadObject(f);
   co->cellvars = ReadObject(f);
   co->filename = ReadObject(f);
+  FreeObject(co->filename); //TO DECREASE MEMORY USAGE
   object *tmp_name = ReadObject(f);
   co->firstlineno = ReadLong(f);
   co->lnotab = ReadObject(f);
-  obj->name = ((string_object*)tmp_name->ptr)->content;//TODO free object tmp_name and string_copy it first
-  printf("module name:%s\n",obj->name);
+  co->name = str_Copy(((string_object*)tmp_name->ptr)->content);//TODO free object tmp_name and string_copy it first
+  FreeObject(tmp_name);
+  printf("module name:%s\n",co->name);
   //printf("filename:%s\n",((string_object*)co->filename->ptr)->content);
   //printf("firstlineno:%d\n",co->firstlineno);
   obj->ptr = co;
@@ -179,6 +188,8 @@ object *ReadObject(FILE *f)
  n = ReadLong(f);
  tuple_object *to = AllocTupleObject(); 
  //printf("items_num:%d\n",n);
+ if(n>0)
+ {
  to->items = (object**)mem_malloc(n*sizeof(object*));
  to->num = n;
  for(int i=0;i<n;i++)
@@ -186,6 +197,7 @@ object *ReadObject(FILE *f)
   object* tuple = ReadObject(f);
   //printf("object type:%c\n",tuple->type);
   to->items[i] = tuple;
+ }
  }
  obj->ptr = to;
  obj->type = TYPE_TUPLE;
@@ -199,14 +211,14 @@ object *ReadObject(FILE *f)
  char *unicode_string = (char*)mem_malloc(n+1);
  memset(unicode_string,0,n+1);
  int uread = fread(unicode_string,n,1,f);
- uo->len = n;
+ //uo->len = n;
  uo->content = unicode_string;
  obj->ptr = uo;
  obj->type = TYPE_UNICODE;
  obj->value_ptr = NULL;
  break;
  case TYPE_INT:
- //printf("reading unicode\n");
+ //printf("reading int\n");
  n = ReadLong(f);
  //unicode_object *uo = AllocUnicodeObject(); 
  //printf("len:%d\n",n);

@@ -4,6 +4,12 @@
 #include "stdio.h"
 #include "stdlib.h"
 
+typedef struct {
+void *ptr;
+long size;
+int is_freed;
+}mem_chunk;
+
 void mem_Init();
 
 void *mem_malloc(size_t size);
