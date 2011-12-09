@@ -98,6 +98,7 @@ const opcode opcodes[]={{0x00,"STOP_CODE","Indicates end-of-code to the compiler
 							{0x70,"JUMP_IF_TRUE","If TOS is true, increment the byte code counter by /delta/. TOS is left on the stack.",2},
 							{0x71,"JUMP_ABSOLUTE","Set byte code counter to /target/.",2},
 							{0x72,"POP_JUMP_IF_FALSE","no description.",2},
+							{0x73,"POP_JUMP_IF_TRUE","no description.",2},
 							{0x74,"LOAD_GLOBAL","Loads the global named co_names[/namei/] onto the stack.",2},
 							{0x77,"CONTINUE_LOOP","Continues a loop due to a continue statement. /target/ is the address to jump to (which should be a FOR_ITER instruction).",2},
 							{0x78,"SETUP_LOOP","Pushes a block for a loop onto the block stack. The block spans from the current instruction with a size of /delta/ bytes.",2},

@@ -54,7 +54,7 @@ typedef struct {
 char type;
 unsigned char flags;
 void *ptr;
-void *value_ptr;//TO DECREASE MEMORY USAGE
+void *value_ptr;//TODO remove this member --> TO DECREASE MEMORY USAGE
 }object;
 
 typedef struct {

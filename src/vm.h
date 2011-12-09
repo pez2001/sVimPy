@@ -5,6 +5,7 @@
 #include "object.h"
 #include "opcodes.h"
 #include "stack.h"
+#include "numops.h"
 extern const opcode opcodes[];
 
 

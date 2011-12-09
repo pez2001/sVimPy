@@ -261,10 +261,10 @@ object *FindUnicodeTupleItem(object *tuple,char *name)
    for(int i=0;i<((tuple_object*)tuple->ptr)->num;i++)
     {
 	//printf("checking tuple:%d\n",i);
-	//if(tuple->items[i]->type == TYPE_UNICODE)
-	// printf("checking %s against: %s\n",name,AsUnicodeObject(tuple->items[i])->content);
+	//if(((tuple_object*)tuple->ptr)->items[i]->type == TYPE_UNICODE)
+	// printf("checking %s against: %s\n",name,(char*)((tuple_object*)tuple->ptr)->items[i]->ptr);
      if(((tuple_object*)tuple->ptr)->items[i]->type == TYPE_UNICODE && !strcmp( (char*)((tuple_object*)tuple->ptr)->items[i]->ptr,name) )
-	   return(((tuple_object*)tuple->ptr)->items[i]);
+	   return((object*) ((tuple_object*)tuple->ptr)->items[i]);
     }
 	return(NULL);
 }
