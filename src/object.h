@@ -81,12 +81,12 @@ object *names;
 object *varnames;
 object *freevars;
 object *cellvars;
-object *filename;
+//object *filename;
 //object *name;
 char *name;
 //long codesize;
 long firstlineno;
-object *lnotab;
+//object *lnotab;
 }code_object;
 
 typedef struct {

@@ -57,11 +57,12 @@ void OpenPYC()
  printf("MAX HEAP USAGE:%d\n",mem_chunks_max_size);
  printf("objects num: %d\n",objects_num);
  printf("max objects : %d\n",objects_max);
- printf("objects num * sizeof(object) : %d\n",objects_num * sizeof(object));
+ printf("objects headers total size  : %d\n",objects_header_total);
  
  DumpObject(obj,0);
  object *ret = ExecuteObject(obj,NULL,obj,NULL,0);
  FreeObject(obj);
+ printf("objects headers total size  : %d\n",objects_header_total);
  fclose(f);
  //mem_free(b);
  //mem_free(bh);
@@ -76,6 +77,7 @@ int main(int argc,char *argv[])
  OpenPYC();
  printf("clearing recycle stack\n");
  stack_Close(recycle,1);
+ printf("objects headers total size  : %d\n",objects_header_total);
  mem_Close();
  printf("%d memory chunks leaked\n",mem_chunks_num);
  return(0);

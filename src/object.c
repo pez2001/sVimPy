@@ -86,6 +86,7 @@ return((unicode_object*)obj->ptr);
 */
 long objects_num = 0;
 long objects_max = 0;
+long objects_header_total = 0;
 
 void FreeObject(object *obj)
 {
@@ -93,25 +94,31 @@ switch(obj->type)
 {
 case TYPE_NULL:
    //printf("freeing NULL object @%x\n",obj);
+   objects_header_total -= sizeof(empty_object);
    break;
 case TYPE_NONE:
    //printf("freeing NONE object @%x\n",obj);
+   objects_header_total -= sizeof(empty_object);
    break;
 case TYPE_INT:
    //printf("freeing int object @%x\n",obj);
+   objects_header_total -= sizeof(empty_object);
    break;
 case TYPE_UNICODE:
    //printf("freeing unicode object @%x\n",obj);
    //if(((unicode_object*)obj->ptr)->content != NULL)
    //if(obj->ptr != NULL)
    // mem_free(obj->ptr);
+   objects_header_total -= sizeof(object);
    break;
 case TYPE_STRING:
    //printf("freeing string object @%x\n",obj);
+   objects_header_total -= sizeof(object);
    mem_free(((string_object*)obj->ptr)->content);
   break;
 case TYPE_TUPLE:
    //printf("freeing tuple object @%x\n",obj);
+   objects_header_total -= sizeof(object);
    if(((tuple_object*)obj->ptr)->num>0)
    {
  for(int i=0;i<((tuple_object*)obj->ptr)->num;i++)
@@ -123,6 +130,8 @@ case TYPE_TUPLE:
  break; 
 case TYPE_CODE:
  //printf("freeing code object @%x\n",obj);
+   objects_header_total -= sizeof(object);
+   objects_header_total -= strlen(((code_object*)obj->ptr)->name) + 1;
  mem_free(((code_object*)obj->ptr)->name);
  FreeObject(((code_object*)obj->ptr)->code);
  FreeObject(((code_object*)obj->ptr)->consts);
@@ -278,18 +287,20 @@ object *ReadObject(FILE *f)
   obj->type = type;
   obj->flags = 0;
   //printf("allocated empty object @%x\n",obj);
+   objects_header_total += sizeof(empty_object);
   return(obj);
   }
   //else
   //printf("allocating object\n");
   obj = AllocObject();
+  objects_header_total += sizeof(object);
  //printf("allocated object @%x\n",obj);
  obj->flags = 0;
  long n;
  switch(type)
  {
  case TYPE_CODE:
-  printf("reading code chunk\n");
+  //printf("reading code chunk\n");
   obj->type = TYPE_CODE;
   code_object *co = AllocCodeObject();
   //printf("co_ptr=%x\n",(unsigned long)co);
@@ -306,18 +317,23 @@ object *ReadObject(FILE *f)
   co->freevars = ReadObject(f);
   co->cellvars = ReadObject(f);
   //printf("reading filename\n");
-  co->filename = ReadObject(f);
+  object *tmp_filename = ReadObject(f);
+  //co->filename = ReadObject(f);
   //printf("filename:%s\n",(char*)co->filename->ptr);
-  FreeObject(co->filename); //TO DECREASE MEMORY USAGE
+  //FreeObject(co->filename); //TO DECREASE MEMORY USAGE
+  FreeObject(tmp_filename); //TO DECREASE MEMORY USAGE
   object *tmp_name = ReadObject(f);
-  if(IsUnicodeObject(tmp_name))
-   printf("name:%s\n",(char*)tmp_name->ptr);
+  //if(IsUnicodeObject(tmp_name))
+  // printf("name:%s\n",(char*)tmp_name->ptr);
   co->name = str_Copy((char*)tmp_name->ptr);
+  objects_header_total += strlen(co->name) +1;
   FreeObject(tmp_name);
   co->firstlineno = ReadLong(f);
-  co->lnotab = ReadObject(f);
+  //co->lnotab = ReadObject(f);
+  object *tmp_lnotab = ReadObject(f);
   //printf("read lnotab\n");
-  FreeObject(co->lnotab);//TO DECREASE MEMORY USAGE
+  //FreeObject(co->lnotab);//TO DECREASE MEMORY USAGE
+  FreeObject(tmp_lnotab);//TO DECREASE MEMORY USAGE
   //printf("freed lnotab\n");
   //co->name = str_Copy(((string_object*)tmp_name->ptr)->content);//TODO free object tmp_name and string_copy it first
   

@@ -15,6 +15,7 @@ extern long mem_chunks_max_size;
 
 extern long objects_num;
 extern long objects_max;
+extern long objects_header_total;
 
 
 #define MAGIC (3180 | ((long)'\r'<<16) | ((long)'\n'<<24))
