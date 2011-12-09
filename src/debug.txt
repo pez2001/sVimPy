@@ -1,0 +1,2485 @@
+Calling all Unit Tests
+opening pyc file
+pyc magic found
+reading object
+module name:__init__
+module name:reset
+module name:solve
+module name:safe
+module name:place
+module name:remove
+module name:display
+module name:Queens
+module name:main
+module name:<module>
+read pyc file
+heap bytes used by objects:5155
+MAX HEAP USAGE:5242
+objects num: 191
+max objects : 192
+objects headers total size  : 1898
+code object
+name: <module>
+code:
+	string object: 64 00 00 5a 00 00 64 01 00 5a 01 00 47 64 02 00 84 00 00 64 03 00 83 02 00 5a 02 00 64 04 00 84 00 00 5a 03 00 65 04 00 64 05 00 6b 02 00 72 3b 00 65 03 00 83 00 00 01 6e 00 00 64 06 00 53 
+consts:
+	tuple object contains 7 items
+		unicode object: 
+N queens problem.
+
+The (well-known) problem is due to Niklaus Wirth.
+
+This solution is inspired by Dijkstra (Structured Programming).  It is
+a classic recursive backtracking approach.
+
+		int object: 8
+		code object
+		name: Queens
+		code:
+			string object: 7c 00 00 45 65 00 00 5a 01 00 65 02 00 64 00 00 84 01 00 5a 03 00 64 01 00 84 00 00 5a 04 00 64 02 00 64 03 00 84 01 00 5a 05 00 64 04 00 84 00 00 5a 06 00 64 05 00 84 00 00 5a 07 00 64 06 00 84 00 00 5a 08 00 64 02 00 5a 09 00 64 07 00 84 00 00 5a 0a 00 64 08 00 53 
+		consts:
+			tuple object contains 9 items
+				code object
+				name: __init__
+				code:
+					string object: 7c 01 00 7c 00 00 5f 00 00 7c 00 00 6a 01 00 83 00 00 01 64 00 00 53 
+				consts:
+					tuple object contains 1 items
+						NONE object
+					-- tuple object
+				names:
+					tuple object contains 2 items
+						unicode object: n
+						unicode object: reset
+					-- tuple object
+				varnames:
+					tuple object contains 2 items
+						unicode object: self
+						unicode object: n
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				code object
+				name: reset
+				code:
+					string object: 7c 00 00 6a 00 00 7d 01 00 64 00 00 67 01 00 7c 01 00 14 7c 00 00 5f 02 00 64 01 00 67 01 00 7c 01 00 14 7c 00 00 5f 03 00 64 01 00 67 01 00 64 02 00 7c 01 00 14 64 03 00 18 14 7c 00 00 5f 04 00 64 01 00 67 01 00 64 02 00 7c 01 00 14 64 03 00 18 14 7c 00 00 5f 05 00 64 01 00 7c 00 00 5f 06 00 64 00 00 53 
+				consts:
+					tuple object contains 4 items
+						NONE object
+						int object: 0
+						int object: 2
+						int object: 1
+					-- tuple object
+				names:
+					tuple object contains 7 items
+						unicode object: n
+						unicode object: None
+						unicode object: y
+						unicode object: row
+						unicode object: up
+						unicode object: down
+						unicode object: nfound
+					-- tuple object
+				varnames:
+					tuple object contains 2 items
+						unicode object: self
+						unicode object: n
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				int object: 0
+				code object
+				name: solve
+				code:
+					string object: 78 7d 00 74 00 00 7c 00 00 6a 01 00 83 01 00 44 5d 6c 00 7d 02 00 7c 00 00 6a 02 00 7c 01 00 7c 02 00 83 02 00 72 10 00 7c 00 00 6a 03 00 7c 01 00 7c 02 00 83 02 00 01 7c 01 00 64 01 00 17 7c 00 00 6a 01 00 6b 02 00 72 58 00 7c 00 00 6a 04 00 83 00 00 01 6e 11 00 7c 00 00 6a 05 00 7c 01 00 64 01 00 17 83 01 00 01 7c 00 00 6a 06 00 7c 01 00 7c 02 00 83 02 00 01 71 10 00 71 10 00 57 64 00 00 53 
+				consts:
+					tuple object contains 2 items
+						NONE object
+						int object: 1
+					-- tuple object
+				names:
+					tuple object contains 7 items
+						unicode object: range
+						unicode object: n
+						unicode object: safe
+						unicode object: place
+						unicode object: display
+						unicode object: solve
+						unicode object: remove
+					-- tuple object
+				varnames:
+					tuple object contains 3 items
+						unicode object: self
+						unicode object: x
+						unicode object: y
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				code object
+				name: safe
+				code:
+					string object: 7c 00 00 6a 00 00 7c 02 00 19 0c 6f 2f 00 7c 00 00 6a 01 00 7c 01 00 7c 02 00 18 19 0c 6f 2f 00 7c 00 00 6a 02 00 7c 01 00 7c 02 00 17 19 0c 53 
+				consts:
+					tuple object contains 1 items
+						NONE object
+					-- tuple object
+				names:
+					tuple object contains 3 items
+						unicode object: row
+						unicode object: up
+						unicode object: down
+					-- tuple object
+				varnames:
+					tuple object contains 3 items
+						unicode object: self
+						unicode object: x
+						unicode object: y
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				code object
+				name: place
+				code:
+					string object: 7c 02 00 7c 00 00 6a 00 00 7c 01 00 3c 64 01 00 7c 00 00 6a 01 00 7c 02 00 3c 64 01 00 7c 00 00 6a 02 00 7c 01 00 7c 02 00 18 3c 64 01 00 7c 00 00 6a 03 00 7c 01 00 7c 02 00 17 3c 64 00 00 53 
+				consts:
+					tuple object contains 2 items
+						NONE object
+						int object: 1
+					-- tuple object
+				names:
+					tuple object contains 4 items
+						unicode object: y
+						unicode object: row
+						unicode object: up
+						unicode object: down
+					-- tuple object
+				varnames:
+					tuple object contains 3 items
+						unicode object: self
+						unicode object: x
+						unicode object: y
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				code object
+				name: remove
+				code:
+					string object: 64 00 00 7c 00 00 6a 01 00 7c 01 00 3c 64 01 00 7c 00 00 6a 02 00 7c 02 00 3c 64 01 00 7c 00 00 6a 03 00 7c 01 00 7c 02 00 18 3c 64 01 00 7c 00 00 6a 04 00 7c 01 00 7c 02 00 17 3c 64 00 00 53 
+				consts:
+					tuple object contains 2 items
+						NONE object
+						int object: 0
+					-- tuple object
+				names:
+					tuple object contains 5 items
+						unicode object: None
+						unicode object: y
+						unicode object: row
+						unicode object: up
+						unicode object: down
+					-- tuple object
+				varnames:
+					tuple object contains 3 items
+						unicode object: self
+						unicode object: x
+						unicode object: y
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				code object
+				name: display
+				code:
+					string object: 7c 00 00 6a 00 00 64 01 00 17 7c 00 00 5f 00 00 7c 00 00 6a 01 00 72 1d 00 64 00 00 53 74 02 00 64 02 00 64 03 00 7c 00 00 6a 03 00 14 17 64 04 00 17 83 01 00 01 78 8b 00 74 04 00 7c 00 00 6a 03 00 64 01 00 18 64 0a 00 64 0b 00 83 03 00 44 5d 70 00 7d 01 00 74 02 00 64 05 00 64 06 00 64 07 00 83 01 01 01 78 4d 00 74 04 00 7c 00 00 6a 03 00 83 01 00 44 5d 3c 00 7d 02 00 7c 00 00 6a 05 00 7c 02 00 19 7c 01 00 6b 02 00 72 a2 00 74 02 00 64 08 00 64 06 00 64 07 00 83 01 01 01 71 76 00 74 02 00 64 09 00 64 06 00 64 07 00 83 01 01 01 71 76 00 57 74 02 00 64 05 00 83 01 00 01 71 50 00 57 74 02 00 64 02 00 64 03 00 7c 00 00 6a 03 00 14 17 64 04 00 17 83 01 00 01 64 00 00 53 
+				consts:
+					tuple object contains 12 items
+						NONE object
+						int object: 1
+						unicode object: +-
+						unicode object: --
+						unicode object: +
+						unicode object: |
+						unicode object: end
+						unicode object:  
+						unicode object: Q
+						unicode object: .
+						int object: -1
+						int object: -1
+					-- tuple object
+				names:
+					tuple object contains 6 items
+						unicode object: nfound
+						unicode object: silent
+						unicode object: print
+						unicode object: n
+						unicode object: range
+						unicode object: y
+					-- tuple object
+				varnames:
+					tuple object contains 3 items
+						unicode object: self
+						unicode object: y
+						unicode object: x
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				NONE object
+			-- tuple object
+		names:
+			tuple object contaiCalling all Unit Tests
+opening pyc file
+pyc magic found
+reading object
+module name:__init__
+module name:reset
+module name:solve
+module name:safe
+module name:place
+module name:remove
+module name:display
+module name:Queens
+module name:main
+module name:<module>
+read pyc file
+heap bytes used by objects:5155
+MAX HEAP USAGE:5242
+objects num: 191
+max objects : 192
+objects headers total size  : 1898
+code object
+name: <module>
+code:
+	string object: 64 00 00 5a 00 00 64 01 00 5a 01 00 47 64 02 00 84 00 00 64 03 00 83 02 00 5a 02 00 64 04 00 84 00 00 5a 03 00 65 04 00 64 05 00 6b 02 00 72 3b 00 65 03 00 83 00 00 01 6e 00 00 64 06 00 53 
+consts:
+	tuple object contains 7 items
+		unicode object: 
+N queens problem.
+
+The (well-known) problem is due to Niklaus Wirth.
+
+This solution is inspired by Dijkstra (Structured Programming).  It is
+a classic recursive backtracking approach.
+
+		int object: 8
+		code object
+		name: Queens
+		code:
+			string object: 7c 00 00 45 65 00 00 5a 01 00 65 02 00 64 00 00 84 01 00 5a 03 00 64 01 00 84 00 00 5a 04 00 64 02 00 64 03 00 84 01 00 5a 05 00 64 04 00 84 00 00 5a 06 00 64 05 00 84 00 00 5a 07 00 64 06 00 84 00 00 5a 08 00 64 02 00 5a 09 00 64 07 00 84 00 00 5a 0a 00 64 08 00 53 
+		consts:
+			tuple object contains 9 items
+				code object
+				name: __init__
+				code:
+					string object: 7c 01 00 7c 00 00 5f 00 00 7c 00 00 6a 01 00 83 00 00 01 64 00 00 53 
+				consts:
+					tuple object contains 1 items
+						NONE object
+					-- tuple object
+				names:
+					tuple object contains 2 items
+						unicode object: n
+						unicode object: reset
+					-- tuple object
+				varnames:
+					tuple object contains 2 items
+						unicode object: self
+						unicode object: n
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				code object
+				name: reset
+				code:
+					string object: 7c 00 00 6a 00 00 7d 01 00 64 00 00 67 01 00 7c 01 00 14 7c 00 00 5f 02 00 64 01 00 67 01 00 7c 01 00 14 7c 00 00 5f 03 00 64 01 00 67 01 00 64 02 00 7c 01 00 14 64 03 00 18 14 7c 00 00 5f 04 00 64 01 00 67 01 00 64 02 00 7c 01 00 14 64 03 00 18 14 7c 00 00 5f 05 00 64 01 00 7c 00 00 5f 06 00 64 00 00 53 
+				consts:
+					tuple object contains 4 items
+						NONE object
+						int object: 0
+						int object: 2
+						int object: 1
+					-- tuple object
+				names:
+					tuple object contains 7 items
+						unicode object: n
+						unicode object: None
+						unicode object: y
+						unicode object: row
+						unicode object: up
+						unicode object: down
+						unicode object: nfound
+					-- tuple object
+				varnames:
+					tuple object contains 2 items
+						unicode object: self
+						unicode object: n
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				int object: 0
+				code object
+				name: solve
+				code:
+					string object: 78 7d 00 74 00 00 7c 00 00 6a 01 00 83 01 00 44 5d 6c 00 7d 02 00 7c 00 00 6a 02 00 7c 01 00 7c 02 00 83 02 00 72 10 00 7c 00 00 6a 03 00 7c 01 00 7c 02 00 83 02 00 01 7c 01 00 64 01 00 17 7c 00 00 6a 01 00 6b 02 00 72 58 00 7c 00 00 6a 04 00 83 00 00 01 6e 11 00 7c 00 00 6a 05 00 7c 01 00 64 01 00 17 83 01 00 01 7c 00 00 6a 06 00 7c 01 00 7c 02 00 83 02 00 01 71 10 00 71 10 00 57 64 00 00 53 
+				consts:
+					tuple object contains 2 items
+						NONE object
+						int object: 1
+					-- tuple object
+				names:
+					tuple object contains 7 items
+						unicode object: range
+						unicode object: n
+						unicode object: safe
+						unicode object: place
+						unicode object: display
+						unicode object: solve
+						unicode object: remove
+					-- tuple object
+				varnames:
+					tuple object contains 3 items
+						unicode object: self
+						unicode object: x
+						unicode object: y
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				code object
+				name: safe
+				code:
+					string object: 7c 00 00 6a 00 00 7c 02 00 19 0c 6f 2f 00 7c 00 00 6a 01 00 7c 01 00 7c 02 00 18 19 0c 6f 2f 00 7c 00 00 6a 02 00 7c 01 00 7c 02 00 17 19 0c 53 
+				consts:
+					tuple object contains 1 items
+						NONE object
+					-- tuple object
+				names:
+					tuple object contains 3 items
+						unicode object: row
+						unicode object: up
+						unicode object: down
+					-- tuple object
+				varnames:
+					tuple object contains 3 items
+						unicode object: self
+						unicode object: x
+						unicode object: y
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				code object
+				name: place
+				code:
+					string object: 7c 02 00 7c 00 00 6a 00 00 7c 01 00 3c 64 01 00 7c 00 00 6a 01 00 7c 02 00 3c 64 01 00 7c 00 00 6a 02 00 7c 01 00 7c 02 00 18 3c 64 01 00 7c 00 00 6a 03 00 7c 01 00 7c 02 00 17 3c 64 00 00 53 
+				consts:
+					tuple object contains 2 items
+						NONE object
+						int object: 1
+					-- tuple object
+				names:
+					tuple object contains 4 items
+						unicode object: y
+						unicode object: row
+						unicode object: up
+						unicode object: down
+					-- tuple object
+				varnames:
+					tuple object contains 3 items
+						unicode object: self
+						unicode object: x
+						unicode object: y
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				code object
+				name: remove
+				code:
+					string object: 64 00 00 7c 00 00 6a 01 00 7c 01 00 3c 64 01 00 7c 00 00 6a 02 00 7c 02 00 3c 64 01 00 7c 00 00 6a 03 00 7c 01 00 7c 02 00 18 3c 64 01 00 7c 00 00 6a 04 00 7c 01 00 7c 02 00 17 3c 64 00 00 53 
+				consts:
+					tuple object contains 2 items
+						NONE object
+						int object: 0
+					-- tuple object
+				names:
+					tuple object contains 5 items
+						unicode object: None
+						unicode object: y
+						unicode object: row
+						unicode object: up
+						unicode object: down
+					-- tuple object
+				varnames:
+					tuple object contains 3 items
+						unicode object: self
+						unicode object: x
+						unicode object: y
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				code object
+				name: display
+				code:
+					string object: 7c 00 00 6a 00 00 64 01 00 17 7c 00 00 5f 00 00 7c 00 00 6a 01 00 72 1d 00 64 00 00 53 74 02 00 64 02 00 64 03 00 7c 00 00 6a 03 00 14 17 64 04 00 17 83 01 00 01 78 8b 00 74 04 00 7c 00 00 6a 03 00 64 01 00 18 64 0a 00 64 0b 00 83 03 00 44 5d 70 00 7d 01 00 74 02 00 64 05 00 64 06 00 64 07 00 83 01 01 01 78 4d 00 74 04 00 7c 00 00 6a 03 00 83 01 00 44 5d 3c 00 7d 02 00 7c 00 00 6a 05 00 7c 02 00 19 7c 01 00 6b 02 00 72 a2 00 74 02 00 64 08 00 64 06 00 64 07 00 83 01 01 01 71 76 00 74 02 00 64 09 00 64 06 00 64 07 00 83 01 01 01 71 76 00 57 74 02 00 64 05 00 83 01 00 01 71 50 00 57 74 02 00 64 02 00 64 03 00 7c 00 00 6a 03 00 14 17 64 04 00 17 83 01 00 01 64 00 00 53 
+				consts:
+					tuple object contains 12 items
+						NONE object
+						int object: 1
+						unicode object: +-
+						unicode object: --
+						unicode object: +
+						unicode object: |
+						unicode object: end
+						unicode object:  
+						unicode object: Q
+						unicode object: .
+						int object: -1
+						int object: -1
+					-- tuple object
+				names:
+					tuple object contains 6 items
+						unicode object: nfound
+						unicode object: silent
+						unicode object: print
+						unicode object: n
+						unicode object: range
+						unicode object: y
+					-- tuple object
+				varnames:
+					tuple object contains 3 items
+						unicode object: self
+						unicode object: y
+						unicode object: x
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				NONE object
+			-- tuple object
+		names:
+			tuple object contaiCalling all Unit Tests
+opening pyc file
+pyc magic found
+reading object
+module name:__init__
+module name:reset
+module name:solve
+module name:safe
+module name:place
+module name:remove
+module name:display
+module name:Queens
+module name:main
+module name:<module>
+read pyc file
+heap bytes used by objects:5155
+MAX HEAP USAGE:5242
+objects num: 191
+max objects : 192
+objects headers total size  : 1898
+code object
+name: <module>
+code:
+	string object: 64 00 00 5a 00 00 64 01 00 5a 01 00 47 64 02 00 84 00 00 64 03 00 83 02 00 5a 02 00 64 04 00 84 00 00 5a 03 00 65 04 00 64 05 00 6b 02 00 72 3b 00 65 03 00 83 00 00 01 6e 00 00 64 06 00 53 
+consts:
+	tuple object contains 7 items
+		unicode object: 
+N queens problem.
+
+The (well-known) problem is due to Niklaus Wirth.
+
+This solution is inspired by Dijkstra (Structured Programming).  It is
+a classic recursive backtracking approach.
+
+		int object: 8
+		code object
+		name: Queens
+		code:
+			string object: 7c 00 00 45 65 00 00 5a 01 00 65 02 00 64 00 00 84 01 00 5a 03 00 64 01 00 84 00 00 5a 04 00 64 02 00 64 03 00 84 01 00 5a 05 00 64 04 00 84 00 00 5a 06 00 64 05 00 84 00 00 5a 07 00 64 06 00 84 00 00 5a 08 00 64 02 00 5a 09 00 64 07 00 84 00 00 5a 0a 00 64 08 00 53 
+		consts:
+			tuple object contains 9 items
+				code object
+				name: __init__
+				code:
+					string object: 7c 01 00 7c 00 00 5f 00 00 7c 00 00 6a 01 00 83 00 00 01 64 00 00 53 
+				consts:
+					tuple object contains 1 items
+						NONE object
+					-- tuple object
+				names:
+					tuple object contains 2 items
+						unicode object: n
+						unicode object: reset
+					-- tuple object
+				varnames:
+					tuple object contains 2 items
+						unicode object: self
+						unicode object: n
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				code object
+				name: reset
+				code:
+					string object: 7c 00 00 6a 00 00 7d 01 00 64 00 00 67 01 00 7c 01 00 14 7c 00 00 5f 02 00 64 01 00 67 01 00 7c 01 00 14 7c 00 00 5f 03 00 64 01 00 67 01 00 64 02 00 7c 01 00 14 64 03 00 18 14 7c 00 00 5f 04 00 64 01 00 67 01 00 64 02 00 7c 01 00 14 64 03 00 18 14 7c 00 00 5f 05 00 64 01 00 7c 00 00 5f 06 00 64 00 00 53 
+				consts:
+					tuple object contains 4 items
+						NONE object
+						int object: 0
+						int object: 2
+						int object: 1
+					-- tuple object
+				names:
+					tuple object contains 7 items
+						unicode object: n
+						unicode object: None
+						unicode object: y
+						unicode object: row
+						unicode object: up
+						unicode object: down
+						unicode object: nfound
+					-- tuple object
+				varnames:
+					tuple object contains 2 items
+						unicode object: self
+						unicode object: n
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				int object: 0
+				code object
+				name: solve
+				code:
+					string object: 78 7d 00 74 00 00 7c 00 00 6a 01 00 83 01 00 44 5d 6c 00 7d 02 00 7c 00 00 6a 02 00 7c 01 00 7c 02 00 83 02 00 72 10 00 7c 00 00 6a 03 00 7c 01 00 7c 02 00 83 02 00 01 7c 01 00 64 01 00 17 7c 00 00 6a 01 00 6b 02 00 72 58 00 7c 00 00 6a 04 00 83 00 00 01 6e 11 00 7c 00 00 6a 05 00 7c 01 00 64 01 00 17 83 01 00 01 7c 00 00 6a 06 00 7c 01 00 7c 02 00 83 02 00 01 71 10 00 71 10 00 57 64 00 00 53 
+				consts:
+					tuple object contains 2 items
+						NONE object
+						int object: 1
+					-- tuple object
+				names:
+					tuple object contains 7 items
+						unicode object: range
+						unicode object: n
+						unicode object: safe
+						unicode object: place
+						unicode object: display
+						unicode object: solve
+						unicode object: remove
+					-- tuple object
+				varnames:
+					tuple object contains 3 items
+						unicode object: self
+						unicode object: x
+						unicode object: y
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				code object
+				name: safe
+				code:
+					string object: 7c 00 00 6a 00 00 7c 02 00 19 0c 6f 2f 00 7c 00 00 6a 01 00 7c 01 00 7c 02 00 18 19 0c 6f 2f 00 7c 00 00 6a 02 00 7c 01 00 7c 02 00 17 19 0c 53 
+				consts:
+					tuple object contains 1 items
+						NONE object
+					-- tuple object
+				names:
+					tuple object contains 3 items
+						unicode object: row
+						unicode object: up
+						unicode object: down
+					-- tuple object
+				varnames:
+					tuple object contains 3 items
+						unicode object: self
+						unicode object: x
+						unicode object: y
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				code object
+				name: place
+				code:
+					string object: 7c 02 00 7c 00 00 6a 00 00 7c 01 00 3c 64 01 00 7c 00 00 6a 01 00 7c 02 00 3c 64 01 00 7c 00 00 6a 02 00 7c 01 00 7c 02 00 18 3c 64 01 00 7c 00 00 6a 03 00 7c 01 00 7c 02 00 17 3c 64 00 00 53 
+				consts:
+					tuple object contains 2 items
+						NONE object
+						int object: 1
+					-- tuple object
+				names:
+					tuple object contains 4 items
+						unicode object: y
+						unicode object: row
+						unicode object: up
+						unicode object: down
+					-- tuple object
+				varnames:
+					tuple object contains 3 items
+						unicode object: self
+						unicode object: x
+						unicode object: y
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				code object
+				name: remove
+				code:
+					string object: 64 00 00 7c 00 00 6a 01 00 7c 01 00 3c 64 01 00 7c 00 00 6a 02 00 7c 02 00 3c 64 01 00 7c 00 00 6a 03 00 7c 01 00 7c 02 00 18 3c 64 01 00 7c 00 00 6a 04 00 7c 01 00 7c 02 00 17 3c 64 00 00 53 
+				consts:
+					tuple object contains 2 items
+						NONE object
+						int object: 0
+					-- tuple object
+				names:
+					tuple object contains 5 items
+						unicode object: None
+						unicode object: y
+						unicode object: row
+						unicode object: up
+						unicode object: down
+					-- tuple object
+				varnames:
+					tuple object contains 3 items
+						unicode object: self
+						unicode object: x
+						unicode object: y
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				code object
+				name: display
+				code:
+					string object: 7c 00 00 6a 00 00 64 01 00 17 7c 00 00 5f 00 00 7c 00 00 6a 01 00 72 1d 00 64 00 00 53 74 02 00 64 02 00 64 03 00 7c 00 00 6a 03 00 14 17 64 04 00 17 83 01 00 01 78 8b 00 74 04 00 7c 00 00 6a 03 00 64 01 00 18 64 0a 00 64 0b 00 83 03 00 44 5d 70 00 7d 01 00 74 02 00 64 05 00 64 06 00 64 07 00 83 01 01 01 78 4d 00 74 04 00 7c 00 00 6a 03 00 83 01 00 44 5d 3c 00 7d 02 00 7c 00 00 6a 05 00 7c 02 00 19 7c 01 00 6b 02 00 72 a2 00 74 02 00 64 08 00 64 06 00 64 07 00 83 01 01 01 71 76 00 74 02 00 64 09 00 64 06 00 64 07 00 83 01 01 01 71 76 00 57 74 02 00 64 05 00 83 01 00 01 71 50 00 57 74 02 00 64 02 00 64 03 00 7c 00 00 6a 03 00 14 17 64 04 00 17 83 01 00 01 64 00 00 53 
+				consts:
+					tuple object contains 12 items
+						NONE object
+						int object: 1
+						unicode object: +-
+						unicode object: --
+						unicode object: +
+						unicode object: |
+						unicode object: end
+						unicode object:  
+						unicode object: Q
+						unicode object: .
+						int object: -1
+						int object: -1
+					-- tuple object
+				names:
+					tuple object contains 6 items
+						unicode object: nfound
+						unicode object: silent
+						unicode object: print
+						unicode object: n
+						unicode object: range
+						unicode object: y
+					-- tuple object
+				varnames:
+					tuple object contains 3 items
+						unicode object: self
+						unicode object: y
+						unicode object: x
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				NONE object
+			-- tuple object
+		names:
+			tuple object contaiCalling all Unit Tests
+opening pyc file
+pyc magic found
+reading object
+module name:__init__
+module name:reset
+module name:solve
+module name:safe
+module name:place
+module name:remove
+module name:display
+module name:Queens
+module name:main
+module name:<module>
+read pyc file
+heap bytes used by objects:5155
+MAX HEAP USAGE:5242
+objects num: 191
+max objects : 192
+objects headers total size  : 1898
+code object
+name: <module>
+code:
+	string object: 64 00 00 5a 00 00 64 01 00 5a 01 00 47 64 02 00 84 00 00 64 03 00 83 02 00 5a 02 00 64 04 00 84 00 00 5a 03 00 65 04 00 64 05 00 6b 02 00 72 3b 00 65 03 00 83 00 00 01 6e 00 00 64 06 00 53 
+consts:
+	tuple object contains 7 items
+		unicode object: 
+N queens problem.
+
+The (well-known) problem is due to Niklaus Wirth.
+
+This solution is inspired by Dijkstra (Structured Programming).  It is
+a classic recursive backtracking approach.
+
+		int object: 8
+		code object
+		name: Queens
+		code:
+			string object: 7c 00 00 45 65 00 00 5a 01 00 65 02 00 64 00 00 84 01 00 5a 03 00 64 01 00 84 00 00 5a 04 00 64 02 00 64 03 00 84 01 00 5a 05 00 64 04 00 84 00 00 5a 06 00 64 05 00 84 00 00 5a 07 00 64 06 00 84 00 00 5a 08 00 64 02 00 5a 09 00 64 07 00 84 00 00 5a 0a 00 64 08 00 53 
+		consts:
+			tuple object contains 9 items
+				code object
+				name: __init__
+				code:
+					string object: 7c 01 00 7c 00 00 5f 00 00 7c 00 00 6a 01 00 83 00 00 01 64 00 00 53 
+				consts:
+					tuple object contains 1 items
+						NONE object
+					-- tuple object
+				names:
+					tuple object contains 2 items
+						unicode object: n
+						unicode object: reset
+					-- tuple object
+				varnames:
+					tuple object contains 2 items
+						unicode object: self
+						unicode object: n
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				code object
+				name: reset
+				code:
+					string object: 7c 00 00 6a 00 00 7d 01 00 64 00 00 67 01 00 7c 01 00 14 7c 00 00 5f 02 00 64 01 00 67 01 00 7c 01 00 14 7c 00 00 5f 03 00 64 01 00 67 01 00 64 02 00 7c 01 00 14 64 03 00 18 14 7c 00 00 5f 04 00 64 01 00 67 01 00 64 02 00 7c 01 00 14 64 03 00 18 14 7c 00 00 5f 05 00 64 01 00 7c 00 00 5f 06 00 64 00 00 53 
+				consts:
+					tuple object contains 4 items
+						NONE object
+						int object: 0
+						int object: 2
+						int object: 1
+					-- tuple object
+				names:
+					tuple object contains 7 items
+						unicode object: n
+						unicode object: None
+						unicode object: y
+						unicode object: row
+						unicode object: up
+						unicode object: down
+						unicode object: nfound
+					-- tuple object
+				varnames:
+					tuple object contains 2 items
+						unicode object: self
+						unicode object: n
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				int object: 0
+				code object
+				name: solve
+				code:
+					string object: 78 7d 00 74 00 00 7c 00 00 6a 01 00 83 01 00 44 5d 6c 00 7d 02 00 7c 00 00 6a 02 00 7c 01 00 7c 02 00 83 02 00 72 10 00 7c 00 00 6a 03 00 7c 01 00 7c 02 00 83 02 00 01 7c 01 00 64 01 00 17 7c 00 00 6a 01 00 6b 02 00 72 58 00 7c 00 00 6a 04 00 83 00 00 01 6e 11 00 7c 00 00 6a 05 00 7c 01 00 64 01 00 17 83 01 00 01 7c 00 00 6a 06 00 7c 01 00 7c 02 00 83 02 00 01 71 10 00 71 10 00 57 64 00 00 53 
+				consts:
+					tuple object contains 2 items
+						NONE object
+						int object: 1
+					-- tuple object
+				names:
+					tuple object contains 7 items
+						unicode object: range
+						unicode object: n
+						unicode object: safe
+						unicode object: place
+						unicode object: display
+						unicode object: solve
+						unicode object: remove
+					-- tuple object
+				varnames:
+					tuple object contains 3 items
+						unicode object: self
+						unicode object: x
+						unicode object: y
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				code object
+				name: safe
+				code:
+					string object: 7c 00 00 6a 00 00 7c 02 00 19 0c 6f 2f 00 7c 00 00 6a 01 00 7c 01 00 7c 02 00 18 19 0c 6f 2f 00 7c 00 00 6a 02 00 7c 01 00 7c 02 00 17 19 0c 53 
+				consts:
+					tuple object contains 1 items
+						NONE object
+					-- tuple object
+				names:
+					tuple object contains 3 items
+						unicode object: row
+						unicode object: up
+						unicode object: down
+					-- tuple object
+				varnames:
+					tuple object contains 3 items
+						unicode object: self
+						unicode object: x
+						unicode object: y
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				code object
+				name: place
+				code:
+					string object: 7c 02 00 7c 00 00 6a 00 00 7c 01 00 3c 64 01 00 7c 00 00 6a 01 00 7c 02 00 3c 64 01 00 7c 00 00 6a 02 00 7c 01 00 7c 02 00 18 3c 64 01 00 7c 00 00 6a 03 00 7c 01 00 7c 02 00 17 3c 64 00 00 53 
+				consts:
+					tuple object contains 2 items
+						NONE object
+						int object: 1
+					-- tuple object
+				names:
+					tuple object contains 4 items
+						unicode object: y
+						unicode object: row
+						unicode object: up
+						unicode object: down
+					-- tuple object
+				varnames:
+					tuple object contains 3 items
+						unicode object: self
+						unicode object: x
+						unicode object: y
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				code object
+				name: remove
+				code:
+					string object: 64 00 00 7c 00 00 6a 01 00 7c 01 00 3c 64 01 00 7c 00 00 6a 02 00 7c 02 00 3c 64 01 00 7c 00 00 6a 03 00 7c 01 00 7c 02 00 18 3c 64 01 00 7c 00 00 6a 04 00 7c 01 00 7c 02 00 17 3c 64 00 00 53 
+				consts:
+					tuple object contains 2 items
+						NONE object
+						int object: 0
+					-- tuple object
+				names:
+					tuple object contains 5 items
+						unicode object: None
+						unicode object: y
+						unicode object: row
+						unicode object: up
+						unicode object: down
+					-- tuple object
+				varnames:
+					tuple object contains 3 items
+						unicode object: self
+						unicode object: x
+						unicode object: y
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				code object
+				name: display
+				code:
+					string object: 7c 00 00 6a 00 00 64 01 00 17 7c 00 00 5f 00 00 7c 00 00 6a 01 00 72 1d 00 64 00 00 53 74 02 00 64 02 00 64 03 00 7c 00 00 6a 03 00 14 17 64 04 00 17 83 01 00 01 78 8b 00 74 04 00 7c 00 00 6a 03 00 64 01 00 18 64 0a 00 64 0b 00 83 03 00 44 5d 70 00 7d 01 00 74 02 00 64 05 00 64 06 00 64 07 00 83 01 01 01 78 4d 00 74 04 00 7c 00 00 6a 03 00 83 01 00 44 5d 3c 00 7d 02 00 7c 00 00 6a 05 00 7c 02 00 19 7c 01 00 6b 02 00 72 a2 00 74 02 00 64 08 00 64 06 00 64 07 00 83 01 01 01 71 76 00 74 02 00 64 09 00 64 06 00 64 07 00 83 01 01 01 71 76 00 57 74 02 00 64 05 00 83 01 00 01 71 50 00 57 74 02 00 64 02 00 64 03 00 7c 00 00 6a 03 00 14 17 64 04 00 17 83 01 00 01 64 00 00 53 
+				consts:
+					tuple object contains 12 items
+						NONE object
+						int object: 1
+						unicode object: +-
+						unicode object: --
+						unicode object: +
+						unicode object: |
+						unicode object: end
+						unicode object:  
+						unicode object: Q
+						unicode object: .
+						int object: -1
+						int object: -1
+					-- tuple object
+				names:
+					tuple object contains 6 items
+						unicode object: nfound
+						unicode object: silent
+						unicode object: print
+						unicode object: n
+						unicode object: range
+						unicode object: y
+					-- tuple object
+				varnames:
+					tuple object contains 3 items
+						unicode object: self
+						unicode object: y
+						unicode object: x
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				NONE object
+			-- tuple object
+		names:
+			tuple object contaiCalling all Unit Tests
+opening pyc file
+pyc magic found
+reading object
+module name:__init__
+module name:reset
+module name:solve
+module name:safe
+module name:place
+module name:remove
+module name:display
+module name:Queens
+module name:main
+module name:<module>
+read pyc file
+heap bytes used by objects:5155
+MAX HEAP USAGE:5242
+objects num: 191
+max objects : 192
+objects headers total size  : 1898
+code object
+name: <module>
+code:
+	string object: 64 00 00 5a 00 00 64 01 00 5a 01 00 47 64 02 00 84 00 00 64 03 00 83 02 00 5a 02 00 64 04 00 84 00 00 5a 03 00 65 04 00 64 05 00 6b 02 00 72 3b 00 65 03 00 83 00 00 01 6e 00 00 64 06 00 53 
+consts:
+	tuple object contains 7 items
+		unicode object: 
+N queens problem.
+
+The (well-known) problem is due to Niklaus Wirth.
+
+This solution is inspired by Dijkstra (Structured Programming).  It is
+a classic recursive backtracking approach.
+
+		int object: 8
+		code object
+		name: Queens
+		code:
+			string object: 7c 00 00 45 65 00 00 5a 01 00 65 02 00 64 00 00 84 01 00 5a 03 00 64 01 00 84 00 00 5a 04 00 64 02 00 64 03 00 84 01 00 5a 05 00 64 04 00 84 00 00 5a 06 00 64 05 00 84 00 00 5a 07 00 64 06 00 84 00 00 5a 08 00 64 02 00 5a 09 00 64 07 00 84 00 00 5a 0a 00 64 08 00 53 
+		consts:
+			tuple object contains 9 items
+				code object
+				name: __init__
+				code:
+					string object: 7c 01 00 7c 00 00 5f 00 00 7c 00 00 6a 01 00 83 00 00 01 64 00 00 53 
+				consts:
+					tuple object contains 1 items
+						NONE object
+					-- tuple object
+				names:
+					tuple object contains 2 items
+						unicode object: n
+						unicode object: reset
+					-- tuple object
+				varnames:
+					tuple object contains 2 items
+						unicode object: self
+						unicode object: n
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				code object
+				name: reset
+				code:
+					string object: 7c 00 00 6a 00 00 7d 01 00 64 00 00 67 01 00 7c 01 00 14 7c 00 00 5f 02 00 64 01 00 67 01 00 7c 01 00 14 7c 00 00 5f 03 00 64 01 00 67 01 00 64 02 00 7c 01 00 14 64 03 00 18 14 7c 00 00 5f 04 00 64 01 00 67 01 00 64 02 00 7c 01 00 14 64 03 00 18 14 7c 00 00 5f 05 00 64 01 00 7c 00 00 5f 06 00 64 00 00 53 
+				consts:
+					tuple object contains 4 items
+						NONE object
+						int object: 0
+						int object: 2
+						int object: 1
+					-- tuple object
+				names:
+					tuple object contains 7 items
+						unicode object: n
+						unicode object: None
+						unicode object: y
+						unicode object: row
+						unicode object: up
+						unicode object: down
+						unicode object: nfound
+					-- tuple object
+				varnames:
+					tuple object contains 2 items
+						unicode object: self
+						unicode object: n
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				int object: 0
+				code object
+				name: solve
+				code:
+					string object: 78 7d 00 74 00 00 7c 00 00 6a 01 00 83 01 00 44 5d 6c 00 7d 02 00 7c 00 00 6a 02 00 7c 01 00 7c 02 00 83 02 00 72 10 00 7c 00 00 6a 03 00 7c 01 00 7c 02 00 83 02 00 01 7c 01 00 64 01 00 17 7c 00 00 6a 01 00 6b 02 00 72 58 00 7c 00 00 6a 04 00 83 00 00 01 6e 11 00 7c 00 00 6a 05 00 7c 01 00 64 01 00 17 83 01 00 01 7c 00 00 6a 06 00 7c 01 00 7c 02 00 83 02 00 01 71 10 00 71 10 00 57 64 00 00 53 
+				consts:
+					tuple object contains 2 items
+						NONE object
+						int object: 1
+					-- tuple object
+				names:
+					tuple object contains 7 items
+						unicode object: range
+						unicode object: n
+						unicode object: safe
+						unicode object: place
+						unicode object: display
+						unicode object: solve
+						unicode object: remove
+					-- tuple object
+				varnames:
+					tuple object contains 3 items
+						unicode object: self
+						unicode object: x
+						unicode object: y
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				code object
+				name: safe
+				code:
+					string object: 7c 00 00 6a 00 00 7c 02 00 19 0c 6f 2f 00 7c 00 00 6a 01 00 7c 01 00 7c 02 00 18 19 0c 6f 2f 00 7c 00 00 6a 02 00 7c 01 00 7c 02 00 17 19 0c 53 
+				consts:
+					tuple object contains 1 items
+						NONE object
+					-- tuple object
+				names:
+					tuple object contains 3 items
+						unicode object: row
+						unicode object: up
+						unicode object: down
+					-- tuple object
+				varnames:
+					tuple object contains 3 items
+						unicode object: self
+						unicode object: x
+						unicode object: y
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				code object
+				name: place
+				code:
+					string object: 7c 02 00 7c 00 00 6a 00 00 7c 01 00 3c 64 01 00 7c 00 00 6a 01 00 7c 02 00 3c 64 01 00 7c 00 00 6a 02 00 7c 01 00 7c 02 00 18 3c 64 01 00 7c 00 00 6a 03 00 7c 01 00 7c 02 00 17 3c 64 00 00 53 
+				consts:
+					tuple object contains 2 items
+						NONE object
+						int object: 1
+					-- tuple object
+				names:
+					tuple object contains 4 items
+						unicode object: y
+						unicode object: row
+						unicode object: up
+						unicode object: down
+					-- tuple object
+				varnames:
+					tuple object contains 3 items
+						unicode object: self
+						unicode object: x
+						unicode object: y
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				code object
+				name: remove
+				code:
+					string object: 64 00 00 7c 00 00 6a 01 00 7c 01 00 3c 64 01 00 7c 00 00 6a 02 00 7c 02 00 3c 64 01 00 7c 00 00 6a 03 00 7c 01 00 7c 02 00 18 3c 64 01 00 7c 00 00 6a 04 00 7c 01 00 7c 02 00 17 3c 64 00 00 53 
+				consts:
+					tuple object contains 2 items
+						NONE object
+						int object: 0
+					-- tuple object
+				names:
+					tuple object contains 5 items
+						unicode object: None
+						unicode object: y
+						unicode object: row
+						unicode object: up
+						unicode object: down
+					-- tuple object
+				varnames:
+					tuple object contains 3 items
+						unicode object: self
+						unicode object: x
+						unicode object: y
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				code object
+				name: display
+				code:
+					string object: 7c 00 00 6a 00 00 64 01 00 17 7c 00 00 5f 00 00 7c 00 00 6a 01 00 72 1d 00 64 00 00 53 74 02 00 64 02 00 64 03 00 7c 00 00 6a 03 00 14 17 64 04 00 17 83 01 00 01 78 8b 00 74 04 00 7c 00 00 6a 03 00 64 01 00 18 64 0a 00 64 0b 00 83 03 00 44 5d 70 00 7d 01 00 74 02 00 64 05 00 64 06 00 64 07 00 83 01 01 01 78 4d 00 74 04 00 7c 00 00 6a 03 00 83 01 00 44 5d 3c 00 7d 02 00 7c 00 00 6a 05 00 7c 02 00 19 7c 01 00 6b 02 00 72 a2 00 74 02 00 64 08 00 64 06 00 64 07 00 83 01 01 01 71 76 00 74 02 00 64 09 00 64 06 00 64 07 00 83 01 01 01 71 76 00 57 74 02 00 64 05 00 83 01 00 01 71 50 00 57 74 02 00 64 02 00 64 03 00 7c 00 00 6a 03 00 14 17 64 04 00 17 83 01 00 01 64 00 00 53 
+				consts:
+					tuple object contains 12 items
+						NONE object
+						int object: 1
+						unicode object: +-
+						unicode object: --
+						unicode object: +
+						unicode object: |
+						unicode object: end
+						unicode object:  
+						unicode object: Q
+						unicode object: .
+						int object: -1
+						int object: -1
+					-- tuple object
+				names:
+					tuple object contains 6 items
+						unicode object: nfound
+						unicode object: silent
+						unicode object: print
+						unicode object: n
+						unicode object: range
+						unicode object: y
+					-- tuple object
+				varnames:
+					tuple object contains 3 items
+						unicode object: self
+						unicode object: y
+						unicode object: x
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				NONE object
+			-- tuple object
+		names:
+			tuple object contaiCalling all Unit Tests
+opening pyc file
+pyc magic found
+reading object
+module name:__init__
+module name:reset
+module name:solve
+module name:safe
+module name:place
+module name:remove
+module name:display
+module name:Queens
+module name:main
+module name:<module>
+read pyc file
+heap bytes used by objects:5155
+MAX HEAP USAGE:5242
+objects num: 191
+max objects : 192
+objects headers total size  : 1898
+code object
+name: <module>
+code:
+	string object: 64 00 00 5a 00 00 64 01 00 5a 01 00 47 64 02 00 84 00 00 64 03 00 83 02 00 5a 02 00 64 04 00 84 00 00 5a 03 00 65 04 00 64 05 00 6b 02 00 72 3b 00 65 03 00 83 00 00 01 6e 00 00 64 06 00 53 
+consts:
+	tuple object contains 7 items
+		unicode object: 
+N queens problem.
+
+The (well-known) problem is due to Niklaus Wirth.
+
+This solution is inspired by Dijkstra (Structured Programming).  It is
+a classic recursive backtracking approach.
+
+		int object: 8
+		code object
+		name: Queens
+		code:
+			string object: 7c 00 00 45 65 00 00 5a 01 00 65 02 00 64 00 00 84 01 00 5a 03 00 64 01 00 84 00 00 5a 04 00 64 02 00 64 03 00 84 01 00 5a 05 00 64 04 00 84 00 00 5a 06 00 64 05 00 84 00 00 5a 07 00 64 06 00 84 00 00 5a 08 00 64 02 00 5a 09 00 64 07 00 84 00 00 5a 0a 00 64 08 00 53 
+		consts:
+			tuple object contains 9 items
+				code object
+				name: __init__
+				code:
+					string object: 7c 01 00 7c 00 00 5f 00 00 7c 00 00 6a 01 00 83 00 00 01 64 00 00 53 
+				consts:
+					tuple object contains 1 items
+						NONE object
+					-- tuple object
+				names:
+					tuple object contains 2 items
+						unicode object: n
+						unicode object: reset
+					-- tuple object
+				varnames:
+					tuple object contains 2 items
+						unicode object: self
+						unicode object: n
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				code object
+				name: reset
+				code:
+					string object: 7c 00 00 6a 00 00 7d 01 00 64 00 00 67 01 00 7c 01 00 14 7c 00 00 5f 02 00 64 01 00 67 01 00 7c 01 00 14 7c 00 00 5f 03 00 64 01 00 67 01 00 64 02 00 7c 01 00 14 64 03 00 18 14 7c 00 00 5f 04 00 64 01 00 67 01 00 64 02 00 7c 01 00 14 64 03 00 18 14 7c 00 00 5f 05 00 64 01 00 7c 00 00 5f 06 00 64 00 00 53 
+				consts:
+					tuple object contains 4 items
+						NONE object
+						int object: 0
+						int object: 2
+						int object: 1
+					-- tuple object
+				names:
+					tuple object contains 7 items
+						unicode object: n
+						unicode object: None
+						unicode object: y
+						unicode object: row
+						unicode object: up
+						unicode object: down
+						unicode object: nfound
+					-- tuple object
+				varnames:
+					tuple object contains 2 items
+						unicode object: self
+						unicode object: n
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				int object: 0
+				code object
+				name: solve
+				code:
+					string object: 78 7d 00 74 00 00 7c 00 00 6a 01 00 83 01 00 44 5d 6c 00 7d 02 00 7c 00 00 6a 02 00 7c 01 00 7c 02 00 83 02 00 72 10 00 7c 00 00 6a 03 00 7c 01 00 7c 02 00 83 02 00 01 7c 01 00 64 01 00 17 7c 00 00 6a 01 00 6b 02 00 72 58 00 7c 00 00 6a 04 00 83 00 00 01 6e 11 00 7c 00 00 6a 05 00 7c 01 00 64 01 00 17 83 01 00 01 7c 00 00 6a 06 00 7c 01 00 7c 02 00 83 02 00 01 71 10 00 71 10 00 57 64 00 00 53 
+				consts:
+					tuple object contains 2 items
+						NONE object
+						int object: 1
+					-- tuple object
+				names:
+					tuple object contains 7 items
+						unicode object: range
+						unicode object: n
+						unicode object: safe
+						unicode object: place
+						unicode object: display
+						unicode object: solve
+						unicode object: remove
+					-- tuple object
+				varnames:
+					tuple object contains 3 items
+						unicode object: self
+						unicode object: x
+						unicode object: y
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				code object
+				name: safe
+				code:
+					string object: 7c 00 00 6a 00 00 7c 02 00 19 0c 6f 2f 00 7c 00 00 6a 01 00 7c 01 00 7c 02 00 18 19 0c 6f 2f 00 7c 00 00 6a 02 00 7c 01 00 7c 02 00 17 19 0c 53 
+				consts:
+					tuple object contains 1 items
+						NONE object
+					-- tuple object
+				names:
+					tuple object contains 3 items
+						unicode object: row
+						unicode object: up
+						unicode object: down
+					-- tuple object
+				varnames:
+					tuple object contains 3 items
+						unicode object: self
+						unicode object: x
+						unicode object: y
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				code object
+				name: place
+				code:
+					string object: 7c 02 00 7c 00 00 6a 00 00 7c 01 00 3c 64 01 00 7c 00 00 6a 01 00 7c 02 00 3c 64 01 00 7c 00 00 6a 02 00 7c 01 00 7c 02 00 18 3c 64 01 00 7c 00 00 6a 03 00 7c 01 00 7c 02 00 17 3c 64 00 00 53 
+				consts:
+					tuple object contains 2 items
+						NONE object
+						int object: 1
+					-- tuple object
+				names:
+					tuple object contains 4 items
+						unicode object: y
+						unicode object: row
+						unicode object: up
+						unicode object: down
+					-- tuple object
+				varnames:
+					tuple object contains 3 items
+						unicode object: self
+						unicode object: x
+						unicode object: y
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				code object
+				name: remove
+				code:
+					string object: 64 00 00 7c 00 00 6a 01 00 7c 01 00 3c 64 01 00 7c 00 00 6a 02 00 7c 02 00 3c 64 01 00 7c 00 00 6a 03 00 7c 01 00 7c 02 00 18 3c 64 01 00 7c 00 00 6a 04 00 7c 01 00 7c 02 00 17 3c 64 00 00 53 
+				consts:
+					tuple object contains 2 items
+						NONE object
+						int object: 0
+					-- tuple object
+				names:
+					tuple object contains 5 items
+						unicode object: None
+						unicode object: y
+						unicode object: row
+						unicode object: up
+						unicode object: down
+					-- tuple object
+				varnames:
+					tuple object contains 3 items
+						unicode object: self
+						unicode object: x
+						unicode object: y
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				code object
+				name: display
+				code:
+					string object: 7c 00 00 6a 00 00 64 01 00 17 7c 00 00 5f 00 00 7c 00 00 6a 01 00 72 1d 00 64 00 00 53 74 02 00 64 02 00 64 03 00 7c 00 00 6a 03 00 14 17 64 04 00 17 83 01 00 01 78 8b 00 74 04 00 7c 00 00 6a 03 00 64 01 00 18 64 0a 00 64 0b 00 83 03 00 44 5d 70 00 7d 01 00 74 02 00 64 05 00 64 06 00 64 07 00 83 01 01 01 78 4d 00 74 04 00 7c 00 00 6a 03 00 83 01 00 44 5d 3c 00 7d 02 00 7c 00 00 6a 05 00 7c 02 00 19 7c 01 00 6b 02 00 72 a2 00 74 02 00 64 08 00 64 06 00 64 07 00 83 01 01 01 71 76 00 74 02 00 64 09 00 64 06 00 64 07 00 83 01 01 01 71 76 00 57 74 02 00 64 05 00 83 01 00 01 71 50 00 57 74 02 00 64 02 00 64 03 00 7c 00 00 6a 03 00 14 17 64 04 00 17 83 01 00 01 64 00 00 53 
+				consts:
+					tuple object contains 12 items
+						NONE object
+						int object: 1
+						unicode object: +-
+						unicode object: --
+						unicode object: +
+						unicode object: |
+						unicode object: end
+						unicode object:  
+						unicode object: Q
+						unicode object: .
+						int object: -1
+						int object: -1
+					-- tuple object
+				names:
+					tuple object contains 6 items
+						unicode object: nfound
+						unicode object: silent
+						unicode object: print
+						unicode object: n
+						unicode object: range
+						unicode object: y
+					-- tuple object
+				varnames:
+					tuple object contains 3 items
+						unicode object: self
+						unicode object: y
+						unicode object: x
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				NONE object
+			-- tuple object
+		names:
+			tuple object contaiCalling all Unit Tests
+opening pyc file
+pyc magic found
+reading object
+module name:__init__
+module name:reset
+module name:solve
+module name:safe
+module name:place
+module name:remove
+module name:display
+module name:Queens
+module name:main
+module name:<module>
+read pyc file
+heap bytes used by objects:5155
+MAX HEAP USAGE:5242
+objects num: 191
+max objects : 192
+objects headers total size  : 1898
+code object
+name: <module>
+code:
+	string object: 64 00 00 5a 00 00 64 01 00 5a 01 00 47 64 02 00 84 00 00 64 03 00 83 02 00 5a 02 00 64 04 00 84 00 00 5a 03 00 65 04 00 64 05 00 6b 02 00 72 3b 00 65 03 00 83 00 00 01 6e 00 00 64 06 00 53 
+consts:
+	tuple object contains 7 items
+		unicode object: 
+N queens problem.
+
+The (well-known) problem is due to Niklaus Wirth.
+
+This solution is inspired by Dijkstra (Structured Programming).  It is
+a classic recursive backtracking approach.
+
+		int object: 8
+		code object
+		name: Queens
+		code:
+			string object: 7c 00 00 45 65 00 00 5a 01 00 65 02 00 64 00 00 84 01 00 5a 03 00 64 01 00 84 00 00 5a 04 00 64 02 00 64 03 00 84 01 00 5a 05 00 64 04 00 84 00 00 5a 06 00 64 05 00 84 00 00 5a 07 00 64 06 00 84 00 00 5a 08 00 64 02 00 5a 09 00 64 07 00 84 00 00 5a 0a 00 64 08 00 53 
+		consts:
+			tuple object contains 9 items
+				code object
+				name: __init__
+				code:
+					string object: 7c 01 00 7c 00 00 5f 00 00 7c 00 00 6a 01 00 83 00 00 01 64 00 00 53 
+				consts:
+					tuple object contains 1 items
+						NONE object
+					-- tuple object
+				names:
+					tuple object contains 2 items
+						unicode object: n
+						unicode object: reset
+					-- tuple object
+				varnames:
+					tuple object contains 2 items
+						unicode object: self
+						unicode object: n
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				code object
+				name: reset
+				code:
+					string object: 7c 00 00 6a 00 00 7d 01 00 64 00 00 67 01 00 7c 01 00 14 7c 00 00 5f 02 00 64 01 00 67 01 00 7c 01 00 14 7c 00 00 5f 03 00 64 01 00 67 01 00 64 02 00 7c 01 00 14 64 03 00 18 14 7c 00 00 5f 04 00 64 01 00 67 01 00 64 02 00 7c 01 00 14 64 03 00 18 14 7c 00 00 5f 05 00 64 01 00 7c 00 00 5f 06 00 64 00 00 53 
+				consts:
+					tuple object contains 4 items
+						NONE object
+						int object: 0
+						int object: 2
+						int object: 1
+					-- tuple object
+				names:
+					tuple object contains 7 items
+						unicode object: n
+						unicode object: None
+						unicode object: y
+						unicode object: row
+						unicode object: up
+						unicode object: down
+						unicode object: nfound
+					-- tuple object
+				varnames:
+					tuple object contains 2 items
+						unicode object: self
+						unicode object: n
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				int object: 0
+				code object
+				name: solve
+				code:
+					string object: 78 7d 00 74 00 00 7c 00 00 6a 01 00 83 01 00 44 5d 6c 00 7d 02 00 7c 00 00 6a 02 00 7c 01 00 7c 02 00 83 02 00 72 10 00 7c 00 00 6a 03 00 7c 01 00 7c 02 00 83 02 00 01 7c 01 00 64 01 00 17 7c 00 00 6a 01 00 6b 02 00 72 58 00 7c 00 00 6a 04 00 83 00 00 01 6e 11 00 7c 00 00 6a 05 00 7c 01 00 64 01 00 17 83 01 00 01 7c 00 00 6a 06 00 7c 01 00 7c 02 00 83 02 00 01 71 10 00 71 10 00 57 64 00 00 53 
+				consts:
+					tuple object contains 2 items
+						NONE object
+						int object: 1
+					-- tuple object
+				names:
+					tuple object contains 7 items
+						unicode object: range
+						unicode object: n
+						unicode object: safe
+						unicode object: place
+						unicode object: display
+						unicode object: solve
+						unicode object: remove
+					-- tuple object
+				varnames:
+					tuple object contains 3 items
+						unicode object: self
+						unicode object: x
+						unicode object: y
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				code object
+				name: safe
+				code:
+					string object: 7c 00 00 6a 00 00 7c 02 00 19 0c 6f 2f 00 7c 00 00 6a 01 00 7c 01 00 7c 02 00 18 19 0c 6f 2f 00 7c 00 00 6a 02 00 7c 01 00 7c 02 00 17 19 0c 53 
+				consts:
+					tuple object contains 1 items
+						NONE object
+					-- tuple object
+				names:
+					tuple object contains 3 items
+						unicode object: row
+						unicode object: up
+						unicode object: down
+					-- tuple object
+				varnames:
+					tuple object contains 3 items
+						unicode object: self
+						unicode object: x
+						unicode object: y
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				code object
+				name: place
+				code:
+					string object: 7c 02 00 7c 00 00 6a 00 00 7c 01 00 3c 64 01 00 7c 00 00 6a 01 00 7c 02 00 3c 64 01 00 7c 00 00 6a 02 00 7c 01 00 7c 02 00 18 3c 64 01 00 7c 00 00 6a 03 00 7c 01 00 7c 02 00 17 3c 64 00 00 53 
+				consts:
+					tuple object contains 2 items
+						NONE object
+						int object: 1
+					-- tuple object
+				names:
+					tuple object contains 4 items
+						unicode object: y
+						unicode object: row
+						unicode object: up
+						unicode object: down
+					-- tuple object
+				varnames:
+					tuple object contains 3 items
+						unicode object: self
+						unicode object: x
+						unicode object: y
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				code object
+				name: remove
+				code:
+					string object: 64 00 00 7c 00 00 6a 01 00 7c 01 00 3c 64 01 00 7c 00 00 6a 02 00 7c 02 00 3c 64 01 00 7c 00 00 6a 03 00 7c 01 00 7c 02 00 18 3c 64 01 00 7c 00 00 6a 04 00 7c 01 00 7c 02 00 17 3c 64 00 00 53 
+				consts:
+					tuple object contains 2 items
+						NONE object
+						int object: 0
+					-- tuple object
+				names:
+					tuple object contains 5 items
+						unicode object: None
+						unicode object: y
+						unicode object: row
+						unicode object: up
+						unicode object: down
+					-- tuple object
+				varnames:
+					tuple object contains 3 items
+						unicode object: self
+						unicode object: x
+						unicode object: y
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				code object
+				name: display
+				code:
+					string object: 7c 00 00 6a 00 00 64 01 00 17 7c 00 00 5f 00 00 7c 00 00 6a 01 00 72 1d 00 64 00 00 53 74 02 00 64 02 00 64 03 00 7c 00 00 6a 03 00 14 17 64 04 00 17 83 01 00 01 78 8b 00 74 04 00 7c 00 00 6a 03 00 64 01 00 18 64 0a 00 64 0b 00 83 03 00 44 5d 70 00 7d 01 00 74 02 00 64 05 00 64 06 00 64 07 00 83 01 01 01 78 4d 00 74 04 00 7c 00 00 6a 03 00 83 01 00 44 5d 3c 00 7d 02 00 7c 00 00 6a 05 00 7c 02 00 19 7c 01 00 6b 02 00 72 a2 00 74 02 00 64 08 00 64 06 00 64 07 00 83 01 01 01 71 76 00 74 02 00 64 09 00 64 06 00 64 07 00 83 01 01 01 71 76 00 57 74 02 00 64 05 00 83 01 00 01 71 50 00 57 74 02 00 64 02 00 64 03 00 7c 00 00 6a 03 00 14 17 64 04 00 17 83 01 00 01 64 00 00 53 
+				consts:
+					tuple object contains 12 items
+						NONE object
+						int object: 1
+						unicode object: +-
+						unicode object: --
+						unicode object: +
+						unicode object: |
+						unicode object: end
+						unicode object:  
+						unicode object: Q
+						unicode object: .
+						int object: -1
+						int object: -1
+					-- tuple object
+				names:
+					tuple object contains 6 items
+						unicode object: nfound
+						unicode object: silent
+						unicode object: print
+						unicode object: n
+						unicode object: range
+						unicode object: y
+					-- tuple object
+				varnames:
+					tuple object contains 3 items
+						unicode object: self
+						unicode object: y
+						unicode object: x
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				NONE object
+			-- tuple object
+		names:
+			tuple object contains 11 items
+				unicode object: __name__
+				unicode object: __module__
+				unicode object: N
+				unicode object: __init__
+				unicode object: reset
+				unicode object: solve
+				unicode object: safe
+				unicode object: place
+				unicode object: remove
+				unicode object: silent
+				unicode object: display
+			-- tuple object
+		varnames:
+			tuple object contains 1 items
+				unicode object: __locals__
+			-- tuple object
+		freevars:
+			tuple object
+			empty tuple
+			-- tuple object
+		cellvars:
+			tuple object
+			empty tuple
+			-- tuple object
+		-- code object
+		unicode object: Queens
+		code object
+		name: main
+		code:
+			string object: 64 01 00 64 00 00 6c 00 00 7d 00 00 64 01 00 7d 01 00 74 01 00 7d 02 00 7c 00 00 6a 02 00 64 02 00 64 03 00 85 02 00 19 64 04 00 67 01 00 6b 02 00 72 47 00 64 02 00 7d 01 00 7c 00 00 6a 02 00 64 02 00 3d 6e 00 00 7c 00 00 6a 02 00 64 02 00 64 00 00 85 02 00 19 72 70 00 74 03 00 7c 00 00 6a 02 00 64 02 00 19 83 01 00 7d 02 00 6e 00 00 74 04 00 7c 02 00 83 01 00 7d 03 00 7c 01 00 7c 03 00 5f 05 00 7c 03 00 6a 06 00 83 00 00 01 74 07 00 64 05 00 7c 03 00 6a 08 00 64 06 00 83 03 00 01 64 00 00 53 
+		consts:
+			tuple object contains 7 items
+				NONE object
+				int object: 0
+				int object: 1
+				int object: 2
+				unicode object: -n
+				unicode object: Found
+				unicode object: solutions.
+			-- tuple object
+		names:
+			tuple object contains 9 items
+				unicode object: sys
+				unicode object: N
+				unicode object: argv
+				unicode object: int
+				unicode object: Queens
+				unicode object: silent
+				unicode object: solve
+				unicode object: print
+				unicode object: nfound
+			-- tuple object
+		varnames:
+			tuple object contains 4 items
+				unicode object: sys
+				unicode object: silent
+				unicode object: n
+				unicode object: q
+			-- tuple object
+		freevars:
+			tuple object
+			empty tuple
+			-- tuple object
+		cellvars:
+			tuple object
+			empty tuple
+			-- tuple object
+		-- code object
+		unicode object: __main__
+		NONE object
+	-- tuple object
+names:
+	tuple object contains 5 items
+		unicode object: __doc__
+		unicode object: N
+		unicode object: Queens
+		unicode object: main
+		unicode object: __name__
+	-- tuple object
+varnames:
+	tuple object
+	empty tuple
+	-- tuple object
+freevars:
+	tuple object
+	empty tuple
+	-- tuple object
+cellvars:
+	tuple object
+	empty tuple
+	-- tuple object
+-- code object
+unknown opcode:64 at 0
+[1,0h] opcode: [ STOP_CODE ]
+
+[1,0h] opcode: [ STOP_CODE ] ,argcount:0 not supported
+(Indicates end-of-code to the compiler, not used by the interpreter.)
+[2,0h] opcode: [ STOP_CODE ]
+
+[2,0h] opcode: [ STOP_CODE ] ,argcount:0 not supported
+(Indicates end-of-code to the compiler, not used by the interpreter.)
+unknown opcode:5a at 3
+[4,0h] opcode: [ STOP_CODE ]
+
+[4,0h] opcode: [ STOP_CODE ] ,argcount:0 not supported
+(Indicates end-of-code to the compiler, not used by the interpreter.)
+[5,0h] opcode: [ STOP_CODE ]
+
+[5,0h] opcode: [ STOP_CODE ] ,argcount:0 not supported
+(Indicates end-of-code to the compiler, not used by the interpreter.)
+unknown opcode:64 at 6
+[7,1h] opcode: [ POP_TOP ]
+stack underflow
+[8,0h] opcode: [ STOP_CODE ]
+
+[8,0h] opcode: [ STOP_CODE ] ,argcount:0 not supported
+(Indicates end-of-code to the compiler, not used by the interpreter.)
+unknown opcode:5a at 9
+[10,1h] opcode: [ POP_TOP ]
+stack underflow
+[11,0h] opcode: [ STOP_CODE ]
+
+[11,0h] opcode: [ STOP_CODE ] ,argcount:0 not supported
+(Indicates end-of-code to the compiler, not used by the interpreter.)
+unknown opcode:47 at 12
+unknown opcode:64 at 13
+[14,2h] opcode: [ ROT_TWO ]
+
+[14,2h] opcode: [ ROT_TWO ] ,argcount:0 not supported
+(Swaps the two top-most stack items.)
+[15,0h] opcode: [ STOP_CODE ]
+
+[15,0h] opcode: [ STOP_CODE ] ,argcount:0 not supported
+(Indicates end-of-code to the compiler, not used by the interpreter.)
+unknown opcode:ffffff84 at 16
+[17,0h] opcode: [ STOP_CODE ]
+
+[17,0h] opcode: [ STOP_CODE ] ,argcount:0 not supported
+(Indicates end-of-code to the compiler, not used by the interpreter.)
+[18,0h] opcode: [ STOP_CODE ]
+
+[18,0h] opcode: [ STOP_CODE ] ,argcount:0 not supported
+(Indicates end-of-code to the compiler, not used by the interpreter.)
+unknown opcode:64 at 19
+[20,3h] opcode: [ ROT_THREE ]
+
+[20,3h] opcode: [ ROT_THREE ] ,argcount:0 not supported
+(Lifts second and third stack item one position up, moves top down to position three.)
+[21,0h] opcode: [ STOP_CODE ]
+
+[21,0h] opcode: [ STOP_CODE ] ,argcount:0 not supported
+(Indicates end-of-code to the compiler, not used by the interpreter.)
+unknown opcode:ffffff83 at 22
+[23,2h] opcode: [ ROT_TWO ]
+
+[23,2h] opcode: [ ROT_TWO ] ,argcount:0 not supported
+(Swaps the two top-most stack items.)
+[24,0h] opcode: [ STOP_CODE ]
+
+[24,0h] opcode: [ STOP_CODE ] ,argcount:0 not supported
+(Indicates end-of-code to the compiler, not used by the interpreter.)
+unknown opcode:5a at 25
+[26,2h] opcode: [ ROT_TWO ]
+
+[26,2h] opcode: [ ROT_TWO ] ,argcount:0 not supported
+(Swaps the two top-most stack items.)
+[27,0h] opcode: [ STOP_CODE ]
+
+[27,0h] opcode: [ STOP_CODE ] ,argcount:0 not supported
+(Indicates end-of-code to the compiler, not used by the interpreter.)
+unknown opcode:64 at 28
+[29,4h] opcode: [ DUP_TOP ]
+
+[29,4h] opcode: [ DUP_TOP ] ,argcount:0 not supported
+(Duplicates the reference on top of the stack.)
+[30,0h] opcode: [ STOP_CODE ]
+
+[30,0h] opcode: [ STOP_CODE ] ,argcount:0 not supported
+(Indicates end-of-code to the compiler, not used by the interpreter.)
+unknown opcode:ffffff84 at 31
+[32,0h] opcode: [ STOP_CODE ]
+
+[32,0h] opcode: [ STOP_CODE ] ,argcount:0 not supported
+(Indicates end-of-code to the compiler, not used by the interpreter.)
+[33,0h] opcode: [ STOP_CODE ]
+
+[33,0h] opcode: [ STOP_CODE ] ,argcount:0 not supported
+(Indicates end-of-code to the compiler, not used by the interpreter.)
+unknown opcode:5a at 34
+[35,3h] opcode: [ ROT_THREE ]
+
+[35,3h] opcode: [ ROT_THREE ] ,argcount:0 not supported
+(Lifts second and third stack item one position up, moves top down to position three.)
+[36,0h] opcode: [ STOP_CODE ]
+
+[36,0h] opcode: [ STOP_CODE ] ,argcount:0 not supported
+(Indicates end-of-code to the compiler, not used by the interpreter.)
+unknown opcode:65 at 37
+[38,4h] opcode: [ DUP_TOP ]
+
+[38,4h] opcode: [ DUP_TOP ] ,argcount:0 not supported
+(Duplicates the reference on top of the stack.)
+[39,0h] opcode: [ STOP_CODE ]
+
+[39,0h] opcode: [ STOP_CODE ] ,argcount:0 not supported
+(Indicates end-of-code to the compiler, not used by the interpreter.)
+unknown opcode:64 at 40
+[41,5h] opcode: [ ROT_FOUR ]
+
+[41,5h] opcode: [ ROT_FOUR ] ,argcount:0 not supported
+(Lifts second, third and forth stack item one position up, moves top down to position four.)
+[42,0h] opcode: [ STOP_CODE ]
+
+[42,0h] opcode: [ STOP_CODE ] ,argcount:0 not supported
+(Indicates end-of-code to the compiler, not used by the interpreter.)
+unknown opcode:6b at 43
+[44,2h] opcode: [ ROT_TWO ]
+
+[44,2h] opcode: [ ROT_TWO ] ,argcount:0 not supported
+(Swaps the two top-most stack items.)
+[45,0h] opcode: [ STOP_CODE ]
+
+[45,0h] opcode: [ STOP_CODE ] ,argcount:0 not supported
+(Indicates end-of-code to the compiler, not used by the interpreter.)
+unknown opcode:72 at 46
+unknown opcode:3b at 47
+[48,0h] opcode: [ STOP_CODE ]
+
+[48,0h] opcode: [ STOP_CODE ] ,argcount:0 not supported
+(Indicates end-of-code to the compiler, not used by the interpreter.)
+unknown opcode:65 at 49
+[50,3h] opcode: [ ROT_THREE ]
+
+[50,3h] opcode: [ ROT_THREE ] ,argcount:0 not supported
+(Lifts second and third stack item one position up, moves top down to position three.)
+[51,0h] opcode: [ STOP_CODE ]
+
+[51,0h] opcode: [ STOP_CODE ] ,argcount:0 not supported
+(Indicates end-of-code to the compiler, not used by the interpreter.)
+unknown opcode:ffffff83 at 52
+[53,0h] opcode: [ STOP_CODE ]
+
+[53,0h] opcode: [ STOP_CODE ] ,argcount:0 not supported
+(Indicates end-of-code to the compiler, not used by the interpreter.)
+[54,0h] opcode: [ STOP_CODE ]
+
+[54,0h] opcode: [ STOP_CODE ] ,argcount:0 not supported
+(Indicates end-of-code to the compiler, not used by the interpreter.)
+[55,1h] opcode: [ POP_TOP ]
+stack underflow
+unknown opcode:6e at 56
+[57,0h] opcode: [ STOP_CODE ]
+
+[57,0h] opcode: [ STOP_CODE ] ,argcount:0 not supported
+(Indicates end-of-code to the compiler, not used by the interpreter.)
+[58,0h] opcode: [ STOP_CODE ]
+
+[58,0h] opcode: [ STOP_CODE ] ,argcount:0 not supported
+(Indicates end-of-code to the compiler, not used by the interpreter.)
+unknown opcode:64 at 59
+unknown opcode:6 at 60
+[61,0h] opcode: [ STOP_CODE ]
+
+[61,0h] opcode: [ STOP_CODE ] ,argcount:0 not supported
+(Indicates end-of-code to the compiler, not used by the interpreter.)
+unknown opcode:53 at 62
+code thru.
+stack underflow
+objects headers total size  : 112
+clearing recycle stack
+freeing 0 stack items
+objects headers total size  : 112
+not freed heap bytes num:0
+MAX HEAP USAGE:5242
+0 memory chunks leaked
+Calling all Unit Tests
+opening pyc file
+pyc magic found
+reading object
+module name:__init__
+module name:reset
+module name:solve
+module name:safe
+module name:place
+module name:remove
+module name:display
+module name:Queens
+module name:main
+module name:<module>
+read pyc file
+heap bytes used by objects:5155
+MAX HEAP USAGE:5242
+objects num: 191
+max objects : 192
+objects headers total size  : 1898
+code object
+name: <module>
+code:
+	string object: 64 00 00 5a 00 00 64 01 00 5a 01 00 47 64 02 00 84 00 00 64 03 00 83 02 00 5a 02 00 64 04 00 84 00 00 5a 03 00 65 04 00 64 05 00 6b 02 00 72 3b 00 65 03 00 83 00 00 01 6e 00 00 64 06 00 53 
+consts:
+	tuple object contains 7 items
+		unicode object: 
+N queens problem.
+
+The (well-known) problem is due to Niklaus Wirth.
+
+This solution is inspired by Dijkstra (Structured Programming).  It is
+a classic recursive backtracking approach.
+
+		int object: 8
+		code object
+		name: Queens
+		code:
+			string object: 7c 00 00 45 65 00 00 5a 01 00 65 02 00 64 00 00 84 01 00 5a 03 00 64 01 00 84 00 00 5a 04 00 64 02 00 64 03 00 84 01 00 5a 05 00 64 04 00 84 00 00 5a 06 00 64 05 00 84 00 00 5a 07 00 64 06 00 84 00 00 5a 08 00 64 02 00 5a 09 00 64 07 00 84 00 00 5a 0a 00 64 08 00 53 
+		consts:
+			tuple object contains 9 items
+				code object
+				name: __init__
+				code:
+					string object: 7c 01 00 7c 00 00 5f 00 00 7c 00 00 6a 01 00 83 00 00 01 64 00 00 53 
+				consts:
+					tuple object contains 1 items
+						NONE object
+					-- tuple object
+				names:
+					tuple object contains 2 items
+						unicode object: n
+						unicode object: reset
+					-- tuple object
+				varnames:
+					tuple object contains 2 items
+						unicode object: self
+						unicode object: n
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				code object
+				name: reset
+				code:
+					string object: 7c 00 00 6a 00 00 7d 01 00 64 00 00 67 01 00 7c 01 00 14 7c 00 00 5f 02 00 64 01 00 67 01 00 7c 01 00 14 7c 00 00 5f 03 00 64 01 00 67 01 00 64 02 00 7c 01 00 14 64 03 00 18 14 7c 00 00 5f 04 00 64 01 00 67 01 00 64 02 00 7c 01 00 14 64 03 00 18 14 7c 00 00 5f 05 00 64 01 00 7c 00 00 5f 06 00 64 00 00 53 
+				consts:
+					tuple object contains 4 items
+						NONE object
+						int object: 0
+						int object: 2
+						int object: 1
+					-- tuple object
+				names:
+					tuple object contains 7 items
+						unicode object: n
+						unicode object: None
+						unicode object: y
+						unicode object: row
+						unicode object: up
+						unicode object: down
+						unicode object: nfound
+					-- tuple object
+				varnames:
+					tuple object contains 2 items
+						unicode object: self
+						unicode object: n
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				int object: 0
+				code object
+				name: solve
+				code:
+					string object: 78 7d 00 74 00 00 7c 00 00 6a 01 00 83 01 00 44 5d 6c 00 7d 02 00 7c 00 00 6a 02 00 7c 01 00 7c 02 00 83 02 00 72 10 00 7c 00 00 6a 03 00 7c 01 00 7c 02 00 83 02 00 01 7c 01 00 64 01 00 17 7c 00 00 6a 01 00 6b 02 00 72 58 00 7c 00 00 6a 04 00 83 00 00 01 6e 11 00 7c 00 00 6a 05 00 7c 01 00 64 01 00 17 83 01 00 01 7c 00 00 6a 06 00 7c 01 00 7c 02 00 83 02 00 01 71 10 00 71 10 00 57 64 00 00 53 
+				consts:
+					tuple object contains 2 items
+						NONE object
+						int object: 1
+					-- tuple object
+				names:
+					tuple object contains 7 items
+						unicode object: range
+						unicode object: n
+						unicode object: safe
+						unicode object: place
+						unicode object: display
+						unicode object: solve
+						unicode object: remove
+					-- tuple object
+				varnames:
+					tuple object contains 3 items
+						unicode object: self
+						unicode object: x
+						unicode object: y
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				code object
+				name: safe
+				code:
+					string object: 7c 00 00 6a 00 00 7c 02 00 19 0c 6f 2f 00 7c 00 00 6a 01 00 7c 01 00 7c 02 00 18 19 0c 6f 2f 00 7c 00 00 6a 02 00 7c 01 00 7c 02 00 17 19 0c 53 
+				consts:
+					tuple object contains 1 items
+						NONE object
+					-- tuple object
+				names:
+					tuple object contains 3 items
+						unicode object: row
+						unicode object: up
+						unicode object: down
+					-- tuple object
+				varnames:
+					tuple object contains 3 items
+						unicode object: self
+						unicode object: x
+						unicode object: y
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				code object
+				name: place
+				code:
+					string object: 7c 02 00 7c 00 00 6a 00 00 7c 01 00 3c 64 01 00 7c 00 00 6a 01 00 7c 02 00 3c 64 01 00 7c 00 00 6a 02 00 7c 01 00 7c 02 00 18 3c 64 01 00 7c 00 00 6a 03 00 7c 01 00 7c 02 00 17 3c 64 00 00 53 
+				consts:
+					tuple object contains 2 items
+						NONE object
+						int object: 1
+					-- tuple object
+				names:
+					tuple object contains 4 items
+						unicode object: y
+						unicode object: row
+						unicode object: up
+						unicode object: down
+					-- tuple object
+				varnames:
+					tuple object contains 3 items
+						unicode object: self
+						unicode object: x
+						unicode object: y
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				code object
+				name: remove
+				code:
+					string object: 64 00 00 7c 00 00 6a 01 00 7c 01 00 3c 64 01 00 7c 00 00 6a 02 00 7c 02 00 3c 64 01 00 7c 00 00 6a 03 00 7c 01 00 7c 02 00 18 3c 64 01 00 7c 00 00 6a 04 00 7c 01 00 7c 02 00 17 3c 64 00 00 53 
+				consts:
+					tuple object contains 2 items
+						NONE object
+						int object: 0
+					-- tuple object
+				names:
+					tuple object contains 5 items
+						unicode object: None
+						unicode object: y
+						unicode object: row
+						unicode object: up
+						unicode object: down
+					-- tuple object
+				varnames:
+					tuple object contains 3 items
+						unicode object: self
+						unicode object: x
+						unicode object: y
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				code object
+				name: display
+				code:
+					string object: 7c 00 00 6a 00 00 64 01 00 17 7c 00 00 5f 00 00 7c 00 00 6a 01 00 72 1d 00 64 00 00 53 74 02 00 64 02 00 64 03 00 7c 00 00 6a 03 00 14 17 64 04 00 17 83 01 00 01 78 8b 00 74 04 00 7c 00 00 6a 03 00 64 01 00 18 64 0a 00 64 0b 00 83 03 00 44 5d 70 00 7d 01 00 74 02 00 64 05 00 64 06 00 64 07 00 83 01 01 01 78 4d 00 74 04 00 7c 00 00 6a 03 00 83 01 00 44 5d 3c 00 7d 02 00 7c 00 00 6a 05 00 7c 02 00 19 7c 01 00 6b 02 00 72 a2 00 74 02 00 64 08 00 64 06 00 64 07 00 83 01 01 01 71 76 00 74 02 00 64 09 00 64 06 00 64 07 00 83 01 01 01 71 76 00 57 74 02 00 64 05 00 83 01 00 01 71 50 00 57 74 02 00 64 02 00 64 03 00 7c 00 00 6a 03 00 14 17 64 04 00 17 83 01 00 01 64 00 00 53 
+				consts:
+					tuple object contains 12 items
+						NONE object
+						int object: 1
+						unicode object: +-
+						unicode object: --
+						unicode object: +
+						unicode object: |
+						unicode object: end
+						unicode object:  
+						unicode object: Q
+						unicode object: .
+						int object: -1
+						int object: -1
+					-- tuple object
+				names:
+					tuple object contains 6 items
+						unicode object: nfound
+						unicode object: silent
+						unicode object: print
+						unicode object: n
+						unicode object: range
+						unicode object: y
+					-- tuple object
+				varnames:
+					tuple object contains 3 items
+						unicode object: self
+						unicode object: y
+						unicode object: x
+					-- tuple object
+				freevars:
+					tuple object
+					empty tuple
+					-- tuple object
+				cellvars:
+					tuple object
+					empty tuple
+					-- tuple object
+				-- code object
+				NONE object
+			-- tuple object
+		names:
+			tuple object contai

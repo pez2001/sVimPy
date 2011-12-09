@@ -72,7 +72,7 @@ void OpenPYC()
 int main(int argc,char *argv[])
 {
  mem_Init();
- recycle = stack_Init(20);
+ recycle = stack_Init(50);
  printf("Calling all Unit Tests\n");
  OpenPYC();
  printf("clearing recycle stack\n");

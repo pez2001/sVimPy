@@ -27,6 +27,14 @@ int stack_Contains(object *x,stack *stack);
 object *stack_Top(stack *stack);
 void stack_SetTop(object *x,stack *stack);
 
+object *stack_Second(stack *stack);
+void stack_SetSecond(object *x,stack *stack);
+object *stack_Third(stack *stack);
+void stack_SetThird(object *x,stack *stack);
+
+void stack_Adjust(int by,stack *stack);
+
+
 //object *callstack_Pop();
 //void callstack_Push(object *x);
 

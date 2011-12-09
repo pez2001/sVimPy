@@ -62,7 +62,7 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
   char *const_content;
   object *tos1;
   object *tos2;
-  //printf("[%d,%xh] opcode: [ %s ]\n",i,opcodes[index].opcode,opcodes[index].name);
+  printf("[%d,%xh] opcode: [ %s ]\n",i,opcodes[index].opcode,opcodes[index].name);
   switch(opcodes[index].opcode)
   {
    case 0x74://LOAD_GLOBAL
@@ -83,7 +83,8 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
 	//printf("pushed global\n");
 	stack_Push(co_names->items[name_i],_stack);
     break;
-   case 0x65://LOAD_NAME
+
+	case 0x65://LOAD_NAME
     printf("");
     //printf("push name\n");
 	co_names = (tuple_object*)co->names->ptr;
@@ -96,7 +97,8 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
 	// printf("pushing local (%d)%s = %d\n",name_i,name->content,co_names->items[name_i]->ptr);
 	stack_Push(co_names->items[name_i],_stack);
     break;
-   case 0x64://LOAD_CONST
+
+	case 0x64://LOAD_CONST
     printf("");
     //printf("push const\n");
 	co_consts = (tuple_object*)co->consts->ptr;
@@ -108,7 +110,8 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
 	// printf("pushing local const (%d)%s = %d\n",const_i,const_content->content,co_consts->items[const_i]->ptr);
     stack_Push(co_consts->items[const_i],_stack);
 	break;
-   case 0x7c://LOAD_FAST
+
+	case 0x7c://LOAD_FAST
     printf("");
     //printf("push name\n");
 	co_varnames = (tuple_object*)co->varnames->ptr;
@@ -125,10 +128,12 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
   case 0x84://MAKE_FUNCTION
 		 //not used right now
 		break;
-  case 0x01://POP_TOP
+
+		case 0x01://POP_TOP
     //printf("Removing TOS\n");
    stack_Pop(_stack);
    break;
+
    case 0x5a://STORE_NAME
    printf("");
    //printf("storing in name\n");
@@ -153,6 +158,7 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
 	 //else 
 	co_names->items[name_i]->value_ptr = tos;
    break;
+
    case 0x7d://STORE_FAST
    printf("");
    //printf("storing in fast\n");
@@ -170,6 +176,103 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
 	 printf("fast storing function %s in %s\n",((code_object*)tos->ptr)->name,varname);
 	co_varnames->items[varname_i]->value_ptr = tos;
    break;
+
+  case 0x02://ROT_TWO
+    tos = stack_Top(_stack);
+    tos1 = stack_Second(_stack);
+   stack_SetTop(tos1,_stack);
+   stack_SetSecond(tos,_stack);
+   break;
+
+   case 0x03://ROT_THREE
+    tos = stack_Top(_stack);
+    tos1 = stack_Second(_stack);
+    tos2 = stack_Third(_stack);
+   stack_SetTop(tos1,_stack);
+   stack_SetSecond(tos2,_stack);
+   stack_SetThird(tos,_stack);
+   break;
+
+   case 0x04://DUP_TOP
+   tos = stack_Top(_stack);
+   stack_Push(tos,_stack);
+   break;
+
+   case 0x05://DUP_TOP_TWO
+   tos = stack_Top(_stack);
+   tos1 = stack_Second(_stack);
+   stack_Adjust(2,_stack);
+   stack_SetTop(tos,_stack);
+   stack_SetSecond(tos1,_stack);
+   break;
+	
+	case 0x0a: //UNARY_POSITIVE
+    tos = stack_Pop(_stack);
+    if(tos->type == TYPE_INT)
+	{
+	object *up = AllocObject();
+	up->type = TYPE_INT;
+    up->flags = OFLAG_ON_STACK;
+	up->value_ptr = NULL;
+	up->ptr = +(long)tos->ptr;
+     stack_Push(up,_stack);
+	}
+	break;
+
+	case 0x0b: //UNARY_NEGATIVE
+    tos = stack_Pop(_stack);
+    if(tos->type == TYPE_INT)
+	{
+	object *up = AllocObject();
+    up->flags = OFLAG_ON_STACK;
+	up->type = TYPE_INT;
+	up->value_ptr = NULL;
+	up->ptr = -(long)tos->ptr;
+    stack_Push(up,_stack);
+	}
+	break;
+
+	case 0x0c: //UNARY_NOT
+    tos = stack_Pop(_stack);
+    if(tos->type == TYPE_INT)
+	{
+	object *up = AllocEmptyObject();
+    up->flags = OFLAG_ON_STACK;
+	up->type = tos->ptr > 0  ? TYPE_TRUE :  TYPE_FALSE;
+    stack_Push(up,_stack);
+	}
+	else
+    if(tos->type == TYPE_TRUE || tos->type == TYPE_FALSE)
+	{
+	object *up = AllocEmptyObject();
+    up->flags = OFLAG_ON_STACK;
+	up->type = tos->type == TYPE_TRUE  ? TYPE_TRUE :  TYPE_FALSE;
+    stack_Push(up,_stack);
+	}
+	else
+    if(tos->type == TYPE_NONE || tos->type == TYPE_NULL)
+	{
+	object *up = AllocEmptyObject();
+    up->flags = OFLAG_ON_STACK;
+	up->type = TYPE_FALSE;
+    stack_Push(up,_stack);
+	}
+	break;
+
+	case 0x0f: //UNARY_INVERT
+    tos = stack_Pop(_stack);
+    if(tos->type == TYPE_INT)
+	{
+	object *up = AllocObject();
+    up->flags = OFLAG_ON_STACK;
+	up->type = TYPE_INT;
+	up->value_ptr = NULL;
+	up->ptr = -(((long)tos->ptr)+1);
+     stack_Push(up,_stack);
+	}
+	break;
+	
+	
    case 0x17: //BINARY_ADD
    printf("");
    tos = stack_Pop(_stack);
@@ -397,6 +500,253 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
    stack_Push(new_mtos,_stack);
    break;
 
+   /*
+   case 0x19://BINARY_SUBSCR
+   printf("");
+   break;
+   case 0x1a://BINARY_FLOOR_DIVIDE
+   printf("");
+   break;
+   case 0x1c://INPLACE_FLOOR_DIVIDE
+   printf("");
+   break;
+   case 0x1d://INPLACE_TRUE_DIVIDE
+   printf("");
+   break;
+   //case 0x14://BINARY_SUBSCR
+   //printf("");
+   //break;
+*/
+   case 0x4c://INPLACE_RSHIFT
+   printf("");
+   tos = stack_Pop(_stack);
+   tos1 = stack_Pop(_stack);
+   if(tos->value_ptr != NULL)
+    tos = (object*)tos->value_ptr;
+   if(tos1->value_ptr != NULL)
+    tos1 = (object*)tos1->value_ptr;
+   long ira = 0;
+   long irb = 0;
+   object *new_irtos = AllocObject();
+   new_irtos->flags = OFLAG_ON_STACK;
+   new_irtos->type = TYPE_INT;
+   new_irtos->ptr = 0;
+   new_irtos->value_ptr = NULL;
+   if(tos->type == TYPE_INT)
+   {
+     ira = tos->ptr;
+   }
+   if(tos1->type == TYPE_INT)
+   {
+    irb = tos1->ptr;
+   }
+   new_irtos->ptr = irb << ira;
+   printf("%d << %d = %d\n",irb,ira,new_irtos->ptr);
+   stack_Push(new_irtos,_stack);
+   break;
+
+   case 0x4d://INPLACE_AND
+   printf("");
+   tos = stack_Pop(_stack);
+   tos1 = stack_Pop(_stack);
+   if(tos->value_ptr != NULL)
+    tos = (object*)tos->value_ptr;
+   if(tos1->value_ptr != NULL)
+    tos1 = (object*)tos1->value_ptr;
+   long iaa = 0;
+   long iab = 0;
+   object *new_iatos = AllocObject();
+   new_iatos->flags = OFLAG_ON_STACK;
+   new_iatos->type = TYPE_INT;
+   new_iatos->ptr = 0;
+   new_iatos->value_ptr = NULL;
+   if(tos->type == TYPE_INT)
+   {
+     iaa = tos->ptr;
+   }
+   if(tos1->type == TYPE_INT)
+   {
+    iab = tos1->ptr;
+   }
+   new_iatos->ptr = iab & iaa;
+   printf("%d & %d = %d\n",iab,iaa,new_iatos->ptr);
+   stack_Push(new_iatos,_stack);
+   break;
+
+   case 0x4e://INPLACE_XOR
+   printf("");
+   tos = stack_Pop(_stack);
+   tos1 = stack_Pop(_stack);
+   if(tos->value_ptr != NULL)
+    tos = (object*)tos->value_ptr;
+   if(tos1->value_ptr != NULL)
+    tos1 = (object*)tos1->value_ptr;
+   long ixa = 0;
+   long ixb = 0;
+   object *new_ixtos = AllocObject();
+   new_ixtos->flags = OFLAG_ON_STACK;
+   new_ixtos->type = TYPE_INT;
+   new_ixtos->ptr = 0;
+   new_ixtos->value_ptr = NULL;
+   if(tos->type == TYPE_INT)
+   {
+     ixa = tos->ptr;
+   }
+   if(tos1->type == TYPE_INT)
+   {
+    ixb = tos1->ptr;
+   }
+   new_ixtos->ptr = ixb ^ ixa;
+   printf("%d ^ %d = %d\n",ixb,ixa,new_ixtos->ptr);
+   stack_Push(new_ixtos,_stack);
+   break;
+
+   case 0x4f://INPLACE_OR
+   printf("");
+   tos = stack_Pop(_stack);
+   tos1 = stack_Pop(_stack);
+   if(tos->value_ptr != NULL)
+    tos = (object*)tos->value_ptr;
+   if(tos1->value_ptr != NULL)
+    tos1 = (object*)tos1->value_ptr;
+   long ioa = 0;
+   long iob = 0;
+   object *new_iotos = AllocObject();
+   new_iotos->flags = OFLAG_ON_STACK;
+   new_iotos->type = TYPE_INT;
+   new_iotos->ptr = 0;
+   new_iotos->value_ptr = NULL;
+   if(tos->type == TYPE_INT)
+   {
+     ioa = tos->ptr;
+   }
+   if(tos1->type == TYPE_INT)
+   {
+    iob = tos1->ptr;
+   }
+   new_iotos->ptr = iob | ioa;
+   printf("%d | %d = %d\n",iob,ioa,new_iotos->ptr);
+   stack_Push(new_iotos,_stack);
+   break;
+
+   case 0x37://INPLACE_ADD
+   printf("");
+   tos = stack_Pop(_stack);
+   tos1 = stack_Pop(_stack);
+   if(tos->value_ptr != NULL)
+    tos = (object*)tos->value_ptr;
+   if(tos1->value_ptr != NULL)
+    tos1 = (object*)tos1->value_ptr;
+   long iada = 0;
+   long iadb = 0;
+   object *new_iadtos = AllocObject();
+   new_iadtos->flags = OFLAG_ON_STACK;
+   new_iadtos->type = TYPE_INT;
+   new_iadtos->ptr = 0;
+   new_iadtos->value_ptr = NULL;
+   if(tos->type == TYPE_INT)
+   {
+     iada = tos->ptr;
+   }
+   if(tos1->type == TYPE_INT)
+   {
+    iadb = tos1->ptr;
+   }
+   new_iadtos->ptr = iadb + iada;
+   printf("%d + %d = %d\n",iadb,iada,new_iadtos->ptr);
+   stack_Push(new_iadtos,_stack);
+   break;
+
+   case 0x39://INPLACE_MULTIPLY
+   printf("");
+   tos = stack_Pop(_stack);
+   tos1 = stack_Pop(_stack);
+   if(tos->value_ptr != NULL)
+    tos = (object*)tos->value_ptr;
+   if(tos1->value_ptr != NULL)
+    tos1 = (object*)tos1->value_ptr;
+   long ima = 0;
+   long imb = 0;
+   object *new_imtos = AllocObject();
+   new_imtos->flags = OFLAG_ON_STACK;
+   new_imtos->type = TYPE_INT;
+   new_imtos->ptr = 0;
+   new_imtos->value_ptr = NULL;
+   if(tos->type == TYPE_INT)
+   {
+     ima = tos->ptr;
+   }
+   if(tos1->type == TYPE_INT)
+   {
+    imb = tos1->ptr;
+   }
+   new_imtos->ptr = imb * ima;
+   printf("%d * %d = %d\n",imb,ima,new_imtos->ptr);
+   stack_Push(new_imtos,_stack);
+   break;
+
+   case 0x38://INPLACE_SUBSTRACT
+   printf("");
+   tos = stack_Pop(_stack);
+   tos1 = stack_Pop(_stack);
+   if(tos->value_ptr != NULL)
+    tos = (object*)tos->value_ptr;
+   if(tos1->value_ptr != NULL)
+    tos1 = (object*)tos1->value_ptr;
+   long isa = 0;
+   long isb = 0;
+   object *new_istos = AllocObject();
+   new_istos->flags = OFLAG_ON_STACK;
+   new_istos->type = TYPE_INT;
+   new_istos->ptr = 0;
+   new_istos->value_ptr = NULL;
+   if(tos->type == TYPE_INT)
+   {
+     isa = tos->ptr;
+   }
+   if(tos1->type == TYPE_INT)
+   {
+    isb = tos1->ptr;
+   }
+   new_istos->ptr = isb - isa;
+   printf("%d - %d = %d\n",isb,isa,new_istos->ptr);
+   stack_Push(new_istos,_stack);
+   break;
+
+   case 0x3b://INPLACE_MODULO
+   printf("");
+   tos = stack_Pop(_stack);
+   tos1 = stack_Pop(_stack);
+   if(tos->value_ptr != NULL)
+    tos = (object*)tos->value_ptr;
+   if(tos1->value_ptr != NULL)
+    tos1 = (object*)tos1->value_ptr;
+   long imoa = 0;
+   long imob = 0;
+   object *new_imotos = AllocObject();
+   new_imotos->flags = OFLAG_ON_STACK;
+   new_imotos->type = TYPE_INT;
+   new_imotos->ptr = 0;
+   new_imotos->value_ptr = NULL;
+   if(tos->type == TYPE_INT)
+   {
+     imoa = tos->ptr;
+   }
+   if(tos1->type == TYPE_INT)
+   {
+    imob = tos1->ptr;
+   }
+   new_imotos->ptr = imob % imoa;
+   printf("%d %% %d = %d\n",imob,imoa,new_imotos->ptr);
+   stack_Push(new_imotos,_stack);
+   break;
+
+   
+   
+
+   
+   
+   
    case 0x6b: //COMPARE_OP
    printf("");
     tos = stack_Pop(_stack);
@@ -493,7 +843,33 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
 	 i = i + jmpf;
 	break;
    
-   case 0x83://CALL_FUNCTION
+    case 0x47: //PRINT_ITEM
+		tos = stack_Pop(_stack);
+				if(tos != NULL)
+					switch(tos->type)
+					{
+						case TYPE_INT:
+							printf("%d",(long)tos->ptr);
+							break;
+						case TYPE_UNICODE:
+							if((object*)tos->value_ptr != NULL)
+							{
+								if(((object*)tos->value_ptr)->type == TYPE_UNICODE)
+									printf("%s",(char*)((object*)tos->value_ptr)->ptr );
+								else
+									if(((object*)tos->value_ptr)->type == TYPE_INT)
+										printf("%d",((object*)tos->value_ptr)->ptr );
+							}
+						else 
+							printf("%s",(char*)tos->ptr);
+							break;
+						default:
+							printf("object on tos (type:%c) not supported for printing\n",tos->type);
+					}
+		
+		break;
+   
+    case 0x83://CALL_FUNCTION
     printf("");
 	char argc = string[i+1];
     //printf("calling function with %d arguments\n",argc);

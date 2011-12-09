@@ -6,8 +6,8 @@ if(!items_num)
  return(NULL);
 stack *tmp = (stack*)mem_malloc(sizeof(stack));
 tmp->items = (object**)mem_malloc(items_num*sizeof(object*));
-printf("init stack @%x\n",tmp);
-printf("init stack items @%x\n",tmp->items);
+//printf("init stack @%x\n",tmp);
+//printf("init stack items @%x\n",tmp->items);
 tmp->top = 0;
 
 //callstack_items = (object**)mem_malloc(CALLSTACK_MIN_ITEMS*sizeof(object*));
@@ -34,8 +34,9 @@ for(int i=0;i<stack->top;i++)
    printf("%d items left untouched on stack\n",stack->top);
  
  mem_free(stack->items);
+ //printf("freed stack items @%x\n",stack->items);
  mem_free(stack);
- printf("freed stack\n");
+ //printf("freed stack @%x\n",stack);
 //for(int i=0;i<callstack_top;i++)
 // if(callstack_items[i]->flags & OFLAG_ON_STACK) 
 // FreeObject(callstack_items[i]);
@@ -63,6 +64,30 @@ object *r = stack->items[stack->top-1];
 return(r);
 }
 
+object *stack_Second(stack *stack)
+{
+if(stack->top < 2)
+{
+ printf("stack underflow - no top\n");
+ return(NULL);
+ }
+object *r = stack->items[stack->top-2];
+return(r);
+}
+
+object *stack_Third(stack *stack)
+{
+if(stack->top < 3)
+{
+ printf("stack underflow - no top\n");
+ return(NULL);
+ }
+object *r = stack->items[stack->top-3];
+return(r);
+}
+
+
+
 void stack_SetTop(object *x,stack *stack)
 {
 if(stack->top < 1)
@@ -72,6 +97,33 @@ if(stack->top < 1)
  }
  stack->items[stack->top-1] = x;
 
+}
+
+void stack_SetSecond(object *x,stack *stack)
+{
+if(stack->top < 2)
+{
+ printf("stack underflow - no top\n");
+ return(NULL);
+ }
+ stack->items[stack->top-2] = x;
+
+}
+
+void stack_SetThird(object *x,stack *stack)
+{
+if(stack->top < 3)
+{
+ printf("stack underflow - no top\n");
+ return(NULL);
+ }
+ stack->items[stack->top-3] = x;
+
+}
+
+void stack_Adjust(int by,stack *stack)
+{
+stack->top += by;
 }
 
 object *stack_Pop(stack *stack)
@@ -102,17 +154,17 @@ for(int i=0;i<stack->top;i++)
 return(0);
 }
 
-/*
+
 void recycle_Remove(object *x)
 {
-for(int i =0;i<recycle_top;i++)
+for(int i =0;i<recycle->top;i++)
 {
-if(x == recycle_items[i])
+if(x == recycle->items[i])
  printf("found object @%x\n",x);
 
 }
 }
-*/
+
 /*
 object *recycle_Pop()
 {
