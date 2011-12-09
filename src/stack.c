@@ -6,6 +6,8 @@ if(!items_num)
  return(NULL);
 stack *tmp = (stack*)mem_malloc(sizeof(stack));
 tmp->items = (object**)mem_malloc(items_num*sizeof(object*));
+//printf("init stack @%x\n",tmp);
+//printf("init stack items @%x\n",tmp->items);
 tmp->top = 0;
 
 //callstack_items = (object**)mem_malloc(CALLSTACK_MIN_ITEMS*sizeof(object*));

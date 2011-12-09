@@ -1,5 +1,13 @@
 #include "object.h"
 
+object *AllocEmptyObject()
+{
+return((object*)mem_malloc(sizeof(empty_object)));
+}
+object *AllocValuedObject()
+{
+return((object*)mem_malloc(sizeof(valued_object)));
+}
 object *AllocObject()
 {
 return((object*)mem_malloc(sizeof(object)));
@@ -24,11 +32,11 @@ tuple_object *AllocTupleObject()
 {
 return((tuple_object*)mem_malloc(sizeof(tuple_object)));
 }
-unicode_object *AllocUnicodeObject()
+/*unicode_object *AllocUnicodeObject()
 {
 return((unicode_object*)mem_malloc(sizeof(unicode_object)));
 }
-
+*/
 int IsIntObject(object *obj)
 {
  return(obj->type == TYPE_INT);
@@ -71,11 +79,13 @@ tuple_object *AsTupleObject(object *obj)
 {
 return((tuple_object*)obj->ptr);
 }
-unicode_object *AsUnicodeObject(object *obj)
+/*unicode_object *AsUnicodeObject(object *obj)
 {
 return((unicode_object*)obj->ptr);
 }
-
+*/
+long objects_num = 0;
+long objects_max = 0;
 
 void FreeObject(object *obj)
 {
@@ -92,8 +102,9 @@ case TYPE_INT:
    break;
 case TYPE_UNICODE:
    //printf("freeing unicode object @%x\n",obj);
-   if(((unicode_object*)obj->ptr)->content != NULL)
-    mem_free(((unicode_object*)obj->ptr)->content);
+   //if(((unicode_object*)obj->ptr)->content != NULL)
+   //if(obj->ptr != NULL)
+   // mem_free(obj->ptr);
    break;
 case TYPE_STRING:
    //printf("freeing string object @%x\n",obj);
@@ -126,20 +137,30 @@ case TYPE_CODE:
 }
 //recycle_Remove(obj);
  
-if(obj->type != TYPE_INT && obj->type != TYPE_NONE && obj->type != TYPE_NULL && obj->ptr != NULL)
+if(obj->type != TYPE_INT && obj->type != TYPE_NONE && obj->type != TYPE_NULL && obj->type != TYPE_TRUE && obj->type != TYPE_FALSE && obj->ptr != NULL)
  mem_free(obj->ptr);
 //if(obj->value_ptr != NULL)
 // FreeObject((object*)obj->value_ptr);
 //printf("freed object(%c) @%x\n",obj->type,obj);
 mem_free(obj);
+objects_num--;
 }
 
 void DumpObject(object *obj,int level)
 {
+if(obj == NULL)
+ return;
+//printf("level:%d\n",level);
 for(int i=0;i<level;i++)
  printf("\t");
 switch(obj->type)
 {
+case TYPE_TRUE:
+   printf("true object\n");
+   break;
+case TYPE_FALSE:
+   printf("false object\n");
+   break;
 case TYPE_NULL:
    printf("NULL object\n");
    break;
@@ -150,7 +171,8 @@ case TYPE_INT:
    printf("int object: %d\n",obj->ptr);
    break;
 case TYPE_UNICODE:
-    printf("unicode object: %s\n",((unicode_object*)obj->ptr)->content);
+    //printf("unicode object: %s\n",((unicode_object*)obj->ptr)->content);
+    printf("unicode object: %s\n",obj->ptr);
    break;
 case TYPE_STRING:
    printf("string object: ");
@@ -159,17 +181,26 @@ case TYPE_STRING:
    printf("\n");
   break;
 case TYPE_TUPLE:
-   printf("tuple object\n");
+   printf("tuple object");
    if(((tuple_object*)obj->ptr)->num>0)
    {
+   printf(" contains %d items\n",((tuple_object*)obj->ptr)->num);
    for(int i=0;i<((tuple_object*)obj->ptr)->num;i++)
     {
-    DumpObject(((tuple_object*)obj->ptr)->items[i],level+1);
+		//if(
+     DumpObject(((tuple_object*)obj->ptr)->items[i],level+1);
     }
+   }
+   else
+    {
+	printf("\n");
+    for(int i=0;i<level;i++)
+     printf("\t");
+     printf("empty tuple\n");
+	}
     for(int i=0;i<level;i++)
      printf("\t");
 	printf("-- tuple object\n");
-   }
  break; 
 case TYPE_CODE:
  printf("code object\n");
@@ -208,18 +239,23 @@ case TYPE_CODE:
  printf("\t");
  printf("-- code object\n");
  break; 
+ default:
+  printf("object type is unknown:%c\n",obj->type);
+ }
 }
-}
-object *FindUnicodeTupleItem(tuple_object *tuple,char *name)
+object *FindUnicodeTupleItem(object *tuple,char *name)
 {
-   //printf("checking in %d tuple items\n",tuple->num);
-   for(int i=0;i<tuple->num;i++)
+   //printf("checking for correct type\n");
+   if(tuple == NULL || tuple->type != TYPE_TUPLE)
+    return(NULL);
+   //printf("checking in %d tuple items\n",((tuple_object*)tuple->ptr)->num);
+   for(int i=0;i<((tuple_object*)tuple->ptr)->num;i++)
     {
 	//printf("checking tuple:%d\n",i);
 	//if(tuple->items[i]->type == TYPE_UNICODE)
 	// printf("checking %s against: %s\n",name,AsUnicodeObject(tuple->items[i])->content);
-     if(tuple->items[i]->type == TYPE_UNICODE && !strcmp( ((unicode_object*)tuple->items[i]->ptr)->content,name) )
-	   return(tuple->items[i]);
+     if(((tuple_object*)tuple->ptr)->items[i]->type == TYPE_UNICODE && !strcmp( (char*)((tuple_object*)tuple->ptr)->items[i]->ptr,name) )
+	   return(((tuple_object*)tuple->ptr)->items[i]);
     }
 	return(NULL);
 }
@@ -227,17 +263,33 @@ object *FindUnicodeTupleItem(tuple_object *tuple,char *name)
 
 object *ReadObject(FILE *f)
 {
+ objects_num++;
+ //printf("increasing objects num to %d\n",objects_num);
+ if(objects_num > objects_max)
+  objects_max = objects_num;
  char type = ReadChar(f);
  //printf("type:%c\n",type);
  //long magic = ReadLong(f);
- object *obj = AllocObject();
+ object *obj = NULL;
+ if(type == TYPE_NONE || type == TYPE_NULL || type == TYPE_TRUE || type == TYPE_FALSE)
+ {
+  //printf("allocating empty object\n");
+  obj = AllocEmptyObject();
+  obj->type = type;
+  obj->flags = 0;
+  //printf("allocated empty object @%x\n",obj);
+  return(obj);
+  }
+  //else
+  //printf("allocating object\n");
+  obj = AllocObject();
  //printf("allocated object @%x\n",obj);
  obj->flags = 0;
  long n;
  switch(type)
  {
  case TYPE_CODE:
-  //printf("reading code chunk\n");
+  printf("reading code chunk\n");
   obj->type = TYPE_CODE;
   code_object *co = AllocCodeObject();
   //printf("co_ptr=%x\n",(unsigned long)co);
@@ -253,14 +305,24 @@ object *ReadObject(FILE *f)
   co->varnames = ReadObject(f);
   co->freevars = ReadObject(f);
   co->cellvars = ReadObject(f);
+  //printf("reading filename\n");
   co->filename = ReadObject(f);
+  //printf("filename:%s\n",(char*)co->filename->ptr);
   FreeObject(co->filename); //TO DECREASE MEMORY USAGE
   object *tmp_name = ReadObject(f);
+  if(IsUnicodeObject(tmp_name))
+   printf("name:%s\n",(char*)tmp_name->ptr);
+  co->name = str_Copy((char*)tmp_name->ptr);
+  FreeObject(tmp_name);
   co->firstlineno = ReadLong(f);
   co->lnotab = ReadObject(f);
+  //printf("read lnotab\n");
   FreeObject(co->lnotab);//TO DECREASE MEMORY USAGE
-  co->name = str_Copy(((string_object*)tmp_name->ptr)->content);//TODO free object tmp_name and string_copy it first
-  FreeObject(tmp_name);
+  //printf("freed lnotab\n");
+  //co->name = str_Copy(((string_object*)tmp_name->ptr)->content);//TODO free object tmp_name and string_copy it first
+  
+  //printf("string copied");
+  //FreeObject(tmp_name);
   printf("module name:%s\n",co->name);
   //printf("filename:%s\n",((string_object*)co->filename->ptr)->content);
   //printf("firstlineno:%d\n",co->firstlineno);
@@ -290,7 +352,7 @@ object *ReadObject(FILE *f)
  }
  else
  {
- //printf("read empty string\n");
+ printf("read empty string\n");
  obj->ptr = NULL;
  obj->type = TYPE_NULL; 
  obj->value_ptr = NULL;
@@ -304,7 +366,6 @@ object *ReadObject(FILE *f)
  if(n>0)
  {
  to->items = (object**)mem_malloc(n*sizeof(object*));
- to->num = n;
  for(int i=0;i<n;i++)
  {
   object* tuple = ReadObject(f);
@@ -312,6 +373,7 @@ object *ReadObject(FILE *f)
   to->items[i] = tuple;
  }
  }
+ to->num = n;
  obj->ptr = to;
  obj->type = TYPE_TUPLE;
  obj->value_ptr = NULL;
@@ -319,14 +381,12 @@ object *ReadObject(FILE *f)
  case TYPE_UNICODE:
  //printf("reading unicode\n");
  n = ReadLong(f);
- unicode_object *uo = AllocUnicodeObject(); 
  //printf("len:%d\n",n);
  char *unicode_string = (char*)mem_malloc(n+1);
  memset(unicode_string,0,n+1);
  int uread = fread(unicode_string,n,1,f);
  //uo->len = n;
- uo->content = unicode_string;
- obj->ptr = uo;
+ obj->ptr = unicode_string;
  obj->type = TYPE_UNICODE;
  obj->value_ptr = NULL;
  break;
@@ -345,18 +405,13 @@ object *ReadObject(FILE *f)
  obj->type = TYPE_INT;
  obj->value_ptr = NULL;
  break;
- case TYPE_NONE:
-  //printf("read none type\n");
-  obj->ptr = NULL;
-  obj->value_ptr = NULL;
-  obj->type = TYPE_NONE;
- break;
  default:
- obj->ptr = NULL;
- obj->value_ptr = NULL;
+ //obj->ptr = NULL;
+ //obj->value_ptr = NULL;
  obj->type = TYPE_UNKNOWN;
   printf("unknown chunk type:%c\n",type);
-}  
+}
+ //printf("read object\n");  
  return(obj); 
 }
 

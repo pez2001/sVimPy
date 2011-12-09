@@ -49,9 +49,16 @@ void OpenPYC()
  mem_free(bt);
  //8 bytes into the file
  */
+ printf("reading object\n");
  object *obj = ReadObject(f);
 
  printf("read pyc file\n");
+ printf("heap bytes used by objects:%d\n",mem_chunks_actual_size);
+ printf("MAX HEAP USAGE:%d\n",mem_chunks_max_size);
+ printf("objects num: %d\n",objects_num);
+ printf("max objects : %d\n",objects_max);
+ printf("objects num * sizeof(object) : %d\n",objects_num * sizeof(object));
+ 
  DumpObject(obj,0);
  object *ret = ExecuteObject(obj,NULL,obj,NULL,0);
  FreeObject(obj);

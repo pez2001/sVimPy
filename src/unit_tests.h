@@ -10,6 +10,11 @@
 #include "string.h"
 
 extern long mem_chunks_num;
+extern long mem_chunks_actual_size;
+extern long mem_chunks_max_size;
+
+extern long objects_num;
+extern long objects_max;
 
 
 #define MAGIC (3180 | ((long)'\r'<<16) | ((long)'\n'<<24))

@@ -9,7 +9,7 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
   //printf("showing bytecodes\n");
   code_object *co = (code_object*)obj->ptr;
   //printf("co_ptr=%x\n",(unsigned long)co);
-  printf("stack size:%d\n",co->stacksize);
+  //printf("stack size:%d\n",co->stacksize);
   stack *_stack = stack_Init(co->stacksize);
   string_object *bytecodes = (string_object*)co->code->ptr;
   char *string = bytecodes->content;
@@ -19,17 +19,17 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
   {
   for(int i=0;i<argc;i++)
   {
-    printf("adding local %d\n",i);
+    //printf("adding local %d\n",i);
     tos = stack_Pop(locals);
 	tuple_object *co_varnames = (tuple_object*)co->varnames->ptr;
 	char varname_i = i;
-	unicode_object *varname = (unicode_object*)co_varnames->items[varname_i]->ptr;
+	char *varname = (char*)co_varnames->items[varname_i]->ptr;
     if(tos->type == TYPE_UNICODE)
-	 printf("fast storing %s in %s\n",((unicode_object*)tos->ptr)->content,varname->content);
+	 printf("fast storing %s in %s\n",(char*)tos->ptr,varname);
     if(tos->type == TYPE_INT)
-	 printf("fast storing %d in %s\n",tos->ptr,varname->content);
+	 printf("fast storing %d in %s\n",tos->ptr,varname);
     if(tos->type == TYPE_CODE)
-	 printf("fast storing function %s in %s\n",((code_object*)tos->ptr)->name,varname->content);
+	 printf("fast storing function %s in %s\n",((code_object*)tos->ptr)->name,varname);
 	co_varnames->items[varname_i]->value_ptr = tos;
    }
    }
@@ -57,12 +57,12 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
   char varname_i;
   tuple_object* co_names;
   tuple_object* co_varnames;
-  unicode_object* name;
-  unicode_object* varname;
-  unicode_object* const_content;
+  char *name;
+  char *varname;
+  char *const_content;
   object *tos1;
   object *tos2;
-  printf("\n[%d,%xh] opcode: [ %s ]\n",i,opcodes[index].opcode,opcodes[index].name);
+  //printf("[%d,%xh] opcode: [ %s ]\n",i,opcodes[index].opcode,opcodes[index].name);
   switch(opcodes[index].opcode)
   {
    case 0x74://LOAD_GLOBAL
@@ -73,7 +73,7 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
 	//co_names = (tuple_object*)co_global->names->ptr;
 	co_names = (tuple_object*)co->names->ptr;
 	name_i = string[i+1];
-	name = (unicode_object*)co_names->items[name_i]->ptr;
+	name = (char*)co_names->items[name_i]->ptr;
     //if(co_names->items[name_i]->type== TYPE_UNICODE)
 	// printf("pushing global (%d)%s = %s\n",name_i,name->content,AsUnicodeObject(co_names->items[name_i])->content);
     //if(co_names->items[name_i]->type== TYPE_INT)
@@ -88,7 +88,7 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
     //printf("push name\n");
 	co_names = (tuple_object*)co->names->ptr;
 	name_i = string[i+1];
-	name = (unicode_object*)co_names->items[name_i]->ptr;
+	name = (char*)co_names->items[name_i]->ptr;
     //printf("opcode: [%s],(%d) [%s]\n",opcodes[index].name,name_i,name->content);
     //if(co_names->items[name_i]->type== TYPE_UNICODE)
 	// printf("pushing local (%d)%s = %s\n",name_i,name->content,AsUnicodeObject(co_names->items[name_i])->content);
@@ -101,7 +101,7 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
     //printf("push const\n");
 	co_consts = (tuple_object*)co->consts->ptr;
 	const_i = string[i+1];
-	const_content = (unicode_object*)co_consts->items[const_i]->ptr;
+	const_content = (char*)co_consts->items[const_i]->ptr;
     //if(((object*)co_consts->items[const_i]->value_ptr)->type== TYPE_UNICODE)
 	//printf("pushing local const (%d)%s = %s\n",const_i,const_content->content,AsUnicodeObject((object*)co_consts->items[const_i]->value_ptr)->content);
     //if(co_consts->items[const_i]->type== TYPE_INT)
@@ -113,7 +113,7 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
     //printf("push name\n");
 	co_varnames = (tuple_object*)co->varnames->ptr;
 	varname_i = string[i+1];
-	varname = (unicode_object*)co_varnames->items[varname_i]->ptr;
+	varname = (char*)co_varnames->items[varname_i]->ptr;
     //printf("opcode: [%s],(%d) [%s]\n",opcodes[index].name,name_i,name->content);
     //if(co_varnames->items[varname_i]->type== TYPE_UNICODE)
 	// printf("pushing local fast (%d,s)%s = %s\n",varname_i,varname->content,AsUnicodeObject((object*)co_varnames->items[varname_i]->value_ptr)->content);
@@ -126,7 +126,7 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
 		 //not used right now
 		break;
   case 0x01://POP_TOP
-    printf("Removing TOS\n");
+    //printf("Removing TOS\n");
    stack_Pop(_stack);
    break;
    case 0x5a://STORE_NAME
@@ -135,18 +135,18 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
     tos = stack_Pop(_stack);
 	co_names = (tuple_object*)co->names->ptr;
 	name_i = string[i+1];
-	name = (unicode_object*)co_names->items[name_i]->ptr;
+	name = (char*)co_names->items[name_i]->ptr;
     //printf("opcode: [%s],(%d) [%s]\n",opcodes[index].name,name_i,name->content);
     if(tos->type == TYPE_UNICODE)
-	 printf("storing %s in %s\n",((unicode_object*)tos->ptr)->content,name->content);
+	 printf("storing %s in %s\n",(char*)tos->ptr,name);
     if(tos->type == TYPE_INT)
-	 printf("storing %d in %s\n",tos->ptr,name->content);
+	 printf("storing %d in %s\n",tos->ptr,name);
     if(tos->type == TYPE_CODE)
 	{
 	//co_names = (tuple_object*)AsCodeObject(global)->names->ptr;
 	//name_i = string[i+1];
 	//name = (unicode_object*)co_names->items[name_i]->ptr;
-	 printf("storing function %s in %s\n",((code_object*)tos->ptr)->name,name->content);
+	 printf("storing function %s in %s\n",((code_object*)tos->ptr)->name,name);
 	//co_names->items[name_i]->value_ptr = tos;
  
 	 }
@@ -159,14 +159,14 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
     tos = stack_Pop(_stack);
 	co_varnames = (tuple_object*)co->varnames->ptr;
 	varname_i = string[i+1];
-	varname = (unicode_object*)co_varnames->items[varname_i]->ptr;
+	varname = (char*)co_varnames->items[varname_i]->ptr;
     //printf("opcode: [%s],(%d) [%s]\n",opcodes[index].name,name_i,name->content);
     if(tos->type == TYPE_UNICODE)
-	 printf("fast storing %s in %s\n",((unicode_object*)tos->ptr)->content,varname->content);
+	 printf("fast storing %s in %s\n",(char*)tos->ptr,varname);
     if(tos->type == TYPE_INT)
-	 printf("fast storing %d in %s\n",tos->ptr,varname->content);
+	 printf("fast storing %d in %s\n",tos->ptr,varname);
     if(tos->type == TYPE_CODE)
-	 printf("fast storing function %s in %s\n",((code_object*)tos->ptr)->name,varname->content);
+	 printf("fast storing function %s in %s\n",((code_object*)tos->ptr)->name,varname);
 	co_varnames->items[varname_i]->value_ptr = tos;
    break;
    case 0x17: //BINARY_ADD
@@ -185,18 +185,16 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
 
 	if(tos->type == TYPE_UNICODE && tos1->type == TYPE_UNICODE)
     {
-     char *tos_tmp = ((unicode_object*)tos->ptr)->content;
-	 char *tos1_tmp = ((unicode_object*)tos1->ptr)->content;
+     char *tos_tmp = (char*)tos->ptr;
+	 char *tos1_tmp = (char*)tos1->ptr;
      char *tmp = str_Cat(tos1_tmp,tos_tmp);
      //free(((unicode_object*)tos->ptr)->content);
 	 //((unicode_object*)tos->ptr)->content = tmp;
 	 //printf("cat:[%s]\n",tmp);
 	 object *new_tos = AllocObject();
 	 new_tos->flags = OFLAG_ON_STACK;
-	 unicode_object* new_tos_value = AllocUnicodeObject();
 	 new_tos->type = TYPE_UNICODE;
-	 new_tos->ptr = new_tos_value;
-	 new_tos_value->content = tmp;
+	 new_tos->ptr = tmp;
 	 //new_tos_value->len = strlen(tmp);
      stack_Push(new_tos,_stack);
    }
@@ -319,9 +317,8 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
 			printf("");
 			long ca = 0;
 			long cb = 0;
-			object *new_ctos = AllocObject();
+			object *new_ctos = AllocEmptyObject();
 			new_ctos->flags = OFLAG_ON_STACK;
-			new_ctos->ptr = 0;
 			if(tos->type == TYPE_INT)
 			{
 				ca = tos->ptr;
@@ -333,7 +330,40 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
 			new_ctos->type = cb < ca  ? TYPE_TRUE :  TYPE_FALSE;
 			printf("%d < %d == %c\n",cb,ca,new_ctos->type);
 			stack_Push(new_ctos,_stack);
-  		break;
+			break;
+		case 2: // ==
+				if(tos->type == TYPE_UNICODE && tos1->type == TYPE_UNICODE)
+				{
+				char *tos_tmp = (char*)tos->ptr;
+				char *tos1_tmp = (char*)tos1->ptr;
+				object *new_ctos = AllocEmptyObject();
+				new_ctos->flags = OFLAG_ON_STACK;
+				new_ctos->type = !strcmp(tos_tmp,tos1_tmp)  ? TYPE_TRUE :  TYPE_FALSE;
+				printf("%s == %s == %c\n",tos_tmp,tos1_tmp,new_ctos->type);
+				stack_Push(new_ctos,_stack);
+				}
+				else
+			{
+			long ca = 0;
+			long cb = 0;
+			object *new_ctos = AllocEmptyObject();
+			new_ctos->flags = OFLAG_ON_STACK;
+			if(tos->type == TYPE_INT)
+			{
+				ca = tos->ptr;
+			}
+			if(tos1->type == TYPE_INT)
+			{
+				cb = tos1->ptr;
+			}
+			new_ctos->type = cb == ca  ? TYPE_TRUE :  TYPE_FALSE;
+			printf("%d == %d == %c\n",cb,ca,new_ctos->type);
+			stack_Push(new_ctos,_stack);
+			}
+			break;
+
+		default:
+			printf("compare op:%d not supported\n",op);
 	}
     //printf("compare op:%d\n",op);
 	break;
@@ -344,21 +374,21 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
     char jmp = string[i+1];
 	if(tos->type == TYPE_FALSE)
 	{
-	printf("jump to:%d",jmp);
+	printf("jump to:%d\n",jmp);
 	 i = jmp -3;
 	 }
 	break;
 	case 0x6e: //JUMP_FORWARD
 	printf("");
     char jmpf = string[i+1];
-	printf("jump forward to:%d",jmpf);
-	 i = jmpf -3;
+	printf("jump forward to:%d\n",i+jmpf+3);
+	 i = i + jmpf;
 	break;
    
    case 0x83://CALL_FUNCTION
     printf("");
 	char argc = string[i+1];
-    printf("calling function with %d arguments\n",argc);
+    //printf("calling function with %d arguments\n",argc);
 	//printf("opcode: [%s],(argc:%d)\n",opcodes[index].name,argc);
     stack *call = NULL;
 	if(argc>0)
@@ -368,11 +398,27 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
 	{
 		stack_Push(stack_Pop(_stack),call);
 	}
-	printf("created callstack\n");
+	//if(argc>0)
+	//  printf("created callstack\n");
 	object *function_name = stack_Pop(_stack);
+	if(function_name != NULL&& function_name->type == TYPE_CODE)
+		{
+		for(int i = 0;i<argc;i++)
+	    { 
+			stack_Push(stack_Pop(call),_stack);
+	    }
+		printf("executing direct local function object: %s\n",((code_object*)function_name->ptr)->name);
+	    object *ret = ExecuteObject((object*)function_name,obj,global,call,argc);
+		if(ret != NULL)
+		 stack_Push(ret,_stack);
+		if(argc>0)
+			stack_Close(call,0);
+		 break;
+        }
+    
 	if(function_name->value_ptr !=NULL && ((object*)function_name->value_ptr)->type == TYPE_CODE)
 	{
-		printf("executing local function object: %s\n",((unicode_object*)function_name->ptr)->content);
+		printf("executing local function object: %s\n",(char*)function_name->ptr);
 		for(int i = 0;i<argc;i++)
 	    { 
 			stack_Push(stack_Pop(call),_stack);
@@ -380,21 +426,27 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
 	    object *ret = ExecuteObject((object*)function_name->value_ptr,obj,global,NULL,0);
 		if(ret != NULL)
 		 stack_Push(ret,_stack);
-	}else
-	{
-		if(function_name != NULL&& function_name->type == TYPE_UNICODE)
+		break;
+	}
+	
+	if(function_name != NULL&& function_name->type == TYPE_UNICODE)
 		{
-	    printf("searching %s\n",((unicode_object*)function_name->ptr)->content);
-		object * caller_func = FindUnicodeTupleItem( (tuple_object*)AsCodeObject(global)->names->ptr,((unicode_object*)function_name->ptr)->content);
+	    //printf("searching %s\n",AsUnicodeObject(function_name)->content);
+		object * caller_func = FindUnicodeTupleItem( AsCodeObject(global)->names,(char*)function_name->ptr);
+		//if(caller_func == NULL)
+		 //printf("global function not found\n");
 		if(caller_func!= NULL && ((object*)caller_func->value_ptr)->type == TYPE_CODE) 
 		{
-  		    printf("executing global function object: %s\n",((unicode_object*)function_name->ptr)->content);
+  		    printf("executing global function object: %s\n",(char*)function_name->ptr);
 			object *ret = ExecuteObject((object*)caller_func->value_ptr,obj,global,call,argc);
 			if(ret != NULL)
 			stack_Push(ret,_stack);
+			if(argc>0)
+				stack_Close(call,0);
+			break;
 		}
 		else
-  	    if(!strcmp(((unicode_object*)function_name->ptr)->content,"print"))
+  	    if(!strcmp((char*)function_name->ptr,"print"))
 	    {
 			for(int i = 0;i<argc;i++)
 			{
@@ -402,6 +454,8 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
 				//if(tos != NULL && tos->type == TYPE_UNICODE)
 				//printf("arg[%d]:%s\n",i,((unicode_object*)tos->ptr)->content );
 				//else 
+				if(i)
+				 printf(" ");
 				if(tos != NULL)
 				//printf("tos type:%c\n",tos->type);
 					switch(tos->type)
@@ -413,13 +467,13 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
 							if((object*)tos->value_ptr != NULL)
 							{
 								if(((object*)tos->value_ptr)->type == TYPE_UNICODE)
-									printf("%s",((unicode_object*)(((object*)tos->value_ptr)->ptr))->content );
+									printf("%s",(char*)((object*)tos->value_ptr)->ptr );
 								else
 									if(((object*)tos->value_ptr)->type == TYPE_INT)
 										printf("%d",((object*)tos->value_ptr)->ptr );
 							}
 						else 
-							printf("%s",((unicode_object*)tos->ptr)->content);
+							printf("%s",(char*)tos->ptr);
 							break;
 					}
 				//else 
@@ -431,25 +485,22 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
 		tmp->ptr = NULL;
 		tmp->value_ptr = NULL;
 		stack_Push(tmp,_stack);	
+		if(argc>0)
+			stack_Close(call,0);
+		break;
 		}
 	   //printf("%s",((unicode_object*)tos->ptr)->content); 
-	   }
-	   else 
-	    printf("function: [%s] not found\n",((unicode_object*)function_name->ptr)->content);
+	   
+	   //else 
+	    printf("function: [%s] not found\n",(char*)function_name->ptr);
 	}
-	 if(argc>0)
-	 {
-	  printf("closing call stack\n");
-	  stack_Close(call,1);
-	  printf("closed call stack\n");
-     }
  
 	 break;
   case 0x53: //RETURN_VALUE
 		printf("");
         object *ret = stack_Pop(_stack);
 		stack_Close(_stack,0);
-		printf("stack closed\n");
+		//printf("stack closed\n");
 		return(ret); 
 	
   default:
@@ -470,7 +521,7 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
  printf("code thru.\n");
  object *ret = stack_Pop(_stack);
  stack_Close(_stack,0);
- printf("stack closed\n");
+ //printf("stack closed\n");
  return(ret); 
  }
 

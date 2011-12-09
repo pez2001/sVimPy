@@ -37,7 +37,9 @@
 
 
 #define OFLAG_ON_STACK 1
-
+#define OFLAG_UNLOADED 2 //set if object was unloaded -> obj->ptr == seek_pos // or just dump to file and reread if accessed
+#define OFLAG_HOLD_IN_MEMORY 4
+#define OFLAG_HAS_VALUE_PTR 8
 
 //internal types
 #define TYPE_FUNCTION 'f'
@@ -49,12 +51,23 @@
 #pragma pack(1)     /* set alignment to 1 byte boundary */
 
 typedef struct {
-//char *name;
-void *ptr;
-void *value_ptr;
 char type;
 unsigned char flags;
+void *ptr;
+void *value_ptr;//TO DECREASE MEMORY USAGE
 }object;
+
+typedef struct {
+char type;
+unsigned char flags;
+void *ptr;
+void *value_ptr;
+}valued_object; //TO OPTIMIZE MEMORY USAGE -> only used in tuples 
+
+typedef struct {
+char type;
+unsigned char flags;
+}empty_object; //TO OPTIMIZE MEMORY USAGE
 
 typedef struct {
 long argcount;
@@ -86,10 +99,12 @@ object **items;
 long num;
 }tuple_object;
 
+/*
 typedef struct {
 char *content;
 //long len;//TO DECREASE MEMORY USAGE
 }unicode_object;
+*/ //TO DECREASE MEMORY USAGE
 
 typedef struct {
 object *module;
@@ -104,9 +119,11 @@ object *code;
 #pragma pack(pop)   /* restore original alignment from stack */
 
 object *AllocObject();
+object *AllocEmptyObject();
+object *AllocValuedObject();
 string_object *AllocStringObject();
 tuple_object *AllocTupleObject();
-unicode_object *AllocUnicodeObject();
+//unicode_object *AllocUnicodeObject();//TO DECREASE MEMORY USAGE
 code_object *AllocCodeObject();
 caller_object *AllocCallerObject();
 function_object *AllocFunctionObject();
@@ -117,7 +134,7 @@ code_object *AsCodeObject(object *obj);
 caller_object *AsCallerObject(object *obj);
 function_object *AsFunctionObject(object *obj);
 tuple_object *AsTupleObject(object *obj);
-unicode_object *AsUnicodeObject(object *obj);
+//unicode_object *AsUnicodeObject(object *obj);
 
 int IsIntObject(object *obj);
 int IsStringObject(object *obj);
@@ -130,6 +147,6 @@ void FreeObject(object *obj);
 void DumpObject(object *obj,int level);
 
 //object *GetTupleItem(tuple_object *tuple,int index);
-object *FindTupleUnicodeItem(tuple_object *tuple,char *name);
+object *FindTupleUnicodeItem(object *tuple,char *name);
 
 #endif
