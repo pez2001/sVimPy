@@ -842,6 +842,13 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
 	printf("jump forward to:%d\n",i+jmpf+3);
 	 i = i + jmpf;
 	break;
+
+	case 0x71: //JUMP_ABSOLUTE
+	printf("");
+    short jmpa = num_short(string[i+1],string[i+2]);
+	printf("jump absoluet to:%d\n",jmpa+3);
+	 i = jmpa - 3;
+	break;
    
     case 0x47: //PRINT_ITEM
 		tos = stack_Pop(_stack);
