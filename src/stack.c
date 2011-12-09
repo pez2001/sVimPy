@@ -6,8 +6,8 @@ if(!items_num)
  return(NULL);
 stack *tmp = (stack*)mem_malloc(sizeof(stack));
 tmp->items = (object**)mem_malloc(items_num*sizeof(object*));
-//printf("init stack @%x\n",tmp);
-//printf("init stack items @%x\n",tmp->items);
+printf("init stack @%x\n",tmp);
+printf("init stack items @%x\n",tmp->items);
 tmp->top = 0;
 
 //callstack_items = (object**)mem_malloc(CALLSTACK_MIN_ITEMS*sizeof(object*));
@@ -28,7 +28,6 @@ printf("freeing %d stack items\n",stack->top);
 for(int i=0;i<stack->top;i++)
  if(stack->items[i]->flags & OFLAG_ON_STACK) 
   FreeObject(stack->items[i]);
- printf("freed stack\n");
  }
  else
   if(stack->top>0)
@@ -36,6 +35,7 @@ for(int i=0;i<stack->top;i++)
  
  mem_free(stack->items);
  mem_free(stack);
+ printf("freed stack\n");
 //for(int i=0;i<callstack_top;i++)
 // if(callstack_items[i]->flags & OFLAG_ON_STACK) 
 // FreeObject(callstack_items[i]);

@@ -62,7 +62,7 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
   char *const_content;
   object *tos1;
   object *tos2;
-  printf("[%d,%xh] opcode: [ %s ]\n",i,opcodes[index].opcode,opcodes[index].name);
+  //printf("[%d,%xh] opcode: [ %s ]\n",i,opcodes[index].opcode,opcodes[index].name);
   switch(opcodes[index].opcode)
   {
    case 0x74://LOAD_GLOBAL
