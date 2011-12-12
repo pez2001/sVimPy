@@ -9,13 +9,22 @@ tmp->items = (object**)mem_malloc(items_num*sizeof(object*));
 //printf("init stack @%x\n",tmp);
 //printf("init stack items @%x\n",tmp->items);
 tmp->top = 0;
-
+tmp->num = items_num;
 //callstack_items = (object**)mem_malloc(CALLSTACK_MIN_ITEMS*sizeof(object*));
 //callstack_top = 0;
 
 //recycle_items = (object**)mem_malloc(STACK_MIN_ITEMS*sizeof(object*));
 //recycle_top = 0;
 return(tmp);
+}
+
+void stack_IncreaseSize(int items_num,stack *stack)
+{
+if(stack == NULL)
+ return;
+stack->items = (object**)mem_realloc(stack->items,stack->num + items_num*sizeof(object*));
+stack->num += items_num;
+printf("increasing stack size by:%d\n",items_num);
 }
 
 void stack_Close(stack *stack,int free_objects)
@@ -47,8 +56,12 @@ for(int i=0;i<stack->top;i++)
 }
 }
 
+
+
 void stack_Push(object *x,stack *stack)
 {
+if(stack->top == stack->num)
+ stack_IncreaseSize(1,stack);
 stack->items[stack->top] = x;
 stack->top++;
 }
@@ -123,6 +136,9 @@ if(stack->top < 3)
 
 void stack_Adjust(int by,stack *stack)
 {
+if((stack->top + by) >= stack->num)
+ stack_IncreaseSize((stack->top +by - stack->num),stack);
+
 stack->top += by;
 }
 

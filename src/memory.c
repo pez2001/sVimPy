@@ -10,7 +10,7 @@ long mem_chunks_top = 0;
 
 void mem_Init()
 {
-mem_chunk_items = (mem_chunk**)malloc(1000*sizeof(mem_chunk*));
+mem_chunk_items = (mem_chunk**)malloc(2000*sizeof(mem_chunk*));
 mem_chunks_top = 0;
 
 
@@ -61,6 +61,24 @@ mem_chunks_actual_size = tmp_mem_chunks_max_size;
 }
 
 
+void *mem_realloc(void *ptr,size_t size)
+{
+for(int i=0;i<mem_chunks_top;i++)
+{
+ if(mem_chunk_items[i]->ptr == ptr && !mem_chunk_items[i]->is_freed)
+ {
+  ptr = realloc(ptr,size);
+  mem_chunk_items[i]->ptr = ptr;
+  mem_chunks_actual_size +=  size  - mem_chunk_items[i]->size;
+  if(mem_chunks_actual_size > mem_chunks_max_size)
+   mem_chunks_max_size = mem_chunks_actual_size;
+  mem_chunk_items[i]->size = size;
+  return(ptr);
+  }
+}
+ printf("chunk not found @%x\n",ptr);
+ return(NULL);
+}
 
 void *mem_malloc(size_t size)
 {

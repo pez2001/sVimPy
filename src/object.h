@@ -40,10 +40,13 @@
 #define OFLAG_UNLOADED 2 //set if object was unloaded -> obj->ptr == seek_pos // or just dump to file and reread if accessed
 #define OFLAG_HOLD_IN_MEMORY 4
 #define OFLAG_HAS_VALUE_PTR 8
+#define OFLAG_TUPLE_PTR 16 //used to iterate over tuples
+
 
 //internal types
 #define TYPE_FUNCTION 'f'
 #define TYPE_CALLER 'C'
+#define TYPE_BLOCK 'b'
 
 
 
@@ -116,6 +119,17 @@ object *code;
 //long pos;
 }function_object;
 
+
+typedef struct {
+object *code;
+long start;
+long len;
+object *iter;
+//long pos;
+}block_object;
+
+
+
 #pragma pack(pop)   /* restore original alignment from stack */
 
 object *AllocObject();
@@ -127,6 +141,8 @@ tuple_object *AllocTupleObject();
 code_object *AllocCodeObject();
 caller_object *AllocCallerObject();
 function_object *AllocFunctionObject();
+block_object *AllocBlockObject();
+
 object *ReadObject(FILE *f);
 
 string_object *AsStringObject(object *obj);
@@ -145,6 +161,7 @@ int IsTupleObject(object *obj);
 void FreeObject(object *obj);
 
 void DumpObject(object *obj,int level);
+object *GetNextItem(object *tuple);
 
 //object *GetTupleItem(tuple_object *tuple,int index);
 object *FindTupleUnicodeItem(object *tuple,char *name);

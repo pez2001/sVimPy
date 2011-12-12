@@ -62,7 +62,10 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
   char *const_content;
   object *tos1;
   object *tos2;
-  printf("[%d,%xh] opcode: [ %s ]\n",i,opcodes[index].opcode,opcodes[index].name);
+  if(opcodes[index].argcount!=0)
+   printf("[%d,%xh] opcode: [ %s ] (%d)\n",i,opcodes[index].opcode,opcodes[index].name,num_short(string[i+1],string[i+2]));
+  else
+   printf("[%d,%xh] opcode: [ %s ]\n",i,opcodes[index].opcode,opcodes[index].name);
   switch(opcodes[index].opcode)
   {
    case 0x74://LOAD_GLOBAL
@@ -874,6 +877,54 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
 							printf("object on tos (type:%c) not supported for printing\n",tos->type);
 					}
 		
+		break;
+	
+	case 0x57: //POP_BLOCK
+		stack_Pop(blocks);
+	
+		break;
+		
+	case 0x78: //SETUP_LOOP
+	printf("");
+    short span = num_short(string[i+1],string[i+2]);
+	object *bo = AllocObject();
+	block_object *block = AllocBlockObject();
+	bo->type = TYPE_BLOCK;
+	bo->ptr = block;
+	bo->flags = OFLAG_ON_STACK;
+	block->start = i;
+	block->len = span;
+	stack_Push(bo,blocks);
+		
+	break;
+	
+	case 0x44: //GET_ITER
+		printf("");
+		object *iter = stack_Pop(_stack);
+		block_object *abo = (block_object*)stack_Top(blocks);
+		abo->iter = iter;
+		break;
+	
+	case 0x5d: //FOR_ITER
+		printf("");
+		short delta = num_short(string[i+1],string[i+2]);
+		//		printf("for_iter delta jump\n");
+		//		i = i + delta;
+		//		break;
+		block_object *fabo = (block_object*)stack_Top(blocks);
+		object *next = GetNextItem(fabo->iter);
+		if(next != NULL)
+		{
+			//if(next->value_ptr != NULL)
+			//	next = next->value_ptr;
+			printf("next pushed\n");
+			stack_Push(next,_stack);
+		}
+		else
+			{
+				printf("for_iter delta jump\n");
+				i = i + delta - 3;
+			}
 		break;
    
     case 0x83://CALL_FUNCTION

@@ -3,6 +3,8 @@
 
 //STEFFI 0174 656 9762
 stack *recycle;
+stack *blocks;
+
 
 long ReadLong(FILE *f)
 {
@@ -72,11 +74,13 @@ void OpenPYC()
 int main(int argc,char *argv[])
 {
  mem_Init();
- recycle = stack_Init(50);
+ recycle = stack_Init(60);
+ blocks = stack_Init(5);
  printf("Calling all Unit Tests\n");
  OpenPYC();
  printf("clearing recycle stack\n");
  stack_Close(recycle,1);
+ stack_Close(blocks,1);
  printf("objects headers total size  : %d\n",objects_header_total);
  mem_Close();
  printf("%d memory chunks leaked\n",mem_chunks_num);

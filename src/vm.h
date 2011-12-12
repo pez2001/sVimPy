@@ -8,6 +8,7 @@
 #include "numops.h"
 extern const opcode opcodes[];
 
+extern stack *blocks;
 
 object *ExecuteObject(object *obj,object *caller,object *global,stack *locals,int argc);
 

@@ -32,6 +32,10 @@ tuple_object *AllocTupleObject()
 {
 return((tuple_object*)mem_malloc(sizeof(tuple_object)));
 }
+block_object *AllocBlockObject()
+{
+return((block_object*)mem_malloc(sizeof(block_object)));
+}
 /*unicode_object *AllocUnicodeObject()
 {
 return((unicode_object*)mem_malloc(sizeof(unicode_object)));
@@ -196,7 +200,8 @@ case TYPE_TUPLE:
    printf(" contains %d items\n",((tuple_object*)obj->ptr)->num);
    for(int i=0;i<((tuple_object*)obj->ptr)->num;i++)
     {
-		//if(
+		if((((tuple_object*)obj->ptr)->items[i]->flags & OFLAG_TUPLE_PTR)>0)
+		 printf("->");
      DumpObject(((tuple_object*)obj->ptr)->items[i],level+1);
     }
    }
@@ -264,8 +269,35 @@ object *FindUnicodeTupleItem(object *tuple,char *name)
 	//if(((tuple_object*)tuple->ptr)->items[i]->type == TYPE_UNICODE)
 	// printf("checking %s against: %s\n",name,(char*)((tuple_object*)tuple->ptr)->items[i]->ptr);
      if(((tuple_object*)tuple->ptr)->items[i]->type == TYPE_UNICODE && !strcmp( (char*)((tuple_object*)tuple->ptr)->items[i]->ptr,name) )
-	   return((object*) ((tuple_object*)tuple->ptr)->items[i]);
+	   return(((tuple_object*)tuple->ptr)->items[i]);
     }
+	return(NULL);
+}
+
+object *GetNextItem(object *tuple)
+{
+   if(tuple == NULL || tuple->type != TYPE_TUPLE)
+    return(NULL);
+   for(int i=0;i<((tuple_object*)tuple->ptr)->num;i++)
+    {
+	printf("checking tuple:%d\n",i);
+	//if(((tuple_object*)tuple->ptr)->items[i]->type == TYPE_UNICODE)
+	// printf("checking %s against: %s\n",name,(char*)((tuple_object*)tuple->ptr)->items[i]->ptr);
+     if((((tuple_object*)tuple->ptr)->items[i]->flags & OFLAG_TUPLE_PTR) > 0 )
+	 {
+	 //update tuple ptr
+	 ((tuple_object*)tuple->ptr)->items[i] -= OFLAG_TUPLE_PTR;
+	 if(i+1<((tuple_object*)tuple->ptr)->num)
+	  ((tuple_object*)tuple->ptr)->items[i+1]->flags += OFLAG_TUPLE_PTR;
+	 else //reset
+	 {
+	 ((tuple_object*)tuple->ptr)->items[0]->flags += OFLAG_TUPLE_PTR;
+	 return(NULL);
+	 }
+		printf("returning tuple iteration\n");
+	   return(((tuple_object*)tuple->ptr)->items[i]);
+    }
+	}
 	return(NULL);
 }
 
@@ -385,7 +417,12 @@ object *ReadObject(FILE *f)
  for(int i=0;i<n;i++)
  {
   object* tuple = ReadObject(f);
-  //printf("object type:%c\n",tuple->type);
+  if(i==0)
+  {
+	tuple->flags +=OFLAG_TUPLE_PTR;
+	//printf("setting tuple's iterate over ptr\n");
+  }
+	//printf("object type:%c\n",tuple->type);
   to->items[i] = tuple;
  }
  }
