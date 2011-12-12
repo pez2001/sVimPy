@@ -923,7 +923,7 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
 		else
 			{
 				printf("for_iter delta jump\n");
-				i = i + delta - 3;
+				i = i + delta;
 			}
 		break;
    

@@ -74,7 +74,7 @@ void OpenPYC()
 int main(int argc,char *argv[])
 {
  mem_Init();
- recycle = stack_Init(60);
+ recycle = stack_Init(70);
  blocks = stack_Init(5);
  printf("Calling all Unit Tests\n");
  OpenPYC();

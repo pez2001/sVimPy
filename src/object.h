@@ -41,6 +41,7 @@
 #define OFLAG_HOLD_IN_MEMORY 4
 #define OFLAG_HAS_VALUE_PTR 8
 #define OFLAG_TUPLE_PTR 16 //used to iterate over tuples
+#define OFLAG_TUPLE_RESTART_FLAG 32 //used to iterate over tuples
 
 
 //internal types

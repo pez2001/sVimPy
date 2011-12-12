@@ -278,6 +278,14 @@ object *GetNextItem(object *tuple)
 {
    if(tuple == NULL || tuple->type != TYPE_TUPLE)
     return(NULL);
+	
+  if((tuple->flags & OFLAG_TUPLE_RESTART_FLAG)) 
+  {
+  	 tuple->flags -=OFLAG_TUPLE_RESTART_FLAG;
+	 return(NULL);
+  }
+  
+	
    for(int i=0;i<((tuple_object*)tuple->ptr)->num;i++)
     {
 	printf("checking tuple:%d\n",i);
@@ -292,7 +300,8 @@ object *GetNextItem(object *tuple)
 	 else //reset
 	 {
 	 ((tuple_object*)tuple->ptr)->items[0]->flags += OFLAG_TUPLE_PTR;
-	 return(NULL);
+	 tuple->flags +=OFLAG_TUPLE_RESTART_FLAG;
+	 //return(NULL);
 	 }
 		printf("returning tuple iteration\n");
 	   return(((tuple_object*)tuple->ptr)->items[i]);
