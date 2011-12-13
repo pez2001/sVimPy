@@ -412,6 +412,36 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
    stack_Push(new_dtos,_stack);
    break;
 
+   case 0x1a://BINARY_FLOOR_DIVIDE
+   printf("");
+   tos = stack_Pop(_stack);
+   tos1 = stack_Pop(_stack);
+   //object* org_tos = tos;
+   if(tos->value_ptr != NULL)
+    tos = (object*)tos->value_ptr;
+   if(tos1->value_ptr != NULL)
+    tos1 = (object*)tos1->value_ptr;
+
+   long fda = 0;
+   long fdb = 0;
+   object *new_fdtos = AllocObject();
+   new_fdtos->flags = OFLAG_ON_STACK;
+   new_fdtos->type = TYPE_INT;
+   new_fdtos->ptr = 0;
+   new_fdtos->value_ptr = NULL;
+   if(tos->type == TYPE_INT)
+   {
+     fda = tos->ptr;
+   }
+   if(tos1->type == TYPE_INT)
+   {
+    fdb = tos1->ptr;
+   }
+   new_fdtos->ptr =(long) fdb / fda;//TODO catch divide by zero
+   printf("%d / %d = %d (%d)\n",fdb,fda,fdb/fda,new_fdtos->ptr);
+   stack_Push(new_fdtos,_stack);
+   break;
+
    case 0x16://BINARY_MODULO
    printf("");
    tos = stack_Pop(_stack);
@@ -508,12 +538,6 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
    printf("");
    break;
    case 0x1a://BINARY_FLOOR_DIVIDE
-   printf("");
-   break;
-   case 0x1c://INPLACE_FLOOR_DIVIDE
-   printf("");
-   break;
-   case 0x1d://INPLACE_TRUE_DIVIDE
    printf("");
    break;
    //case 0x14://BINARY_SUBSCR
@@ -744,7 +768,61 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
    stack_Push(new_imotos,_stack);
    break;
 
+   case 0x1d://INPLACE_TRUE_DIVIDE
+   printf("");
+   tos = stack_Pop(_stack);
+   tos1 = stack_Pop(_stack);
+   if(tos->value_ptr != NULL)
+    tos = (object*)tos->value_ptr;
+   if(tos1->value_ptr != NULL)
+    tos1 = (object*)tos1->value_ptr;
+   long itda = 0;
+   long itdb = 0;
+   object *new_itdtos = AllocObject();
+   new_itdtos->flags = OFLAG_ON_STACK;
+   new_itdtos->type = TYPE_INT;
+   new_itdtos->ptr = 0;
+   new_itdtos->value_ptr = NULL;
+   if(tos->type == TYPE_INT)
+   {
+     itda = tos->ptr;
+   }
+   if(tos1->type == TYPE_INT)
+   {
+    itdb = tos1->ptr;
+   }
+   new_itdtos->ptr = itdb / itda;
+   printf("%d / %d = %d\n",itdb,itda,new_itdtos->ptr);
+   stack_Push(new_itdtos,_stack);
+   break;
    
+   case 0x1c://INPLACE_FLOOR_DIVIDE
+   printf("");
+   tos = stack_Pop(_stack);
+   tos1 = stack_Pop(_stack);
+   if(tos->value_ptr != NULL)
+    tos = (object*)tos->value_ptr;
+   if(tos1->value_ptr != NULL)
+    tos1 = (object*)tos1->value_ptr;
+   long ifda = 0;
+   long ifdb = 0;
+   object *new_ifdtos = AllocObject();
+   new_ifdtos->flags = OFLAG_ON_STACK;
+   new_ifdtos->type = TYPE_INT;
+   new_ifdtos->ptr = 0;
+   new_ifdtos->value_ptr = NULL;
+   if(tos->type == TYPE_INT)
+   {
+     ifda = tos->ptr;
+   }
+   if(tos1->type == TYPE_INT)
+   {
+    ifdb = tos1->ptr;
+   }
+   new_ifdtos->ptr = ifdb / ifda;
+   printf("%d // %d = %d\n",ifdb,ifda,new_ifdtos->ptr);
+   stack_Push(new_ifdtos,_stack);
+   break;
    
 
    
@@ -917,8 +995,10 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
 		{
 			//if(next->value_ptr != NULL)
 			//	next = next->value_ptr;
-			printf("next pushed\n");
+			printf("next pushed:");
+			PrintObject(next);
 			stack_Push(next,_stack);
+			printf("\n");
 		}
 		else
 			{

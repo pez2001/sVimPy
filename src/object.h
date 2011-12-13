@@ -160,7 +160,7 @@ int IsCodeObject(object *obj);
 int IsTupleObject(object *obj);
 
 void FreeObject(object *obj);
-
+void PrintObject(object *obj);
 void DumpObject(object *obj,int level);
 object *GetNextItem(object *tuple);
 

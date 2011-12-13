@@ -27,6 +27,11 @@ for(int i=0;i<mem_chunks_top;i++)
  {
   printf("%x ",*((unsigned char*)(mem_chunk_items[i]->ptr+ix)));
  }
+ printf("  ");
+   for(int ix=0;ix<mem_chunk_items[i]->size;ix++)
+ {
+  printf("%c  ",*((unsigned char*)(mem_chunk_items[i]->ptr+ix)));
+ }
  printf("\n");
 
   }
@@ -67,16 +72,16 @@ for(int i=0;i<mem_chunks_top;i++)
 {
  if(mem_chunk_items[i]->ptr == ptr && !mem_chunk_items[i]->is_freed)
  {
-  ptr = realloc(ptr,size);
-  mem_chunk_items[i]->ptr = ptr;
+  
+  mem_chunk_items[i]->ptr = realloc(ptr,size);
   mem_chunks_actual_size +=  size  - mem_chunk_items[i]->size;
   if(mem_chunks_actual_size > mem_chunks_max_size)
    mem_chunks_max_size = mem_chunks_actual_size;
   mem_chunk_items[i]->size = size;
-  return(ptr);
+  return(mem_chunk_items[i]->ptr );
   }
 }
- printf("chunk not found @%x\n",ptr);
+ printf("realloc chunk not found @%x\n",ptr);
  return(NULL);
 }
 

@@ -159,6 +159,33 @@ mem_free(obj);
 objects_num--;
 }
 
+void PrintObject(object *obj)
+{
+			if(obj != NULL)
+			{
+				//printf("tos type:%c\n",obj->type);
+					switch(obj->type)
+					{
+						case TYPE_INT:
+							printf("%d",(long)obj->ptr);
+							break;
+						case TYPE_UNICODE:
+							if((object*)obj->value_ptr != NULL)
+							{
+								if(((object*)obj->value_ptr)->type == TYPE_UNICODE)
+									printf("%s",(char*)((object*)obj->value_ptr)->ptr );
+								else
+									if(((object*)obj->value_ptr)->type == TYPE_INT)
+										printf("%d",((object*)obj->value_ptr)->ptr );
+							}
+						else 
+							printf("%s",(char*)obj->ptr);
+							break;
+					}
+
+			}
+} 
+
 void DumpObject(object *obj,int level)
 {
 if(obj == NULL)
@@ -294,7 +321,7 @@ object *GetNextItem(object *tuple)
      if((((tuple_object*)tuple->ptr)->items[i]->flags & OFLAG_TUPLE_PTR) > 0 )
 	 {
 	 //update tuple ptr
-	 ((tuple_object*)tuple->ptr)->items[i] -= OFLAG_TUPLE_PTR;
+	 ((tuple_object*)tuple->ptr)->items[i]->flags -= OFLAG_TUPLE_PTR;
 	 if(i+1<((tuple_object*)tuple->ptr)->num)
 	  ((tuple_object*)tuple->ptr)->items[i+1]->flags += OFLAG_TUPLE_PTR;
 	 else //reset
