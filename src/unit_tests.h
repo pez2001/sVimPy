@@ -4,6 +4,7 @@
 #include "vm.h"
 #include "object.h"
 #include "memory.h"
+#include "internal_functions.h"
 
 #include "stdio.h"
 #include "stdlib.h"

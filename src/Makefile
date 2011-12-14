@@ -3,10 +3,10 @@
 CFLAGS=-W -w -O2 -std=c99 
 
 CC=gcc
-all: vm.o unit_tests.o opcodes.o object.o stack.o strops.o numops.o memory.o unit_test 
+all: vm.o unit_tests.o opcodes.o object.o stack.o strops.o numops.o memory.o internal_functions.o lists.o unit_test 
 
-unit_test: vm.o stack.o opcodes.o object.o strops.o numops.o stack.o memory.o
-	$(CC)  unit_tests.o vm.o opcodes.o object.o stack.o strops.o numops.o memory.o -o unit_test 
+unit_test: vm.o stack.o opcodes.o object.o strops.o numops.o stack.o memory.o internal_functions.o lists.o
+	$(CC)  unit_tests.o vm.o opcodes.o object.o stack.o strops.o numops.o memory.o internal_functions.o lists.o -o unit_test 
 unit_tests.o: unit_tests.c
 	$(CC) $(CFLAGS) -c unit_tests.c 
 vm.o: vm.c
@@ -23,6 +23,10 @@ memory.o: memory.c
 	$(CC) $(CFLAGS) -c memory.c 
 stack.o: stack.c
 	$(CC) $(CFLAGS) -c stack.c 
+lists.o: lists.c
+	$(CC) $(CFLAGS) -c lists.c 
+internal_functions.o: internal_functions.c
+	$(CC) $(CFLAGS) -c internal_functions.c 
 	
 clean:
 	rm vm.o

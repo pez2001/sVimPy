@@ -68,13 +68,19 @@ void OpenPYC()
  fclose(f);
  //mem_free(b);
  //mem_free(bh);
+ 
 }
 
 
 int main(int argc,char *argv[])
 {
  mem_Init();
- recycle = stack_Init(70);
+ vm_Init();
+ function_definition *range = CreateCFunction(&if_range,"range");
+ AddFunctionDefinition(range);
+ function_definition *print = CreateCFunction(&if_print,"print");
+ AddFunctionDefinition(print);
+ recycle = stack_Init(90);
  blocks = stack_Init(5);
  printf("Calling all Unit Tests\n");
  OpenPYC();
@@ -82,7 +88,9 @@ int main(int argc,char *argv[])
  stack_Close(recycle,1);
  stack_Close(blocks,1);
  printf("objects headers total size  : %d\n",objects_header_total);
+ vm_Close();
  mem_Close();
  printf("%d memory chunks leaked\n",mem_chunks_num);
+ DumpUnsupportedOpCodes();
  return(0);
 }

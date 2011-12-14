@@ -301,6 +301,50 @@ object *FindUnicodeTupleItem(object *tuple,char *name)
 	return(NULL);
 }
 
+void ResetIteration(object *tuple)
+{
+   if(tuple == NULL || tuple->type != TYPE_TUPLE)
+    return(NULL);
+	
+  if((tuple->flags & OFLAG_TUPLE_RESTART_FLAG)) 
+  {
+  	 tuple->flags -=OFLAG_TUPLE_RESTART_FLAG;
+	 return(NULL);
+  }
+  
+   for(int i=0;i<((tuple_object*)tuple->ptr)->num;i++)
+    {
+	//printf("checking tuple:%d\n",i);
+	//if(((tuple_object*)tuple->ptr)->items[i]->type == TYPE_UNICODE)
+	// printf("checking %s against: %s\n",name,(char*)((tuple_object*)tuple->ptr)->items[i]->ptr);
+     if((((tuple_object*)tuple->ptr)->items[i]->flags & OFLAG_TUPLE_PTR) > 0 )
+	 {
+	 //update tuple ptr
+	 ((tuple_object*)tuple->ptr)->items[i]->flags -= OFLAG_TUPLE_PTR;
+	 }
+    }
+ ((tuple_object*)tuple->ptr)->items[0]->flags += OFLAG_TUPLE_PTR;
+
+}
+
+void SetItem(object *tuple,int index,object *obj)
+{
+   if(tuple == NULL || tuple->type != TYPE_TUPLE)
+    return(NULL);
+	if(index >= ((tuple_object*)tuple->ptr)->num || index < 0)
+	
+	((tuple_object*)tuple->ptr)->items[index] = obj;
+}
+
+object *GetItem(object *tuple,int index)
+{
+   if(tuple == NULL || tuple->type != TYPE_TUPLE)
+    return(NULL);
+	if(index >= ((tuple_object*)tuple->ptr)->num || index < 0)
+	 return(NULL);
+	return(((tuple_object*)tuple->ptr)->items[index]);
+}
+
 object *GetNextItem(object *tuple)
 {
    if(tuple == NULL || tuple->type != TYPE_TUPLE)
@@ -315,7 +359,7 @@ object *GetNextItem(object *tuple)
 	
    for(int i=0;i<((tuple_object*)tuple->ptr)->num;i++)
     {
-	printf("checking tuple:%d\n",i);
+	//printf("checking tuple:%d\n",i);
 	//if(((tuple_object*)tuple->ptr)->items[i]->type == TYPE_UNICODE)
 	// printf("checking %s against: %s\n",name,(char*)((tuple_object*)tuple->ptr)->items[i]->ptr);
      if((((tuple_object*)tuple->ptr)->items[i]->flags & OFLAG_TUPLE_PTR) > 0 )
@@ -330,7 +374,7 @@ object *GetNextItem(object *tuple)
 	 tuple->flags +=OFLAG_TUPLE_RESTART_FLAG;
 	 //return(NULL);
 	 }
-		printf("returning tuple iteration\n");
+		//printf("returning tuple iteration\n");
 	   return(((tuple_object*)tuple->ptr)->items[i]);
     }
 	}

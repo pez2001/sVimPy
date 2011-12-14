@@ -163,6 +163,9 @@ void FreeObject(object *obj);
 void PrintObject(object *obj);
 void DumpObject(object *obj,int level);
 object *GetNextItem(object *tuple);
+void ResetIteration(object *tuple);
+void SetItem(object *tuple,int index,object *obj);
+object *GetItem(object *tuple,int index);
 
 //object *GetTupleItem(tuple_object *tuple,int index);
 object *FindTupleUnicodeItem(object *tuple,char *name);

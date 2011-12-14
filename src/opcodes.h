@@ -10,9 +10,12 @@ char *name;    //string version
 char *description;    //a short description
 //unsigned int num_parameters; //number of parameters
 unsigned int argcount;
+unsigned int supported;
 #endif
 } opcode;
 
+void DumpUnsupportedOpCodes();
+unsigned int GetSupportedOpcodesNum();
 
 int GetOpcodeIndex(unsigned char opcode);
 /*
