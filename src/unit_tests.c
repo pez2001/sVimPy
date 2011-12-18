@@ -76,6 +76,8 @@ int main(int argc,char *argv[])
 {
  mem_Init();
  vm_Init();
+ function_definition *build_list = CreateCFunction(&BuildList,"internal.BuildList");
+ AddFunctionDefinition(build_list);
  function_definition *range = CreateCFunction(&if_range,"range");
  AddFunctionDefinition(range);
  function_definition *print = CreateCFunction(&if_print,"print");
@@ -85,6 +87,7 @@ int main(int argc,char *argv[])
  printf("Calling all Unit Tests\n");
  OpenPYC();
  printf("clearing recycle stack\n");
+ stack_Dump(recycle);
  stack_Close(recycle,1);
  stack_Close(blocks,1);
  printf("objects headers total size  : %d\n",objects_header_total);

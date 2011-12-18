@@ -2,7 +2,7 @@
 //#define OPCODES_C
 #include "opcodes.h"
 
-const unsigned int opcodecount = 95;
+const unsigned int opcodecount = 94;
 #ifdef DEBUG
 
 const opcode opcodes[]={{0x00,"STOP_CODE","Indicates end-of-code to the compiler, not used by the interpreter.",0,1}, 													//SUPPORTED
@@ -49,7 +49,7 @@ const opcode opcodes[]={{0x00,"STOP_CODE","Indicates end-of-code to the compiler
                             {0x3a,"INPLACE_DIVIDE","Implements in-place TOS = TOS1 / TOS when from __future__ import division is not in effect.",0,1},				//SUPPORTED
                             {0x3b,"INPLACE_MODULO","Implements in-place TOS = TOS1 % TOS.",0,1},																					//SUPPORTED
                             {0x3c,"STORE_SUBSCR","Implements TOS1[TOS] = TOS2.",0,1},																									//SUPPORTED
-                            {0x3d,"DELETE_SUBSCR","Implements del TOS1[TOS].",0,0},
+                            {0x3d,"DELETE_SUBSCR","Implements del TOS1[TOS].",0,1},																											//SUPPORTED
                             {0x3e,"BINARY_LSHIFT","Implements TOS = TOS1 << TOS.",0,0},
                             {0x3f,"BINARY_RSHIFT","Implements TOS = TOS1 >> TOS.",0,0},
                             {0x40,"BINARY_AND","Implements TOS = TOS1 & TOS.",0,1},																											//SUPPORTED
@@ -89,19 +89,20 @@ const opcode opcodes[]={{0x00,"STOP_CODE","Indicates end-of-code to the compiler
 							TOS1 the tuple of the names of the base classes, and TOS2 the class name.",0,0},
                             {0x5a,"STORE_NAME","Implements name = TOS. /namei/ is the index of name in the attribute co_names of the code object.\
 							The compiler tries to use STORE_LOCAL or STORE_GLOBAL if possible.",2,1},																				//SUPPORTED
-                            {0x5b,"DELETE_NAME","Implements del name, where /namei/ is the index into co_names attribute of the code object.",2,0},
-                            {0x5c,"UNPACK_SEQUENCE","Unpacks TOS into /count/ individual values, which are put onto the stack right-to-left.",2,0},
-                            {0x5d,"FOR_ITER","TOS is an iterator. Call its next() method. If this yields a new value, push it on the stack (leaving the iterator below it).\
-							If the iterator indicates it is exhausted TOS is popped, and the byte code counter is incremented by /delta/.",2,1},									//SUPPORTED
+                            {0x5b,"DELETE_NAME","Implements del name, where /namei/ is the index into co_names attribute of the code object.",2,1},				//SUPPORTED
+                            {0x5c,"UNPACK_SEQUENCE","Unpacks TOS into /count/ individual values, which are put onto the stack right-to-left.",2,1},					//SUPPORTED
+                            {0x5d,"FOR_ITER","TOS is an iterator. Call its next() method. If this yields a new value, push it on the stack\
+							(leaving the iterator below it). If the iterator indicates it is exhausted TOS is popped,\
+							and the byte code counter is incremented by /delta/.",2,1},																												//SUPPORTED
                             {0x5f,"STORE_ATTR","Implements TOS.name = TOS1, where /namei/ is the index of name in co_names.",2,0},
                             {0x60,"DELETE_ATTR","Implements del TOS.name, using /namei/ as index into co_names.",2,0},
                             {0x61,"STORE_GLOBAL","Works as STORE_NAME(/namei/), but stores the name as a global.",2,1},													//SUPPORTED
-                            {0x62,"DELETE_GLOBAL","Works as DELETE_NAME(/namei/), but deletes a global name.",2,0},												
-                            {0x63,"DUP_TOPX","Duplicate /count/ items, keeping them in the same order.\
-							Due to implementation limits, count should be between 1 and 5 inclusive.",0,0},
+                            {0x62,"DELETE_GLOBAL","Works as DELETE_NAME(/namei/), but deletes a global name.",2,1},														//SUPPORTED										
+ //                           {0x63,"DUP_TOPX","Duplicate /count/ items, keeping them in the same order.\
+//							Due to implementation limits, count should be between 1 and 5 inclusive.",0,0},																					//DEPRECATED
                             {0x64,"LOAD_CONST","Pushes \"co_consts[/consti/]\" onto the stack.",2,1},																						//SUPPORTED
                             {0x65,"LOAD_NAME","Pushes the value associated with \"co_names[/namei/]\" onto the stack.",2,1},													//SUPPORTED
-                            {0x66,"BUILD_TUPLE","Creates a tuple consuming /count/ items from the stack, and pushes the resulting tuple onto the stack.",2,0},
+                            {0x66,"BUILD_TUPLE","Creates a tuple consuming /count/ items from the stack, and pushes the resulting tuple onto the stack.",2,1},	//SUPPORTED
                             {0x67,"BUILD_LIST","Works as BUILD_TUPLE(/count/), but creates a list.",2,1},																				//SUPPORTED
                             {0x68,"BUILD_MAP","Pushes a new empty dictionary object onto the stack.\
 							The argument is ignored and set to /zero/ by the compiler.",2,0},
@@ -112,8 +113,8 @@ const opcode opcodes[]={{0x00,"STOP_CODE","Indicates end-of-code to the compiler
 							{0x6c,"IMPORT_FROM","Loads the attribute co_names[/namei/] from the module found in TOS.\
 							The resulting object is pushed onto the stack, to be subsequently stored by a STORE_FAST instruction.",2,0},
 							{0x6e,"JUMP_FORWARD","Increments byte code counter by /delta/.",2,1},																						//SUPPORTED
-							{0x6f,"JUMP_IF_FALSE","If TOS is false, increment the byte code counter by /delta/. TOS is not changed.",2,0},
-							{0x70,"JUMP_IF_TRUE","If TOS is true, increment the byte code counter by /delta/. TOS is left on the stack.",2,0},
+							{0x6f,"JUMP_IF_FALSE","If TOS is false, increment the byte code counter by /delta/. TOS is not changed.",2,1},									//SUPPORTED
+							{0x70,"JUMP_IF_TRUE","If TOS is true, increment the byte code counter by /delta/. TOS is left on the stack.",2,1},								//SUPPORTED
 							{0x71,"JUMP_ABSOLUTE","Set byte code counter to /target/.",2,1},																									//SUPPORTED
 							{0x72,"POP_JUMP_IF_FALSE","no description.",2,1},																														//SUPPORTED
 							{0x73,"POP_JUMP_IF_TRUE","no description.",2,1},																														//SUPPORTED
@@ -126,7 +127,7 @@ const opcode opcodes[]={{0x00,"STOP_CODE","Indicates end-of-code to the compiler
 							{0x7a,"SETUP_FINALLY","Pushes a try block from a try-except clause onto the block stack. /delta/ points to the finally block.",2,0},
 							{0x7c,"LOAD_FAST","Pushes a reference to the local co_varnames[/var_num/] onto the stack.",2,1},													//SUPPORTED
 							{0x7d,"STORE_FAST","Stores TOS into the local co_varnames[/var_num/].",2,1},																				//SUPPORTED
-							{0x7e,"DELETE_FAST","Deletes local co_varnames[/var_num/].",2,0},
+							{0x7e,"DELETE_FAST","Deletes local co_varnames[/var_num/].",2,1},																								//SUPPORTED
 							{0x82,"RAISE_VARARGS","Raises an exception. /argc/ indicates the number of parameters to the raise statement,\
 							ranging from 0 to 3. The handler will find the traceback as TOS2, the parameter as TOS1, and the exception as TOS.",2,0},
 							{0x83,"CALL_FUNCTION","Calls a function. The low byte of /argc/ indicates the number of positional parameters,\

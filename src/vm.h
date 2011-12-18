@@ -38,8 +38,8 @@ function_definition *FindFunction(char *name);
 void vm_Init();
 void vm_Close();
 
-object *BuildList(stack *stack,int argc);
-
+//object *BuildList(stack *stack,int argc);
+object *BuildList(stack *stack);
 
 object *ExecuteObject(object *obj,object *caller,object *global,stack *locals,int argc);
 

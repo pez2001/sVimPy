@@ -308,8 +308,8 @@ void ResetIteration(object *tuple)
 	
   if((tuple->flags & OFLAG_TUPLE_RESTART_FLAG)) 
   {
-  	 tuple->flags -=OFLAG_TUPLE_RESTART_FLAG;
-	 return(NULL);
+  	 tuple->flags ^=OFLAG_TUPLE_RESTART_FLAG;
+	 return;
   }
   
    for(int i=0;i<((tuple_object*)tuple->ptr)->num;i++)
@@ -320,21 +320,34 @@ void ResetIteration(object *tuple)
      if((((tuple_object*)tuple->ptr)->items[i]->flags & OFLAG_TUPLE_PTR) > 0 )
 	 {
 	 //update tuple ptr
-	 ((tuple_object*)tuple->ptr)->items[i]->flags -= OFLAG_TUPLE_PTR;
+	 ((tuple_object*)tuple->ptr)->items[i]->flags ^= OFLAG_TUPLE_PTR;
 	 }
     }
- ((tuple_object*)tuple->ptr)->items[0]->flags += OFLAG_TUPLE_PTR;
+ ((tuple_object*)tuple->ptr)->items[0]->flags |= OFLAG_TUPLE_PTR;
 
 }
 
 void SetItem(object *tuple,int index,object *obj)
 {
    if(tuple == NULL || tuple->type != TYPE_TUPLE)
-    return(NULL);
+    return;
 	if(index >= ((tuple_object*)tuple->ptr)->num || index < 0)
-	
+	 return;
 	((tuple_object*)tuple->ptr)->items[index] = obj;
+	obj->flags ^= OFLAG_ON_STACK;
 }
+
+void DeleteItem(object *tuple,int index)
+{
+   if(tuple == NULL || tuple->type != TYPE_TUPLE)
+    return;
+	if(index >= ((tuple_object*)tuple->ptr)->num || index < 0)
+	 return;
+	FreeObject(((tuple_object*)tuple->ptr)->items[index]);
+}
+
+
+
 
 object *GetItem(object *tuple,int index)
 {
@@ -352,7 +365,7 @@ object *GetNextItem(object *tuple)
 	
   if((tuple->flags & OFLAG_TUPLE_RESTART_FLAG)) 
   {
-  	 tuple->flags -=OFLAG_TUPLE_RESTART_FLAG;
+  	 tuple->flags ^=OFLAG_TUPLE_RESTART_FLAG;
 	 return(NULL);
   }
   
@@ -365,13 +378,13 @@ object *GetNextItem(object *tuple)
      if((((tuple_object*)tuple->ptr)->items[i]->flags & OFLAG_TUPLE_PTR) > 0 )
 	 {
 	 //update tuple ptr
-	 ((tuple_object*)tuple->ptr)->items[i]->flags -= OFLAG_TUPLE_PTR;
+	 ((tuple_object*)tuple->ptr)->items[i]->flags ^= OFLAG_TUPLE_PTR;
 	 if(i+1<((tuple_object*)tuple->ptr)->num)
-	  ((tuple_object*)tuple->ptr)->items[i+1]->flags += OFLAG_TUPLE_PTR;
+	  ((tuple_object*)tuple->ptr)->items[i+1]->flags |= OFLAG_TUPLE_PTR;
 	 else //reset
 	 {
-	 ((tuple_object*)tuple->ptr)->items[0]->flags += OFLAG_TUPLE_PTR;
-	 tuple->flags +=OFLAG_TUPLE_RESTART_FLAG;
+	 ((tuple_object*)tuple->ptr)->items[0]->flags |= OFLAG_TUPLE_PTR;
+	 tuple->flags |=OFLAG_TUPLE_RESTART_FLAG;
 	 //return(NULL);
 	 }
 		//printf("returning tuple iteration\n");
@@ -499,7 +512,7 @@ object *ReadObject(FILE *f)
   object* tuple = ReadObject(f);
   if(i==0)
   {
-	tuple->flags +=OFLAG_TUPLE_PTR;
+	tuple->flags |=OFLAG_TUPLE_PTR;
 	//printf("setting tuple's iterate over ptr\n");
   }
 	//printf("object type:%c\n",tuple->type);

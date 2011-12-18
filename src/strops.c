@@ -16,3 +16,12 @@ char *str_Copy(char *a)
 	 memcpy(tmp,a,strlen(a));
      return(tmp);
 }
+
+char *str_FromChar(char c)
+{
+ char *tmp = (char*)mem_malloc(2);
+ memset(tmp,0,2);
+ memset(tmp,c,1);
+ return(tmp);
+ 
+}

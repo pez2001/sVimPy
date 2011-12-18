@@ -136,11 +136,23 @@ if(stack->top < 3)
 
 void stack_Adjust(int by,stack *stack)
 {
-if((stack->top + by) >= stack->num)
- stack_IncreaseSize((stack->top +by - stack->num),stack);
+if((stack->top + by) > stack->num)
+ stack_IncreaseSize(((stack->top +by) - stack->num),stack);
 
 stack->top += by;
 }
+
+void stack_Dump(stack *stack)
+{
+printf("Dumping %d stack items\n",stack->top);
+for(int i=0;i<stack->top;i++)
+{
+	printf("item: %d\n",i);
+	DumpObject(stack->items[i],1);
+
+}
+}
+
 
 object *stack_Pop(stack *stack)
 {

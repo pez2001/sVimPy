@@ -123,17 +123,16 @@ mem_free(functions);
 }
 }
 
-object *BuildList(stack *stack,int argc)
+object *BuildList(stack *stack)
 {
 int num =stack->top;
 object *r = AllocObject();
 r->type = TYPE_TUPLE;
 r->flags = OFLAG_ON_STACK;
 r->ptr = AllocTupleObject();
-int n = argc;
-((tuple_object*)r->ptr)->num = n;
-((tuple_object*)r->ptr)->items = (object**)mem_malloc(n*sizeof(object*));
-for(int i = 0;i<n;i++)
+((tuple_object*)r->ptr)->num = num;
+((tuple_object*)r->ptr)->items = (object**)mem_malloc(num*sizeof(object*));
+for(int i = 0;i<num;i++)
 {
 ((tuple_object*)r->ptr)->items[i] = stack_Pop(stack);
 }
@@ -213,11 +212,27 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
 	case 0x00: //STOP_CODE
 		i = n;
 		break;
-		
+	
+	case 0x66: //BUILD_TUPLE	
 	case 0x67: //BUILD_LIST
 		printf("");
-	    long bl_num = num_short(string[i+1],string[i+2]);	
-		stack_Push(BuildList(_stack,bl_num),_stack);
+	    short bl_num = num_short(string[i+1],string[i+2]);	
+		//stack_Push(BuildList(_stack,bl_num),_stack);
+		   stack *blcall = NULL;
+		if(bl_num>0)
+		blcall = stack_Init((long)bl_num);
+		tos = NULL;
+		for(int i = 0;i<bl_num;i++)
+		{
+			stack_Push(stack_Pop(_stack),blcall);
+		}
+		object *tmp = ExecuteCFunction("internal.BuildList",blcall);
+  	    if(tmp != NULL)
+	    {
+				stack_Push(tmp,_stack);	
+		}
+		if(bl_num>0)
+			stack_Close(blcall,0);
 		break;
    case 0x74://LOAD_GLOBAL
     printf("");
@@ -331,6 +346,109 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
 	co_varnames->items[varname_i]->value_ptr = tos;
    break;
 
+   case 0x61://STORE_GLOBAL
+   printf("");
+   //printf("storing in fast\n");
+    tos = stack_Pop(_stack);
+	//printf("tos type:%c\n",tos->type);
+	co_names = (tuple_object*)co->names->ptr;
+	name_i = num_short(string[i+1],string[i+2]);
+	name = (char*)co_names->items[name_i]->ptr;
+    //printf("opcode: [%s],(%d) [%s]\n",opcodes[index].name,name_i,name->content);
+    if(tos->type == TYPE_UNICODE)
+	 printf("fast storing %s in %s\n",(char*)tos->ptr,name);
+    if(tos->type == TYPE_INT)
+	 printf("fast storing %d in %s\n",tos->ptr,name);
+    if(tos->type == TYPE_CODE)
+	 printf("fast storing function %s in %s\n",((code_object*)tos->ptr)->name,name);
+	co_names->items[name_i]->value_ptr = tos;
+   break;
+
+   case 0x62://DELETE_GLOBAL
+   printf("");
+   //printf("storing in fast\n");
+    //tos = stack_Pop(_stack);
+	//printf("tos type:%c\n",tos->type);
+	co_names = (tuple_object*)co->names->ptr;
+	name_i = num_short(string[i+1],string[i+2]);
+	name = (char*)co_names->items[name_i]->ptr;
+    //printf("opcode: [%s],(%d) [%s]\n",opcodes[index].name,name_i,name->content);
+	FreeObject(co_names->items[name_i]);
+	//->value_ptr = tos;
+   break;
+
+   case 0x5b://DELETE_NAME
+   printf("");
+   //printf("storing in fast\n");
+    //tos = stack_Pop(_stack);
+	//printf("tos type:%c\n",tos->type);
+	co_names = (tuple_object*)co->names->ptr;
+	name_i = num_short(string[i+1],string[i+2]);
+	name = (char*)co_names->items[name_i]->ptr;
+    //printf("opcode: [%s],(%d) [%s]\n",opcodes[index].name,name_i,name->content);
+	FreeObject(co_names->items[name_i]);
+	//->value_ptr = tos;
+   break;
+
+   case 0x7e://DELETE_FAST
+   printf("");
+   //printf("storing in fast\n");
+    //tos = stack_Pop(_stack);
+	//printf("tos type:%c\n",tos->type);
+	co_varnames = (tuple_object*)co->varnames->ptr;
+	varname_i = num_short(string[i+1],string[i+2]);
+	varname = (char*)co_varnames->items[varname_i]->ptr;
+    //printf("opcode: [%s],(%d) [%s]\n",opcodes[index].name,name_i,name->content);
+	FreeObject(co_varnames->items[varname_i]);
+	//->value_ptr = tos;
+   break;
+
+    case 0x3d: //DELETE_SUBSCR
+    printf(""); //Implements  del TOS1[TOS] 
+   tos = stack_Pop(_stack);
+   tos1 = stack_Pop(_stack);
+ 
+   if(tos->value_ptr != NULL)
+    tos = (object*)tos->value_ptr;
+   if(tos1->value_ptr != NULL)
+    tos1 = (object*)tos1->value_ptr;
+	long dsa = 0;
+   if(tos->type == TYPE_INT)
+   {
+     dsa = tos->ptr;
+   }
+   if(tos1->type == TYPE_TUPLE)
+   {
+    //DumpObject(tos2,0);
+	//printf("ssa: %d\n",ssa);
+    DeleteItem(tos1,dsa);
+	//DumpObject(tos1,0);
+   }
+	break;
+	
+	case 0x5c: //UNPACK_SEQUENCE
+	   printf(""); 
+	   short ua = num_short(string[i+1],string[i+2]);
+		tos = stack_Pop(_stack);
+		  if(tos->value_ptr != NULL)
+			tos = (object*)tos->value_ptr;
+		for(int i=0;i<ua;i++)
+		 {
+		  switch(tos->type)
+		   {
+			case TYPE_UNICODE:
+				printf("");
+				object *uso = AllocObject();
+				uso->flags = OFLAG_ON_STACK;
+				uso->type = TYPE_UNICODE;
+				uso->ptr = str_FromChar(((char*)tos->ptr)[i]);
+				stack_Push(uso,_stack);
+				break;
+		 }
+		 }
+		  stack_Dump(_stack);
+		break;
+   
   case 0x02://ROT_TWO
     tos = stack_Top(_stack);
     tos1 = stack_Second(_stack);
@@ -702,10 +820,10 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
    }
    if(tos1->type == TYPE_TUPLE)
    {
-    DumpObject(tos2,0);
-	printf("ssa: %d\n",ssa);
+    //DumpObject(tos2,0);
+	//printf("ssa: %d\n",ssa);
     SetItem(tos1,ssa,tos2);
-	DumpObject(tos1,0);
+	//DumpObject(tos1,0);
    }
 	break;
    
@@ -728,10 +846,10 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
    }
    if(tos1->type == TYPE_TUPLE)
    {
-    DumpObject(tos1,0);
-    printf("bsa:%d\n",bsa);
+    //DumpObject(tos1,0);
+    //printf("bsa:%d\n",bsa);
    object *bst = GetItem(tos1,bsa);
-   DumpObject(bst,0);
+   //DumpObject(bst,0);
    stack_Push(bst,_stack);
    }
    break;
@@ -1162,6 +1280,30 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
 	 i = jmpa - 3;
 	break;
    
+	case 0x6f: //JUMP_IF_FALSE
+		printf("");//If TOS is false, increment the byte code counter by /delta/. TOS is not changed.
+		tos = stack_Top(_stack);
+		short njmp = num_short(string[i+1],string[i+2]);
+		if(tos->type == TYPE_FALSE)
+		{
+			printf("jump to:%d\n",jmp);
+			i = njmp -3;
+		}
+		break;
+
+	case 0x70: //JUMP_IF_TRUE
+		printf("");//If TOS is true, increment the byte code counter by /delta/. TOS is not changed.
+		tos = stack_Top(_stack);
+		short ntjmp = num_short(string[i+1],string[i+2]);
+		if(tos->type == TYPE_TRUE)
+		{
+			printf("true jmp arg:%d\n",tjmp);
+			i = ntjmp -3;
+		}
+		break;
+
+
+		
     case 0x47: //PRINT_ITEM
 		tos = stack_Pop(_stack);
 				if(tos != NULL)
@@ -1249,6 +1391,7 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
    
     case 0x83://CALL_FUNCTION
     printf("");
+	//short argc = num_short(string[i+1],string[i+2]);
 	char argc = string[i+1];
     //printf("calling function with %d arguments\n",argc);
 	//printf("opcode: [%s],(argc:%d)\n",opcodes[index].name,argc);
@@ -1293,6 +1436,7 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
 	
 	if(function_name != NULL&& function_name->type == TYPE_UNICODE)
 		{
+		printf("executing C function: %s\n",(char*)function_name->ptr);
 		 object *tmp = ExecuteCFunction((char*)function_name->ptr,call);
   	    if(tmp != NULL)
 	    {

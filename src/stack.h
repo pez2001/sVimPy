@@ -35,6 +35,7 @@ void stack_SetThird(object *x,stack *stack);
 
 void stack_Adjust(int by,stack *stack);
 void stack_IncreaseSize(int items_num,stack *stack);
+void stack_Dump(stack *stack);
 
 //object *callstack_Pop();
 //void callstack_Push(object *x);
