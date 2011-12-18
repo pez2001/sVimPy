@@ -374,6 +374,7 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
 	name = (char*)co_names->items[name_i]->ptr;
     //printf("opcode: [%s],(%d) [%s]\n",opcodes[index].name,name_i,name->content);
 	FreeObject(co_names->items[name_i]);
+	co_names->items[name_i]=NULL;
 	//->value_ptr = tos;
    break;
 
@@ -387,6 +388,7 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
 	name = (char*)co_names->items[name_i]->ptr;
     //printf("opcode: [%s],(%d) [%s]\n",opcodes[index].name,name_i,name->content);
 	FreeObject(co_names->items[name_i]);
+		co_names->items[name_i]=NULL;
 	//->value_ptr = tos;
    break;
 
@@ -400,6 +402,7 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
 	varname = (char*)co_varnames->items[varname_i]->ptr;
     //printf("opcode: [%s],(%d) [%s]\n",opcodes[index].name,name_i,name->content);
 	FreeObject(co_varnames->items[varname_i]);
+		co_varnames->items[varname_i]=NULL;
 	//->value_ptr = tos;
    break;
 

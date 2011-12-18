@@ -35,8 +35,11 @@ if(free_objects)
 {
 printf("freeing %d stack items\n",stack->top);
 for(int i=0;i<stack->top;i++)
- if(stack->items[i]->flags & OFLAG_ON_STACK) 
+ if((stack->items[i]->flags & OFLAG_ON_STACK) > 0) 
+ {
+  printf("free:%d\n",i);
   FreeObject(stack->items[i]);
+  }
  }
  else
   if(stack->top>0)

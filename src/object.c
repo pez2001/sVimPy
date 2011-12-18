@@ -295,6 +295,8 @@ object *FindUnicodeTupleItem(object *tuple,char *name)
 	//printf("checking tuple:%d\n",i);
 	//if(((tuple_object*)tuple->ptr)->items[i]->type == TYPE_UNICODE)
 	// printf("checking %s against: %s\n",name,(char*)((tuple_object*)tuple->ptr)->items[i]->ptr);
+	if(((tuple_object*)tuple->ptr)->items[i] == NULL)
+	 continue;
      if(((tuple_object*)tuple->ptr)->items[i]->type == TYPE_UNICODE && !strcmp( (char*)((tuple_object*)tuple->ptr)->items[i]->ptr,name) )
 	   return(((tuple_object*)tuple->ptr)->items[i]);
     }
@@ -317,12 +319,13 @@ void ResetIteration(object *tuple)
 	//printf("checking tuple:%d\n",i);
 	//if(((tuple_object*)tuple->ptr)->items[i]->type == TYPE_UNICODE)
 	// printf("checking %s against: %s\n",name,(char*)((tuple_object*)tuple->ptr)->items[i]->ptr);
-     if((((tuple_object*)tuple->ptr)->items[i]->flags & OFLAG_TUPLE_PTR) > 0 )
+     if(((tuple_object*)tuple->ptr)->items[i] != NULL && (((tuple_object*)tuple->ptr)->items[i]->flags & OFLAG_TUPLE_PTR) > 0 )
 	 {
 	 //update tuple ptr
 	 ((tuple_object*)tuple->ptr)->items[i]->flags ^= OFLAG_TUPLE_PTR;
 	 }
     }
+ if(((tuple_object*)tuple->ptr)->items[0] !=NULL)
  ((tuple_object*)tuple->ptr)->items[0]->flags |= OFLAG_TUPLE_PTR;
 
 }
@@ -344,6 +347,7 @@ void DeleteItem(object *tuple,int index)
 	if(index >= ((tuple_object*)tuple->ptr)->num || index < 0)
 	 return;
 	FreeObject(((tuple_object*)tuple->ptr)->items[index]);
+	((tuple_object*)tuple->ptr)->items[index] = NULL;
 }
 
 
@@ -372,6 +376,8 @@ object *GetNextItem(object *tuple)
 	
    for(int i=0;i<((tuple_object*)tuple->ptr)->num;i++)
     {
+		if(((tuple_object*)tuple->ptr)->items[i] == NULL)
+	      continue;
 	//printf("checking tuple:%d\n",i);
 	//if(((tuple_object*)tuple->ptr)->items[i]->type == TYPE_UNICODE)
 	// printf("checking %s against: %s\n",name,(char*)((tuple_object*)tuple->ptr)->items[i]->ptr);
