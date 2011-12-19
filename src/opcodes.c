@@ -1,3 +1,26 @@
+/*
+ * sVimPy - small Virtual interpreting machine for Python
+ * (c) 2012 by Tim Theede aka Pez2001 <pez2001@voyagerproject.de> / vp
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *
+ * THIS SOFTWARE IS SUPPLIED AS IT IS WITHOUT ANY WARRANTY!
+ *
+ */
+
+
 #define DEBUG
 //#define OPCODES_C
 #include "opcodes.h"
@@ -74,6 +97,10 @@ const opcode opcodes[]={{OPCODE_STOP_CODE,"STOP_CODE","Indicates end-of-code to 
 							{OPCODE_LOAD_FAST,"LOAD_FAST","Pushes a reference to the local co_varnames[/var_num/] onto the stack.",1,1},																		//SUPPORTED
 							{OPCODE_STORE_FAST,"STORE_FAST","Stores TOS into the local co_varnames[/var_num/].",1,1},																									//SUPPORTED
 							{OPCODE_DELETE_FAST,"DELETE_FAST","Deletes local co_varnames[/var_num/].",1,1},																												//SUPPORTED
+                            {OPCODE_INPLACE_LSHIFT,"INPLACE_LSHIFT","Implements in-place TOS = TOS1 << TOS.",0,1},																									//SUPPORTED
+                            {OPCODE_INPLACE_RSHIFT,"INPLACE_RSHIFT","Implements in-place TOS = TOS1 >> TOS.",0,1},																									//SUPPORTED
+                            {OPCODE_BINARY_LSHIFT,"BINARY_LSHIFT","Implements TOS = TOS1 << TOS.",0,1},																													//SUPPORTED
+                            {OPCODE_BINARY_RSHIFT,"BINARY_RSHIFT","Implements TOS = TOS1 >> TOS.",0,1},																													//SUPPORTED
 							{OPCODE_EXTENDED_ARG,"EXTENDED_ARG","Support for opargs more than 16 bits long.",1,1},																									//SUPPORTED
 							{OPCODE_CALL_FUNCTION,"CALL_FUNCTION","Calls a function. The low byte of /argc/ indicates the number of positional parameters,\
 							the high byte the number of keyword parameters. On the stack, the opcode finds the keyword parameters first.\
@@ -101,8 +128,6 @@ const opcode opcodes[]={{OPCODE_STOP_CODE,"STOP_CODE","Indicates end-of-code to 
                             {OPCODE_END_FINALLY,"END_FINALLY","Terminates a finally clause. The interpreter recalls whether the exception has to be re-raised,\
 							or whether the function returns, and continues with the outer-next block.",0,0},
                             {OPCODE_LOAD_BUILD_CLASS,"LOAD_BUILD_CLASS","No description.",0,0},
-                            {OPCODE_INPLACE_LSHIFT,"INPLACE_LSHIFT","Implements in-place TOS = TOS1 << TOS.",0,0},
-                            {OPCODE_INPLACE_RSHIFT,"INPLACE_RSHIFT","Implements in-place TOS = TOS1 >> TOS.",0,0},
                             {OPCODE_BUILD_CLASS,"BUILD_CLASS","Creates a new class object. TOS is the methods dictionary,\
 							TOS1 the tuple of the names of the base classes, and TOS2 the class name.",0,0},
 							{OPCODE_RAISE_VARARGS,"RAISE_VARARGS","Raises an exception. /argc/ indicates the number of parameters to the raise statement,\
@@ -111,8 +136,6 @@ const opcode opcodes[]={{OPCODE_STOP_CODE,"STOP_CODE","Indicates end-of-code to 
 							The resulting object is pushed onto the stack, to be subsequently stored by a STORE_FAST instruction.",1,0},
                             {OPCODE_IMPORT_STAR,"IMPORT_STAR","Loads all symbols not starting with \"_\" directly from the module TOS to the local namespace.\
 							The module is popped after loading all names. This opcode implements from module import *.",0,0},
-                            {OPCODE_BINARY_LSHIFT,"BINARY_LSHIFT","Implements TOS = TOS1 << TOS.",0,0},
-                            {OPCODE_BINARY_RSHIFT,"BINARY_RSHIFT","Implements TOS = TOS1 >> TOS.",0,0},
                             {OPCODE_YIELD_VALUE,"YIELD_VALUE","Pops TOS and yields it from a generator.",0,0},
                             {OPCODE_STORE_LOCALS,"STORE_LOCALS","No description.",0,0},
                             {OPCODE_STORE_MAP,"STORE_MAP","No description.",0,0},

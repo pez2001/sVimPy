@@ -1,4 +1,27 @@
-#ifndef OBJECT_H
+/*
+ * sVimPy - small Virtual interpreting machine for Python
+ * (c) 2012 by Tim Theede aka Pez2001 <pez2001@voyagerproject.de> / vp
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
+ *
+ * THIS SOFTWARE IS SUPPLIED AS IT IS WITHOUT ANY WARRANTY!
+ *
+ */
+
+ 
+ #ifndef OBJECT_H
 #define OBJECT_H
 
 #include "stdio.h"
@@ -40,6 +63,7 @@
 
 #define OFLAG_ON_STACK 1
 #define OFLAG_UNLOADED 2 //set if object was unloaded -> obj->ptr == seek_pos // or just dump to file and reread if accessed
+
 #define OFLAG_HOLD_IN_MEMORY 4
 #define OFLAG_HAS_VALUE_PTR 8
 #define OFLAG_TUPLE_PTR 16 //used to iterate over tuples
