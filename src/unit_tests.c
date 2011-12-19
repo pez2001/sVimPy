@@ -62,7 +62,10 @@ void OpenPYC()
  printf("objects headers total size  : %d\n",objects_header_total);
  
  DumpObject(obj,0);
- object *ret = ExecuteObject(obj,NULL,obj,NULL,0);
+ object *ret = ExecuteObject(obj,obj,obj,NULL,0);
+ printf("object executed\n");
+ //DumpObject(obj,0);
+ printf("cleaning up object\n");
  FreeObject(obj);
  printf("objects headers total size  : %d\n",objects_header_total);
  fclose(f);
@@ -87,8 +90,9 @@ int main(int argc,char *argv[])
  printf("Calling all Unit Tests\n");
  OpenPYC();
  printf("clearing recycle stack\n");
- stack_Dump(recycle);
+ //stack_Dump(recycle);
  stack_Close(recycle,1);
+ //stack_Dump(blocks);
  stack_Close(blocks,1);
  printf("objects headers total size  : %d\n",objects_header_total);
  vm_Close();

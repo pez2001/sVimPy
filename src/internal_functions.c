@@ -22,7 +22,7 @@ r->flags = OFLAG_ON_STACK;
 r->ptr = AllocTupleObject();
 int n = (long)e->ptr - (long)s->ptr;
 ((tuple_object*)r->ptr)->num = n;
-((tuple_object*)r->ptr)->items = (object**)mem_malloc(n*sizeof(object*));
+((tuple_object*)r->ptr)->items = (object**)mem_malloc(n*sizeof(object*),"if_range() items");
 for(int i = 0;i<n;i++)
 {
 ((tuple_object*)r->ptr)->items[i] = AllocObject();

@@ -6,6 +6,8 @@
 #include "string.h"
 #include "memory.h"
 
+#include "assert.h"
+
 #define TYPE_NULL               '0'
 #define TYPE_NONE               'N'
 #define TYPE_FALSE              'F'
@@ -162,12 +164,13 @@ int IsTupleObject(object *obj);
 void FreeObject(object *obj);
 void PrintObject(object *obj);
 void DumpObject(object *obj,int level);
+//void DumpObject(object *obj);
 object *GetNextItem(object *tuple);
 void ResetIteration(object *tuple);
 void SetItem(object *tuple,int index,object *obj);
 object *GetItem(object *tuple,int index);
 
 //object *GetTupleItem(tuple_object *tuple,int index);
-object *FindTupleUnicodeItem(object *tuple,char *name);
+object *FindUnicodeTupleItem(object *tuple,char *name);
 
 #endif

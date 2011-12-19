@@ -6,6 +6,10 @@
 #include "opcodes.h"
 #include "stack.h"
 #include "numops.h"
+
+#include "assert.h"
+
+
 extern const opcode opcodes[];
 
 extern stack *blocks;

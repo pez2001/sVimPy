@@ -4,8 +4,8 @@ stack* stack_Init(long items_num)
 {
 if(!items_num)
  return(NULL);
-stack *tmp = (stack*)mem_malloc(sizeof(stack));
-tmp->items = (object**)mem_malloc(items_num*sizeof(object*));
+stack *tmp = (stack*)mem_malloc(sizeof(stack),"stack_Init() return");
+tmp->items = (object**)mem_malloc(items_num*sizeof(object*),"stack_Init() items");
 //printf("init stack @%x\n",tmp);
 //printf("init stack items @%x\n",tmp->items);
 tmp->top = 0;
@@ -45,9 +45,9 @@ for(int i=0;i<stack->top;i++)
   if(stack->top>0)
    printf("%d items left untouched on stack\n",stack->top);
  
- mem_free(stack->items);
+ assert(mem_free(stack->items));
  //printf("freed stack items @%x\n",stack->items);
- mem_free(stack);
+ assert(mem_free(stack));
  //printf("freed stack @%x\n",stack);
 //for(int i=0;i<callstack_top;i++)
 // if(callstack_items[i]->flags & OFLAG_ON_STACK) 
@@ -63,9 +63,13 @@ for(int i=0;i<stack->top;i++)
 
 void stack_Push(object *x,stack *stack)
 {
+if(x == NULL)
+ return;
 if(stack->top == stack->num)
  stack_IncreaseSize(1,stack);
 stack->items[stack->top] = x;
+//printf("put object on stack @:%d\n",stack->top);
+//DumpObject(x,0);
 stack->top++;
 }
 
@@ -165,11 +169,14 @@ if(stack->top < 1)
  return(NULL);
  }
 object *r = stack->items[stack->top-1];
-if(r->flags & OFLAG_ON_STACK)
+if((r->flags & OFLAG_ON_STACK))
  {
  //printf("removed stack only item\n");
  if(!stack_Contains(r,recycle))
+ {
+  printf("put object on recycle stack @:%d\n",recycle->top);
   stack_Push(r,recycle);
+  }
  }
 stack->top--;
 //if(stack_top < 0)
@@ -196,61 +203,3 @@ if(x == recycle->items[i])
 }
 }
 
-/*
-object *recycle_Pop()
-{
-if(recycle_top < 1)
-{
- printf("recycle stack underflow\n");
- return(NULL);
- }
-object *r = recycle_items[recycle_top-1];
-recycle_top--;
-return(r);
-}
-
-void recycle_Push(object *x)
-{
-//printf("added recycle item @%x\n",x);
-recycle_items[recycle_top] = x;
-recycle_top++;
-}
-*/
-/*
-void callstack_Push(object *x)
-{
-callstack_items[callstack_top] = x;
-callstack_top++;
-}
-
-object *callstack_Pop()
-{
-if(callstack_top < 0)
-{
- printf("callstack underflow\n");
-return(NULL);
- }
-object *r = callstack_items[callstack_top-1];
-//if(r->flags & OFLAG_ON_STACK)
-// {
-// printf("removed stack only item from callstack\n");
-// recycle_Push(r);
-// }
- 
-callstack_top--;
-//if(stack_top < 0)
-// stack_top = 0;
-return(r);
-}
-*/
-/*
-
-void stack_IncreaseSize()
-{
-
-}
-void stack_DecreaseSize()
-{
-
-}
-*/
