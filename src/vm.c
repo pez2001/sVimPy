@@ -924,6 +924,66 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
    stack_Push(new_mdtos,_stack);
    break;
 
+   case OPCODE_BINARY_RSHIFT:
+   printf("");
+   tos = stack_Pop(_stack);
+   tos1 = stack_Pop(_stack);
+   //object* org_tos = tos;
+   if(tos->value_ptr != NULL)
+    tos = (object*)tos->value_ptr;
+   if(tos1->value_ptr != NULL)
+    tos1 = (object*)tos1->value_ptr;
+
+   long brsa = 0;
+   long brsb = 0;
+   object *new_brstos = AllocObject();
+   new_brstos->flags = OFLAG_ON_STACK;
+   new_brstos->type = TYPE_INT;
+   new_brstos->ptr = 0;
+   new_brstos->value_ptr = NULL;
+   if(tos->type == TYPE_INT)
+   {
+     brsa = tos->ptr;
+   }
+   if(tos1->type == TYPE_INT)
+   {
+    brsb = tos1->ptr;
+   }
+   new_brstos->ptr =(long) brsb >> brsa;
+   printf("%d >> %d = %d\n",brsb,brsa,new_brstos->ptr);
+   stack_Push(new_brstos,_stack);
+   break;
+
+   case OPCODE_BINARY_LSHIFT:
+   printf("");
+   tos = stack_Pop(_stack);
+   tos1 = stack_Pop(_stack);
+   //object* org_tos = tos;
+   if(tos->value_ptr != NULL)
+    tos = (object*)tos->value_ptr;
+   if(tos1->value_ptr != NULL)
+    tos1 = (object*)tos1->value_ptr;
+
+   long blsa = 0;
+   long blsb = 0;
+   object *new_blstos = AllocObject();
+   new_blstos->flags = OFLAG_ON_STACK;
+   new_blstos->type = TYPE_INT;
+   new_blstos->ptr = 0;
+   new_blstos->value_ptr = NULL;
+   if(tos->type == TYPE_INT)
+   {
+     blsa = tos->ptr;
+   }
+   if(tos1->type == TYPE_INT)
+   {
+    blsb = tos1->ptr;
+   }
+   new_blstos->ptr =(long) blsb << blsa;
+   printf("%d << %d = %d\n",blsb,blsa,new_blstos->ptr);
+   stack_Push(new_blstos,_stack);
+   break;
+
    case OPCODE_BINARY_POWER:
    printf("");
    tos = stack_Pop(_stack);
@@ -1060,8 +1120,8 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
    {
     irb = tos1->ptr;
    }
-   new_irtos->ptr = irb << ira;
-   printf("%d << %d = %d\n",irb,ira,new_irtos->ptr);
+   new_irtos->ptr = irb >> ira;
+   printf("%d >> %d = %d\n",irb,ira,new_irtos->ptr);
    stack_Push(new_irtos,_stack);
    break;
 
@@ -1119,6 +1179,34 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
    new_ixtos->ptr = ixb ^ ixa;
    printf("%d ^ %d = %d\n",ixb,ixa,new_ixtos->ptr);
    stack_Push(new_ixtos,_stack);
+   break;
+
+   case OPCODE_INPLACE_LSHIFT:
+   printf("");
+   tos = stack_Pop(_stack);
+   tos1 = stack_Pop(_stack);
+   if(tos->value_ptr != NULL)
+    tos = (object*)tos->value_ptr;
+   if(tos1->value_ptr != NULL)
+    tos1 = (object*)tos1->value_ptr;
+   long ilsa = 0;
+   long ilsb = 0;
+   object *new_ilstos = AllocObject();
+   new_ilstos->flags = OFLAG_ON_STACK;
+   new_ilstos->type = TYPE_INT;
+   new_ilstos->ptr = 0;
+   new_ilstos->value_ptr = NULL;
+   if(tos->type == TYPE_INT)
+   {
+     ilsa = tos->ptr;
+   }
+   if(tos1->type == TYPE_INT)
+   {
+    ilsb = tos1->ptr;
+   }
+   new_ilstos->ptr = ilsb << ilsa;
+   printf("%d << %d = %d\n",ilsb,ilsa,new_ilstos->ptr);
+   stack_Push(new_ilstos,_stack);
    break;
 
    case OPCODE_INPLACE_OR:

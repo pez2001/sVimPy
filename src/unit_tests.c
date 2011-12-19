@@ -64,7 +64,7 @@ void OpenPYC()
  DumpObject(obj,0);
  object *ret = ExecuteObject(obj,obj,obj,NULL,0);
  printf("object executed\n");
- //DumpObject(obj,0);
+ DumpObject(obj,0);
  printf("cleaning up object\n");
  FreeObject(obj);
  printf("objects headers total size  : %d\n",objects_header_total);
