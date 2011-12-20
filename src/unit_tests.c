@@ -25,6 +25,55 @@
 
 //STEFFI 0174 656 9762
 
+void ptr_tests()
+{
+ printf("testing ptr list functions\n");
+ ptr_list *p = ptr_CreateList(0);
+ ptr_Push(p,1);
+ ptr_Push(p,2);
+ ptr_Push(p,3);
+ ptr_Push(p,4);
+ printf("push(1,2,3,4):\n");
+ for(int i = 0;i<p->num;i++)
+  printf("%d ",p->items[i]); 
+ printf("\n");
+ long x = ptr_Pop(p);
+ printf("pop(): %d\n",x);
+ ptr_Push(p,5);
+ printf("push(5):\n");
+ for(int i = 0;i<p->num;i++)
+  printf("%d ",p->items[i]); 
+ printf("\n");
+ long r = ptr_Remove(p,2);
+ printf("remove(2): %d\n",r);
+ for(int i = 0;i<p->num;i++)
+  printf("%d ",p->items[i]); 
+ printf("\ninserting\n");
+ ptr_Insert(p,3,66);
+ printf("insert 3,66:\n");
+ for(int i = 0;i<p->num;i++)
+  printf("%d ",p->items[i]); 
+ printf("\ninserting\n");
+ ptr_Insert(p,0,99);
+ printf("insert 0,99:\n");
+ for(int i = 0;i<p->num;i++)
+  printf("%d ",p->items[i]); 
+ printf("\n");
+ ptr_Set(p,1,22);
+ printf("set 1,22:\n");
+ for(int i = 0;i<p->num;i++)
+  printf("%d ",p->items[i]); 
+ printf("\n");
+ ptr_Queue(p,88);
+ printf("queue(88):\n");
+ for(int i = 0;i<p->num;i++)
+  printf("%d ",p->items[i]); 
+ printf("\n");
+ ptr_CloseList(p);
+ printf("ptr tests thru\n");
+}
+
+
 
 long ReadLong(FILE *f)
 {
@@ -96,7 +145,7 @@ void OpenPYC(vm *vm)
 int main(int argc,char *argv[])
 {
  mem_Init();
- 
+ ptr_tests();
  vm *vm = vm_Init(NULL);
  function_definition *build_list = CreateCFunction(&BuildList,"internal.BuildList");
  AddFunctionDefinition(vm,build_list);
@@ -104,7 +153,7 @@ int main(int argc,char *argv[])
  AddFunctionDefinition(vm,range);
  function_definition *print = CreateCFunction(&if_print,"print");
  AddFunctionDefinition(vm,print);
-
+ RemoveFunction(vm,"range");
  //printf("Calling all Unit Tests\n");
  OpenPYC(vm);
  //printf("clearing recycle stack\n");

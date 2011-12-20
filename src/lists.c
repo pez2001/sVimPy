@@ -60,26 +60,57 @@ void *ptr_Pop(ptr_list *list)
 {
 if(list->num)
 {
-	void *tmp = list->items[list->num-1];
-	ptr_Remove(list,list->num-1);
+	void *tmp = ptr_Remove(list,list->num-1);
 	return(tmp);
 }
 return(NULL);
 }
 int ptr_Insert(ptr_list *list,int index,void *ptr)
 {
-if(index < list->num)
-{
-	list->items = (void**)mem_realloc(list->items,(list->num+1)*sizeof(void*));
-	int len = (list->num-1) - index;
-	if(len)
-	  memcpy(list->items+ (index+1) * sizeof(void*),list->items + index * sizeof(void*),len * sizeof(void*));
-	list->items[index] = ptr;
+if(index == 0 && !list->num)
+ {
+	ptr_Push(list,ptr);
+ }
+ else
+  if(index < list->num-1)
+  {
 	list->num++;
- return(1);
-}
+	list->items = (void**)mem_realloc(list->items,(list->num)*sizeof(void*));
+	//int len = (list->num-1) - index;
+	//if(len)
+	//{
+	  for(int i =list->num-2;i>=index;i--)
+	  {
+	   ptr_MoveDown(list,i);
+	  //memcpy(&list->items[index+1],&list->items[index],len * sizeof(void*));
+	  }
+	list->items[index] = ptr;
+   return(1);
+  } else if(index >= list->num -1)
+			ptr_Push(list,ptr);
+
 return(0);
 }
+
+void ptr_MoveUp(ptr_list *list,int index)
+{
+ if(!list->num)
+  return;
+if(index < list->num && index > 0)
+ {
+ list->items[index -1 ] = list->items[index];
+ }  
+}
+void ptr_MoveDown(ptr_list *list,int index)
+{
+ if(!list->num)
+  return;
+if(index < list->num-1 && index >= 0)
+ {
+ list->items[index +1 ] = list->items[index];
+ }  
+}
+
 void *ptr_Remove(ptr_list *list,int index)
 {
  if(!list->num)
@@ -87,9 +118,14 @@ void *ptr_Remove(ptr_list *list,int index)
  if(index < list->num)
  {
 	void *tmp = list->items[index];
-	int len = (list->num-1) - index;
-	if(len)
-	  memcpy(list->items+ index * sizeof(void*),list->items + (index+1) * sizeof(void*),len * sizeof(void*));
+	//int len = (list->num-1) - index;
+	//if(len)
+	//{
+	  for(int i =list->num-1;i>index;i--)
+	  {
+	    ptr_MoveUp(list,i);
+	  //memcpy(&list->items[index],&list->items[index+1],len * sizeof(void*));
+	 }
 	list->items = (void**)mem_realloc(list->items,(list->num-1)*sizeof(void*));
 	list->num--;
 	return(tmp);

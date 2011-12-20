@@ -61,8 +61,8 @@ for(int i=0;i<vm->functions->num;i++)
 {
    if(!strcmp(((function_definition*)vm->functions->items[i])->name,name))
 	{
-		ptr_Remove(vm->functions,i);
 		FreeFunctionDefinition((function_definition*)vm->functions->items[i]);
+		ptr_Remove(vm->functions,i);
 	}
    }
 }
@@ -73,8 +73,8 @@ for(int i=0;i<vm->functions->num;i++)
 {
    if(vm->functions->items[i] == fd)
 	{
-		ptr_Remove(vm->functions,i);
 		FreeFunctionDefinition(fd);
+		ptr_Remove(vm->functions,i);
 	}
 }
 }
@@ -144,7 +144,6 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
 {
  if(obj->type == TYPE_CODE)
  {
-  object *tos;
   //printf("showing bytecodes\n");
   code_object *co = (code_object*)obj->ptr;
   //printf("co_ptr=%x\n",(unsigned long)co);
@@ -159,16 +158,16 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
   for(int i=0;i<argc;i++)
   {
     //printf("adding local %d\n",i);
-    tos = stack_Pop(locals);
+    object *local = stack_Pop(locals);
 	tuple_object *co_varnames = (tuple_object*)co->varnames->ptr;
 	char *varname = (char*)co_varnames->items[i]->ptr;
-    if(tos->type == TYPE_UNICODE)
-	 printf("fast storing %s in %s\n",(char*)tos->ptr,varname);
-    if(tos->type == TYPE_INT)
-	 printf("fast storing %d in %s\n",tos->ptr,varname);
-    if(tos->type == TYPE_CODE)
-	 printf("fast storing function %s in %s\n",((code_object*)tos->ptr)->name,varname);
-	co_varnames->items[i]->value_ptr = tos;
+    if(local->type == TYPE_UNICODE)
+	 printf("fast storing %s in %s\n",(char*)local->ptr,varname);
+    if(local->type == TYPE_INT)
+	 printf("fast storing %d in %s\n",local->ptr,varname);
+    if(local->type == TYPE_CODE)
+	 printf("fast storing function %s in %s\n",((code_object*)local->ptr)->name,varname);
+	co_varnames->items[i]->value_ptr = local;
    }
    }
 
@@ -181,9 +180,14 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
   long arg = 0; //holds the argument if present
   int op_thru = 0;//used to skip unneccessary switches
 
+  object *tos;
+  object *tos1;
+  object *tos2;
+
   //FOR DEBUGGING
+  /*
   int old_i = i;
-  /*int index = GetOpcodeIndex(op);
+  int index = GetOpcodeIndex(op);
   if(index >=0)
   {
 	if(opcodes[index].argcount!=0)
@@ -203,8 +207,6 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
   char *name;
   char *varname;
   char *const_content;
-  object *tos1;
-  object *tos2;
    
    
    //prepare opcode argument,increment codepointer  and intepret small opcodes not using an arg etc
@@ -218,10 +220,12 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
 		stack_Close(_stack,0);
 		return(ret); 
 		}
+		
 	case OPCODE_STOP_CODE:
 		i = n;
 		op_thru = 1;
 		break;
+		
 	case OPCODE_BREAK_LOOP:
 		{
 		block_object *bbo = (block_object*)stack_Top(vm->blocks)->ptr;
@@ -229,7 +233,41 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
 		//printf("break to: %d ,start: %d ,len: %d\n",i,bbo->start,bbo->len);
 		op_thru = 1;
 		}
-		//break;
+		break;
+		
+	case OPCODE_ROT_TWO:
+		tos = stack_Top(_stack);
+		tos1 = stack_Second(_stack);
+		stack_SetTop(tos1,_stack);
+		stack_SetSecond(tos,_stack);
+		op_thru = 1;
+		break;
+
+	case OPCODE_ROT_THREE:
+		tos = stack_Top(_stack);
+		tos1 = stack_Second(_stack);
+		tos2 = stack_Third(_stack);
+		stack_SetTop(tos1,_stack);
+		stack_SetSecond(tos2,_stack);
+		stack_SetThird(tos,_stack);
+		op_thru = 1;
+		break;
+
+	case OPCODE_DUP_TOP:
+		tos = stack_Top(_stack);
+		stack_Push(tos,_stack);
+		op_thru = 1;
+		break;
+
+	case OPCODE_DUP_TOP_TWO:
+		tos = stack_Top(_stack);
+		tos1 = stack_Second(_stack);
+		stack_Adjust(2,_stack);
+		stack_SetTop(tos,_stack);
+		stack_SetSecond(tos1,_stack);
+		op_thru = 1;
+		break;
+	
 	case OPCODE_EXTENDED_ARG:
 		extended_arg = num_short(string[i+1],string[i+2]);
 		i += 2;
@@ -311,30 +349,17 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
 		ResetIteration(iter);
 		op_thru = 1;
 		}
-		//break;
+		break;
 	
 	case OPCODE_POP_BLOCK:
 		stack_Pop(vm->blocks);
 		op_thru = 1;
 		break;
 
-	case OPCODE_ROT_TWO:
-	case OPCODE_ROT_THREE:
-	case OPCODE_DUP_TOP:
-	case OPCODE_DUP_TOP_TWO:
 	case OPCODE_UNARY_POSITIVE:
 	case OPCODE_UNARY_NEGATIVE:
 	case OPCODE_UNARY_NOT:
 	case OPCODE_UNARY_INVERT:
-	case OPCODE_BINARY_POWER:
-	case OPCODE_BINARY_MULTIPLY:
-	case OPCODE_BINARY_DIVIDE:
-	case OPCODE_BINARY_MODULO:
-	case OPCODE_BINARY_ADD:
-	case OPCODE_BINARY_SUBTRACT:
-	case OPCODE_BINARY_SUBSCR:
-	case OPCODE_BINARY_FLOOR_DIVIDE:
-	case OPCODE_BINARY_TRUE_DIVIDE:
 	case OPCODE_INPLACE_FLOOR_DIVIDE:
 	case OPCODE_INPLACE_TRUE_DIVIDE:
 	case OPCODE_INPLACE_ADD:
@@ -342,11 +367,6 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
 	case OPCODE_INPLACE_MULTIPLY:
 	case OPCODE_INPLACE_DIVIDE:
 	case OPCODE_INPLACE_MODULO:
-	case OPCODE_BINARY_LSHIFT:
-	case OPCODE_BINARY_RSHIFT:
-	case OPCODE_BINARY_AND:
-	case OPCODE_BINARY_XOR:
-	case OPCODE_BINARY_OR:
 	case OPCODE_INPLACE_POWER:
 	case OPCODE_INPLACE_LSHIFT:
 	case OPCODE_INPLACE_RSHIFT:
@@ -360,9 +380,37 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
    if(op_thru)
 	continue;
    
-   
-   
-   
+   //fetch tos items 
+   switch(op)
+   {
+	case OPCODE_COMPARE_OP:
+	case OPCODE_STORE_SUBSCR:
+	case OPCODE_DELETE_SUBSCR:
+	case OPCODE_BINARY_ADD:
+	case OPCODE_BINARY_SUBTRACT:
+	case OPCODE_BINARY_TRUE_DIVIDE:
+	case OPCODE_BINARY_FLOOR_DIVIDE:
+	case OPCODE_BINARY_MODULO:
+	case OPCODE_BINARY_RSHIFT:
+	case OPCODE_BINARY_POWER:
+	case OPCODE_BINARY_MULTIPLY:
+	case OPCODE_BINARY_LSHIFT:
+		tos = stack_Pop(_stack);
+		tos1 = stack_Pop(_stack);
+		if(tos->value_ptr != NULL)
+			tos = (object*)tos->value_ptr;
+		if(tos1->value_ptr != NULL)
+			tos1 = (object*)tos1->value_ptr;
+		break;
+	case OPCODE_BINARY_DIVIDE:
+	case OPCODE_BINARY_SUBSCR:
+	case OPCODE_BINARY_AND:
+	case OPCODE_BINARY_XOR:
+	case OPCODE_BINARY_OR:
+		break;
+
+	}
+  //execute remaining ops here
   switch(op)
   {
    case OPCODE_POP_JUMP_IF_FALSE:
@@ -610,26 +658,20 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
    break;
 
     case OPCODE_DELETE_SUBSCR:
-    printf(""); //Implements  del TOS1[TOS] 
-   tos = stack_Pop(_stack);
-   tos1 = stack_Pop(_stack);
- 
-   if(tos->value_ptr != NULL)
-    tos = (object*)tos->value_ptr;
-   if(tos1->value_ptr != NULL)
-    tos1 = (object*)tos1->value_ptr;
+	{
 	long dsa = 0;
-   if(tos->type == TYPE_INT)
-   {
+	if(tos->type == TYPE_INT)
+	{
      dsa = tos->ptr;
-   }
-   if(tos1->type == TYPE_TUPLE)
-   {
+	}
+	if(tos1->type == TYPE_TUPLE)
+	{
     //DumpObject(tos2,0);
 	//printf("ssa: %d\n",ssa);
     DeleteItem(tos1,dsa);
 	DumpObject(tos1,0);
-   }
+	}
+	}
 	break;
 	
 	case OPCODE_UNPACK_SEQUENCE:
@@ -654,46 +696,17 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
 		  //stack_Dump(_stack);
 		break;
    
-  case OPCODE_ROT_TWO:
-    tos = stack_Top(_stack);
-    tos1 = stack_Second(_stack);
-   stack_SetTop(tos1,_stack);
-   stack_SetSecond(tos,_stack);
-   break;
-
-   case OPCODE_ROT_THREE:
-    tos = stack_Top(_stack);
-    tos1 = stack_Second(_stack);
-    tos2 = stack_Third(_stack);
-   stack_SetTop(tos1,_stack);
-   stack_SetSecond(tos2,_stack);
-   stack_SetThird(tos,_stack);
-   break;
-
-   case OPCODE_DUP_TOP:
-   tos = stack_Top(_stack);
-   stack_Push(tos,_stack);
-   break;
-
-   case OPCODE_DUP_TOP_TWO:
-   tos = stack_Top(_stack);
-   tos1 = stack_Second(_stack);
-   stack_Adjust(2,_stack);
-   stack_SetTop(tos,_stack);
-   stack_SetSecond(tos1,_stack);
-   break;
-	
 	case OPCODE_UNARY_POSITIVE:
-    tos = stack_Pop(_stack);
-    if(tos->type == TYPE_INT)
-	{
-	object *up = AllocObject();
-	up->type = TYPE_INT;
-    up->flags = OFLAG_ON_STACK;
-	up->value_ptr = NULL;
-	up->ptr = +(long)tos->ptr;
-     stack_Push(up,_stack);
-	}
+		tos = stack_Pop(_stack);
+		if(tos->type == TYPE_INT)
+		{
+			object *up = AllocObject();
+			up->type = TYPE_INT;
+			up->flags = OFLAG_ON_STACK;
+			up->value_ptr = NULL;
+			up->ptr = +(long)tos->ptr;
+			stack_Push(up,_stack);
+		}
 	break;
 
 	case OPCODE_UNARY_NEGATIVE:
@@ -751,33 +764,17 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
 	
 	
    case OPCODE_BINARY_ADD:
-   printf("");
-   tos = stack_Pop(_stack);
-   tos1 = stack_Pop(_stack);
-   //printf("tos1.type:%c (%s)(%d)\n",tos1->type,((unicode_object*)tos1->ptr)->content,((object*)tos1->value_ptr)->ptr );
-   object* org_tos = tos;
-   if(tos->value_ptr != NULL)
-    tos = (object*)tos->value_ptr;
-   if(tos1->value_ptr != NULL)
-    tos1 = (object*)tos1->value_ptr;
-   printf("tos.type:%c (%d)\n",(long)tos->type,tos->ptr);
-   printf("tos1.type:%c (%d)\n",(long)tos->type,tos->ptr);
-
-
 	if(tos->type == TYPE_UNICODE && tos1->type == TYPE_UNICODE)
     {
      char *tos_tmp = (char*)tos->ptr;
 	 char *tos1_tmp = (char*)tos1->ptr;
      char *tmp = str_Cat(tos1_tmp,tos_tmp);
-     //free(((unicode_object*)tos->ptr)->content);
-	 //((unicode_object*)tos->ptr)->content = tmp;
-	 printf("cat:[%s]\n",tmp);
+	 //printf("cat:[%s]\n",tmp);
 	 object *new_tos = AllocObject();
 	 new_tos->flags = OFLAG_ON_STACK;
 	 new_tos->type = TYPE_UNICODE;
 	 new_tos->ptr = tmp;
 	 new_tos->value_ptr = NULL;
-	 //new_tos_value->len = strlen(tmp);
      stack_Push(new_tos,_stack);
    }
    else
@@ -804,15 +801,7 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
    break;
 
    case OPCODE_BINARY_SUBTRACT:
-   printf("");
-   tos = stack_Pop(_stack);
-   tos1 = stack_Pop(_stack);
-   //object* org_tos = tos;
-   if(tos->value_ptr != NULL)
-    tos = (object*)tos->value_ptr;
-   if(tos1->value_ptr != NULL)
-    tos1 = (object*)tos1->value_ptr;
-
+   {
    long a = 0;
    long b = 0;
    object *new_tos = AllocObject();
@@ -831,18 +820,11 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
    new_tos->ptr = b - a;
    printf("%d - %d = %d (%d)\n",b,a,b-a,new_tos->ptr);
    stack_Push(new_tos,_stack);
+   }
    break;
 
    case OPCODE_BINARY_TRUE_DIVIDE:
-   printf("");
-   tos = stack_Pop(_stack);
-   tos1 = stack_Pop(_stack);
-   //object* org_tos = tos;
-   if(tos->value_ptr != NULL)
-    tos = (object*)tos->value_ptr;
-   if(tos1->value_ptr != NULL)
-    tos1 = (object*)tos1->value_ptr;
-
+   {
    long da = 0;
    long db = 0;
    object *new_dtos = AllocObject();
@@ -861,18 +843,11 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
    new_dtos->ptr =(long) db / da;//TODO catch divide by zero
    printf("%d / %d = %d (%d)\n",db,da,db/da,new_dtos->ptr);
    stack_Push(new_dtos,_stack);
+   }
    break;
 
    case OPCODE_BINARY_FLOOR_DIVIDE:
-   printf("");
-   tos = stack_Pop(_stack);
-   tos1 = stack_Pop(_stack);
-   //object* org_tos = tos;
-   if(tos->value_ptr != NULL)
-    tos = (object*)tos->value_ptr;
-   if(tos1->value_ptr != NULL)
-    tos1 = (object*)tos1->value_ptr;
-
+   {
    long fda = 0;
    long fdb = 0;
    object *new_fdtos = AllocObject();
@@ -891,18 +866,11 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
    new_fdtos->ptr =(long) fdb / fda;//TODO catch divide by zero
    printf("%d / %d = %d (%d)\n",fdb,fda,fdb/fda,new_fdtos->ptr);
    stack_Push(new_fdtos,_stack);
+   }
    break;
 
    case OPCODE_BINARY_MODULO:
-   printf("");
-   tos = stack_Pop(_stack);
-   tos1 = stack_Pop(_stack);
-   //object* org_tos = tos;
-   if(tos->value_ptr != NULL)
-    tos = (object*)tos->value_ptr;
-   if(tos1->value_ptr != NULL)
-    tos1 = (object*)tos1->value_ptr;
-
+   {
    long mda = 0;
    long mdb = 0;
    object *new_mdtos = AllocObject();
@@ -921,18 +889,11 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
    new_mdtos->ptr =(long) mdb % mda;//TODO catch divide by zero
    printf("%d %% %d = %d\n",mdb,mda,new_mdtos->ptr);
    stack_Push(new_mdtos,_stack);
+   }
    break;
 
    case OPCODE_BINARY_RSHIFT:
-   printf("");
-   tos = stack_Pop(_stack);
-   tos1 = stack_Pop(_stack);
-   //object* org_tos = tos;
-   if(tos->value_ptr != NULL)
-    tos = (object*)tos->value_ptr;
-   if(tos1->value_ptr != NULL)
-    tos1 = (object*)tos1->value_ptr;
-
+   {
    long brsa = 0;
    long brsb = 0;
    object *new_brstos = AllocObject();
@@ -951,18 +912,11 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
    new_brstos->ptr =(long) brsb >> brsa;
    printf("%d >> %d = %d\n",brsb,brsa,new_brstos->ptr);
    stack_Push(new_brstos,_stack);
+   }
    break;
 
    case OPCODE_BINARY_LSHIFT:
-   printf("");
-   tos = stack_Pop(_stack);
-   tos1 = stack_Pop(_stack);
-   //object* org_tos = tos;
-   if(tos->value_ptr != NULL)
-    tos = (object*)tos->value_ptr;
-   if(tos1->value_ptr != NULL)
-    tos1 = (object*)tos1->value_ptr;
-
+   {
    long blsa = 0;
    long blsb = 0;
    object *new_blstos = AllocObject();
@@ -981,17 +935,11 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
    new_blstos->ptr =(long) blsb << blsa;
    printf("%d << %d = %d\n",blsb,blsa,new_blstos->ptr);
    stack_Push(new_blstos,_stack);
+   }
    break;
 
    case OPCODE_BINARY_POWER:
-   printf("");
-   tos = stack_Pop(_stack);
-   tos1 = stack_Pop(_stack);
-   //object* org_tos = tos;
-   if(tos->value_ptr != NULL)
-    tos = (object*)tos->value_ptr;
-   if(tos1->value_ptr != NULL)
-    tos1 = (object*)tos1->value_ptr;
+   {
    long pa = 0;
    long pb = 0;
    object *new_ptos = AllocObject();
@@ -1007,23 +955,15 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
    {
     pb = tos1->ptr;
    }
-   //printf("getting pow\n");
    new_ptos->ptr = long_pow(pb , pa);//TODO catch divide by zero
    printf("%d ** %d = %d\n",pb,pa,new_ptos->ptr);
    stack_Push(new_ptos,_stack);
+   }
    break;
 
    
    case OPCODE_BINARY_MULTIPLY:
-   printf("");
-   tos = stack_Pop(_stack);
-   tos1 = stack_Pop(_stack);
-   //object* org_tos = tos;
-   if(tos->value_ptr != NULL)
-    tos = (object*)tos->value_ptr;
-   if(tos1->value_ptr != NULL)
-    tos1 = (object*)tos1->value_ptr;
-
+   {
    long ma = 0;
    long mb = 0;
    object *new_mtos = AllocObject();
@@ -1042,19 +982,11 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
    new_mtos->ptr = ma * mb;
    printf("%d * %d = %d (%d)\n",ma,mb,ma*mb,new_mtos->ptr);
    stack_Push(new_mtos,_stack);
-   break;
+   }
+   //break;
 
    case OPCODE_STORE_SUBSCR:
-    printf(""); //Implements TOS1[TOS] = TOS2.
-   tos = stack_Pop(_stack);
-   tos1 = stack_Pop(_stack);
-   tos2 = stack_Pop(_stack);
-   if(tos->value_ptr != NULL)
-    tos = (object*)tos->value_ptr;
-   if(tos1->value_ptr != NULL)
-    tos1 = (object*)tos1->value_ptr;
-   if(tos2->value_ptr != NULL)
-    tos2 = (object*)tos2->value_ptr;
+   {
 	long ssa = 0;
    if(tos->type == TYPE_INT)
    {
@@ -1066,6 +998,7 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
 	//printf("ssa: %d\n",ssa);
     SetItem(tos1,ssa,tos2);
 	//DumpObject(tos1,0);
+   }
    }
 	break;
    
@@ -1433,16 +1366,7 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
    break;
    
    case OPCODE_COMPARE_OP:
-   printf("");
-    tos = stack_Pop(_stack);
-    tos1 = stack_Pop(_stack);
-
-	if(tos->value_ptr != NULL)
-    tos = (object*)tos->value_ptr;
-   if(tos1->value_ptr != NULL)
-    tos1 = (object*)tos1->value_ptr;
-	short op = num_short(string[i+1],string[i+2]);
-	switch(op)
+	switch(arg)
 	{
 	  case 0: // <
 			printf("");
