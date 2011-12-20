@@ -25,19 +25,27 @@
 #define LISTS_H
 
 #include "memory.h"
+#include "assert.h"
 
 
+typedef struct {
+void **items;
+unsigned int num;
+}ptr_list;
 
-void **ptr_CreateList(unsigned int num);
-void ptr_CloseList(void **list);
-void ptr_Push(void **list,void *ptr);
-void *ptr_Pop(void **list);
-int ptr_Insert(void **list,int index,void *ptr);
-int ptr_Remove(void **list,int index);
-int ptr_Clear(void **list);
-int ptr_GetNum(void **list);
-void *ptr_Get(void **list,int index);
-void ptr_Set(void **list,int index,void *ptr);
 
+ptr_list *ptr_CreateList(unsigned int num);
+void ptr_CloseList(ptr_list *list);
+void ptr_Push(ptr_list *list,void *ptr);
+void *ptr_Pop(ptr_list *list);
+int ptr_Insert(ptr_list *list,int index,void *ptr);
+void *ptr_Remove(ptr_list *list,int index);
+int ptr_Clear(ptr_list *list);
+int ptr_GetNum(ptr_list *list);
+void *ptr_Get(ptr_list *list,int index);
+void ptr_Set(ptr_list *list,int index,void *ptr);
+void ptr_Queue(ptr_list *list,void *ptr);
+void *ptr_Dequeue(ptr_list *list);
+int ptr_IsEmpty(ptr_list *list);
 
 #endif

@@ -23,6 +23,10 @@
 #ifndef STREAM_H
 #define STREAM_H
 
+typedef struct {
+
+
+}stream;
 
 
 

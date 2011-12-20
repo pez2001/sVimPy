@@ -67,11 +67,9 @@ void RemoveFunctionDefinition(function_definition *fd);
 object *ExecuteCFunction(char *name,stack *stack);
 object *ExecuteCObjFunction(char *name,object *obj);
 function_definition *FindFunction(char *name);
-void vm_Init();
+vm *vm_Init(stream *s);
 void vm_Close();
 
-//object *BuildList(stack *stack,int argc);
-object *BuildList(stack *stack);
 
 object *ExecuteObject(object *obj,object *caller,object *global,stack *locals,int argc);
 

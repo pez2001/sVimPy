@@ -24,13 +24,8 @@
 #define STACK_H
 #include "object.h"
 
-#define STACK_ITEM_SIZE 4
-//#define STACK_TYPE *void
 #define STACK_TYPE *object;
 
-#define STACK_MIN_ITEMS 100
-#define CALLSTACK_MIN_ITEMS 20
-#define STACK_SIZE_INCREASE 200
 
 
 typedef struct 
