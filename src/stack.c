@@ -96,6 +96,17 @@ stack->items[stack->top] = x;
 stack->top++;
 }
 
+object *stack_Bottom(stack *stack)
+{
+if(stack->top < 1)
+{
+ printf("stack underflow - no top\n");
+ return(NULL);
+ }
+object *r = stack->items[0];
+return(r);
+}
+
 object *stack_Top(stack *stack)
 {
 if(stack->top < 1)
@@ -129,7 +140,15 @@ object *r = stack->items[stack->top-3];
 return(r);
 }
 
-
+void stack_SetBottom(object *x,stack *stack)
+{
+if(stack->top < 1)
+{
+ printf("stack underflow - no top\n");
+ return(NULL);
+ }
+ stack->items[0] = x;
+}
 
 void stack_SetTop(object *x,stack *stack)
 {
@@ -139,7 +158,6 @@ if(stack->top < 1)
  return(NULL);
  }
  stack->items[stack->top-1] = x;
-
 }
 
 void stack_SetSecond(object *x,stack *stack)

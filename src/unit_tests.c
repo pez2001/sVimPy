@@ -127,10 +127,10 @@ void OpenPYC(vm *vm)
  //printf("objects num: %d\n",objects_num);
  //printf("max objects : %d\n",objects_max);
  //printf("objects headers total size  : %d\n",objects_header_total);
- 
+ vm_SetGlobal(vm,obj);
  //DumpObject(obj,0);
- object *ret = ExecuteObject(vm,obj,obj,obj,NULL,0);
- //printf("object executed\n");
+ object *ret = vm_RunObject(vm,obj,obj,NULL,0);//,obj
+ printf("object executed\n");
  //DumpObject(obj,0);
  //printf("cleaning up object\n");
  FreeObject(obj);
@@ -148,16 +148,17 @@ int main(int argc,char *argv[])
  ptr_tests();
  vm *vm = vm_Init(NULL);
  function_definition *build_list = CreateCFunction(&BuildList,"internal.BuildList");
- AddFunctionDefinition(vm,build_list);
+ vm_AddFunctionDefinition(vm,build_list);
  function_definition *range = CreateCFunction(&if_range,"range");
- AddFunctionDefinition(vm,range);
+ vm_AddFunctionDefinition(vm,range);
  function_definition *print = CreateCFunction(&if_print,"print");
- AddFunctionDefinition(vm,print);
- RemoveFunction(vm,"range");
+ vm_AddFunctionDefinition(vm,print);
+ vm_RemoveFunction(vm,"range");
  //printf("Calling all Unit Tests\n");
  OpenPYC(vm);
  //printf("clearing recycle stack\n");
  //stack_Dump(vm->recycle);
+ printf("closing vm\n");
  vm_Close(vm);
  //printf("objects headers total size  : %d\n",objects_header_total);
  mem_Close();

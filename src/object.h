@@ -152,7 +152,7 @@ object *code;
 long start;
 long len;
 object *iter;
-//long pos;
+long ip;
 }block_object;
 
 

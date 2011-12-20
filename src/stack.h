@@ -44,6 +44,9 @@ void stack_Push(object *x,stack *stack);
 void stack_Close(stack *stack,int free_objects);
 int stack_Contains(object *x,stack *stack);
 object *stack_Top(stack *stack);
+object *stack_Bottom(stack *stack);
+void stack_SetBottom(object *x,stack *stack);
+
 void stack_SetTop(object *x,stack *stack);
 
 object *stack_Second(stack *stack);

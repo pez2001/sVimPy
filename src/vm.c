@@ -49,13 +49,13 @@ fd->name = str_Copy(name);
 return(fd);
 }
 
-int AddFunctionDefinition(vm *vm,function_definition *fd)
+int vm_AddFunctionDefinition(vm *vm,function_definition *fd)
 {
 ptr_Push(vm->functions,fd);
 return(vm->functions->num -1);
 }
 
-void RemoveFunction(vm *vm,char *name)
+void vm_RemoveFunction(vm *vm,char *name)
 {
 for(int i=0;i<vm->functions->num;i++)
 {
@@ -67,7 +67,7 @@ for(int i=0;i<vm->functions->num;i++)
    }
 }
 
-void RemoveFunctionDefinition(vm *vm,function_definition *fd)
+void vm_RemoveFunctionDefinition(vm *vm,function_definition *fd)
 {
 for(int i=0;i<vm->functions->num;i++)
 {
@@ -79,9 +79,9 @@ for(int i=0;i<vm->functions->num;i++)
 }
 }
 
-object *ExecuteCFunction(vm *vm,char *name,stack *stack)
+object *vm_ExecuteCFunction(vm *vm,char *name,stack *stack)
 {
-function_definition *fd = FindFunction(vm,name);
+function_definition *fd = vm_FindFunction(vm,name);
 if(fd != NULL)
  {
   //printf("fd found:%s\n",fd->name);
@@ -90,16 +90,16 @@ if(fd != NULL)
  } 
 }
 
-object *ExecuteCObjFunction(vm *vm,char *name,object *obj)
+object *vm_ExecuteCObjFunction(vm *vm,char *name,object *obj)
 {
-function_definition *fd = FindFunction(vm,name);
+function_definition *fd = vm_FindFunction(vm,name);
 if(fd != NULL)
  {
   return((*fd->func.func_obj)(obj));
  }
 }
 
-function_definition *FindFunction(vm *vm,char *name)
+function_definition *vm_FindFunction(vm *vm,char *name)
 {
 for(int i=0;i<vm->functions->num;i++)
 {
@@ -115,12 +115,23 @@ assert(mem_free(fd->name));
 assert(mem_free(fd));
 }
 
-vm *vm_Init(stream *s)
+vm *vm_Init(code_object *co)
 {
 vm *tmp = (vm*)mem_malloc(sizeof(vm),"vm_Init() return");
 tmp->functions = ptr_CreateList(0);
 tmp->recycle = stack_Init(90,NULL);
 tmp->blocks = stack_Init(10,tmp->recycle);
+
+ if(co != NULL)
+ {
+ block_object *bo = AllocBlockObject();
+ bo->code = co;
+ bo->ip = 0;
+ bo->iter = NULL;
+ bo->start = 0;
+ bo->len = 0;
+ stack_Push(bo,tmp->blocks);
+ }
 return(tmp);
 }
 
@@ -134,13 +145,28 @@ for(int i=0;i<vm->functions->num;i++)
 ptr_CloseList(vm->functions);
 //stack_Close(vm->blocks,0);
  stack_Close(vm->recycle,1);
- //stack_Dump(blocks);
- stack_Close(vm->blocks,1);
+ //stack_Dump(vm->blocks);
+ stack_Close(vm->blocks,0);
 assert(mem_free(vm));
 }
 
+void vm_SetGlobal(vm *vm,code_object *co) 
+{
+ block_object *bo = AllocBlockObject();
+ bo->code = co;
+ bo->ip = 0;
+ bo->iter = NULL;
+ bo->start = 0;
+ bo->len = 0;
+ if(vm->blocks->top)
+	stack_SetBottom(bo,vm->blocks);
+ else 
+  stack_Push(bo,vm->blocks);
+ 
+ 
+}
 
-object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *locals,int argc)
+object *vm_RunObject(vm *vm,object *obj,object* caller,stack *locals,int argc) //
 {
  if(obj->type == TYPE_CODE)
  {
@@ -148,6 +174,7 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
   code_object *co = (code_object*)obj->ptr;
   //printf("co_ptr=%x\n",(unsigned long)co);
   //printf("stack size:%d\n",co->stacksize);
+  object *global = ((block_object*)stack_Bottom(vm->blocks))->code;
   stack *_stack = stack_Init(co->stacksize,vm->recycle);
   string_object *bytecodes = (string_object*)co->code->ptr;
   char *string = bytecodes->content;
@@ -171,7 +198,7 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
    }
    }
 
-  int i=0;
+  int i = 0;
   int has_extended_arg = 0;
   short extended_arg = 0;
   while(i<n)
@@ -213,8 +240,15 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
    switch(op)
    {
 	case OPCODE_NOP:
+		op_thru = 1;
 		break;
-    case OPCODE_RETURN_VALUE:
+
+		case OPCODE_MAKE_FUNCTION:
+		i += 2;
+		op_thru = 1;
+		break;
+
+		case OPCODE_RETURN_VALUE:
 		{
         object *ret = stack_Pop(_stack);
 		stack_Close(_stack,0);
@@ -226,6 +260,26 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
 		op_thru = 1;
 		break;
 		
+	case OPCODE_POP_TOP:
+		stack_Pop(_stack);
+		op_thru = 1;
+		break;
+
+	case OPCODE_GET_ITER:
+		{
+		object *iter = stack_Pop(_stack);
+		block_object *abo = (block_object*)stack_Top(vm->blocks)->ptr;
+		abo->iter = iter;
+		ResetIteration(iter);
+		op_thru = 1;
+		}
+		break;
+	
+	case OPCODE_POP_BLOCK:
+		stack_Pop(vm->blocks);
+		op_thru = 1;
+		break;
+
 	case OPCODE_BREAK_LOOP:
 		{
 		block_object *bbo = (block_object*)stack_Top(vm->blocks)->ptr;
@@ -235,6 +289,7 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
 		}
 		break;
 		
+
 	case OPCODE_ROT_TWO:
 		tos = stack_Top(_stack);
 		tos1 = stack_Second(_stack);
@@ -309,7 +364,6 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
 	case OPCODE_JUMP_ABSOLUTE:
 	case OPCODE_POP_JUMP_IF_FALSE:
 	case OPCODE_POP_JUMP_IF_TRUE:
-	case OPCODE_MAKE_FUNCTION:
 	case OPCODE_BUILD_SLICE:
 	case OPCODE_MAKE_CLOSURE:
 	case OPCODE_LOAD_CLOSURE:
@@ -336,30 +390,20 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
 		i += 2;
 		break;
 
-	case OPCODE_POP_TOP:
-		stack_Pop(_stack);
-		op_thru = 1;
-		break;
-
-	case OPCODE_GET_ITER:
-		{
-		object *iter = stack_Pop(_stack);
-		block_object *abo = (block_object*)stack_Top(vm->blocks)->ptr;
-		abo->iter = iter;
-		ResetIteration(iter);
-		op_thru = 1;
-		}
-		break;
-	
-	case OPCODE_POP_BLOCK:
-		stack_Pop(vm->blocks);
-		op_thru = 1;
-		break;
-
 	case OPCODE_UNARY_POSITIVE:
 	case OPCODE_UNARY_NEGATIVE:
 	case OPCODE_UNARY_NOT:
 	case OPCODE_UNARY_INVERT:
+	case OPCODE_YIELD_VALUE:
+		break;
+	}
+   
+   if(op_thru)
+	continue;
+   
+   //fetch tos items 
+   switch(op)
+   {
 	case OPCODE_INPLACE_FLOOR_DIVIDE:
 	case OPCODE_INPLACE_TRUE_DIVIDE:
 	case OPCODE_INPLACE_ADD:
@@ -373,16 +417,6 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
 	case OPCODE_INPLACE_AND:
 	case OPCODE_INPLACE_XOR:
 	case OPCODE_INPLACE_OR:
-	case OPCODE_YIELD_VALUE:
-		break;
-	}
-   
-   if(op_thru)
-	continue;
-   
-   //fetch tos items 
-   switch(op)
-   {
 	case OPCODE_COMPARE_OP:
 	case OPCODE_STORE_SUBSCR:
 	case OPCODE_DELETE_SUBSCR:
@@ -395,6 +429,11 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
 	case OPCODE_BINARY_POWER:
 	case OPCODE_BINARY_MULTIPLY:
 	case OPCODE_BINARY_LSHIFT:
+	case OPCODE_BINARY_DIVIDE:
+	case OPCODE_BINARY_AND:
+	case OPCODE_BINARY_XOR:
+	case OPCODE_BINARY_OR:
+	case OPCODE_BINARY_SUBSCR:
 		tos = stack_Pop(_stack);
 		tos1 = stack_Pop(_stack);
 		if(tos->value_ptr != NULL)
@@ -402,18 +441,26 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
 		if(tos1->value_ptr != NULL)
 			tos1 = (object*)tos1->value_ptr;
 		break;
-	case OPCODE_BINARY_DIVIDE:
-	case OPCODE_BINARY_SUBSCR:
-	case OPCODE_BINARY_AND:
-	case OPCODE_BINARY_XOR:
-	case OPCODE_BINARY_OR:
-		break;
-
+		
 	}
   //execute remaining ops here
   switch(op)
   {
-   case OPCODE_POP_JUMP_IF_FALSE:
+	case OPCODE_SETUP_LOOP:
+	{
+	object *bo = AllocObject();
+	block_object *block = AllocBlockObject();
+	bo->type = TYPE_BLOCK;
+	bo->ptr = block;
+	bo->flags = OFLAG_ON_STACK;
+	block->start = i;
+	block->len = arg;
+	//printf("block - start: %d, len: %d\n",block->start,block->len);
+	stack_Push(bo,vm->blocks);
+	}	
+	break;
+
+	case OPCODE_POP_JUMP_IF_FALSE:
    {
     tos = stack_Pop(_stack);
 	if(tos->type == TYPE_FALSE)
@@ -482,9 +529,8 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
 				i = i + arg;
 			}
 		}
-		//break;
+		break;
 
-	
 	case OPCODE_BUILD_TUPLE:
 	case OPCODE_BUILD_LIST:
 		printf("");
@@ -497,7 +543,7 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
 		{
 			stack_Push(stack_Pop(_stack),blcall);
 		}
-		object *tmp = ExecuteCFunction(vm,"internal.BuildList",blcall);
+		object *tmp = vm_ExecuteCFunction(vm,"internal.BuildList",blcall);
   	    if(tmp != NULL)
 	    {
 				stack_Push(tmp,_stack);	
@@ -517,7 +563,7 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
     object *lgo = FindUnicodeTupleItem(co_global->varnames,name);
 	//DumpObject(lgo,1);
 	if(lgo == NULL)
-	 if(FindFunction(vm,name)!= NULL)
+	 if(vm_FindFunction(vm,name)!= NULL)
 	 {
 	  lgo = AllocObject();
 	  lgo->type = TYPE_UNICODE;
@@ -602,9 +648,6 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
 	stack_Push(co_varnames->items[arg]->value_ptr,_stack);
     break;
 
-    case OPCODE_MAKE_FUNCTION:
-		 //not used right now
-		break;
 
 
    case OPCODE_STORE_NAME:
@@ -1003,17 +1046,7 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
 	break;
    
    case OPCODE_BINARY_SUBSCR:
-   printf("");// TOS = TOS1[TOS].
-   tos = stack_Pop(_stack);
-   tos1 = stack_Pop(_stack);
-   //tos2 = stack_Pop(_stack);
-   if(tos->value_ptr != NULL)
-    tos = (object*)tos->value_ptr;
-   if(tos1->value_ptr != NULL)
-    tos1 = (object*)tos1->value_ptr;
-   //if(tos2->value_ptr != NULL)
-   // tos2 = (object*)tos2->value_ptr;
-
+	{
    long bsa = 0;
    if(tos->type == TYPE_INT)
    {
@@ -1027,16 +1060,11 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
    //DumpObject(bst,0);
    stack_Push(bst,_stack);
    }
+   }
    break;
    
    case OPCODE_INPLACE_RSHIFT:
-   printf("");
-   tos = stack_Pop(_stack);
-   tos1 = stack_Pop(_stack);
-   if(tos->value_ptr != NULL)
-    tos = (object*)tos->value_ptr;
-   if(tos1->value_ptr != NULL)
-    tos1 = (object*)tos1->value_ptr;
+   {
    long ira = 0;
    long irb = 0;
    object *new_irtos = AllocObject();
@@ -1055,16 +1083,11 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
    new_irtos->ptr = irb >> ira;
    printf("%d >> %d = %d\n",irb,ira,new_irtos->ptr);
    stack_Push(new_irtos,_stack);
+   }
    break;
 
    case OPCODE_INPLACE_AND:
-   printf("");
-   tos = stack_Pop(_stack);
-   tos1 = stack_Pop(_stack);
-   if(tos->value_ptr != NULL)
-    tos = (object*)tos->value_ptr;
-   if(tos1->value_ptr != NULL)
-    tos1 = (object*)tos1->value_ptr;
+   {
    long iaa = 0;
    long iab = 0;
    object *new_iatos = AllocObject();
@@ -1083,16 +1106,11 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
    new_iatos->ptr = iab & iaa;
    printf("%d & %d = %d\n",iab,iaa,new_iatos->ptr);
    stack_Push(new_iatos,_stack);
+   }
    break;
 
    case OPCODE_INPLACE_XOR:
-   printf("");
-   tos = stack_Pop(_stack);
-   tos1 = stack_Pop(_stack);
-   if(tos->value_ptr != NULL)
-    tos = (object*)tos->value_ptr;
-   if(tos1->value_ptr != NULL)
-    tos1 = (object*)tos1->value_ptr;
+   {
    long ixa = 0;
    long ixb = 0;
    object *new_ixtos = AllocObject();
@@ -1111,16 +1129,11 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
    new_ixtos->ptr = ixb ^ ixa;
    printf("%d ^ %d = %d\n",ixb,ixa,new_ixtos->ptr);
    stack_Push(new_ixtos,_stack);
+   }
    break;
 
    case OPCODE_INPLACE_LSHIFT:
-   printf("");
-   tos = stack_Pop(_stack);
-   tos1 = stack_Pop(_stack);
-   if(tos->value_ptr != NULL)
-    tos = (object*)tos->value_ptr;
-   if(tos1->value_ptr != NULL)
-    tos1 = (object*)tos1->value_ptr;
+   {
    long ilsa = 0;
    long ilsb = 0;
    object *new_ilstos = AllocObject();
@@ -1139,16 +1152,11 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
    new_ilstos->ptr = ilsb << ilsa;
    printf("%d << %d = %d\n",ilsb,ilsa,new_ilstos->ptr);
    stack_Push(new_ilstos,_stack);
+   }
    break;
 
    case OPCODE_INPLACE_OR:
-   printf("");
-   tos = stack_Pop(_stack);
-   tos1 = stack_Pop(_stack);
-   if(tos->value_ptr != NULL)
-    tos = (object*)tos->value_ptr;
-   if(tos1->value_ptr != NULL)
-    tos1 = (object*)tos1->value_ptr;
+   {
    long ioa = 0;
    long iob = 0;
    object *new_iotos = AllocObject();
@@ -1167,16 +1175,11 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
    new_iotos->ptr = iob | ioa;
    printf("%d | %d = %d\n",iob,ioa,new_iotos->ptr);
    stack_Push(new_iotos,_stack);
+   }
    break;
 
    case OPCODE_INPLACE_ADD:
-   printf("");
-   tos = stack_Pop(_stack);
-   tos1 = stack_Pop(_stack);
-   if(tos->value_ptr != NULL)
-    tos = (object*)tos->value_ptr;
-   if(tos1->value_ptr != NULL)
-    tos1 = (object*)tos1->value_ptr;
+   {
    long iada = 0;
    long iadb = 0;
    object *new_iadtos = AllocObject();
@@ -1195,16 +1198,11 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
    new_iadtos->ptr = iadb + iada;
    printf("%d + %d = %d\n",iadb,iada,new_iadtos->ptr);
    stack_Push(new_iadtos,_stack);
+   }
    break;
 
    case OPCODE_INPLACE_MULTIPLY:
-   printf("");
-   tos = stack_Pop(_stack);
-   tos1 = stack_Pop(_stack);
-   if(tos->value_ptr != NULL)
-    tos = (object*)tos->value_ptr;
-   if(tos1->value_ptr != NULL)
-    tos1 = (object*)tos1->value_ptr;
+   {
    long ima = 0;
    long imb = 0;
    object *new_imtos = AllocObject();
@@ -1223,16 +1221,11 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
    new_imtos->ptr = imb * ima;
    printf("%d * %d = %d\n",imb,ima,new_imtos->ptr);
    stack_Push(new_imtos,_stack);
+   }
    break;
 
    case OPCODE_INPLACE_SUBTRACT:
-   printf("");
-   tos = stack_Pop(_stack);
-   tos1 = stack_Pop(_stack);
-   if(tos->value_ptr != NULL)
-    tos = (object*)tos->value_ptr;
-   if(tos1->value_ptr != NULL)
-    tos1 = (object*)tos1->value_ptr;
+   {
    long isa = 0;
    long isb = 0;
    object *new_istos = AllocObject();
@@ -1251,16 +1244,11 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
    new_istos->ptr = isb - isa;
    printf("%d - %d = %d\n",isb,isa,new_istos->ptr);
    stack_Push(new_istos,_stack);
+   }
    break;
 
    case OPCODE_INPLACE_MODULO:
-   printf("");
-   tos = stack_Pop(_stack);
-   tos1 = stack_Pop(_stack);
-   if(tos->value_ptr != NULL)
-    tos = (object*)tos->value_ptr;
-   if(tos1->value_ptr != NULL)
-    tos1 = (object*)tos1->value_ptr;
+   {
    long imoa = 0;
    long imob = 0;
    object *new_imotos = AllocObject();
@@ -1279,16 +1267,11 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
    new_imotos->ptr = imob % imoa;
    printf("%d %% %d = %d\n",imob,imoa,new_imotos->ptr);
    stack_Push(new_imotos,_stack);
+   }
    break;
 
    case OPCODE_INPLACE_TRUE_DIVIDE:
-   printf("");
-   tos = stack_Pop(_stack);
-   tos1 = stack_Pop(_stack);
-   if(tos->value_ptr != NULL)
-    tos = (object*)tos->value_ptr;
-   if(tos1->value_ptr != NULL)
-    tos1 = (object*)tos1->value_ptr;
+   {
    long itda = 0;
    long itdb = 0;
    object *new_itdtos = AllocObject();
@@ -1307,16 +1290,11 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
    new_itdtos->ptr = itdb / itda;
    printf("%d / %d = %d\n",itdb,itda,new_itdtos->ptr);
    stack_Push(new_itdtos,_stack);
+   }
    break;
    
    case OPCODE_INPLACE_FLOOR_DIVIDE:
-   printf("");
-   tos = stack_Pop(_stack);
-   tos1 = stack_Pop(_stack);
-   if(tos->value_ptr != NULL)
-    tos = (object*)tos->value_ptr;
-   if(tos1->value_ptr != NULL)
-    tos1 = (object*)tos1->value_ptr;
+   {
    long ifda = 0;
    long ifdb = 0;
    object *new_ifdtos = AllocObject();
@@ -1335,16 +1313,11 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
    new_ifdtos->ptr = ifdb / ifda;
    printf("%d // %d = %d\n",ifdb,ifda,new_ifdtos->ptr);
    stack_Push(new_ifdtos,_stack);
+   }
    break;
    
    case OPCODE_INPLACE_POWER:
-   printf("");
-   tos = stack_Pop(_stack);
-   tos1 = stack_Pop(_stack);
-   if(tos->value_ptr != NULL)
-    tos = (object*)tos->value_ptr;
-   if(tos1->value_ptr != NULL)
-    tos1 = (object*)tos1->value_ptr;
+   {
    long ifpa = 0;
    long ifpb = 0;
    object *new_ifptos = AllocObject();
@@ -1363,6 +1336,7 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
    new_ifptos->ptr = long_pow(ifpb , ifpa);
    printf("%d ** %d = %d\n",ifpb,ifpa,new_ifptos->ptr);
    stack_Push(new_ifptos,_stack);
+   }
    break;
    
    case OPCODE_COMPARE_OP:
@@ -1450,19 +1424,6 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
 		break;
 */	
 	
-	case OPCODE_SETUP_LOOP:
-	{
-	object *bo = AllocObject();
-	block_object *block = AllocBlockObject();
-	bo->type = TYPE_BLOCK;
-	bo->ptr = block;
-	bo->flags = OFLAG_ON_STACK;
-	block->start = i;
-	block->len = arg;
-	printf("block - start: %d, len: %d\n",block->start,block->len);
-	stack_Push(bo,vm->blocks);
-	}	
-	//break;
 	
     case OPCODE_CALL_FUNCTION:
 	{
@@ -1482,7 +1443,7 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
 	    { 
 			stack_Push(stack_Pop(call),_stack);
 	    }
-	    object *ret = ExecuteObject(vm,(object*)function_name,obj,global,call,arg);
+	    object *ret = vm_RunObject(vm,(object*)function_name,obj,call,arg);//,global
 		if(ret != NULL)
 		 stack_Push(ret,_stack);
 		if(arg>0)
@@ -1497,7 +1458,7 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
 	    { 
 			stack_Push(stack_Pop(call),_stack);
 	    }
-	    object *ret = ExecuteObject(vm,(object*)function_name->value_ptr,obj,global,NULL,0);
+	    object *ret = vm_RunObject(vm,(object*)function_name->value_ptr,obj,NULL,0);//,global
 		if(ret != NULL)
 		 stack_Push(ret,_stack);
 		if(arg>0)
@@ -1508,7 +1469,7 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
 	if(function_name != NULL&& function_name->type == TYPE_UNICODE)
 		{
 		printf("executing C function: %s\n",(char*)function_name->ptr);
-		 object *tmp = ExecuteCFunction(vm,(char*)function_name->ptr,call);
+		 object *tmp = vm_ExecuteCFunction(vm,(char*)function_name->ptr,call);
   	    if(tmp != NULL)
 	    {
 				stack_Push(tmp,_stack);	
@@ -1526,7 +1487,7 @@ object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *lo
 		if(caller_func!= NULL && ((object*)caller_func->value_ptr)->type == TYPE_CODE) 
 		{
   		    printf("executing global function object: %s\n",(char*)function_name->ptr);
-			object *ret = ExecuteObject(vm,(object*)caller_func->value_ptr,obj,global,call,arg);
+			object *ret = vm_RunObject(vm,(object*)caller_func->value_ptr,obj,call,arg);//,global
 			if(ret != NULL)
 			stack_Push(ret,_stack);
 			if(arg>0)
