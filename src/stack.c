@@ -22,7 +22,7 @@
 
 #include "stack.h"
 
-stack* stack_Init(long items_num)
+stack* stack_Init(long items_num,stack *recycle)
 {
 if(!items_num)
  return(NULL);
@@ -32,6 +32,7 @@ tmp->items = (object**)mem_malloc(items_num*sizeof(object*),"stack_Init() items"
 //printf("init stack items @%x\n",tmp->items);
 tmp->top = 0;
 tmp->num = items_num;
+tmp->recycle_stack = recycle;
 //callstack_items = (object**)mem_malloc(CALLSTACK_MIN_ITEMS*sizeof(object*));
 //callstack_top = 0;
 
@@ -55,11 +56,11 @@ if(stack != NULL)
 {
 if(free_objects)
 {
-printf("freeing %d stack items\n",stack->top);
+//printf("freeing %d stack items\n",stack->top);
 for(int i=0;i<stack->top;i++)
  if((stack->items[i]->flags & OFLAG_ON_STACK) > 0) 
  {
-  printf("free:%d\n",i);
+  //printf("free:%d\n",i);
   FreeObject(stack->items[i]);
   }
  }
@@ -183,24 +184,27 @@ for(int i=0;i<stack->top;i++)
 }
 
 
-object *stack_Pop(stack *stack)
+object *stack_Pop(stack *_stack)
 {
-if(stack->top < 1)
+if(_stack->top < 1)
 {
  printf("stack underflow\n");
  return(NULL);
  }
-object *r = stack->items[stack->top-1];
+object *r = _stack->items[_stack->top-1];
 if((r->flags & OFLAG_ON_STACK))
  {
  //printf("removed stack only item\n");
- if(!stack_Contains(r,recycle))
+ if(_stack->recycle_stack != NULL)
  {
-  printf("put object on recycle stack @:%d\n",recycle->top);
-  stack_Push(r,recycle);
+ if(!stack_Contains(r,(stack*)_stack->recycle_stack))
+ {
+  //printf("put object on recycle stack @:%d\n",((stack*)_stack->recycle_stack)->top);
+  stack_Push(r,(stack*)_stack->recycle_stack);
+  }
   }
  }
-stack->top--;
+_stack->top--;
 //if(stack_top < 0)
 // stack_top = 0;
 return(r);
@@ -214,7 +218,7 @@ for(int i=0;i<stack->top;i++)
 return(0);
 }
 
-
+/*
 void recycle_Remove(object *x)
 {
 for(int i =0;i<recycle->top;i++)
@@ -224,4 +228,4 @@ if(x == recycle->items[i])
 
 }
 }
-
+*/

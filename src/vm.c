@@ -22,16 +22,12 @@
 
 #include "vm.h"
 
-function_definition **functions;
-unsigned long functions_num = 0;
-unsigned long functions_total = 0;
-
 function_definition *CreateCFunction(object *(*func)(stack *stack),char *name)
 {
 function_definition *fd = mem_malloc(sizeof(function_definition),"CreateCFunction() fd");
 fd->type = FUNC_C;
 fd->func.func = func;
-fd->name = name;
+fd->name = str_Copy(name);
 return(fd);
 }
 
@@ -40,7 +36,7 @@ function_definition *CreateCObjFunction(object *(*func)(object *obj),char *name)
 function_definition *fd = mem_malloc(sizeof(function_definition),"CreateCObjFunction() fd");
 fd->type = FUNC_C_OBJ;
 fd->func.func_obj = (*func);
-fd->name = name;
+fd->name = str_Copy(name);
 return(fd);
 }
 
@@ -49,54 +45,43 @@ function_definition *CreatePythonFunction(object *code,char *name)
 function_definition *fd = mem_malloc(sizeof(function_definition),"CreatePythonFunction() fd");
 fd->type = FUNC_PYTHON;
 fd->func.code = code;
-fd->name = name;
+fd->name = str_Copy(name);
 return(fd);
 }
 
-int AddFunctionDefinition(function_definition *fd)
+int AddFunctionDefinition(vm *vm,function_definition *fd)
 {
-functions = (function_definition**)mem_realloc(functions,(functions_total + 1) *sizeof(function_definition*));
-functions[functions_total] = fd;
-functions_total++;
-functions_num++;
-return(functions_total -1);
+ptr_Push(vm->functions,fd);
+return(vm->functions->num -1);
 }
 
-void RemoveFunction(char *name)
+void RemoveFunction(vm *vm,char *name)
 {
-for(int i=0;i<functions_total;i++)
+for(int i=0;i<vm->functions->num;i++)
 {
- if(functions[i]!=NULL)
-  {
-   if(!strcmp(functions[i]->name,name))
+   if(!strcmp(((function_definition*)vm->functions->items[i])->name,name))
 	{
-	 assert(mem_free(functions[i]));
-	 functions[i] = NULL;
-	 functions_num--;
+		ptr_Remove(vm->functions,i);
+		FreeFunctionDefinition((function_definition*)vm->functions->items[i]);
 	}
    }
 }
-}
 
-void RemoveFunctionDefinition(function_definition *fd)
+void RemoveFunctionDefinition(vm *vm,function_definition *fd)
 {
-for(int i=0;i<functions_total;i++)
+for(int i=0;i<vm->functions->num;i++)
 {
- if(functions[i]!=NULL)
-  {
-   if(functions[i] == fd)
+   if(vm->functions->items[i] == fd)
 	{
-	 assert(mem_free(functions[i]));
-	 functions[i] = NULL;
-	 functions_num--;
+		ptr_Remove(vm->functions,i);
+		FreeFunctionDefinition(fd);
 	}
-  }
 }
 }
 
-object *ExecuteCFunction(char *name,stack *stack)
+object *ExecuteCFunction(vm *vm,char *name,stack *stack)
 {
-function_definition *fd = FindFunction(name);
+function_definition *fd = FindFunction(vm,name);
 if(fd != NULL)
  {
   //printf("fd found:%s\n",fd->name);
@@ -105,48 +90,57 @@ if(fd != NULL)
  } 
 }
 
-object *ExecuteCObjFunction(char *name,object *obj)
+object *ExecuteCObjFunction(vm *vm,char *name,object *obj)
 {
-function_definition *fd = FindFunction(name);
+function_definition *fd = FindFunction(vm,name);
 if(fd != NULL)
  {
   return((*fd->func.func_obj)(obj));
  }
 }
 
-function_definition *FindFunction(char *name)
+function_definition *FindFunction(vm *vm,char *name)
 {
-for(int i=0;i<functions_total;i++)
+for(int i=0;i<vm->functions->num;i++)
 {
- if(functions[i]!=NULL)
-  {
-   if(!strcmp(functions[i]->name,name))
-    return(functions[i]);
-  }
+   if(!strcmp(((function_definition*)vm->functions->items[i])->name,name))
+    return((function_definition*)(vm->functions->items[i]));
 }
 return(NULL);
 }
 
-void vm_Init()
+void FreeFunctionDefinition(function_definition * fd)
 {
-functions = (function_definition**)mem_malloc(0,"vm_Init() functions");
-functions_num = 0;
-functions_total = 0;
+assert(mem_free(fd->name));
+assert(mem_free(fd));
 }
 
-void vm_Close()
+vm *vm_Init(stream *s)
 {
-if(functions_total >0)
-{
-for(int i=0;i<functions_total;i++)
- if(functions[i] != NULL)
- assert(mem_free(functions[i]));
-assert(mem_free(functions)); 
+vm *tmp = (vm*)mem_malloc(sizeof(vm),"vm_Init() return");
+tmp->functions = ptr_CreateList(0);
+tmp->recycle = stack_Init(90,NULL);
+tmp->blocks = stack_Init(10,tmp->recycle);
+return(tmp);
 }
+
+void vm_Close(vm *vm)
+{
+if(vm->functions->num)
+{
+for(int i=0;i<vm->functions->num;i++)
+  FreeFunctionDefinition((function_definition*)vm->functions->items[i]);
+}
+ptr_CloseList(vm->functions);
+//stack_Close(vm->blocks,0);
+ stack_Close(vm->recycle,1);
+ //stack_Dump(blocks);
+ stack_Close(vm->blocks,1);
+assert(mem_free(vm));
 }
 
 
-object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,int argc)
+object *ExecuteObject(vm *vm,object *obj,object* caller,object *global,stack *locals,int argc)
 {
  if(obj->type == TYPE_CODE)
  {
@@ -155,7 +149,7 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
   code_object *co = (code_object*)obj->ptr;
   //printf("co_ptr=%x\n",(unsigned long)co);
   //printf("stack size:%d\n",co->stacksize);
-  stack *_stack = stack_Init(co->stacksize);
+  stack *_stack = stack_Init(co->stacksize,vm->recycle);
   string_object *bytecodes = (string_object*)co->code->ptr;
   char *string = bytecodes->content;
   long n = bytecodes->len;
@@ -189,7 +183,7 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
 
   //FOR DEBUGGING
   int old_i = i;
-  int index = GetOpcodeIndex(op);
+  /*int index = GetOpcodeIndex(op);
   if(index >=0)
   {
 	if(opcodes[index].argcount!=0)
@@ -200,6 +194,7 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
   {
 	printf("unknown opcode:%x at %d\n",(char)string[i-1],i-1);
   }
+  */
   // -- FOR DEBUGGING
 
   tuple_object* co_consts;
@@ -213,7 +208,7 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
    
    
    //prepare opcode argument,increment codepointer  and intepret small opcodes not using an arg etc
-   switch(opcodes[index].opcode)
+   switch(op)
    {
 	case OPCODE_NOP:
 		break;
@@ -229,7 +224,7 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
 		break;
 	case OPCODE_BREAK_LOOP:
 		{
-		block_object *bbo = (block_object*)stack_Top(blocks)->ptr;
+		block_object *bbo = (block_object*)stack_Top(vm->blocks)->ptr;
 		i = bbo->start + bbo->len - 1;
 		//printf("break to: %d ,start: %d ,len: %d\n",i,bbo->start,bbo->len);
 		op_thru = 1;
@@ -311,7 +306,7 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
 	case OPCODE_GET_ITER:
 		{
 		object *iter = stack_Pop(_stack);
-		block_object *abo = (block_object*)stack_Top(blocks)->ptr;
+		block_object *abo = (block_object*)stack_Top(vm->blocks)->ptr;
 		abo->iter = iter;
 		ResetIteration(iter);
 		op_thru = 1;
@@ -319,7 +314,7 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
 		//break;
 	
 	case OPCODE_POP_BLOCK:
-		stack_Pop(blocks);
+		stack_Pop(vm->blocks);
 		op_thru = 1;
 		break;
 
@@ -368,7 +363,7 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
    
    
    
-  switch(opcodes[index].opcode)
+  switch(op)
   {
    case OPCODE_POP_JUMP_IF_FALSE:
    {
@@ -422,7 +417,7 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
 		//		printf("for_iter delta jump\n");
 		//		i = i + delta;
 		//		break;
-		block_object *fabo = (block_object*)stack_Top(blocks)->ptr;
+		block_object *fabo = (block_object*)stack_Top(vm->blocks)->ptr;
 		object *next = GetNextItem(fabo->iter);
 		if(next != NULL)
 		{
@@ -448,13 +443,13 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
 		//stack_Push(BuildList(_stack,arg),_stack);
 		stack *blcall = NULL;
 		if(arg>0)
-		blcall = stack_Init(arg);
+		blcall = stack_Init(arg,vm->recycle);
 		tos = NULL;
 		for(int i = 0;i<arg;i++)
 		{
 			stack_Push(stack_Pop(_stack),blcall);
 		}
-		object *tmp = ExecuteCFunction("internal.BuildList",blcall);
+		object *tmp = ExecuteCFunction(vm,"internal.BuildList",blcall);
   	    if(tmp != NULL)
 	    {
 				stack_Push(tmp,_stack);	
@@ -474,7 +469,7 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
     object *lgo = FindUnicodeTupleItem(co_global->varnames,name);
 	//DumpObject(lgo,1);
 	if(lgo == NULL)
-	 if(FindFunction(name)!= NULL)
+	 if(FindFunction(vm,name)!= NULL)
 	 {
 	  lgo = AllocObject();
 	  lgo->type = TYPE_UNICODE;
@@ -1541,7 +1536,7 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
 	block->start = i;
 	block->len = arg;
 	printf("block - start: %d, len: %d\n",block->start,block->len);
-	stack_Push(bo,blocks);
+	stack_Push(bo,vm->blocks);
 	}	
 	//break;
 	
@@ -1549,7 +1544,7 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
 	{
     stack *call = NULL;
 	if(arg>0)
-		call = stack_Init(arg);
+		call = stack_Init(arg,vm->recycle);
  	tos = NULL;
 	for(int i = 0;i<arg;i++)
 	{
@@ -1563,7 +1558,7 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
 	    { 
 			stack_Push(stack_Pop(call),_stack);
 	    }
-	    object *ret = ExecuteObject((object*)function_name,obj,global,call,arg);
+	    object *ret = ExecuteObject(vm,(object*)function_name,obj,global,call,arg);
 		if(ret != NULL)
 		 stack_Push(ret,_stack);
 		if(arg>0)
@@ -1578,7 +1573,7 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
 	    { 
 			stack_Push(stack_Pop(call),_stack);
 	    }
-	    object *ret = ExecuteObject((object*)function_name->value_ptr,obj,global,NULL,0);
+	    object *ret = ExecuteObject(vm,(object*)function_name->value_ptr,obj,global,NULL,0);
 		if(ret != NULL)
 		 stack_Push(ret,_stack);
 		if(arg>0)
@@ -1589,7 +1584,7 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
 	if(function_name != NULL&& function_name->type == TYPE_UNICODE)
 		{
 		printf("executing C function: %s\n",(char*)function_name->ptr);
-		 object *tmp = ExecuteCFunction((char*)function_name->ptr,call);
+		 object *tmp = ExecuteCFunction(vm,(char*)function_name->ptr,call);
   	    if(tmp != NULL)
 	    {
 				stack_Push(tmp,_stack);	
@@ -1607,7 +1602,7 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
 		if(caller_func!= NULL && ((object*)caller_func->value_ptr)->type == TYPE_CODE) 
 		{
   		    printf("executing global function object: %s\n",(char*)function_name->ptr);
-			object *ret = ExecuteObject((object*)caller_func->value_ptr,obj,global,call,arg);
+			object *ret = ExecuteObject(vm,(object*)caller_func->value_ptr,obj,global,call,arg);
 			if(ret != NULL)
 			stack_Push(ret,_stack);
 			if(arg>0)
@@ -1621,7 +1616,7 @@ object *ExecuteObject(object *obj,object* caller,object *global,stack *locals,in
 	 break;
 	
   default:
-  printf("\n[%d,%xh] opcode: [ %s ] ,argcount:%d not supported\n(%s)\n",old_i,op,opcodes[index].name,opcodes[index].argcount,opcodes[index].description);
+   //printf("\n[%d,%xh] opcode: [ %s ] ,argcount:%d not supported\n(%s)\n",old_i,op,opcodes[index].name,opcodes[index].argcount,opcodes[index].description);
    break;
   }
   

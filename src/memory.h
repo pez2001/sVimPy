@@ -35,11 +35,12 @@ long size;
 int is_freed;
 }mem_chunk;
 
-void mem_Init();
+#define MAX_MEM_CHUNKS 2000
 
+void mem_Init();
+void mem_Close();
 void *mem_malloc(size_t size,char *description);
 void *mem_realloc(void *ptr,size_t size);
 int mem_free(void *ptr);
-
 
 #endif

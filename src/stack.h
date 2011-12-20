@@ -33,11 +33,12 @@ typedef struct
 object **items;
 long top;
 long num;
+void *recycle_stack;
 }stack;
 
 extern stack *recycle;
 
-stack* stack_Init(long items_num);
+stack* stack_Init(long items_num,stack *recycle);
 object *stack_Pop(stack *stack);
 void stack_Push(object *x,stack *stack);
 void stack_Close(stack *stack,int free_objects);
@@ -53,12 +54,5 @@ void stack_SetThird(object *x,stack *stack);
 void stack_Adjust(int by,stack *stack);
 void stack_IncreaseSize(int items_num,stack *stack);
 void stack_Dump(stack *stack);
-
-//object *callstack_Pop();
-//void callstack_Push(object *x);
-
-//object *recycle_Pop();
-//void recycle_Push(object *x);
-
 
 #endif

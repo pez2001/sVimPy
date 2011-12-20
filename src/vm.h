@@ -28,19 +28,18 @@
 #include "opcodes.h"
 #include "stack.h"
 #include "numops.h"
+#include "lists.h"
+#include "stream.h"
 
 #include "assert.h"
 
-
-typedef struct {
-
-
-
-}vm;
-
 extern const opcode opcodes[];
 
-extern stack *blocks;
+typedef struct {
+stack *recycle;
+stack *blocks;
+ptr_list *functions;
+}vm;
 
 #define FUNC_PYTHON 1
 #define FUNC_C 2
@@ -61,17 +60,15 @@ function_definition *CreateCFunction(object *(*func)(stack *stack),char *name);
 function_definition *CreateCObjFunction(object *(*func)(object *obj),char *name);
 function_definition *CreatePythonFunction(object *code,char *name);
 
-int AddFunctionDefinition(function_definition *fd);
-void RemoveFunction(char *name);
-void RemoveFunctionDefinition(function_definition *fd);
-object *ExecuteCFunction(char *name,stack *stack);
-object *ExecuteCObjFunction(char *name,object *obj);
-function_definition *FindFunction(char *name);
+int AddFunctionDefinition(vm *vm,function_definition *fd);
+void RemoveFunction(vm *vm,char *name);
+void RemoveFunctionDefinition(vm *vm,function_definition *fd);
+object *ExecuteCFunction(vm *vm,char *name,stack *stack);
+object *ExecuteCObjFunction(vm *vm,char *name,object *obj);
+function_definition *FindFunction(vm *vm,char *name);
+
 vm *vm_Init(stream *s);
-void vm_Close();
-
-
-object *ExecuteObject(object *obj,object *caller,object *global,stack *locals,int argc);
-
+void vm_Close(vm* vm);
+object *ExecuteObject(vm *vm,object *obj,object *caller,object *global,stack *locals,int argc);
 
 #endif

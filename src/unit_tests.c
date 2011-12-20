@@ -24,8 +24,6 @@
 #include "unit_tests.h"
 
 //STEFFI 0174 656 9762
-stack *recycle;
-stack *blocks;
 
 
 long ReadLong(FILE *f)
@@ -44,13 +42,13 @@ char ReadChar(FILE *f)
  return(r);
 }
 
-void OpenPYC()
+void OpenPYC(vm *vm)
 {
  //char *b = (char*)mem_malloc(3);
  //char *bh = (char*)mem_malloc(4);
  //memset(bh,0,4);
 
- printf("opening pyc file\n");
+ //printf("opening pyc file\n");
  FILE *f;
  f=fopen("test.pyc","rb");
  if(f==NULL)
@@ -58,10 +56,8 @@ void OpenPYC()
  //int r = fread(bh,4,1,f);
  //if(!memcmp(bh,(char*)&pyc_magic,4))
  long magic = ReadLong(f);
- if(magic == pyc_magic)
-  printf("pyc magic found\n");
- else
-  printf("not a pyc file");
+ if(magic != pyc_magic)
+	return;
  long time = ReadLong(f); 
  /*struct tm *ti; //TO DECREASE MEMORY USAGE
  ti = localtime((void*)&time);
@@ -73,23 +69,23 @@ void OpenPYC()
  mem_free(bt);
  //8 bytes into the file
  */
- printf("reading object\n");
+ //printf("reading object\n");
  object *obj = ReadObject(f);
 
- printf("read pyc file\n");
- printf("heap bytes used by objects:%d\n",mem_chunks_actual_size);
- printf("MAX HEAP USAGE:%d\n",mem_chunks_max_size);
- printf("objects num: %d\n",objects_num);
- printf("max objects : %d\n",objects_max);
- printf("objects headers total size  : %d\n",objects_header_total);
+ //printf("read pyc file\n");
+ //printf("heap bytes used by objects:%d\n",mem_chunks_actual_size);
+ //printf("MAX HEAP USAGE:%d\n",mem_chunks_max_size);
+ //printf("objects num: %d\n",objects_num);
+ //printf("max objects : %d\n",objects_max);
+ //printf("objects headers total size  : %d\n",objects_header_total);
  
- DumpObject(obj,0);
- object *ret = ExecuteObject(obj,obj,obj,NULL,0);
- printf("object executed\n");
- DumpObject(obj,0);
- printf("cleaning up object\n");
+ //DumpObject(obj,0);
+ object *ret = ExecuteObject(vm,obj,obj,obj,NULL,0);
+ //printf("object executed\n");
+ //DumpObject(obj,0);
+ //printf("cleaning up object\n");
  FreeObject(obj);
- printf("objects headers total size  : %d\n",objects_header_total);
+ //printf("objects headers total size  : %d\n",objects_header_total);
  fclose(f);
  //mem_free(b);
  //mem_free(bh);
@@ -100,24 +96,21 @@ void OpenPYC()
 int main(int argc,char *argv[])
 {
  mem_Init();
- vm_Init();
+ 
+ vm *vm = vm_Init(NULL);
  function_definition *build_list = CreateCFunction(&BuildList,"internal.BuildList");
- AddFunctionDefinition(build_list);
+ AddFunctionDefinition(vm,build_list);
  function_definition *range = CreateCFunction(&if_range,"range");
- AddFunctionDefinition(range);
+ AddFunctionDefinition(vm,range);
  function_definition *print = CreateCFunction(&if_print,"print");
- AddFunctionDefinition(print);
- recycle = stack_Init(90);
- blocks = stack_Init(5);
- printf("Calling all Unit Tests\n");
- OpenPYC();
- printf("clearing recycle stack\n");
- //stack_Dump(recycle);
- stack_Close(recycle,1);
- //stack_Dump(blocks);
- stack_Close(blocks,1);
- printf("objects headers total size  : %d\n",objects_header_total);
- vm_Close();
+ AddFunctionDefinition(vm,print);
+
+ //printf("Calling all Unit Tests\n");
+ OpenPYC(vm);
+ //printf("clearing recycle stack\n");
+ //stack_Dump(vm->recycle);
+ vm_Close(vm);
+ //printf("objects headers total size  : %d\n",objects_header_total);
  mem_Close();
  printf("%d memory chunks leaked\n",mem_chunks_num);
  DumpUnsupportedOpCodes();
