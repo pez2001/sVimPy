@@ -22,154 +22,192 @@
 
 #include "lists.h"
 
- 
-ptr_list *ptr_CreateList(unsigned int num)
+
+ptr_list *
+ptr_CreateList (unsigned int num)
 {
-ptr_list *tmp = (ptr_list*)mem_malloc(sizeof(ptr_list),"ptr_CreateList() return");
- if(num)
-	tmp->items = (void**)mem_malloc(num*sizeof(void*),"ptr_CreateList() items");
- else
-	tmp->items = NULL;
-tmp->num = num;
-return(tmp);
+  ptr_list *tmp =
+    (ptr_list *) mem_malloc (sizeof (ptr_list), "ptr_CreateList() return");
+  if (num)
+    tmp->items =
+      (void **) mem_malloc (num * sizeof (void *), "ptr_CreateList() items");
+  else
+    tmp->items = NULL;
+  tmp->num = num;
+  return (tmp);
 }
-void ptr_CloseList(ptr_list *list)
+
+void
+ptr_CloseList (ptr_list * list)
 {
-if(list->num)
-{
-	assert(mem_free(list->items));
+  if (list->num)
+    {
+      assert (mem_free (list->items));
+    }
+  assert (mem_free (list));
 }
-assert(mem_free(list));
-}
-void ptr_Push(ptr_list *list,void *ptr)
+
+void
+ptr_Push (ptr_list * list, void *ptr)
 {
-if(!list->num)
-{
-	list->num = 1;
-	list->items = (void**)mem_malloc(list->num*sizeof(void*),"ptr_Push() items");
-	list->items[0] = ptr;
+  if (!list->num)
+    {
+      list->num = 1;
+      list->items =
+	(void **) mem_malloc (list->num * sizeof (void *),
+			      "ptr_Push() items");
+      list->items[0] = ptr;
+    }
+  else
+    {
+      list->items =
+	(void **) mem_realloc (list->items,
+			       (list->num + 1) * sizeof (void *));
+      list->items[list->num] = ptr;
+      list->num++;
+    }
 }
-else
+
+void *
+ptr_Pop (ptr_list * list)
 {
-	list->items = (void**)mem_realloc(list->items,(list->num+1)*sizeof(void*));
-	list->items[list->num] = ptr;
-	list->num++;
+  if (list->num)
+    {
+      void *tmp = ptr_Remove (list, list->num - 1);
+
+      return (tmp);
+    }
+  return (NULL);
 }
-}
-void *ptr_Pop(ptr_list *list)
+
+int
+ptr_Insert (ptr_list * list, int index, void *ptr)
 {
-if(list->num)
-{
-	void *tmp = ptr_Remove(list,list->num-1);
-	return(tmp);
-}
-return(NULL);
-}
-int ptr_Insert(ptr_list *list,int index,void *ptr)
-{
-if(index == 0 && !list->num)
- {
-	ptr_Push(list,ptr);
- }
- else
-  if(index < list->num-1)
-  {
-	list->num++;
-	list->items = (void**)mem_realloc(list->items,(list->num)*sizeof(void*));
-	//int len = (list->num-1) - index;
-	//if(len)
-	//{
-	  for(int i =list->num-2;i>=index;i--)
-	  {
-	   ptr_MoveDown(list,i);
+  if (index == 0 && !list->num)
+    {
+      ptr_Push (list, ptr);
+    }
+  else if (index < list->num - 1)
+    {
+      list->num++;
+      list->items =
+	(void **) mem_realloc (list->items, (list->num) * sizeof (void *));
+      //int len = (list->num-1) - index;
+      //if(len)
+      //{
+      for (int i = list->num - 2; i >= index; i--)
+	{
+	  ptr_MoveDown (list, i);
 	  //memcpy(&list->items[index+1],&list->items[index],len * sizeof(void*));
-	  }
-	list->items[index] = ptr;
-   return(1);
-  } else if(index >= list->num -1)
-			ptr_Push(list,ptr);
+	}
+      list->items[index] = ptr;
+      return (1);
+    }
+  else if (index >= list->num - 1)
+    ptr_Push (list, ptr);
 
-return(0);
+  return (0);
 }
 
-void ptr_MoveUp(ptr_list *list,int index)
+void
+ptr_MoveUp (ptr_list * list, int index)
 {
- if(!list->num)
-  return;
-if(index < list->num && index > 0)
- {
- list->items[index -1 ] = list->items[index];
- }  
-}
-void ptr_MoveDown(ptr_list *list,int index)
-{
- if(!list->num)
-  return;
-if(index < list->num-1 && index >= 0)
- {
- list->items[index +1 ] = list->items[index];
- }  
+  if (!list->num)
+    return;
+  if (index < list->num && index > 0)
+    {
+      list->items[index - 1] = list->items[index];
+    }
 }
 
-void *ptr_Remove(ptr_list *list,int index)
+void
+ptr_MoveDown (ptr_list * list, int index)
 {
- if(!list->num)
-  return(NULL);
- if(index < list->num)
- {
-	void *tmp = list->items[index];
-	//int len = (list->num-1) - index;
-	//if(len)
-	//{
-	  for(int i =list->num-1;i>index;i--)
-	  {
-	    ptr_MoveUp(list,i);
+  if (!list->num)
+    return;
+  if (index < list->num - 1 && index >= 0)
+    {
+      list->items[index + 1] = list->items[index];
+    }
+}
+
+void *
+ptr_Remove (ptr_list * list, int index)
+{
+  if (!list->num)
+    return (NULL);
+  if (index < list->num)
+    {
+      void *tmp = list->items[index];
+
+      //int len = (list->num-1) - index;
+      //if(len)
+      //{
+      for (int i = list->num - 1; i > index; i--)
+	{
+	  ptr_MoveUp (list, i);
 	  //memcpy(&list->items[index],&list->items[index+1],len * sizeof(void*));
-	 }
-	list->items = (void**)mem_realloc(list->items,(list->num-1)*sizeof(void*));
-	list->num--;
-	return(tmp);
- }
-return(NULL);
-}
-int ptr_Clear(ptr_list *list)
-{
-if(list->num)
-{
-	assert(mem_free(list->items));
-}
-list->num = 0;
-}
-int ptr_GetNum(ptr_list *list)
-{
-return(list->num);
-}
-void *ptr_Get(ptr_list *list,int index)
-{
-if(index < list->num)
- return(list->items[index]);
-else
- return(NULL);
-}
-void ptr_Set(ptr_list *list,int index,void *ptr)
-{
-if(index < list->num)
- list->items[index] = ptr;
-} 
-void ptr_Queue(ptr_list *list,void *ptr)
-{
-ptr_Insert(list,0,ptr);
-}
-void *ptr_Dequeue(ptr_list *list)
-{
-if(!list->num)
- return(NULL);
-void *tmp = ptr_Get(list,0);
-ptr_Remove(list,0);
-return(tmp);
-}
-int ptr_IsEmpty(ptr_list *list)
-{
- return(!list->num);
+	}
+      list->items =
+	(void **) mem_realloc (list->items,
+			       (list->num - 1) * sizeof (void *));
+      list->num--;
+      return (tmp);
+    }
+  return (NULL);
 }
 
+int
+ptr_Clear (ptr_list * list)
+{
+  if (list->num)
+    {
+      assert (mem_free (list->items));
+    }
+  list->num = 0;
+}
+
+int
+ptr_GetNum (ptr_list * list)
+{
+  return (list->num);
+}
+
+void *
+ptr_Get (ptr_list * list, int index)
+{
+  if (index < list->num)
+    return (list->items[index]);
+  else
+    return (NULL);
+}
+
+void
+ptr_Set (ptr_list * list, int index, void *ptr)
+{
+  if (index < list->num)
+    list->items[index] = ptr;
+}
+
+void
+ptr_Queue (ptr_list * list, void *ptr)
+{
+  ptr_Insert (list, 0, ptr);
+}
+
+void *
+ptr_Dequeue (ptr_list * list)
+{
+  if (!list->num)
+    return (NULL);
+  void *tmp = ptr_Get (list, 0);
+
+  ptr_Remove (list, 0);
+  return (tmp);
+}
+
+int
+ptr_IsEmpty (ptr_list * list)
+{
+  return (!list->num);
+}

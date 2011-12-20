@@ -35,45 +35,59 @@
 
 extern const opcode opcodes[];
 
-typedef struct {
-stack *recycle;
-stack *blocks;
-ptr_list *functions;
+typedef struct
+{
+  stack *recycle;
+  stack *blocks;
+  ptr_list *functions;
 //code_object *co;//global code object //Bottom of blocks stack is the global module
 //int ip;//instruction pointer moved to block object
-}vm;
+} vm;
 
 #define FUNC_PYTHON 1
 #define FUNC_C 2
 #define FUNC_C_OBJ 4
 
-typedef struct {
-unsigned int type;
-union func_def
+typedef struct
 {
-object *(*func)(stack *stack);
-object *(*func_obj)(object *object);
-object *code;
-}func;
-char *name;
-}function_definition;
+  unsigned int type;
+  union func_def
+  {
+    object *(*func) (stack * stack);
+    object *(*func_obj) (object * object);
+    object *code;
+  } func;
+  char *name;
+} function_definition;
 
-function_definition *CreateCFunction(object *(*func)(stack *stack),char *name);
-function_definition *CreateCObjFunction(object *(*func)(object *obj),char *name);
-function_definition *CreatePythonFunction(object *code,char *name);
+function_definition *CreateCFunction (object * (*func) (stack * stack),
+				      char *name);
+function_definition *CreateCObjFunction (object * (*func) (object * obj),
+					 char *name);
+function_definition *CreatePythonFunction (object * code, char *name);
 
-int vm_AddFunctionDefinition(vm *vm,function_definition *fd);
-void vm_RemoveFunction(vm *vm,char *name);
-void vm_RemoveFunctionDefinition(vm *vm,function_definition *fd);
-object *vm_ExecuteCFunction(vm *vm,char *name,stack *stack);
-object *vm_ExecuteCObjFunction(vm *vm,char *name,object *obj);
-function_definition *vm_FindFunction(vm *vm,char *name);
+int vm_AddFunctionDefinition (vm * vm, function_definition * fd);
 
-vm *vm_Init(code_object *co);
-void vm_Close(vm* vm);
+void vm_RemoveFunction (vm * vm, char *name);
+
+void vm_RemoveFunctionDefinition (vm * vm, function_definition * fd);
+
+object *vm_ExecuteCFunction (vm * vm, char *name, stack * stack);
+
+object *vm_ExecuteCObjFunction (vm * vm, char *name, object * obj);
+
+function_definition *vm_FindFunction (vm * vm, char *name);
+
+vm *vm_Init (code_object * co);
+
+void vm_Close (vm * vm);
+
 //void vm_SetGlobal();
-void vm_SetGlobal(vm *vm,code_object *co);
-object *vm_RunObject(vm *vm,object *obj,object *caller,stack *locals,int argc);//,object *global
-object *vm_StepObject(vm *vm,object *obj,object *caller,stack *locals,int argc);
+void vm_SetGlobal (vm * vm, code_object * co);
+
+object *vm_RunObject (vm * vm, object * obj, object * caller, stack * locals, int argc);	//,object *global
+
+object *vm_StepObject (vm * vm, object * obj, object * caller, stack * locals,
+		       int argc);
 
 #endif

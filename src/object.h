@@ -20,8 +20,8 @@
  *
  */
 
- 
- #ifndef OBJECT_H
+
+#ifndef OBJECT_H
 #define OBJECT_H
 
 #include "stdio.h"
@@ -62,12 +62,12 @@
 
 
 #define OFLAG_ON_STACK 1
-#define OFLAG_UNLOADED 2 //set if object was unloaded -> obj->ptr == seek_pos // or just dump to file and reread if accessed
+#define OFLAG_UNLOADED 2	//set if object was unloaded -> obj->ptr == seek_pos // or just dump to file and reread if accessed
 
 #define OFLAG_HOLD_IN_MEMORY 4
 #define OFLAG_HAS_VALUE_PTR 8
-#define OFLAG_TUPLE_PTR 16 //used to iterate over tuples
-#define OFLAG_TUPLE_RESTART_FLAG 32 //used to iterate over tuples
+#define OFLAG_TUPLE_PTR 16	//used to iterate over tuples
+#define OFLAG_TUPLE_RESTART_FLAG 32	//used to iterate over tuples
 
 
 //internal types
@@ -77,124 +77,156 @@
 
 
 
-#pragma pack(push)  /* push current alignment to stack */
-#pragma pack(1)     /* set alignment to 1 byte boundary */
+#pragma pack(push)		/* push current alignment to stack */
+#pragma pack(1)			/* set alignment to 1 byte boundary */
 
-typedef struct {
-char type;
-unsigned char flags;
-void *ptr;
-void *value_ptr;//TODO remove this member --> TO DECREASE MEMORY USAGE
-}object;
+typedef struct
+{
+  char type;
+  unsigned char flags;
+  void *ptr;
+  void *value_ptr;		//TODO remove this member --> TO DECREASE MEMORY USAGE
+} object;
 
-typedef struct {
-char type;
-unsigned char flags;
-void *ptr;
-void *value_ptr;
-}valued_object; //TO OPTIMIZE MEMORY USAGE -> only used in tuples 
+typedef struct
+{
+  char type;
+  unsigned char flags;
+  void *ptr;
+  void *value_ptr;
+} valued_object;		//TO OPTIMIZE MEMORY USAGE -> only used in tuples 
 
-typedef struct {
-char type;
-unsigned char flags;
-}empty_object; //TO OPTIMIZE MEMORY USAGE
+typedef struct
+{
+  char type;
+  unsigned char flags;
+} empty_object;			//TO OPTIMIZE MEMORY USAGE
 
-typedef struct {
-long argcount;
-long kwonlyargcount;
-long nlocals;
-long stacksize;
-long flags;
-object *code;
-object *consts;
-object *names;
-object *varnames;
-object *freevars;
-object *cellvars;
+typedef struct
+{
+  long argcount;
+  long kwonlyargcount;
+  long nlocals;
+  long stacksize;
+  long flags;
+  object *code;
+  object *consts;
+  object *names;
+  object *varnames;
+  object *freevars;
+  object *cellvars;
 //object *filename;
 //object *name;
-char *name;
+  char *name;
 //long codesize;
-long firstlineno;
+  long firstlineno;
 //object *lnotab;
-}code_object;
+} code_object;
 
-typedef struct {
-char *content;
-long len;
-}string_object;
+typedef struct
+{
+  char *content;
+  long len;
+} string_object;
 
-typedef struct {
-object **items;
-long num;
-}tuple_object;
+typedef struct
+{
+  object **items;
+  long num;
+} tuple_object;
 
 /*
 typedef struct {
 char *content;
 //long len;//TO DECREASE MEMORY USAGE
-}unicode_object;
-*/ //TO DECREASE MEMORY USAGE
+     }unicode_object;
+*///TO DECREASE MEMORY USAGE
 
-typedef struct {
-object *module;
-long pos;
-}caller_object;
+typedef struct
+{
+  object *module;
+  long pos;
+} caller_object;
 
-typedef struct {
-object *code;
+typedef struct
+{
+  object *code;
 //long pos;
-}function_object;
+} function_object;
 
 
-typedef struct {
-object *code;
-long start;
-long len;
-object *iter;
-long ip;
-}block_object;
+typedef struct
+{
+  object *code;
+  long start;
+  long len;
+  object *iter;
+  long ip;
+} block_object;
 
 
 
-#pragma pack(pop)   /* restore original alignment from stack */
+#pragma pack(pop)		/* restore original alignment from stack */
 
-object *AllocObject();
-object *AllocEmptyObject();
-object *AllocValuedObject();
-string_object *AllocStringObject();
-tuple_object *AllocTupleObject();
+object *AllocObject ();
+
+object *AllocEmptyObject ();
+
+object *AllocValuedObject ();
+
+string_object *AllocStringObject ();
+
+tuple_object *AllocTupleObject ();
+
 //unicode_object *AllocUnicodeObject();//TO DECREASE MEMORY USAGE
-code_object *AllocCodeObject();
-caller_object *AllocCallerObject();
-function_object *AllocFunctionObject();
-block_object *AllocBlockObject();
+code_object *AllocCodeObject ();
 
-object *ReadObject(FILE *f);
+caller_object *AllocCallerObject ();
 
-string_object *AsStringObject(object *obj);
-code_object *AsCodeObject(object *obj);
-caller_object *AsCallerObject(object *obj);
-function_object *AsFunctionObject(object *obj);
-tuple_object *AsTupleObject(object *obj);
+function_object *AllocFunctionObject ();
+
+block_object *AllocBlockObject ();
+
+object *ReadObject (FILE * f);
+
+string_object *AsStringObject (object * obj);
+
+code_object *AsCodeObject (object * obj);
+
+caller_object *AsCallerObject (object * obj);
+
+function_object *AsFunctionObject (object * obj);
+
+tuple_object *AsTupleObject (object * obj);
+
 //unicode_object *AsUnicodeObject(object *obj);
 
-int IsIntObject(object *obj);
-int IsStringObject(object *obj);
-int IsUnicodeObject(object *obj);
-int IsCodeObject(object *obj);
-int IsTupleObject(object *obj);
+int IsIntObject (object * obj);
 
-void FreeObject(object *obj);
-void PrintObject(object *obj);
-void DumpObject(object *obj,int level);
+int IsStringObject (object * obj);
+
+int IsUnicodeObject (object * obj);
+
+int IsCodeObject (object * obj);
+
+int IsTupleObject (object * obj);
+
+void FreeObject (object * obj);
+
+void PrintObject (object * obj);
+
+void DumpObject (object * obj, int level);
+
 //void DumpObject(object *obj);
-object *GetNextItem(object *tuple);
-void ResetIteration(object *tuple);
-void SetItem(object *tuple,int index,object *obj);
-object *GetItem(object *tuple,int index);
+object *GetNextItem (object * tuple);
+
+void ResetIteration (object * tuple);
+
+void SetItem (object * tuple, int index, object * obj);
+
+object *GetItem (object * tuple, int index);
 
 //object *GetTupleItem(tuple_object *tuple,int index);
-object *FindUnicodeTupleItem(object *tuple,char *name);
+object *FindUnicodeTupleItem (object * tuple, char *name);
 
 #endif

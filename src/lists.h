@@ -28,26 +28,39 @@
 #include "assert.h"
 
 
-typedef struct {
-void **items;
-unsigned int num;
-int flags;
-}ptr_list;
+typedef struct
+{
+  void **items;
+  unsigned int num;
+  int flags;
+} ptr_list;
 
-#define PTR_STATIC_LIST 1 //TODO add support for static lists , so indices wont change 
+#define PTR_STATIC_LIST 1	//TODO add support for static lists , so indices wont change
 
-ptr_list *ptr_CreateList(unsigned int num);
-void ptr_CloseList(ptr_list *list);
-void ptr_Push(ptr_list *list,void *ptr);
-void *ptr_Pop(ptr_list *list);
-int ptr_Insert(ptr_list *list,int index,void *ptr);
-void *ptr_Remove(ptr_list *list,int index);
-int ptr_Clear(ptr_list *list);
-int ptr_GetNum(ptr_list *list);
-void *ptr_Get(ptr_list *list,int index);
-void ptr_Set(ptr_list *list,int index,void *ptr);
-void ptr_Queue(ptr_list *list,void *ptr);
-void *ptr_Dequeue(ptr_list *list);
-int ptr_IsEmpty(ptr_list *list);
+ptr_list *ptr_CreateList (unsigned int num);
+
+void ptr_CloseList (ptr_list * list);
+
+void ptr_Push (ptr_list * list, void *ptr);
+
+void *ptr_Pop (ptr_list * list);
+
+int ptr_Insert (ptr_list * list, int index, void *ptr);
+
+void *ptr_Remove (ptr_list * list, int index);
+
+int ptr_Clear (ptr_list * list);
+
+int ptr_GetNum (ptr_list * list);
+
+void *ptr_Get (ptr_list * list, int index);
+
+void ptr_Set (ptr_list * list, int index, void *ptr);
+
+void ptr_Queue (ptr_list * list, void *ptr);
+
+void *ptr_Dequeue (ptr_list * list);
+
+int ptr_IsEmpty (ptr_list * list);
 
 #endif
