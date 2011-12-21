@@ -24,7 +24,7 @@
 
 
 ptr_list *
-ptr_CreateList (unsigned int num)
+ptr_CreateList (unsigned int num,int flags)
 {
   ptr_list *tmp =
     (ptr_list *) mem_malloc (sizeof (ptr_list), "ptr_CreateList() return");
@@ -34,6 +34,7 @@ ptr_CreateList (unsigned int num)
   else
     tmp->items = NULL;
   tmp->num = num;
+  tmp->flags = flags;
   return (tmp);
 }
 

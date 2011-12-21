@@ -37,7 +37,7 @@ typedef struct
 
 #define PTR_STATIC_LIST 1	//TODO add support for static lists , so indices wont change
 
-ptr_list *ptr_CreateList (unsigned int num);
+ptr_list *ptr_CreateList (unsigned int num,int flags);
 
 void ptr_CloseList (ptr_list * list);
 

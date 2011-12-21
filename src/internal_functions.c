@@ -50,21 +50,26 @@ BuildList (stack * stack)
 object *
 if_range (stack * stack)
 {
-//printf("range called\n");
+ //printf("range called:%d\n",stack->top);
   if (stack->top < 2)
     {
       object *tmp = AllocEmptyObject ();
 
       tmp->type = TYPE_NONE;
       tmp->flags = OFLAG_ON_STACK;
+	  printf("not enough args for range\n");
       return (tmp);
     }
   object *s = stack_Pop (stack);
 
   object *e = stack_Pop (stack);
+  object *st = NULL;
+  if(stack->top == 1)
+   st = stack_Pop(stack);
 
-  if (s->type == TYPE_INT && e->type == TYPE_INT)
+  if (st == NULL && s->type == TYPE_INT && e->type == TYPE_INT)
     {
+	  //printf("range called with 2 args\n");
       object *r = AllocObject ();
 
       r->type = TYPE_TUPLE;
@@ -84,7 +89,31 @@ if_range (stack * stack)
 //DumpObject(r,0);
       return (r);
     }
+else
+ if(st != NULL && s->type == TYPE_INT && e->type == TYPE_INT && st->type == TYPE_INT)
+  {
+      object *r = AllocObject ();
 
+      r->type = TYPE_TUPLE;
+      r->flags = OFLAG_ON_STACK;
+      r->ptr = AllocTupleObject ();
+      int n = ((long) e->ptr - (long) s->ptr) / (long) st->ptr;
+
+      ((tuple_object *) r->ptr)->num = n;
+      ((tuple_object *) r->ptr)->items =
+	(object **) mem_malloc (n * sizeof (object *), "if_range() items");
+      for (int i = 0; i < n; i++)
+	{
+	  ((tuple_object *) r->ptr)->items[i] = AllocObject ();
+	  ((tuple_object *) r->ptr)->items[i]->type = TYPE_INT;
+	  ((tuple_object *) r->ptr)->items[i]->flags = OFLAG_ON_STACK;
+	  ((tuple_object *) r->ptr)->items[i]->ptr = (long) s->ptr + (i*(long)st->ptr);
+	}
+     //DumpObject(r,0);
+      return (r);
+
+  
+  }
   object *tmp = AllocEmptyObject ();
 
   tmp->type = TYPE_NONE;

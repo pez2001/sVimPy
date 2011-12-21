@@ -29,7 +29,7 @@ void
 ptr_tests ()
 {
   printf ("testing ptr list functions\n");
-  ptr_list *p = ptr_CreateList (0);
+  ptr_list *p = ptr_CreateList (0,0);
 
   ptr_Push (p, 1);
   ptr_Push (p, 2);

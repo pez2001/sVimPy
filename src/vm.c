@@ -138,7 +138,7 @@ vm_Init (code_object * co)
 {
   vm *tmp = (vm *) mem_malloc (sizeof (vm), "vm_Init() return");
 
-  tmp->functions = ptr_CreateList (0);
+  tmp->functions = ptr_CreateList (0,0);
   tmp->recycle = stack_Init (90, NULL);
   tmp->blocks = stack_Init (10, tmp->recycle);
 
@@ -299,7 +299,6 @@ vm_RunObject (vm * vm, object * obj, object * caller, stack * locals, int argc)	
 		case OPCODE_RETURN_VALUE:
 		  {
 		    object *ret = stack_Pop (_stack);
-
 		    stack_Close (_stack, 0);
 		    return (ret);
 		  }
@@ -524,7 +523,7 @@ vm_RunObject (vm * vm, object * obj, object * caller, stack * locals, int argc)	
 		    tos = stack_Pop (_stack);
 		    if (tos->type == TYPE_FALSE)
 		      {
-			i = arg - 3;
+			i = arg;
 		      }
 		  }
 		  break;
@@ -533,7 +532,7 @@ vm_RunObject (vm * vm, object * obj, object * caller, stack * locals, int argc)	
 		    tos = stack_Pop (_stack);
 		    if (tos->type == TYPE_TRUE)
 		      {
-			i = arg - 3;
+			i = arg;
 		      }
 		  }
 		  break;
@@ -552,7 +551,7 @@ vm_RunObject (vm * vm, object * obj, object * caller, stack * locals, int argc)	
 		    tos = stack_Top (_stack);
 		    if (tos->type == TYPE_FALSE)
 		      {
-			i = arg - 3;
+			i = arg;
 		      }
 		  }
 		  break;
@@ -561,7 +560,7 @@ vm_RunObject (vm * vm, object * obj, object * caller, stack * locals, int argc)	
 		    tos = stack_Top (_stack);
 		    if (tos->type == TYPE_TRUE)
 		      {
-			i = arg - 3;
+			i = arg;
 		      }
 		  }
 		  break;
