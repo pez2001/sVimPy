@@ -23,7 +23,7 @@
 #define DEBUG
 #include "unit_tests.h"
 
-//STEFFI 0174 656 9762
+
 
 void
 ptr_tests ()
