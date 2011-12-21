@@ -112,7 +112,7 @@ OpenPYC (vm * vm)
   //printf("opening pyc file\n");
   FILE *f;
 
-  f = fopen ("test.pyc", "rb");
+  f = fopen ("tests/test.pyc", "rb");
   if (f == NULL)
     return;
   //int r = fread(bh,4,1,f);
