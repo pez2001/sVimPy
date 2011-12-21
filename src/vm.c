@@ -248,14 +248,14 @@ vm_RunObject (vm * vm, object * obj, object * caller, stack * locals, int argc)	
 
 	  int op_thru = 0;	//used to skip unneccessary switches
 
-	  object *tos;
+	  object *tos = NULL;
 
-	  object *tos1;
+	  object *tos1 = NULL;
 
-	  object *tos2;
+	  object *tos2 = NULL;
 
 	  //FOR DEBUGGING
-	  /*
+	  
 	     int old_i = i;
 	     int index = GetOpcodeIndex(op);
 	     if(index >=0)
@@ -268,7 +268,7 @@ vm_RunObject (vm * vm, object * obj, object * caller, stack * locals, int argc)	
 	     {
 	     printf("unknown opcode:%x at %d\n",(char)string[i-1],i-1);
 	     }
-	   */
+	  
 	  // -- FOR DEBUGGING
 
 	  tuple_object *co_consts;
@@ -491,10 +491,12 @@ vm_RunObject (vm * vm, object * obj, object * caller, stack * locals, int argc)	
 		case OPCODE_BINARY_SUBSCR:
 		  tos = stack_Pop (_stack);
 		  tos1 = stack_Pop (_stack);
-		  if (tos->value_ptr != NULL)
-		    tos = (object *) tos->value_ptr;
-		  if (tos1->value_ptr != NULL)
-		    tos1 = (object *) tos1->value_ptr;
+		    if (tos->type != TYPE_NONE && tos->type != TYPE_NULL && tos->type != TYPE_TRUE
+			&& tos->type != TYPE_FALSE && tos->value_ptr != NULL)
+				tos = (object *) tos->value_ptr;
+		    if (tos1->type != TYPE_NONE && tos1->type != TYPE_NULL && tos1->type != TYPE_TRUE
+			&& tos1->type != TYPE_FALSE && tos1->value_ptr != NULL)
+				tos1 = (object *) tos1->value_ptr;
 		  break;
 
 	    }
@@ -542,7 +544,7 @@ vm_RunObject (vm * vm, object * obj, object * caller, stack * locals, int argc)	
 		  break;
 		case OPCODE_JUMP_ABSOLUTE:
 		  {
-		    i = arg - 3;
+		    i = arg ;
 		  }
 		  break;
 		case OPCODE_JUMP_IF_FALSE:
@@ -592,8 +594,8 @@ vm_RunObject (vm * vm, object * obj, object * caller, stack * locals, int argc)	
 
 		case OPCODE_BUILD_TUPLE:
 		case OPCODE_BUILD_LIST:
-		  printf ("");
-		  //stack_Push(BuildList(_stack,arg),_stack);
+		  {
+		//stack_Push(BuildList(_stack,arg),_stack);
 		  stack *blcall = NULL;
 
 		  if (arg > 0)
@@ -611,9 +613,10 @@ vm_RunObject (vm * vm, object * obj, object * caller, stack * locals, int argc)	
 		    }
 		  if (arg > 0)
 		    stack_Close (blcall, 0);
+			}
 		  break;
 		case OPCODE_LOAD_GLOBAL:
-		  printf ("");
+		   {
 		  //printf("push global name\n");
 		  //code_object *co_global = (code_object*)global->ptr;
 
@@ -644,13 +647,14 @@ vm_RunObject (vm * vm, object * obj, object * caller, stack * locals, int argc)	
 		  //DumpObject(co_names->items[name_i],0);
 		  //printf("pushed global\n");
 		  //stack_Push(co_varnames->items[arg],_stack);
+		  }
 		  break;
 
 		case OPCODE_STORE_GLOBAL:
-		  printf ("");
+		  {
 		  tos = stack_Pop (_stack);
 		  co_names = (tuple_object *) co->names->ptr;
-		  co_global = (code_object *) global->ptr;
+		  code_object *co_global = (code_object *) global->ptr;
 
 		  //co_names = (tuple_object*)co->names->ptr;
 		  name = (char *) co_names->items[arg]->ptr;
@@ -659,69 +663,72 @@ vm_RunObject (vm * vm, object * obj, object * caller, stack * locals, int argc)	
 
 		  if (tos->type == TYPE_UNICODE)
 		    printf ("fast storing %s in %s\n", (char *) tos->ptr,
-			    (char *) lgo->ptr);
+			    (char *) sgo->ptr);
 		  if (tos->type == TYPE_INT)
 		    printf ("fast storing %d in %s\n", tos->ptr,
-			    (char *) lgo->ptr);
+			    (char *) sgo->ptr);
 		  if (tos->type == TYPE_CODE)
 		    printf ("fast storing function %s in %s\n",
 			    ((code_object *) tos->ptr)->name,
-			    (char *) lgo->ptr);
+			    (char *) sgo->ptr);
 		  //co_varnames->items[arg]->value_ptr = tos;
 		  sgo->value_ptr = tos;
+		  }
 		  break;
 
 		case OPCODE_DELETE_GLOBAL:
-		  printf ("");
+		  {
 		  co_names = (tuple_object *) co->names->ptr;
-		  co_global = (code_object *) global->ptr;
+		  code_object *co_global = (code_object *) global->ptr;
 
 		  name = (char *) co_names->items[arg]->ptr;
 		  DeleteItem (co_global->varnames, arg);
+		  }
 		  break;
 
 		case OPCODE_LOAD_NAME:
-		  printf ("");
+		  {
 		  //printf("push name\n");
 		  co_names = (tuple_object *) co->names->ptr;
-		  name = (char *) co_names->items[arg]->ptr;
+		  //name = (char *) co_names->items[arg]->ptr;
 		  //printf("opcode: [%s],(%d) [%s]\n",opcodes[index].name,name_i,name->content);
 		  //if(co_names->items[name_i]->type== TYPE_UNICODE)
 		  // printf("pushing local (%d)%s = %s\n",name_i,name->content,AsUnicodeObject(co_names->items[name_i])->content);
 		  //if(co_names->items[name_i]->type== TYPE_INT)
 		  // printf("pushing local (%d)%s = %d\n",name_i,name->content,co_names->items[name_i]->ptr);
 		  stack_Push (co_names->items[arg], _stack);
+		    }
 		  break;
 
 		case OPCODE_LOAD_CONST:
-		  printf ("");
+		  {
 		  //printf("push const\n");
 		  co_consts = (tuple_object *) co->consts->ptr;
-		  const_content = (char *) co_consts->items[arg]->ptr;
+		  //const_content = (char *) co_consts->items[arg]->ptr;
 		  //if(((object*)co_consts->items[const_i]->value_ptr)->type== TYPE_UNICODE)
 		  //printf("pushing local const (%d)%s = %s\n",const_i,const_content->content,AsUnicodeObject((object*)co_consts->items[const_i]->value_ptr)->content);
 		  //if(co_consts->items[const_i]->type== TYPE_INT)
 		  // printf("pushing local const (%d)%s = %d\n",const_i,const_content->content,co_consts->items[const_i]->ptr);
 		  stack_Push (co_consts->items[arg], _stack);
+		  }
 		  break;
 
 		case OPCODE_LOAD_FAST:
-		  printf ("");
+		  {
 		  //printf("push name\n");
 		  co_varnames = (tuple_object *) co->varnames->ptr;
-		  varname = (char *) co_varnames->items[arg]->ptr;
+		  //varname = (char *) co_varnames->items[arg]->ptr;
 		  //printf("opcode: [%s],(%d) [%s]\n",opcodes[index].name,name_i,name->content);
 		  //if(co_varnames->items[varname_i]->type== TYPE_UNICODE)
 		  // printf("pushing local fast (%d,s)%s = %s\n",varname_i,varname->content,AsUnicodeObject((object*)co_varnames->items[varname_i]->value_ptr)->content);
 		  //if(co_varnames->items[varname_i]->type== TYPE_INT)
 		  // printf("pushing local fast (%d,i)%s = %d\n",varname_i,varname->content,co_varnames->items[varname_i]->ptr);
 		  stack_Push (co_varnames->items[arg]->value_ptr, _stack);
+		  }
 		  break;
 
-
-
 		case OPCODE_STORE_NAME:
-		  printf ("");
+		  {
 		  //printf("storing in name\n");
 		  tos = stack_Pop (_stack);
 		  co_names = (tuple_object *) co->names->ptr;
@@ -743,10 +750,11 @@ vm_RunObject (vm * vm, object * obj, object * caller, stack * locals, int argc)	
 		    }
 		  //else 
 		  co_names->items[arg]->value_ptr = tos;
+		  }
 		  break;
 
 		case OPCODE_STORE_FAST:
-		  printf ("");
+		  {
 		  //printf("storing in fast\n");
 		  tos = stack_Pop (_stack);
 		  //printf("tos type:%c\n",tos->type);
@@ -763,6 +771,7 @@ vm_RunObject (vm * vm, object * obj, object * caller, stack * locals, int argc)	
 			    ((code_object *) tos->ptr)->name, varname);
 		  tos->flags ^= OFLAG_ON_STACK;
 		  co_varnames->items[arg]->value_ptr = tos;
+		  }
 		  break;
 
 		case OPCODE_DELETE_NAME:
@@ -792,7 +801,7 @@ vm_RunObject (vm * vm, object * obj, object * caller, stack * locals, int argc)	
 		  break;
 
 		case OPCODE_UNPACK_SEQUENCE:
-		  printf ("");
+		  {
 		  tos = stack_Pop (_stack);
 		  if (tos->value_ptr != NULL)
 		    tos = (object *) tos->value_ptr;
@@ -813,9 +822,11 @@ vm_RunObject (vm * vm, object * obj, object * caller, stack * locals, int argc)	
 			}
 		    }
 		  //stack_Dump(_stack);
+		  }
 		  break;
 
 		case OPCODE_UNARY_POSITIVE:
+		{
 		  tos = stack_Pop (_stack);
 		  if (tos->type == TYPE_INT)
 		    {
@@ -827,9 +838,11 @@ vm_RunObject (vm * vm, object * obj, object * caller, stack * locals, int argc)	
 		      up->ptr = +(long) tos->ptr;
 		      stack_Push (up, _stack);
 		    }
+		}
 		  break;
 
 		case OPCODE_UNARY_NEGATIVE:
+		{
 		  tos = stack_Pop (_stack);
 		  if (tos->type == TYPE_INT)
 		    {
@@ -841,9 +854,11 @@ vm_RunObject (vm * vm, object * obj, object * caller, stack * locals, int argc)	
 		      up->ptr = -(long) tos->ptr;
 		      stack_Push (up, _stack);
 		    }
+		}
 		  break;
 
 		case OPCODE_UNARY_NOT:
+		{
 		  tos = stack_Pop (_stack);
 		  if (tos->type == TYPE_INT)
 		    {
@@ -870,9 +885,11 @@ vm_RunObject (vm * vm, object * obj, object * caller, stack * locals, int argc)	
 		      up->type = TYPE_FALSE;
 		      stack_Push (up, _stack);
 		    }
+			 }
 		  break;
 
 		case OPCODE_UNARY_INVERT:
+		 {
 		  tos = stack_Pop (_stack);
 		  if (tos->type == TYPE_INT)
 		    {
@@ -884,10 +901,12 @@ vm_RunObject (vm * vm, object * obj, object * caller, stack * locals, int argc)	
 		      up->ptr = -(((long) tos->ptr) + 1);
 		      stack_Push (up, _stack);
 		    }
+			}
 		  break;
 
 
 		case OPCODE_BINARY_ADD:
+		{
 		  if (tos->type == TYPE_UNICODE && tos1->type == TYPE_UNICODE)
 		    {
 		      char *tos_tmp = (char *) tos->ptr;
@@ -930,6 +949,7 @@ vm_RunObject (vm * vm, object * obj, object * caller, stack * locals, int argc)	
 			      new_tos->ptr);
 		      stack_Push (new_tos, _stack);
 		    }
+			}
 		  break;
 
 		case OPCODE_BINARY_SUBTRACT:
@@ -1116,7 +1136,6 @@ vm_RunObject (vm * vm, object * obj, object * caller, stack * locals, int argc)	
 		  }
 		  break;
 
-
 		case OPCODE_BINARY_MULTIPLY:
 		  {
 		    long ma = 0;
@@ -1124,7 +1143,9 @@ vm_RunObject (vm * vm, object * obj, object * caller, stack * locals, int argc)	
 		    long mb = 0;
 
 		    object *new_mtos = AllocObject ();
-
+			
+			printf("tos:%c\n",tos->type);
+			printf("tos1:%c\n",tos1->type);
 		    new_mtos->flags = OFLAG_ON_STACK;
 		    new_mtos->type = TYPE_INT;
 		    new_mtos->ptr = 0;
@@ -1133,6 +1154,23 @@ vm_RunObject (vm * vm, object * obj, object * caller, stack * locals, int argc)	
 		      {
 			ma = tos->ptr;
 		      }
+			if(tos1->type == TYPE_TUPLE)
+				{
+			printf("multiplying with a tuple\n");
+			int mnum = ((tuple_object*)tos1->ptr)->num;
+			if(mnum==1)
+				tos1 = ((tuple_object*)tos1->ptr)->items[0];
+			stack *mstack = stack_Init(ma,vm->recycle);
+			for(int i=0;i<ma;i++)
+				{
+			stack_Push(tos1,mstack);
+				}
+			printf("mnum:%d\n",mnum);
+			object *mtr = BuildList(mstack);
+			stack_Push(mtr,_stack);
+			//DumpObject(mtr,0);
+			break;
+				}
 		    if (tos1->type == TYPE_INT)
 		      {
 			mb = tos1->ptr;
@@ -1142,7 +1180,7 @@ vm_RunObject (vm * vm, object * obj, object * caller, stack * locals, int argc)	
 			    new_mtos->ptr);
 		    stack_Push (new_mtos, _stack);
 		  }
-		  //break;
+		  break;
 
 		case OPCODE_STORE_SUBSCR:
 		  {
@@ -1173,10 +1211,10 @@ vm_RunObject (vm * vm, object * obj, object * caller, stack * locals, int argc)	
 		    if (tos1->type == TYPE_TUPLE)
 		      {
 			//DumpObject(tos1,0);
-			//printf("bsa:%d\n",bsa);
+			printf("bsa:%d\n",bsa);
 			object *bst = GetItem (tos1, bsa);
 
-			//DumpObject(bst,0);
+			DumpObject(bst,0);
 			stack_Push (bst, _stack);
 		      }
 		  }
@@ -1495,6 +1533,7 @@ vm_RunObject (vm * vm, object * obj, object * caller, stack * locals, int argc)	
 		  break;
 
 		case OPCODE_COMPARE_OP:
+		  printf("compare op:%d\n",arg);
 		  switch (arg)
 		    {
 			case 0:	// <
@@ -1519,6 +1558,9 @@ vm_RunObject (vm * vm, object * obj, object * caller, stack * locals, int argc)	
 			  stack_Push (new_ctos, _stack);
 			  break;
 			case 2:	// ==
+			printf("cmp2\n");
+			printf("tos:%c\n",tos->type);
+			  printf("tos1:%c\n",tos1->type);
 			  if (tos->type == TYPE_UNICODE
 			      && tos1->type == TYPE_UNICODE)
 			    {
@@ -1562,9 +1604,9 @@ vm_RunObject (vm * vm, object * obj, object * caller, stack * locals, int argc)	
 			  break;
 
 			default:
-			  printf ("compare op:%d not supported\n", op);
+			  printf ("compare op:%d not supported\n", arg);
 		    }
-		  //printf("compare op:%d\n",op);
+		  printf("compare op thru:%d\n",arg);
 		  break;
 
 /*    case OPCODE_PRINT_ITEM:
@@ -1593,7 +1635,6 @@ vm_RunObject (vm * vm, object * obj, object * caller, stack * locals, int argc)	
 		
 		break;
 */
-
 
 		case OPCODE_CALL_FUNCTION:
 		  {

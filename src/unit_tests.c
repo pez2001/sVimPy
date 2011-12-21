@@ -112,7 +112,7 @@ OpenPYC (vm * vm)
   //printf("opening pyc file\n");
   FILE *f;
 
-  f = fopen ("tests/test.pyc", "rb");
+  f = fopen ("tests/e.pyc", "rb");
   if (f == NULL)
     return;
   //int r = fread(bh,4,1,f);
@@ -143,7 +143,7 @@ OpenPYC (vm * vm)
   //printf("max objects : %d\n",objects_max);
   //printf("objects headers total size  : %d\n",objects_header_total);
   vm_SetGlobal (vm, obj);
-  //DumpObject(obj,0);
+  DumpObject(obj,0);
   object *ret = vm_RunObject (vm, obj, obj, NULL, 0);	//,obj
 
   printf ("object executed\n");
@@ -162,7 +162,7 @@ int
 main (int argc, char *argv[])
 {
   mem_Init ();
-  ptr_tests ();
+  //ptr_tests ();
   vm *vm = vm_Init (NULL);
 
   function_definition *build_list =
@@ -174,7 +174,7 @@ main (int argc, char *argv[])
   function_definition *print = CreateCFunction (&if_print, "print");
 
   vm_AddFunctionDefinition (vm, print);
-  vm_RemoveFunction (vm, "range");
+  //vm_RemoveFunction (vm, "range");
   //printf("Calling all Unit Tests\n");
   OpenPYC (vm);
   //printf("clearing recycle stack\n");
