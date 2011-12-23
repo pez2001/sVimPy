@@ -1878,3 +1878,12 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 
 	return (NULL);
 }
+
+#ifdef CREATELIB
+
+int main(int argc, char *argv[])
+{
+
+}
+
+#endif

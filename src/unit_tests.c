@@ -94,27 +94,6 @@ void ptr_tests()
 
 
 
-long ReadLong(FILE * f)
-{
-	long r = 0;
-
-	// char *b = (char*)mem_malloc(4);
-	int read = fread(&r, 4, 1, f);
-
-	// r = *(long*)b;
-	// free(b);
-	return (r);
-}
-
-char ReadChar(FILE * f)
-{
-	char r = 0;
-
-	int read = fread(&r, 1, 1, f);
-
-	return (r);
-}
-
 void OpenPYC(char *filename, vm * vm, int debug)
 {
 	// char *b = (char*)mem_malloc(3);
@@ -214,7 +193,7 @@ int main(int argc, char *argv[])
 	//OpenPYC("tests/test20.pyc", vm, 1);
 	OpenPYC("tests/e_small.pyc", vm, 0);
 	OpenPYC("tests/e_med.pyc", vm, 0);
-	OpenPYC("tests/e.pyc", vm, 0);
+	//OpenPYC("tests/e.pyc", vm, 0);
 	//OpenPYC("tests/test23.pyc", vm, 1);
 	// printf("clearing recycle stack\n");
 	// stack_Dump(vm->recycle);

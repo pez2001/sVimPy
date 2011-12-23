@@ -487,6 +487,28 @@ object *GetNextItem(object * tuple)
 }
 
 
+long ReadLong(FILE * f)
+{
+	long r = 0;
+
+	// char *b = (char*)mem_malloc(4);
+	int read = fread(&r, 4, 1, f);
+
+	// r = *(long*)b;
+	// free(b);
+	return (r);
+}
+
+char ReadChar(FILE * f)
+{
+	char r = 0;
+
+	int read = fread(&r, 1, 1, f);
+
+	return (r);
+}
+
+
 object *ReadObject(FILE * f)
 {
 	objects_num++;

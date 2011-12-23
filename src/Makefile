@@ -2,52 +2,53 @@
 
 CFLAGS=-W -w -O2 -std=c99 
 CC=gcc
+VERSION = 0.1.8
+AR=ar
+LD=ld
+#LDFLAGS=-no-undefined --enable-runtime-pseudo-reloc
 
-all: vm.o unit_tests.o opcodes.o object.o stack.o strops.o numops.o memory.o internal_functions.o lists.o stream.o unit_test 
 
-unit_test: vm.o stack.o opcodes.o object.o strops.o numops.o stack.o memory.o internal_functions.o lists.o stream.o
-	$(CC)  unit_tests.o vm.o opcodes.o object.o stack.o strops.o numops.o memory.o internal_functions.o lists.o stream.o -o unit_test 
-unit_tests.o: unit_tests.c
-	$(CC) $(CFLAGS) -c unit_tests.c 
-vm.o: vm.c
-	$(CC) $(CFLAGS) -c vm.c 
-strops.o: strops.c
-	$(CC) $(CFLAGS) -c strops.c 
-numops.o: numops.c
-	$(CC) $(CFLAGS) -c numops.c 
-opcodes.o: opcodes.c
-	$(CC) $(CFLAGS) -c opcodes.c 
-object.o: object.c
-	$(CC) $(CFLAGS) -c object.c 
-memory.o: memory.c
-	$(CC) $(CFLAGS) -c memory.c 
-stack.o: stack.c
-	$(CC) $(CFLAGS) -c stack.c 
-lists.o: lists.c
-	$(CC) $(CFLAGS) -c lists.c 
-internal_functions.o: internal_functions.c
-	$(CC) $(CFLAGS) -c internal_functions.c 
-stream.o: stream.c
-	$(CC) $(CFLAGS) -c stream.c 
+VM_FILES = vm.c strops.c numops.c opcodes.c object.c memory.c stack.c lists.c internal_functions.c stream.c
+VM_INCLUDES = vm.h strops.h numops.h opcodes.h object.h memory.h stack.h lists.h internal_functions.h stream.h
+VM_OBJ = vm.o strops.o numops.o opcodes.o object.o memory.o stack.o lists.o internal_functions.o stream.o
+UT_FILES = unit_tests.c
+UT_OBJ = unit_tests.o
+UT_INCLUDES = unit_tests.h
+
+
+test: clean all
+	unit_test.exe
+
+all: unit_test 
+
+unit_test: vm_static $(UT_OBJ) 
+	$(CC) $(UT_OBJ) vm.a  -o unit_test 
+
+unit_test_o: $(VM_OBJ) $(UT_OBJ)
+	$(CC) $(VM_OBJ) $(UT_OBJ)  -o unit_test 
+
+vm_static: $(VM_OBJ)
+	$(AR) -rs vm.a $(VM_OBJ)
+
+vm_dynamic: $(VM_OBJ)
+	$(CC) -DCREATELIB -shared $(VM_OBJ) $(LDFLAGS) -o vm.dll
+	
+%.o: %.c 
+	$(CC) $(CFLAGS) -c -o $@ $<
 	
 clean:
-	rm vm.o
-	rm stack.o
-	rm strops.o
-	rm numops.o
-	rm opcodes.o	
-	rm object.o	
-	rm memory.o	
-	rm lists.o
-	rm stream.o
-	rm internal_functions.o
-	rm unit_test.exe
-	rm unit_tests.o
-	rm svimpy.src.tar.gz
-
+	rm -f unit_test.exe *.o *.a *.so svimpy.src.tar.gz
 srcdist:	
-	tar -cf svimpy.src.tar unit_tests.c unit_tests.h opcodes.c opcodes.h memory.c memory.h object.c object.h stack.c stack.h stream.c stream.h internal_functions.c internal_functions.h vm.c vm.h lists.c lists.h strops.c strops.h numops.c numops.h object.c object.h Makefile
-	gzip -9 svimpy.src.tar
+	mkdir svimpy-$(VERSION)
+	cp $(VM_FILES) svimpy-$(VERSION)
+	cp $(VM_INCLUDES) svimpy-$(VERSION)
+	cp $(UT_FILES) svimpy-$(VERSION)
+	cp $(UT_INCLUDES) svimpy-$(VERSION)
+	cp -r tests svimpy-$(VERSION)
+	cp Makefile svimpy-$(VERSION)
+	tar -cf svimpy.src-$(VERSION).tar svimpy-$(VERSION)
+	gzip -9 svimpy.src-$(VERSION).tar
+	rm -r svimpy-$(VERSION)
 
 git:	
 	git add *

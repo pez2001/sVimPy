@@ -188,6 +188,10 @@ function_object *AllocFunctionObject();
 
 block_object *AllocBlockObject();
 
+long ReadLong(FILE * f);
+
+char ReadChar(FILE * f);
+
 object *ReadObject(FILE * f);
 
 string_object *AsStringObject(object * obj);
