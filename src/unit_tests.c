@@ -119,7 +119,7 @@ ReadChar (FILE * f)
 }
 
 void
-OpenPYC (vm * vm)
+OpenPYC (char *filename,vm * vm)
 {
   //char *b = (char*)mem_malloc(3);
   //char *bh = (char*)mem_malloc(4);
@@ -128,7 +128,7 @@ OpenPYC (vm * vm)
   //printf("opening pyc file\n");
   FILE *f;
 
-  f = fopen ("tests/e.pyc", "rb");
+  f = fopen (filename, "rb");
   if (f == NULL)
     return;
   //int r = fread(bh,4,1,f);
@@ -162,7 +162,7 @@ OpenPYC (vm * vm)
   DumpObject(obj,0);
   object *ret = vm_RunObject (vm, obj, obj, NULL, 0);	//,obj
 
-  printf ("object executed\n");
+  printf ("object executed:%s\n",filename);
   //DumpObject(obj,0);
   //printf("cleaning up object\n");
   FreeObject (obj);
@@ -192,7 +192,31 @@ main (int argc, char *argv[])
   vm_AddFunctionDefinition (vm, print);
   //vm_RemoveFunction (vm, "range");
   //printf("Calling all Unit Tests\n");
-  OpenPYC (vm);
+  OpenPYC ("tests/test1.pyc",vm);
+  OpenPYC ("tests/test2.pyc",vm);
+  OpenPYC ("tests/test3.pyc",vm);
+  OpenPYC ("tests/test4.pyc",vm);
+  OpenPYC ("tests/test5.pyc",vm);
+  OpenPYC ("tests/test6.pyc",vm);
+  OpenPYC ("tests/test7.pyc",vm);
+  OpenPYC ("tests/test8.pyc",vm);
+  OpenPYC ("tests/test9.pyc",vm);
+  OpenPYC ("tests/test10.pyc",vm);
+  OpenPYC ("tests/test11.pyc",vm);
+  OpenPYC ("tests/test12.pyc",vm);
+  OpenPYC ("tests/test13.pyc",vm);
+  OpenPYC ("tests/test14.pyc",vm);
+  OpenPYC ("tests/test15.pyc",vm);
+  OpenPYC ("tests/test16.pyc",vm);
+  OpenPYC ("tests/test17.pyc",vm);
+  OpenPYC ("tests/test18.pyc",vm);
+  OpenPYC ("tests/test19.pyc",vm);
+  OpenPYC ("tests/test20.pyc",vm);
+  OpenPYC ("tests/test21.pyc",vm);
+  OpenPYC ("tests/test22.pyc",vm);
+  OpenPYC ("tests/test23.pyc",vm);
+  OpenPYC ("tests/test.pyc",vm);
+  OpenPYC ("tests/e_small.pyc",vm);
   //printf("clearing recycle stack\n");
   //stack_Dump(vm->recycle);
   printf ("closing vm\n");

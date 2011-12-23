@@ -519,6 +519,8 @@ vm_RunObject (vm * vm, object * obj, object * caller, stack * locals, int argc)	
 		    if (tos1->type != TYPE_NONE && tos1->type != TYPE_NULL && tos1->type != TYPE_TRUE
 			&& tos1->type != TYPE_FALSE && tos1->value_ptr != NULL)
 				tos1 = (object *) tos1->value_ptr;
+				assert(tos != NULL);
+				assert(tos1!=NULL);
 				}
 		  break;
 		case OPCODE_STORE_SUBSCR:
@@ -667,9 +669,12 @@ vm_RunObject (vm * vm, object * obj, object * caller, stack * locals, int argc)	
 
 		  //co_names = (tuple_object*)co->names->ptr;
 		  name = (char *) co_names->items[arg]->ptr;
+		  printf("searching for:%s\n",name);
 		  object *lgo =
-		    FindUnicodeTupleItem (co_global->varnames, name);
-		  //DumpObject(lgo,1);
+		    FindUnicodeTupleItem (co_global->names, name);
+		  if(lgo == NULL)
+		  lgo =   FindUnicodeTupleItem (co_global->varnames, name);
+		  DumpObject(lgo,1);
 		  if (lgo == NULL)
 		    if (vm_FindFunction (vm, name) != NULL)
 		      {
@@ -680,7 +685,7 @@ vm_RunObject (vm * vm, object * obj, object * caller, stack * locals, int argc)	
 			lgo->value_ptr = NULL;
 		      }
 		  stack_Push (_stack,lgo);
-		  //stack_Dump(_stack);
+		  stack_Dump(_stack);
 		  //if(co_names->items[name_i]->type== TYPE_UNICODE)
 		  // printf("pushing global (%d)%s = %s\n",name_i,name->content,AsUnicodeObject(co_names->items[name_i])->content);
 		  //if(co_names->items[name_i]->type== TYPE_INT)
@@ -1246,6 +1251,7 @@ vm_RunObject (vm * vm, object * obj, object * caller, stack * locals, int argc)	
 		case OPCODE_BINARY_SUBSCR:
 		  {
 		    long bsa = 0;
+			
 			//printf("binary subscribe");
 		    if (tos->type == TYPE_INT)
 		      {
@@ -1726,11 +1732,12 @@ vm_RunObject (vm * vm, object * obj, object * caller, stack * locals, int argc)	
 			TYPE_CODE)
 		      {
 			printf ("executing local function object: %s\n",(char *) function_name->ptr);
-			for (int i = 0; i < arg; i++)
+			/*for (int i = 0; i < arg; i++)
 			  {
 			    stack_Push (_stack,stack_Pop (call));
 			  }
-			object *ret = vm_RunObject (vm, (object *) function_name->value_ptr, obj, NULL, 0);	//,global
+			  */
+			object *ret = vm_RunObject (vm, (object *) function_name->value_ptr, obj, call, arg);	//,global
 
 			if (ret != NULL)
 			  stack_Push (_stack,ret);
