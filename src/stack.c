@@ -192,11 +192,11 @@ object *stack_Pop(stack * _stack)
 		// printf("removed stack only item\n");
 		if (_stack->recycle_stack != NULL)
 		{
-			//if (!stack_Contains((stack *) _stack->recycle_stack, r))
-			//{
+			if (!stack_Contains((stack *) _stack->recycle_stack, r))
+			{
 			//	 printf("put object on recycle stack @:%d\n",((stack*)_stack->recycle_stack)->list->num);
-			//	stack_Push((stack *) _stack->recycle_stack, r);
-			//}
+				stack_Push((stack *) _stack->recycle_stack, r);
+			}
 		}
 	}
 	return (r);

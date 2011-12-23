@@ -157,15 +157,14 @@ int main(int argc, char *argv[])
 	//ptr_tests();
 	vm *vm = vm_Init(NULL);
 
-	function_definition *build_list =
-		CreateCFunction(&BuildList, "internal.BuildList");
-	vm_AddFunctionDefinition(vm, build_list);
+	function_definition *build_list = CreateCFunction(&BuildList, "internal.BuildList");
 	function_definition *range = CreateCFunction(&if_range, "range");
-
-	vm_AddFunctionDefinition(vm, range);
 	function_definition *print = CreateCFunction(&if_print, "print");
-
+	function_definition *sum = CreateCFunction(&if_sum, "sum");
+	vm_AddFunctionDefinition(vm, build_list);
+	vm_AddFunctionDefinition(vm, range);
 	vm_AddFunctionDefinition(vm, print);
+	vm_AddFunctionDefinition(vm, sum);
 	// vm_RemoveFunction (vm, "range");
 	// printf("Calling all Unit Tests\n");
 	/*OpenPYC("tests/test1.pyc", vm, 0);
@@ -190,9 +189,9 @@ int main(int argc, char *argv[])
 	OpenPYC("tests/test21.pyc", vm, 0); 
 	OpenPYC("tests/test22.pyc", vm, 0);
 	OpenPYC("tests/test.pyc", vm, 0);*/
-	//OpenPYC("tests/test20.pyc", vm, 1);
+	OpenPYC("tests/test20.pyc", vm, 2);
 	OpenPYC("tests/e_small.pyc", vm, 0);
-	OpenPYC("tests/e_med.pyc", vm, 0);
+	//OpenPYC("tests/e_med.pyc", vm, 0);
 	//OpenPYC("tests/e.pyc", vm, 0);
 	//OpenPYC("tests/test23.pyc", vm, 1);
 	// printf("clearing recycle stack\n");

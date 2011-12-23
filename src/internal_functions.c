@@ -199,3 +199,32 @@ object *if_print(stack * stack)
 	tmp->flags = OFLAG_ON_STACK;
 	return (tmp);
 }
+
+
+object *if_sum(stack * stack)
+{
+	// printf("print called\n");
+	int num = stack->list->num;
+
+	long sum = 0;
+	for (int i = 0; i < num; i++)
+	{
+		object *tos = stack_Pop(stack);
+
+		if (tos != NULL)
+			switch (tos->type)
+			{
+			case TYPE_INT:
+				sum += (long)tos->ptr;
+				break;
+			case TYPE_UNICODE:
+				break;
+			}
+	}
+	object *tmp = AllocEmptyObject();
+	tmp->type = TYPE_INT;
+	tmp->flags = OFLAG_ON_STACK;
+	tmp->ptr = sum;
+	printf("returning sum:%d\n",sum);
+	return (tmp);
+}

@@ -297,7 +297,9 @@ void DumpObject(object * obj, int level)
 
 					if ((((tuple_object *) obj->ptr)->items[i]->
 						 flags & OFLAG_TUPLE_PTR) > 0)
-						printf("->");
+						printf("%d->",i);
+					else
+						printf("%d  ",i);
 					DumpObject(((tuple_object *) obj->ptr)->items[i],
 							   level + 1);
 				}
@@ -392,7 +394,7 @@ void ResetIteration(object * tuple)
 
 	for (int i = 0; i < ((tuple_object *) tuple->ptr)->num; i++)
 	{
-		// printf("checking tuple:%d\n",i);
+		 //printf("checking tuple:%d\n",i);
 		// if(((tuple_object*)tuple->ptr)->items[i]->type == TYPE_UNICODE)
 		// printf("checking %s against:
 		// %s\n",name,(char*)((tuple_object*)tuple->ptr)->items[i]->ptr);
@@ -431,9 +433,6 @@ void DeleteItem(object * tuple, int index)
 		FreeObject(((tuple_object *) tuple->ptr)->items[index]);
 	((tuple_object *) tuple->ptr)->items[index] = NULL;
 }
-
-
-
 
 object *GetItem(object * tuple, int index)
 {
@@ -507,7 +506,6 @@ char ReadChar(FILE * f)
 
 	return (r);
 }
-
 
 object *ReadObject(FILE * f)
 {

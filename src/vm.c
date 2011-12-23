@@ -323,11 +323,21 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 			case OPCODE_GET_ITER:
 				{
 					object *iter = stack_Pop(_stack);
-
+					if(debug >= 2)
+					{
+					 printf("iter:\n");
+					 DumpObject(iter,0);
+					//printf("bo_stack:\n");
+					//stack_Dump(vm->blocks);
+					//printf("bo:\n");
+					//DumpObject(stack_Top(vm->blocks),0);
+					}
 					block_object *abo =
-						(block_object *) stack_Top(vm->blocks)->ptr;
+						(block_object *) stack_Top(vm->blocks);
 					abo->iter = iter;
+					
 					ResetIteration(iter);
+					stack_Push(_stack,iter);
 					op_thru = 1;
 				}
 				break;
@@ -342,7 +352,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 			case OPCODE_BREAK_LOOP:
 				{
 					block_object *bbo =
-						(block_object *) stack_Top(vm->blocks)->ptr;
+						(block_object *) stack_Top(vm->blocks);
 					i = bbo->start + bbo->len - 1;
 					// printf("break to: %d ,start: %d ,len:
 					// %d\n",i,bbo->start,bbo->len);
@@ -559,18 +569,18 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 			{
 			case OPCODE_SETUP_LOOP:
 				{
-					object *bo = AllocObject();
+					//object *bo = AllocObject();
 
 					block_object *block = AllocBlockObject();
 
-					bo->type = TYPE_BLOCK;
-					bo->ptr = block;
-					bo->flags = OFLAG_ON_STACK;
+					//bo->type = TYPE_BLOCK;
+					//bo->ptr = block;
+					//bo->flags = OFLAG_ON_STACK;
 					block->start = i;
 					block->len = arg;
 					// printf("block - start: %d, len:
 					// %d\n",block->start,block->len);
-					stack_Push(vm->blocks, bo);
+					stack_Push(vm->blocks, block);
 				}
 				break;
 
@@ -627,7 +637,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 					// i = i + delta;
 					// break;
 					block_object *fabo =
-						(block_object *) stack_Top(vm->blocks)->ptr;
+						(block_object *) stack_Top(vm->blocks);
 					object *next = GetNextItem(fabo->iter);
 
 					if (next != NULL)
@@ -1775,10 +1785,10 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 							printf
 								("executing direct local function object: %s\n",
 								 ((code_object *) function_name->ptr)->name);
-						for (int i = 0; i < arg; i++)
+						/*for (int i = 0; i < arg; i++)
 						{
 							stack_Push(_stack, stack_Pop(call));
-						}
+						}*/
 						object *ret = vm_RunObject(vm, (object *) function_name, obj, call, arg, debug);	// ,global
 
 						if (ret != NULL)
