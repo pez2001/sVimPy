@@ -38,10 +38,17 @@ ptr_CreateList (unsigned int num,int flags)
   return (tmp);
 }
 
+ptr_list_with_tag *ptr_CreateTaggedList (unsigned int num,int flags)
+{
+
+
+return(NULL);
+}
+
 void
 ptr_CloseList (ptr_list * list)
 {
-  if (list->num)
+  if (list->num >0)
     {
       assert (mem_free (list->items));
     }
@@ -74,6 +81,7 @@ ptr_Pop (ptr_list * list)
 {
   if (list->num)
     {
+		//printf("ptr pop:%d\n",list->num-1);
       void *tmp = ptr_Remove (list, list->num - 1);
 
       return (tmp);
@@ -146,13 +154,24 @@ ptr_Remove (ptr_list * list, int index)
       //{
       for (int i = list->num - 1; i > index; i--)
 	{
+	 //printf("move up\n");
 	  ptr_MoveUp (list, i);
 	  //memcpy(&list->items[index],&list->items[index+1],len * sizeof(void*));
 	}
+	if(list->num-1 == 0)
+		{
+			//printf("freeing empty list\n");
+			assert(mem_free(list->items));
+			list->items = NULL;
+			list->num = 0;
+		}
+		else
+		{
       list->items =
-	(void **) mem_realloc (list->items,
-			       (list->num - 1) * sizeof (void *));
+	(void **) mem_realloc (list->items,			       (list->num - 1) * sizeof (void *));
       list->num--;
+	  }
+	  //printf("top:%d\n",list->num);
       return (tmp);
     }
   return (NULL);
@@ -164,6 +183,7 @@ ptr_Clear (ptr_list * list)
   if (list->num)
     {
       assert (mem_free (list->items));
+	  list->items= NULL;
     }
   list->num = 0;
 }

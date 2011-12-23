@@ -34,10 +34,20 @@ typedef struct
   unsigned int num;
   int flags;
 } ptr_list;
+typedef struct
+{
+  void **items;
+  unsigned int num;
+  int flags;
+  void *tag;
+} ptr_list_with_tag;
 
 #define PTR_STATIC_LIST 1	//TODO add support for static lists , so indices wont change
+#define PTR_LIST_HAS_TAG 2
 
 ptr_list *ptr_CreateList (unsigned int num,int flags);
+
+ptr_list_with_tag *ptr_CreateTaggedList (unsigned int num,int flags);
 
 void ptr_CloseList (ptr_list * list);
 

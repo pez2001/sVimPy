@@ -73,6 +73,22 @@ ptr_tests ()
   for (int i = 0; i < p->num; i++)
     printf ("%d ", p->items[i]);
   printf ("\n");
+  
+  ptr_Clear(p);
+  ptr_Push(p,0);
+  for(int i = 0; i< 20000;i++)
+   ptr_Push(p,1);
+  for(int i = 0; i< 20000;i++)
+   ptr_Pop(p);
+  printf("first:%d \n",ptr_Pop(p));
+  printf("top:%d\n",p->num);
+
+  for(int i = 0; i< 20000;i++)
+	{
+	ptr_Push(p,0);
+    ptr_Pop(p);
+	}
+  
   ptr_CloseList (p);
   printf ("ptr tests thru\n");
 }
@@ -162,7 +178,7 @@ int
 main (int argc, char *argv[])
 {
   mem_Init ();
-  //ptr_tests ();
+  ptr_tests ();
   vm *vm = vm_Init (NULL);
 
   function_definition *build_list =

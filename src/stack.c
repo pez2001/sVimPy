@@ -23,28 +23,15 @@
 #include "stack.h"
 
 stack *
-stack_Init (long items_num, stack * recycle)
+stack_Init (stack * recycle)
 {
-  if (!items_num)
-    return (NULL);
   stack *tmp = (stack *) mem_malloc (sizeof (stack), "stack_Init() return");
-
-  tmp->items =
-    (object **) mem_malloc (items_num * sizeof (object *),
-			    "stack_Init() items");
-//printf("init stack @%x\n",tmp);
-//printf("init stack items @%x\n",tmp->items);
-  tmp->top = 0;
-  tmp->num = items_num;
+  tmp->list = ptr_CreateList(0,0);
   tmp->recycle_stack = recycle;
-//callstack_items = (object**)mem_malloc(CALLSTACK_MIN_ITEMS*sizeof(object*));
-//callstack_top = 0;
-
-//recycle_items = (object**)mem_malloc(STACK_MIN_ITEMS*sizeof(object*));
-//recycle_top = 0;
   return (tmp);
 }
 
+/*
 void
 stack_IncreaseSize (int items_num, stack * stack)
 {
@@ -56,6 +43,7 @@ stack_IncreaseSize (int items_num, stack * stack)
   stack->num += items_num;
   printf ("increasing stack size by:%d\n", items_num);
 }
+*/
 
 void
 stack_Close (stack * stack, int free_objects)
@@ -64,55 +52,38 @@ stack_Close (stack * stack, int free_objects)
     {
       if (free_objects)
 	{
-//printf("freeing %d stack items\n",stack->top);
-	  for (int i = 0; i < stack->top; i++)
-	    if ((stack->items[i]->flags & OFLAG_ON_STACK) > 0)
+	  for (int i = 0; i < stack->list->num; i++)
+	    if ((((object*)stack->list->items[i])->flags & OFLAG_ON_STACK) > 0)
 	      {
-		//printf("free:%d\n",i);
-		FreeObject (stack->items[i]);
+		FreeObject (stack->list->items[i]);
 	      }
 	}
-      else if (stack->top > 0)
-	printf ("%d items left untouched on stack\n", stack->top);
-
-      assert (mem_free (stack->items));
-      //printf("freed stack items @%x\n",stack->items);
+      else if (stack->list->num > 0)
+	printf ("%d items left untouched on stack\n", stack->list->num);
+      ptr_CloseList(stack->list);
       assert (mem_free (stack));
-      //printf("freed stack @%x\n",stack);
-//for(int i=0;i<callstack_top;i++)
-// if(callstack_items[i]->flags & OFLAG_ON_STACK) 
-// FreeObject(callstack_items[i]);
-// mem_free(callstack_items);
-//for(int i=0;i<recycle_top;i++)
-// FreeObject(recycle_items[i]);
-// mem_free(recycle_items);
     }
 }
 
 
 
 void
-stack_Push (object * x, stack * stack)
+stack_Push (stack * stack,object * x)
 {
   if (x == NULL)
     return;
-  if (stack->top == stack->num)
-    stack_IncreaseSize (1, stack);
-  stack->items[stack->top] = x;
-//printf("put object on stack @:%d\n",stack->top);
-//DumpObject(x,0);
-  stack->top++;
+	ptr_Push(stack->list,x);
 }
 
 object *
 stack_Bottom (stack * stack)
 {
-  if (stack->top < 1)
+  if (stack->list->num < 1)
     {
-      printf ("stack underflow - no top\n");
+      printf ("stack_Bottom() - stack underflow - no top\n");
       return (NULL);
     }
-  object *r = stack->items[0];
+  object *r = stack->list->items[0];
 
   return (r);
 }
@@ -120,12 +91,12 @@ stack_Bottom (stack * stack)
 object *
 stack_Top (stack * stack)
 {
-  if (stack->top < 1)
+  if (stack->list->num< 1)
     {
-      printf ("stack underflow - no top\n");
+      printf ("stack_Top() - stack underflow - no top\n");
       return (NULL);
     }
-  object *r = stack->items[stack->top - 1];
+  object *r = stack->list->items[stack->list->num - 1];
 
   return (r);
 }
@@ -133,12 +104,12 @@ stack_Top (stack * stack)
 object *
 stack_Second (stack * stack)
 {
-  if (stack->top < 2)
+  if (stack->list->num < 2)
     {
-      printf ("stack underflow - no top\n");
+      printf ("stack_Second() - stack underflow - no top\n");
       return (NULL);
     }
-  object *r = stack->items[stack->top - 2];
+  object *r = stack->list->items[stack->list->num - 2];
 
   return (r);
 }
@@ -146,79 +117,82 @@ stack_Second (stack * stack)
 object *
 stack_Third (stack * stack)
 {
-  if (stack->top < 3)
+  if (stack->list->num < 3)
     {
-      printf ("stack underflow - no top\n");
+      printf ("stack_Third() - stack underflow - no top\n");
       return (NULL);
     }
-  object *r = stack->items[stack->top - 3];
+  object *r = stack->list->items[stack->list->num - 3];
 
   return (r);
 }
 
 void
-stack_SetBottom (object * x, stack * stack)
+stack_SetBottom ( stack * stack,object * x)
 {
-  if (stack->top < 1)
+  if (stack->list->num < 1)
     {
-      printf ("stack underflow - no top\n");
+      printf ("stack_SetBottom() - stack underflow - no top\n");
       return (NULL);
     }
-  stack->items[0] = x;
+  stack->list->items[0] = x;
 }
 
 void
-stack_SetTop (object * x, stack * stack)
+stack_SetTop (stack *stack,object * x)
 {
-  if (stack->top < 1)
+  if (stack->list->num < 1)
     {
-      printf ("stack underflow - no top\n");
+      printf ("stack_SetTop() - stack underflow - no top\n");
       return (NULL);
     }
-  stack->items[stack->top - 1] = x;
+  stack->list->items[stack->list->num - 1] = x;
 }
 
 void
-stack_SetSecond (object * x, stack * stack)
+stack_SetSecond (stack *stack,object * x)
 {
-  if (stack->top < 2)
+  if (stack->list->num < 2)
     {
-      printf ("stack underflow - no top\n");
+      printf ("stack_SetSecond() - stack underflow - no top\n");
       return (NULL);
     }
-  stack->items[stack->top - 2] = x;
-
-}
-
-void
-stack_SetThird (object * x, stack * stack)
-{
-  if (stack->top < 3)
-    {
-      printf ("stack underflow - no top\n");
-      return (NULL);
-    }
-  stack->items[stack->top - 3] = x;
+  stack->list->items[stack->list->num - 2] = x;
 
 }
 
 void
-stack_Adjust (int by, stack * stack)
+stack_SetThird (stack * stack,object * x)
 {
-  if ((stack->top + by) > stack->num)
-    stack_IncreaseSize (((stack->top + by) - stack->num), stack);
+  if (stack->list->num < 3)
+    {
+      printf ("stack_SetThird() - stack underflow - no top\n");
+      return (NULL);
+    }
+  stack->list->items[stack->list->num - 3] = x;
 
-  stack->top += by;
 }
+
+void
+stack_Adjust (stack * stack,int by)
+{
+ // if ((stack->top + by) > stack->num)
+//    stack_IncreaseSize (((stack->top + by) - stack->num), stack);
+
+//  stack->top += by;
+for(int i = 0;i< by;i++)
+ ptr_Push(stack->list,NULL);
+}
+
 
 void
 stack_Dump (stack * stack)
 {
-  printf ("Dumping %d stack items\n", stack->top);
-  for (int i = 0; i < stack->top; i++)
+  printf ("Dumping %d stack items\n", stack->list->num);
+  for (int i = 0; i < stack->list->num; i++)
     {
       printf ("item: %d\n", i);
-      DumpObject (stack->items[i], 1);
+      DumpObject (stack->list->items[i], 1);
 
     }
 }
@@ -227,36 +201,33 @@ stack_Dump (stack * stack)
 object *
 stack_Pop (stack * _stack)
 {
-  if (_stack->top < 1)
+  if (_stack->list->num < 1)
     {
-      printf ("stack underflow\n");
+      printf ("stack_Pop() - stack underflow\n");
       return (NULL);
     }
-  object *r = _stack->items[_stack->top - 1];
+  object *r = ptr_Pop(_stack->list);
 
   if ((r->flags & OFLAG_ON_STACK))
     {
       //printf("removed stack only item\n");
       if (_stack->recycle_stack != NULL)
 	{
-	  if (!stack_Contains (r, (stack *) _stack->recycle_stack))
+	  if (!stack_Contains ((stack *) _stack->recycle_stack,r))
 	    {
-	      //printf("put object on recycle stack @:%d\n",((stack*)_stack->recycle_stack)->top);
-	      stack_Push (r, (stack *) _stack->recycle_stack);
+	      //printf("put object on recycle stack @:%d\n",((stack*)_stack->recycle_stack)->list->num);
+	      stack_Push ( (stack *) _stack->recycle_stack,r);
 	    }
 	}
     }
-  _stack->top--;
-//if(stack_top < 0)
-// stack_top = 0;
   return (r);
 }
 
 int
-stack_Contains (object * x, stack * stack)
+stack_Contains (stack * stack,object * x)
 {
-  for (int i = 0; i < stack->top; i++)
-    if (stack->items[i] == x)
+  for (int i = 0; i < stack->list->num; i++)
+    if (stack->list->items[i] == x)
       return (1);
   return (0);
 }

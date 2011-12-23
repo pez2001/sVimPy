@@ -494,7 +494,7 @@ GetNextItem (object * tuple)
     {
       if (((tuple_object *) tuple->ptr)->items[i] == NULL)
 	continue;
-      printf ("checking tuple:%d\n", i);
+      //printf ("checking tuple:%d\n", i);
       //if(((tuple_object*)tuple->ptr)->items[i]->type == TYPE_UNICODE)
       // printf("checking %s against: %s\n",name,(char*)((tuple_object*)tuple->ptr)->items[i]->ptr);
       if ((((tuple_object *) tuple->ptr)->items[i]->flags & OFLAG_TUPLE_PTR) >

@@ -27,7 +27,7 @@
 object *
 BuildList (stack * stack)
 {
-  int num = stack->top;
+  int num = stack->list->num;
 
   object *r = AllocObject ();
 
@@ -50,8 +50,10 @@ BuildList (stack * stack)
 object *
 if_range (stack * stack)
 {
+//TODO dirty hack in a classless world
+ //stack_Dump(stack);
  //printf("range called:%d\n",stack->top);
-  if (stack->top < 2)
+  if (stack->list->num < 2)
     {
       object *tmp = AllocEmptyObject ();
 
@@ -64,7 +66,7 @@ if_range (stack * stack)
 
   object *e = stack_Pop (stack);
   object *st = NULL;
-  if(stack->top == 1)
+  if(stack->list->num == 1)
    st = stack_Pop(stack);
 
   if (st == NULL && s->type == TYPE_INT && e->type == TYPE_INT)
@@ -76,7 +78,8 @@ if_range (stack * stack)
       r->flags = OFLAG_ON_STACK;
       r->ptr = AllocTupleObject ();
       int n = (long) e->ptr - (long) s->ptr;
-
+      printf("range(%d,%d) tuple will contain %d items\n",s->ptr,e->ptr,n);
+     
       ((tuple_object *) r->ptr)->num = n;
       ((tuple_object *) r->ptr)->items =
 	(object **) mem_malloc (n * sizeof (object *), "if_range() items");
@@ -97,11 +100,12 @@ else
       r->type = TYPE_TUPLE;
       r->flags = OFLAG_ON_STACK;
       r->ptr = AllocTupleObject ();
-      int n = ((long) e->ptr - (long) s->ptr) / (long) st->ptr;
-
+      int n = (((long) e->ptr - (long) s->ptr) / (long) st->ptr )+ 1;
+     //printf("range(%d,%d,%d) step tuple will contain %d items\n",s->ptr,e->ptr,st->ptr,n);
       ((tuple_object *) r->ptr)->num = n;
       ((tuple_object *) r->ptr)->items =
 	(object **) mem_malloc (n * sizeof (object *), "if_range() items");
+	//printf("filling tuple\n");
       for (int i = 0; i < n; i++)
 	{
 	  ((tuple_object *) r->ptr)->items[i] = AllocObject ();
@@ -125,7 +129,7 @@ object *
 if_print (stack * stack)
 {
 //printf("print called\n");
-  int num = stack->top;
+  int num = stack->list->num;
 
   for (int i = 0; i < num; i++)
     {

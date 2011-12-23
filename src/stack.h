@@ -23,50 +23,48 @@
 #ifndef STACK_H
 #define STACK_H
 #include "object.h"
+#include "lists.h"
 
 #define STACK_TYPE *object;
 
-
+//#define stack ptr_list
 
 typedef struct
 {
-  object **items;
-  long top;
-  long num;
+  ptr_list *list;
   void *recycle_stack;
 } stack;
 
-extern stack *recycle;
 
-stack *stack_Init (long items_num, stack * recycle);
+stack *stack_Init (stack * recycle);//long items_num, 
 
 object *stack_Pop (stack * stack);
 
-void stack_Push (object * x, stack * stack);
+void stack_Push ( stack * stack,object * x);
 
 void stack_Close (stack * stack, int free_objects);
 
-int stack_Contains (object * x, stack * stack);
+int stack_Contains (stack * stack,object * x);
 
 object *stack_Top (stack * stack);
 
 object *stack_Bottom (stack * stack);
 
-void stack_SetBottom (object * x, stack * stack);
+void stack_SetBottom (stack * stack,object * x);
 
-void stack_SetTop (object * x, stack * stack);
+void stack_SetTop (stack * stack,object * x);
 
 object *stack_Second (stack * stack);
 
-void stack_SetSecond (object * x, stack * stack);
+void stack_SetSecond (stack * stack,object * x);
 
 object *stack_Third (stack * stack);
 
-void stack_SetThird (object * x, stack * stack);
+void stack_SetThird (stack * stack,object * x);
 
-void stack_Adjust (int by, stack * stack);
+void stack_Adjust (stack * stack,int by);
 
-void stack_IncreaseSize (int items_num, stack * stack);
+//void stack_IncreaseSize (int items_num, stack * stack);
 
 void stack_Dump (stack * stack);
 

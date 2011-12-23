@@ -1,5 +1,5 @@
 def e():
-	o = 150
+	o = 150000
 	n = o*o
 	tossed = [False]*(o+1)
 
@@ -7,7 +7,7 @@ def e():
 	while p*p < n:
 		if(tossed[p] == False):
 			print(p,", ")
-			for j in range(p*p,o,p):
+			for j in range(p,o,p):
 				tossed[j] = True
 		p+= 1
 e()
