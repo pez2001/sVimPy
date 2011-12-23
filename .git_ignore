@@ -1,0 +1,7 @@
+src/*.o
+src/*.txt
+src/*.a
+src/*.dll
+src/*.exe
+test_scripts/__pycache__
+test_scripts/__pycache__/*
