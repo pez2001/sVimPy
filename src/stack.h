@@ -1,4 +1,4 @@
-/*
+/* 
  * sVimPy - small Virtual interpreting machine for Python
  * (c) 2012 by Tim Theede aka Pez2001 <pez2001@voyagerproject.de> / vp
  *
@@ -27,45 +27,45 @@
 
 #define STACK_TYPE *object;
 
-//#define stack ptr_list
+// #define stack ptr_list
 
 typedef struct
 {
-  ptr_list *list;
-  void *recycle_stack;
+	ptr_list *list;
+	void *recycle_stack;
 } stack;
 
 
-stack *stack_Init (stack * recycle);//long items_num, 
+stack *stack_Init(stack * recycle);	// long items_num, 
 
-object *stack_Pop (stack * stack);
+object *stack_Pop(stack * stack);
 
-void stack_Push ( stack * stack,object * x);
+void stack_Push(stack * stack, object * x);
 
-void stack_Close (stack * stack, int free_objects);
+void stack_Close(stack * stack, int free_objects);
 
-int stack_Contains (stack * stack,object * x);
+int stack_Contains(stack * stack, object * x);
 
-object *stack_Top (stack * stack);
+object *stack_Top(stack * stack);
 
-object *stack_Bottom (stack * stack);
+object *stack_Bottom(stack * stack);
 
-void stack_SetBottom (stack * stack,object * x);
+void stack_SetBottom(stack * stack, object * x);
 
-void stack_SetTop (stack * stack,object * x);
+void stack_SetTop(stack * stack, object * x);
 
-object *stack_Second (stack * stack);
+object *stack_Second(stack * stack);
 
-void stack_SetSecond (stack * stack,object * x);
+void stack_SetSecond(stack * stack, object * x);
 
-object *stack_Third (stack * stack);
+object *stack_Third(stack * stack);
 
-void stack_SetThird (stack * stack,object * x);
+void stack_SetThird(stack * stack, object * x);
 
-void stack_Adjust (stack * stack,int by);
+void stack_Adjust(stack * stack, int by);
 
-//void stack_IncreaseSize (int items_num, stack * stack);
+// void stack_IncreaseSize (int items_num, stack * stack);
 
-void stack_Dump (stack * stack);
+void stack_Dump(stack * stack);
 
 #endif

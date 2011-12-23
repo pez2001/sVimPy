@@ -1,4 +1,4 @@
-/*
+/* 
  * sVimPy - small Virtual interpreting machine for Python
  * (c) 2012 by Tim Theede aka Pez2001 <pez2001@voyagerproject.de> / vp
  *
@@ -55,178 +55,179 @@
 #define TYPE_FROZENSET          '>'
 
 
-//#define OFLAG_USES_VALUE_PTR 1
-//#define OFLAG_IS_NAME 2
-//#define OFLAG_IS_CONST 4
-//#define OFLAG_IS_VARNAME 8
+// #define OFLAG_USES_VALUE_PTR 1
+// #define OFLAG_IS_NAME 2
+// #define OFLAG_IS_CONST 4
+// #define OFLAG_IS_VARNAME 8
 
 
 #define OFLAG_ON_STACK 1
-#define OFLAG_UNLOADED 2	//set if object was unloaded -> obj->ptr == seek_pos // or just dump to file and reread if accessed
+#define OFLAG_UNLOADED 2		// set if object was unloaded -> obj->ptr ==
+								// seek_pos // or just dump to file and reread 
+								// if accessed
 
 #define OFLAG_HOLD_IN_MEMORY 4
 #define OFLAG_HAS_VALUE_PTR 8
-#define OFLAG_TUPLE_PTR 16	//used to iterate over tuples
-#define OFLAG_TUPLE_RESTART_FLAG 32	//used to iterate over tuples
+#define OFLAG_TUPLE_PTR 16		// used to iterate over tuples
+#define OFLAG_TUPLE_RESTART_FLAG 32	// used to iterate over tuples
 
 
-//internal types
+// internal types
 #define TYPE_FUNCTION 'f'
 #define TYPE_CALLER 'C'
 #define TYPE_BLOCK 'b'
 
 
 
-#pragma pack(push)		/* push current alignment to stack */
-#pragma pack(1)			/* set alignment to 1 byte boundary */
+#pragma pack(push)				/* push current alignment to stack */
+#pragma pack(1)					/* set alignment to 1 byte boundary */
 
 typedef struct
 {
-  char type;
-  unsigned char flags;
-  void *ptr;
-  void *value_ptr;		//TODO remove this member --> TO DECREASE MEMORY USAGE
+	char type;
+	unsigned char flags;
+	void *ptr;
+	void *value_ptr;			// TODO remove this member --> TO DECREASE
+								// MEMORY USAGE
 } object;
 
 typedef struct
 {
-  char type;
-  unsigned char flags;
-  void *ptr;
-  void *value_ptr;
-} valued_object;		//TO OPTIMIZE MEMORY USAGE -> only used in tuples 
+	char type;
+	unsigned char flags;
+	void *ptr;
+	void *value_ptr;
+} valued_object;				// TO OPTIMIZE MEMORY USAGE -> only used in
+								// tuples 
 
 typedef struct
 {
-  char type;
-  unsigned char flags;
-} empty_object;			//TO OPTIMIZE MEMORY USAGE
+	char type;
+	unsigned char flags;
+} empty_object;					// TO OPTIMIZE MEMORY USAGE
 
 typedef struct
 {
-  long argcount;
-  long kwonlyargcount;
-  long nlocals;
-  long stacksize;
-  long flags;
-  object *code;
-  object *consts;
-  object *names;
-  object *varnames;
-  object *freevars;
-  object *cellvars;
-//object *filename;
-//object *name;
-  char *name;
-//long codesize;
-  long firstlineno;
-//object *lnotab;
+	long argcount;
+	long kwonlyargcount;
+	long nlocals;
+	long stacksize;
+	long flags;
+	object *code;
+	object *consts;
+	object *names;
+	object *varnames;
+	object *freevars;
+	object *cellvars;
+	// object *filename;
+	// object *name;
+	char *name;
+	// long codesize;
+	long firstlineno;
+	// object *lnotab;
 } code_object;
 
 typedef struct
 {
-  char *content;
-  long len;
+	char *content;
+	long len;
 } string_object;
 
 typedef struct
 {
-  object **items;
-  long num;
+	object **items;
+	long num;
 } tuple_object;
 
-/*
-typedef struct {
-char *content;
-//long len;//TO DECREASE MEMORY USAGE
-     }unicode_object;
-*///TO DECREASE MEMORY USAGE
+/* 
+   typedef struct { char *content; //long len;//TO DECREASE MEMORY USAGE
+     }unicode_object; */// TO DECREASE MEMORY USAGE
 
 typedef struct
 {
-  object *module;
-  long pos;
+	object *module;
+	long pos;
 } caller_object;
 
 typedef struct
 {
-  object *code;
-//long pos;
+	object *code;
+	// long pos;
 } function_object;
 
 
 typedef struct
 {
-  object *code;
-  long start;
-  long len;
-  object *iter;
-  long ip;
+	object *code;
+	long start;
+	long len;
+	object *iter;
+	long ip;
 } block_object;
 
 
 
-#pragma pack(pop)		/* restore original alignment from stack */
+#pragma pack(pop)				/* restore original alignment from stack */
 
-object *AllocObject ();
+object *AllocObject();
 
-object *AllocEmptyObject ();
+object *AllocEmptyObject();
 
-object *AllocValuedObject ();
+object *AllocValuedObject();
 
-string_object *AllocStringObject ();
+string_object *AllocStringObject();
 
-tuple_object *AllocTupleObject ();
+tuple_object *AllocTupleObject();
 
-//unicode_object *AllocUnicodeObject();//TO DECREASE MEMORY USAGE
-code_object *AllocCodeObject ();
+// unicode_object *AllocUnicodeObject();//TO DECREASE MEMORY USAGE
+code_object *AllocCodeObject();
 
-caller_object *AllocCallerObject ();
+caller_object *AllocCallerObject();
 
-function_object *AllocFunctionObject ();
+function_object *AllocFunctionObject();
 
-block_object *AllocBlockObject ();
+block_object *AllocBlockObject();
 
-object *ReadObject (FILE * f);
+object *ReadObject(FILE * f);
 
-string_object *AsStringObject (object * obj);
+string_object *AsStringObject(object * obj);
 
-code_object *AsCodeObject (object * obj);
+code_object *AsCodeObject(object * obj);
 
-caller_object *AsCallerObject (object * obj);
+caller_object *AsCallerObject(object * obj);
 
-function_object *AsFunctionObject (object * obj);
+function_object *AsFunctionObject(object * obj);
 
-tuple_object *AsTupleObject (object * obj);
+tuple_object *AsTupleObject(object * obj);
 
-//unicode_object *AsUnicodeObject(object *obj);
+// unicode_object *AsUnicodeObject(object *obj);
 
-int IsIntObject (object * obj);
+int IsIntObject(object * obj);
 
-int IsStringObject (object * obj);
+int IsStringObject(object * obj);
 
-int IsUnicodeObject (object * obj);
+int IsUnicodeObject(object * obj);
 
-int IsCodeObject (object * obj);
+int IsCodeObject(object * obj);
 
-int IsTupleObject (object * obj);
+int IsTupleObject(object * obj);
 
-void FreeObject (object * obj);
+void FreeObject(object * obj);
 
-void PrintObject (object * obj);
+void PrintObject(object * obj);
 
-void DumpObject (object * obj, int level);
+void DumpObject(object * obj, int level);
 
-//void DumpObject(object *obj);
-object *GetNextItem (object * tuple);
+// void DumpObject(object *obj);
+object *GetNextItem(object * tuple);
 
-void ResetIteration (object * tuple);
+void ResetIteration(object * tuple);
 
-void SetItem (object * tuple, int index, object * obj);
+void SetItem(object * tuple, int index, object * obj);
 
-object *GetItem (object * tuple, int index);
+object *GetItem(object * tuple, int index);
 
-//object *GetTupleItem(tuple_object *tuple,int index);
-object *FindUnicodeTupleItem (object * tuple, char *name);
+// object *GetTupleItem(tuple_object *tuple,int index);
+object *FindUnicodeTupleItem(object * tuple, char *name);
 
 #endif

@@ -1,4 +1,4 @@
-/*
+/* 
  * sVimPy - small Virtual interpreting machine for Python
  * (c) 2012 by Tim Theede aka Pez2001 <pez2001@voyagerproject.de> / vp
  *
@@ -30,22 +30,22 @@
 
 typedef struct
 {
-  void *ptr;
-  char *description;
-  long size;
-  int is_freed;
+	void *ptr;
+	char *description;
+	long size;
+	int is_freed;
 } mem_chunk;
 
 #define MAX_MEM_CHUNKS 20000000
 
-void mem_Init ();
+void mem_Init();
 
-void mem_Close ();
+void mem_Close();
 
-void *mem_malloc (size_t size, char *description);
+void *mem_malloc(size_t size, char *description);
 
-void *mem_realloc (void *ptr, size_t size);
+void *mem_realloc(void *ptr, size_t size);
 
-int mem_free (void *ptr);
+int mem_free(void *ptr);
 
 #endif

@@ -1,4 +1,4 @@
-/*
+/* 
  * sVimPy - small Virtual interpreting machine for Python
  * (c) 2012 by Tim Theede aka Pez2001 <pez2001@voyagerproject.de> / vp
  *
@@ -27,14 +27,14 @@
 #include "stack.h"
 #include "vm.h"
 
-//object *pow(object *base,object *exp);
+// object *pow(object *base,object *exp);
 
-object *if_range (stack * stack);
+object *if_range(stack * stack);
 
-object *if_print (stack * stack);
+object *if_print(stack * stack);
 
-object *BuildList (stack * stack);
+object *BuildList(stack * stack);
 
-//object *BinaryOp(object *tos,object *tos1,object *tos2,char op);
+// object *BinaryOp(object *tos,object *tos1,object *tos2,char op);
 
 #endif

@@ -55,3 +55,5 @@ git:
 	git push openstrike.de master
 	git push -u origin master
 	
+indent:	
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h

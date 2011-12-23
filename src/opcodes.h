@@ -1,4 +1,4 @@
-/*
+/* 
  * sVimPy - small Virtual interpreting machine for Python
  * (c) 2012 by Tim Theede aka Pez2001 <pez2001@voyagerproject.de> / vp
  *
@@ -126,29 +126,24 @@
 
 typedef struct
 {
-  unsigned char opcode;		//opcode in bytecode representation
+	unsigned char opcode;		// opcode in bytecode representation
 #ifdef DEBUG
-  char *name;			//string version
-  char *description;		//a short description
-//unsigned int num_parameters; //number of parameters
-  unsigned int argcount;
-  unsigned int supported;
+	char *name;					// string version
+	char *description;			// a short description
+	// unsigned int num_parameters; //number of parameters
+	unsigned int argcount;
+	unsigned int supported;
 #endif
 } opcode;
 
-void DumpUnsupportedOpCodes ();
+void DumpUnsupportedOpCodes();
 
-unsigned int GetSupportedOpcodesNum ();
+unsigned int GetSupportedOpcodesNum();
 
-int GetOpcodeIndex (unsigned char opcode);
+int GetOpcodeIndex(unsigned char opcode);
 
-/*
-#ifdef OPCODES_C
-#define EXTERN 
-#else
-#define EXTERN extern
-#endif
-*/
+/* 
+   #ifdef OPCODES_C #define EXTERN #else #define EXTERN extern #endif */
 
 
 #endif
