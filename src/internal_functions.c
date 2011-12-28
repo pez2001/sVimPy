@@ -24,7 +24,7 @@
 
 
 
-object *BuildList(stack * stack)
+object *if_list(stack * stack)
 {
 	int num = stack->list->num;
 
@@ -34,12 +34,12 @@ object *BuildList(stack * stack)
 	r->flags = OFLAG_ON_STACK;
 	r->ptr = AllocTupleObject();
 	r->value_ptr = NULL;
-	((tuple_object *) r->ptr)->num = num;
-	((tuple_object *) r->ptr)->items =
-		(object **) mem_malloc(num * sizeof(object *), "BuildList() items");
+	((tuple_object *) r->ptr)->list = ptr_CreateList(num,PTR_STATIC_LIST);
+	//((tuple_object *) r->ptr)->items =
+	//	(object **) mem_malloc(num * sizeof(object *), "BuildList() items");
 	for (int i = 0; i < num; i++)
 	{
-		((tuple_object *) r->ptr)->items[i] = stack_Pop(stack);
+		((tuple_object *) r->ptr)->list->items[i] = stack_Pop(stack);
 	}
 	// DumpObject(r,0);
 	return (r);
@@ -82,15 +82,15 @@ object *if_range(stack * stack)
 		int n = (long)s->ptr;
 		//printf("range(%d,%d) tuple will contain %d items\n", s->ptr, e->ptr, n);
 
-		((tuple_object *) r->ptr)->num = n;
-		((tuple_object *) r->ptr)->items =
-			(object **) mem_malloc(n * sizeof(object *), "if_range() items");
+		((tuple_object *) r->ptr)->list = ptr_CreateList(n,PTR_STATIC_LIST);
+		//((tuple_object *) r->ptr)->items =
+		//	(object **) mem_malloc(n * sizeof(object *), "if_range() items");
 		for (int i = 0; i < n; i++)
 		{
-			((tuple_object *) r->ptr)->items[i] = AllocObject();
-			((tuple_object *) r->ptr)->items[i]->type = TYPE_INT;
-			((tuple_object *) r->ptr)->items[i]->ptr = i;
-			((tuple_object *) r->ptr)->items[i]->value_ptr = NULL;
+			((tuple_object *) r->ptr)->list->items[i] = AllocObject();
+			((object*)((tuple_object *) r->ptr)->list->items[i])->type = TYPE_INT;
+			((object*)((tuple_object *) r->ptr)->list->items[i])->ptr = i;
+			((object*)((tuple_object *) r->ptr)->list->items[i])->value_ptr = NULL;
 		}
 		// DumpObject(r,0);
 		return (r);
@@ -107,15 +107,15 @@ object *if_range(stack * stack)
 		int n = (long)e->ptr - (long)s->ptr;
 		//printf("range(%d,%d) tuple will contain %d items\n", s->ptr, e->ptr, n);
 
-		((tuple_object *) r->ptr)->num = n;
-		((tuple_object *) r->ptr)->items =
-			(object **) mem_malloc(n * sizeof(object *), "if_range() items");
+		((tuple_object *) r->ptr)->list = ptr_CreateList(n,PTR_STATIC_LIST);
+		//((tuple_object *) r->ptr)->items =
+		//	(object **) mem_malloc(n * sizeof(object *), "if_range() items");
 		for (int i = 0; i < n; i++)
 		{
-			((tuple_object *) r->ptr)->items[i] = AllocObject();
-			((tuple_object *) r->ptr)->items[i]->type = TYPE_INT;
-			((tuple_object *) r->ptr)->items[i]->ptr = (long)s->ptr + i;
-			((tuple_object *) r->ptr)->items[i]->value_ptr = NULL;
+			((tuple_object *) r->ptr)->list->items[i] = AllocObject();
+			((object*)((tuple_object *) r->ptr)->list->items[i])->type = TYPE_INT;
+			((object*)((tuple_object *) r->ptr)->list->items[i])->ptr = (long)s->ptr + i;
+			((object*)((tuple_object *) r->ptr)->list->items[i])->value_ptr = NULL;
 		}
 		// DumpObject(r,0);
 		return (r);
@@ -132,18 +132,18 @@ object *if_range(stack * stack)
 		int n = (((long)e->ptr - (long)s->ptr) / (long)st->ptr) + 1;
 		// printf("range(%d,%d,%d) step tuple will contain %d
 		// items\n",s->ptr,e->ptr,st->ptr,n);
-		((tuple_object *) r->ptr)->num = n;
-		((tuple_object *) r->ptr)->items =
-			(object **) mem_malloc(n * sizeof(object *), "if_range() items");
+		((tuple_object *) r->ptr)->list = ptr_CreateList(n,PTR_STATIC_LIST);
+		//((tuple_object *) r->ptr)->items =
+		//	(object **) mem_malloc(n * sizeof(object *), "if_range() items");
 		// printf("filling tuple\n");
 		for (int i = 0; i < n; i++)
 		{
-			((tuple_object *) r->ptr)->items[i] = AllocObject();
-			((tuple_object *) r->ptr)->items[i]->type = TYPE_INT;
-			((tuple_object *) r->ptr)->items[i]->flags = OFLAG_ON_STACK;
-			((tuple_object *) r->ptr)->items[i]->ptr =
+			((tuple_object *) r->ptr)->list->items[i] = AllocObject();
+			((object*)((tuple_object *) r->ptr)->list->items[i])->type = TYPE_INT;
+			((object*)((tuple_object *) r->ptr)->list->items[i])->flags = OFLAG_ON_STACK;
+			((object*)((tuple_object *) r->ptr)->list->items[i])->ptr =
 				(long)s->ptr + (i * (long)st->ptr);
-			((tuple_object *) r->ptr)->items[i]->value_ptr = NULL;
+			((object*)((tuple_object *) r->ptr)->list->items[i])->value_ptr = NULL;
 		}
 		// DumpObject(r,0);
 		return (r);

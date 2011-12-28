@@ -161,8 +161,13 @@ void stack_Adjust(stack * stack, int by)
 	// stack_IncreaseSize (((stack->top + by) - stack->num), stack);
 
 	// stack->top += by;
+	if(by>0)
 	for (int i = 0; i < by; i++)
 		ptr_Push(stack->list, NULL);
+	if(by<0)
+	for (int i = 0; i < -by; i++)
+		ptr_Pop(stack->list);
+	
 }
 
 

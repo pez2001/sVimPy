@@ -89,8 +89,8 @@
 #define OPCODE_LOAD_NAME 						0x65
 #define OPCODE_BUILD_TUPLE 						0x66
 #define OPCODE_BUILD_LIST 							0x67
-#define OPCODE_BUILD_MAP 							0x68
-#define OPCODE_LOAD_ATTR 							0x69
+#define OPCODE_BUILD_MAP 							0x69
+#define OPCODE_LOAD_ATTR 							0x99 //WRONG ID
 #define OPCODE_COMPARE_OP						0x6b
 #define OPCODE_IMPORT_FROM 					0x6c
 #define OPCODE_JUMP_FORWARD 					0x6e
@@ -110,8 +110,8 @@
 #define OPCODE_CALL_FUNCTION 					0x83
 #define OPCODE_MAKE_FUNCTION 					0x84
 #define OPCODE_BUILD_SLICE							0x85
-#define OPCODE_MAKE_CLOSURE 					0x86
-#define OPCODE_LOAD_CLOSURE 					0x87
+//#define OPCODE_MAKE_CLOSURE 					0x86
+//#define OPCODE_LOAD_CLOSURE 					0x87
 #define OPCODE_LOAD_DEREF 						0x88
 #define OPCODE_STORE_DEREF 					0x89
 #define OPCODE_CALL_FUNCTION_VAR 			0x8c

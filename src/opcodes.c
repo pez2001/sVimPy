@@ -27,7 +27,7 @@
 
 #ifdef DEBUG
 
-const unsigned int opcodecount = 94;
+const unsigned int opcodecount = 92;
 
 const opcode opcodes[] = { {OPCODE_STOP_CODE, "STOP_CODE", "Indicates end-of-code to the compiler, not used by the interpreter.", 0, 1},	// SUPPORTED
 {OPCODE_POP_TOP, "POP_TOP", "Removes the top-of-stack (TOS) item.", 0, 1},	// SUPPORTED
@@ -123,15 +123,6 @@ const opcode opcodes[] = { {OPCODE_STOP_CODE, "STOP_CODE", "Indicates end-of-cod
  "Pushes a slice object on the stack. /argc/ must be 2 or 3. If it is 2, slice(TOS1, TOS) is pushed;\
 							if it is 3, slice(TOS2, TOS1, TOS) is pushed. See the slice() built-in function for more information.",
  1, 0},
-{OPCODE_MAKE_CLOSURE, "MAKE_CLOSURE",
- "Creates a new function object, sets its func_closure slot, and pushes it on the stack.\
-							TOS is the code associated with the function. If the code object has N free variables, the next N items on the stack are the cells\
-							for these variables. The function also has /argc/ default parameters, where are found before the cells.",
- 1, 0},
-{OPCODE_LOAD_CLOSURE, "LOAD_CLOSURE",
- "Pushes a reference to the cell contained in slot /i/ of the cell and free variable storage.\
-							The name of the variable is co_cellvars[i] if i is less than the length of co_cellvars. Otherwise it is co_freevars[i - len(co_cellvars)].",
- 1, 0},
 {OPCODE_LOAD_DEREF, "LOAD_DEREF",
  "Loads the cell contained in slot /i/ of the cell and free variable storage.\
 							Pushes a reference to the object the cell contains on the stack.", 1, 0},
@@ -170,7 +161,7 @@ const opcode opcodes[] = { {OPCODE_STOP_CODE, "STOP_CODE", "Indicates end-of-cod
 {OPCODE_YIELD_VALUE, "YIELD_VALUE",
  "Pops TOS and yields it from a generator.", 0, 0},
 {OPCODE_STORE_LOCALS, "STORE_LOCALS", "No description.", 0, 0},
-{OPCODE_STORE_MAP, "STORE_MAP", "No description.", 0, 0},
+{OPCODE_STORE_MAP, "STORE_MAP", "No description.", 0, 1},
 {OPCODE_STORE_ATTR, "STORE_ATTR",
  "Implements TOS.name = TOS1, where /namei/ is the index of name in co_names.",
  1, 0},
@@ -185,7 +176,7 @@ const opcode opcodes[] = { {OPCODE_STOP_CODE, "STOP_CODE", "Indicates end-of-cod
 {OPCODE_WITH_CLEANUP, "WITH_CLEANUP", "No description.", 0, 0},
 {OPCODE_BUILD_MAP, "BUILD_MAP",
  "Pushes a new empty dictionary object onto the stack.\
-							The argument is ignored and set to /zero/ by the compiler.", 1, 0},
+							The argument is ignored and set to /zero/ by the compiler.", 1, 1},
 {OPCODE_LOAD_ATTR, "LOAD_ATTR",
  "Replaces TOS with getattr(TOS, co_names[/namei/]).", 1, 0}
 };
@@ -199,6 +190,15 @@ const opcode opcodes[] = { {OPCODE_STOP_CODE, "STOP_CODE", "Indicates end-of-cod
 // {0x05,"ROT_FOUR","Lifts second, third and forth stack item one position up, 
 // moves top down to position four.",0}, //DEPRECATED
 
+//{OPCODE_MAKE_CLOSURE, "MAKE_CLOSURE",
+// "Creates a new function object, sets its func_closure slot, and pushes it on the stack.\
+//							TOS is the code associated with the function. If the code object has N free variables, the next N items on the stack are the cells\
+//							for these variables. The function also has /argc/ default parameters, where are found before the cells.",
+// 1, 0},
+//{OPCODE_LOAD_CLOSURE, "LOAD_CLOSURE",
+// "Pushes a reference to the cell contained in slot /i/ of the cell and free variable storage.\
+//							The name of the variable is co_cellvars[i] if i is less than the length of co_cellvars. Otherwise it is co_freevars[i - len(co_cellvars)].",
+// 1, 0},
 
 // {0x6b,"IMPORT_NAME","Imports the module co_names[/namei/]. The module
 // object is pushed onto the stack.\

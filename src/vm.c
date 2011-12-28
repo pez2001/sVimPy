@@ -159,6 +159,8 @@ void vm_Close(vm * vm)
 	}
 	ptr_CloseList(vm->functions);
 	// stack_Close(vm->blocks,0);
+	for(int i = 0;i<vm->blocks->list->num;i++)
+		assert(mem_free(vm->blocks->list->items[i]));
 	stack_Close(vm->recycle, 1);
 	// stack_Dump(vm->blocks);
 	stack_Close(vm->blocks, 0);
@@ -212,7 +214,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 
 				tuple_object *co_varnames = (tuple_object *) co->varnames->ptr;
 
-				char *varname = (char *)co_varnames->items[i]->ptr;
+				char *varname = (char *)((object*)co_varnames->list->items[i])->ptr;
 
 				if (debug && local->type == TYPE_UNICODE)
 					printf("fast storing %s in %s\n", (char *)local->ptr,
@@ -222,7 +224,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 				if (debug && local->type == TYPE_CODE)
 					printf("fast storing function %s in %s\n",
 						   ((code_object *) local->ptr)->name, varname);
-				co_varnames->items[i]->value_ptr = local;
+				((object*)co_varnames->list->items[i])->value_ptr = local;
 			}
 		}
 
@@ -445,8 +447,8 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 			case OPCODE_POP_JUMP_IF_FALSE:
 			case OPCODE_POP_JUMP_IF_TRUE:
 			case OPCODE_BUILD_SLICE:
-			case OPCODE_MAKE_CLOSURE:
-			case OPCODE_LOAD_CLOSURE:
+			//case OPCODE_MAKE_CLOSURE:
+			//case OPCODE_LOAD_CLOSURE:
 			case OPCODE_STORE_LOCALS:
 			case OPCODE_PRINT_EXPR:
 			case OPCODE_LOAD_BUILD_CLASS:
@@ -658,6 +660,19 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 				}
 				break;
 
+			case OPCODE_BUILD_MAP:
+				{
+					tuple_object *to = AllocTupleObject();
+					to->list = ptr_CreateList(0,0);//arg
+					object *o = AllocObject();
+					o->ptr = to;
+					o->type = TYPE_TUPLE;
+					o->flags = OFLAG_ON_STACK | OFLAG_IS_DICT;
+					o->value_ptr = NULL;
+					stack_Push(_stack,o);
+				}
+				break;
+				
 			case OPCODE_BUILD_TUPLE:
 			case OPCODE_BUILD_LIST:
 				{
@@ -672,7 +687,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 						stack_Push(blcall, stack_Pop(_stack));
 					}
 					object *tmp =
-						vm_ExecuteCFunction(vm, "internal.BuildList", blcall);
+						vm_ExecuteCFunction(vm, "list", blcall);
 					if (tmp != NULL)
 					{
 						stack_Push(_stack, tmp);
@@ -690,7 +705,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 					code_object *co_global = (code_object *) global->ptr;
 
 					// co_names = (tuple_object*)co->names->ptr;
-					name = (char *)co_names->items[arg]->ptr;
+					name = (char *)((object*)co_names->list->items[arg])->ptr;
 					if (debug)
 						printf("searching for:%s\n", name);
 					object *lgo = FindUnicodeTupleItem(co_global->names, name);
@@ -730,7 +745,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 					code_object *co_global = (code_object *) global->ptr;
 
 					// co_names = (tuple_object*)co->names->ptr;
-					name = (char *)co_names->items[arg]->ptr;
+					name = (char *)((object*)co_names->list->items[arg])->ptr;
 					object *sgo =
 						FindUnicodeTupleItem(co_global->names, name);
 					
@@ -760,7 +775,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 					co_names = (tuple_object *) co->names->ptr;
 					code_object *co_global = (code_object *) global->ptr;
 
-					name = (char *)co_names->items[arg]->ptr;
+					name = (char *)((object*)co_names->list->items[arg])->ptr;
 					DeleteItem(co_global->varnames, arg);
 				}
 				break;
@@ -778,7 +793,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 					// if(co_names->items[name_i]->type== TYPE_INT)
 					// printf("pushing local (%d)%s =
 					// %d\n",name_i,name->content,co_names->items[name_i]->ptr);
-					stack_Push(_stack, co_names->items[arg]);
+					stack_Push(_stack, co_names->list->items[arg]);
 				}
 				break;
 
@@ -794,7 +809,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 					// if(co_consts->items[const_i]->type== TYPE_INT)
 					// printf("pushing local const (%d)%s =
 					// %d\n",const_i,const_content->content,co_consts->items[const_i]->ptr);
-					stack_Push(_stack, co_consts->items[arg]);
+					stack_Push(_stack, co_consts->list->items[arg]);
 				}
 				break;
 
@@ -811,16 +826,36 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 					// if(co_varnames->items[varname_i]->type== TYPE_INT)
 					// printf("pushing local fast (%d,i)%s =
 					// %d\n",varname_i,varname->content,co_varnames->items[varname_i]->ptr);
-					stack_Push(_stack, co_varnames->items[arg]->value_ptr);
+					stack_Push(_stack, ((object*)co_varnames->list->items[arg])->value_ptr);
 				}
 				break;
 
+/*				
+		case OPCODE_MAP_ADD:
+				{
+					// printf("push name\n");
+					co_varnames = (tuple_object *) co->varnames->ptr;
+					// varname = (char *) co_varnames->items[arg]->ptr;
+					// printf("opcode: [%s],(%d)
+					// [%s]\n",opcodes[index].name,name_i,name->content);
+					// if(co_varnames->items[varname_i]->type== TYPE_UNICODE)
+					// printf("pushing local fast (%d,s)%s =
+					// %s\n",varname_i,varname->content,AsUnicodeObject((object*)co_varnames->items[varname_i]->value_ptr)->content);
+					// if(co_varnames->items[varname_i]->type== TYPE_INT)
+					// printf("pushing local fast (%d,i)%s =
+					// %d\n",varname_i,varname->content,co_varnames->items[varname_i]->ptr);
+					stack_Push(_stack, ((object*)co_varnames->list->items[arg])->value_ptr);
+				}
+				break;
+	*/			
+				
+				
 			case OPCODE_STORE_NAME:
 				{
 					// printf("storing in name\n");
 					tos = stack_Pop(_stack);
 					co_names = (tuple_object *) co->names->ptr;
-					name = (char *)co_names->items[arg]->ptr;
+					name = (char *)((object*)co_names->list->items[arg])->ptr;
 					// printf("opcode: [%s],(%d)
 					// [%s]\n",opcodes[index].name,name_i,name->content);
 					if (debug && tos->type == TYPE_UNICODE)
@@ -840,17 +875,50 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 
 					}
 					// else 
-					co_names->items[arg]->value_ptr = tos;
+					((object*)co_names->list->items[arg])->value_ptr = tos;
 				}
 				break;
 
+			case OPCODE_STORE_MAP:
+				{
+					// printf("storing in name\n");
+					object *w = stack_Top(_stack);
+					object *u = stack_Second(_stack);
+					object *v = stack_Third(_stack);
+					stack_Adjust(_stack,-2);
+					SetDictItem(v,w,u);
+    				//co_names = (tuple_object *) co->names->ptr;
+					//name = (char *)((object*)co_names->list->items[arg])->ptr;
+					// printf("opcode: [%s],(%d)
+					// [%s]\n",opcodes[index].name,name_i,name->content);
+					//if (debug && tos->type == TYPE_UNICODE)
+					//	printf("storing %s in %s\n", (char *)tos->ptr, name);
+					//if (debug && tos->type == TYPE_INT)
+					//	printf("storing %d in %s\n", tos->ptr, name);
+					//if (debug && tos->type == TYPE_CODE)
+					//{
+						// co_names =
+						// (tuple_object*)AsCodeObject(global)->names->ptr;
+						// name_i = num_short(string[i+1],string[i+2]);
+						// name =
+						// (unicode_object*)co_names->items[name_i]->ptr;
+						//printf("storing function %s in %s\n",
+						//	   ((code_object *) tos->ptr)->name, name);
+						// co_names->items[name_i]->value_ptr = tos;
+
+					//}
+					// else 
+					//((object*)co_names->list->items[arg])->value_ptr = tos;
+				}
+				break;
+				
 			case OPCODE_STORE_FAST:
 				{
 					// printf("storing in fast\n");
 					tos = stack_Pop(_stack);
 					// printf("tos type:%c\n",tos->type);
-					co_varnames = (tuple_object *) co->varnames->ptr;
-					varname = (char *)co_varnames->items[arg]->ptr;
+					co_varnames = (tuple_object*) co->varnames->ptr;
+					varname = (char *)((object*)co_varnames->list->items[arg])->ptr;
 					// printf("opcode: [%s],(%d)
 					// [%s]\n",opcodes[index].name,name_i,name->content);
 					/* if (tos->type == TYPE_UNICODE) printf ("fast storing %s 
@@ -860,7 +928,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 					   storing function %s in %s\n", ((code_object *)
 					   tos->ptr)->name, varname); */
 					tos->flags ^= OFLAG_ON_STACK;
-					co_varnames->items[arg]->value_ptr = tos;
+					((object*)co_varnames->list->items[arg])->value_ptr = tos;
 				}
 				break;
 
@@ -1258,16 +1326,16 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 					if (tos1->type == TYPE_TUPLE)
 					{
 						// printf("multiplying with a tuple\n");
-						int mnum = ((tuple_object *) tos1->ptr)->num;
+						int mnum = ((tuple_object *) tos1->ptr)->list->num;
 						if (mnum == 1)
-							tos1 = ((tuple_object *) tos1->ptr)->items[0];
+							tos1 = ((tuple_object *) tos1->ptr)->list->items[0];
 						stack *mstack = stack_Init(vm->recycle);	// ma
 						for (int i = 0; i < ma; i++)
 						{
 							stack_Push(mstack, tos1);
 						}
 						// printf("mnum:%d\n",mnum);
-						object *mtr = BuildList(mstack);
+						object *mtr = if_list(mstack);
 						stack_Push(_stack, mtr);
 						// DumpObject(mtr,0);
 						break;
@@ -1300,7 +1368,10 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 						// DumpObject(tos2,0);
 					if(debug >= 2)
 						 printf("ssa: %d\n",ssa);
+					if (tos->type == TYPE_INT)
 						SetItem(tos1, ssa, tos2);
+					else
+						SetDictItem(tos1,tos,tos2);
 						// DumpObject(tos1,0);
 					if(debug >= 2)
 						 DumpObject(tos2,0);
@@ -1317,15 +1388,21 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 					{
 						bsa = tos->ptr;
 					}
+				
 					if (tos1->type == TYPE_TUPLE)
 					{
 						if (debug >= 2)
 						{
 							DumpObject(tos1, 0);
+							DumpObject(tos,0);
 							printf("bsa:%d\n", bsa);
 						}
-						object *bst = GetItem(tos1, bsa);
-
+					object *bst= NULL;
+					if (tos->type == TYPE_INT)
+						bst = GetItem(tos1, bsa);
+					else
+						bst = GetDictItem(tos1,tos);
+						
 						if (debug>= 2)
 							DumpObject(bst, 0);
 						stack_Push(_stack, bst);
@@ -1662,7 +1739,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 					switch (arg)
 					{
 					case 0:	// <
-						printf("");
+						{
 						long ca = 0;
 
 						long cb = 0;
@@ -1681,6 +1758,29 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 						new_ctos->type = cb < ca ? TYPE_TRUE : TYPE_FALSE;
 						// printf ("%d < %d == %c\n", cb, ca, new_ctos->type);
 						stack_Push(_stack, new_ctos);
+						}
+						break;
+					case 4:	// >
+						{
+						long ca = 0;
+
+						long cb = 0;
+
+						object *new_ctos = AllocEmptyObject();
+
+						new_ctos->flags = OFLAG_ON_STACK;
+						if (tos->type == TYPE_INT)
+						{
+							ca = tos->ptr;
+						}
+						if (tos1->type == TYPE_INT)
+						{
+							cb = tos1->ptr;
+						}
+						new_ctos->type = cb > ca ? TYPE_TRUE : TYPE_FALSE;
+						// printf ("%d < %d == %c\n", cb, ca, new_ctos->type);
+						stack_Push(_stack, new_ctos);
+						}
 						break;
 					case 2:	// ==
 						// printf("cmp2\n");

@@ -140,7 +140,8 @@ void OpenPYC(char *filename, vm * vm, int debug)
 
 		printf("object executed:%s\n", filename);
 	}
-	// DumpObject(obj,0);
+	if(debug)
+	 DumpObject(obj,0);
 	// printf("cleaning up object\n");
 	FreeObject(obj);
 	// printf("objects headers total size : %d\n",objects_header_total);
@@ -157,11 +158,11 @@ int main(int argc, char *argv[])
 	//ptr_tests();
 	vm *vm = vm_Init(NULL);
 
-	function_definition *build_list = CreateCFunction(&BuildList, "internal.BuildList");
+	function_definition *list = CreateCFunction(&if_list, "list");
 	function_definition *range = CreateCFunction(&if_range, "range");
 	function_definition *print = CreateCFunction(&if_print, "print");
 	function_definition *sum = CreateCFunction(&if_sum, "sum");
-	vm_AddFunctionDefinition(vm, build_list);
+	vm_AddFunctionDefinition(vm, list);
 	vm_AddFunctionDefinition(vm, range);
 	vm_AddFunctionDefinition(vm, print);
 	vm_AddFunctionDefinition(vm, sum);
@@ -189,8 +190,16 @@ int main(int argc, char *argv[])
 	OpenPYC("tests/test21.pyc", vm, 0); 
 	OpenPYC("tests/test22.pyc", vm, 0);
 	OpenPYC("tests/test.pyc", vm, 0);*/
-	OpenPYC("tests/test20.pyc", vm, 2);
-	OpenPYC("tests/e_small.pyc", vm, 0);
+	//OpenPYC("tests/test20.pyc", vm, 2);
+	//OpenPYC("tests/test24.pyc", vm, 2);
+	//OpenPYC("tests/test25.pyc", vm, 2);
+	//OpenPYC("tests/test26.pyc", vm, 2);
+	//OpenPYC("tests/test27.pyc", vm, 2);
+	//OpenPYC("tests/test29.pyc", vm, 0);
+	//OpenPYC("tests/test30.pyc", vm, 2);
+	OpenPYC("tests/test31.pyc", vm,2);
+	//OpenPYC("tests/test28.pyc", vm, 2);
+	//OpenPYC("tests/e_small.pyc", vm, 0);
 	//OpenPYC("tests/e_med.pyc", vm, 0);
 	//OpenPYC("tests/e.pyc", vm, 0);
 	//OpenPYC("tests/test23.pyc", vm, 1);

@@ -28,9 +28,12 @@ ptr_list *ptr_CreateList(unsigned int num, int flags)
 	ptr_list *tmp =
 		(ptr_list *) mem_malloc(sizeof(ptr_list), "ptr_CreateList() return");
 	if (num)
+	{
 		tmp->items =
 			(void **)mem_malloc(num * sizeof(void *),
 								"ptr_CreateList() items");
+		memset(tmp->items,0,num*sizeof(void*));
+	}
 	else
 		tmp->items = NULL;
 	tmp->num = num;

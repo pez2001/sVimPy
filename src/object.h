@@ -28,6 +28,7 @@
 #include "stdlib.h"
 #include "string.h"
 #include "memory.h"
+#include "lists.h"
 
 #include "assert.h"
 
@@ -70,6 +71,17 @@
 #define OFLAG_HAS_VALUE_PTR 8
 #define OFLAG_TUPLE_PTR 16		// used to iterate over tuples
 #define OFLAG_TUPLE_RESTART_FLAG 32	// used to iterate over tuples
+#define OFLAG_IS_DICT 64 //used distinguish between tuples and dicts because both use the same structs
+
+//code flags
+#define CO_OPTIMIZED	0x0001
+#define CO_NEWLOCALS	0x0002
+#define CO_VARARGS	0x0004
+#define CO_VARKEYWORDS	0x0008
+#define CO_NESTED       0x0010
+#define CO_GENERATOR    0x0020
+#define CO_NOFREE       0x0040
+
 
 
 // internal types
@@ -135,8 +147,9 @@ typedef struct
 
 typedef struct
 {
-	object **items;
-	long num;
+	//object **items;
+	//long num;
+	ptr_list *list
 } tuple_object;
 
 /* 
@@ -233,5 +246,17 @@ object *GetItem(object * tuple, int index);
 
 // object *GetTupleItem(tuple_object *tuple,int index);
 object *FindUnicodeTupleItem(object * tuple, char *name);
+
+void SetDictItem(object *tuple,object *key,object *value);
+
+object *GetDictItem(object *tuple,object *key);
+
+int GetDictItemIndex(object *tuple,object *key);
+
+object *CopyObject(object *obj);
+
+int object_compare(object *a,object *b);
+
+void AppendDictItem(object * tuple,object *key,object *value);
 
 #endif

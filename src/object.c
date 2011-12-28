@@ -175,20 +175,22 @@ void FreeObject(object * obj)
 	case TYPE_TUPLE:
 		// printf("freeing tuple object @%x\n",obj);
 		objects_header_total -= sizeof(object);
-		if (((tuple_object *) obj->ptr)->num > 0)
+		if (((tuple_object *) obj->ptr)->list != NULL  && ((tuple_object *) obj->ptr)->list->num > 0)
 		{
-			for (int i = 0; i < ((tuple_object *) obj->ptr)->num; i++)
+			for (int i = 0; i < ((tuple_object *) obj->ptr)->list->num; i++)
 			{
-				if ((((tuple_object *) obj->ptr)->items[i]) != NULL
-					&& !(((tuple_object *) obj->ptr)->items[i]->
+				if ((((tuple_object *) obj->ptr)->list->items[i]) != NULL
+					&& !(((object*)((tuple_object *) obj->ptr)->list->items[i])->
 						 flags & OFLAG_ON_STACK))
 				{
-					FreeObject(((tuple_object *) obj->ptr)->items[i]);
+					FreeObject(((tuple_object *) obj->ptr)->list->items[i]);
 				}
-				((tuple_object *) obj->ptr)->items[i] = NULL;
+				((tuple_object *) obj->ptr)->list->items[i] = NULL;
 			}
-			assert(mem_free(((tuple_object *) obj->ptr)->items));
-			((tuple_object *) obj->ptr)->items = NULL;
+			ptr_CloseList(((tuple_object *) obj->ptr)->list);
+			
+			//assert(mem_free(((tuple_object *) obj->ptr)->list->items));
+			((tuple_object *) obj->ptr)->list = NULL;
 		}
 		break;
 	case TYPE_CODE:
@@ -277,6 +279,8 @@ void DumpObject(object * obj, int level)
 		// printf("unicode object:
 		// %s\n",((unicode_object*)obj->ptr)->content);
 		printf("unicode object: %s\n", obj->ptr);
+		if(obj->value_ptr != NULL)
+			DumpObject(obj->value_ptr,level +1);
 		break;
 	case TYPE_STRING:
 		printf("string object: ");
@@ -287,20 +291,20 @@ void DumpObject(object * obj, int level)
 		break;
 	case TYPE_TUPLE:
 		printf("tuple object");
-		if (((tuple_object *) obj->ptr)->num > 0)
+		if (((tuple_object *) obj->ptr)->list != NULL && ((tuple_object *) obj->ptr)->list->num > 0)
 		{
-			printf(" contains %d items\n", ((tuple_object *) obj->ptr)->num);
-			for (int i = 0; i < ((tuple_object *) obj->ptr)->num; i++)
+			printf(" contains %d items\n", ((tuple_object *) obj->ptr)->list->num);
+			for (int i = 0; i < ((tuple_object *) obj->ptr)->list->num; i++)
 			{
-				if (((tuple_object *) obj->ptr)->items[i] != NULL)
+				if (((tuple_object *) obj->ptr)->list->items[i] != NULL)
 				{
 
-					if ((((tuple_object *) obj->ptr)->items[i]->
+					if ((((object*)((tuple_object *) obj->ptr)->list->items[i])->
 						 flags & OFLAG_TUPLE_PTR) > 0)
 						printf("%d->",i);
 					else
 						printf("%d  ",i);
-					DumpObject(((tuple_object *) obj->ptr)->items[i],
+					DumpObject(((tuple_object *) obj->ptr)->list->items[i],
 							   level + 1);
 				}
 			}
@@ -321,6 +325,18 @@ void DumpObject(object * obj, int level)
 		for (int i = 0; i < level; i++)
 			printf("\t");
 		printf("name: %s\n", ((code_object *) obj->ptr)->name);
+		for (int i = 0; i < level; i++)
+			printf("\t");
+		printf("flags:%d\n",((code_object *) obj->ptr)->flags);
+		for (int i = 0; i < level; i++)
+			printf("\t");
+		printf("nlocals:%d\n",((code_object *) obj->ptr)->nlocals);
+		for (int i = 0; i < level; i++)
+			printf("\t");
+		printf("argcount:%d\n",((code_object *) obj->ptr)->argcount);
+		for (int i = 0; i < level; i++)
+			printf("\t");
+		printf("kwonlyargcount:%d\n",((code_object *) obj->ptr)->kwonlyargcount);
 		for (int i = 0; i < level; i++)
 			printf("\t");
 		printf("code:\n");
@@ -358,25 +374,210 @@ void DumpObject(object * obj, int level)
 	}
 }
 
+int object_compare(object *a,object *b)
+{
+	assert(a != NULL && b != NULL);
+	if (a == NULL && b == NULL)
+		return(0);
+	if(a== NULL || b == NULL)
+		return (-1);
+	
+	switch (a->type)
+	{
+	case TYPE_NULL:
+		return(-1);
+		break;
+	case TYPE_NONE:
+		return(-1);
+		break;
+	case TYPE_INT:
+		return(a->ptr == b->ptr);
+		break;
+	case TYPE_UNICODE:
+		return(strcmp(a->ptr,b->ptr));
+		break;
+	case TYPE_STRING:
+		break;
+	case TYPE_TUPLE:
+		/*if (((tuple_object *) obj->ptr)->list != NULL  && ((tuple_object *) obj->ptr)->list->num > 0)
+		{
+		ret->
+			for (int i = 0; i < ((tuple_object *) obj->ptr)->list->num; i++)
+			{
+				if ((((tuple_object *) obj->ptr)->list->items[i]) != NULL
+					&& !(((object*)((tuple_object *) obj->ptr)->list->items[i])->
+						 flags & OFLAG_ON_STACK))
+				{
+					FreeObject(((tuple_object *) obj->ptr)->list->items[i]);
+				}
+				((tuple_object *) obj->ptr)->list->items[i] = NULL;
+			}
+			ptr_CloseList(((tuple_object *) obj->ptr)->list);
+			
+			//assert(mem_free(((tuple_object *) obj->ptr)->list->items));
+			((tuple_object *) obj->ptr)->list = NULL;
+		}*/
+		break;
+	case TYPE_CODE:
+		break;
+
+	}
+return(-1);
+}
+
+object *CopyObject(object *obj)
+{
+	assert(obj != NULL);
+	if (obj == NULL)
+		return;
+
+	object *ret = AllocObject();
+	ret->type = obj->type;
+	ret->value_ptr = obj->value_ptr;
+	ret->flags = obj->flags;
+	ret->flags |= OFLAG_ON_STACK;
+	
+	switch (obj->type)
+	{
+	case TYPE_NULL:
+		ret->ptr = NULL;
+		break;
+	case TYPE_NONE:
+		ret->ptr = NULL;
+		break;
+	case TYPE_INT:
+		ret->ptr = obj->ptr;
+		break;
+	case TYPE_UNICODE:
+		ret->ptr = str_Copy(obj->ptr);
+		break;
+	case TYPE_STRING:
+		//ret->ptr = mem_malloc(
+		break;
+	case TYPE_TUPLE:
+		/*if (((tuple_object *) obj->ptr)->list != NULL  && ((tuple_object *) obj->ptr)->list->num > 0)
+		{
+		ret->
+			for (int i = 0; i < ((tuple_object *) obj->ptr)->list->num; i++)
+			{
+				if ((((tuple_object *) obj->ptr)->list->items[i]) != NULL
+					&& !(((object*)((tuple_object *) obj->ptr)->list->items[i])->
+						 flags & OFLAG_ON_STACK))
+				{
+					FreeObject(((tuple_object *) obj->ptr)->list->items[i]);
+				}
+				((tuple_object *) obj->ptr)->list->items[i] = NULL;
+			}
+			ptr_CloseList(((tuple_object *) obj->ptr)->list);
+			
+			//assert(mem_free(((tuple_object *) obj->ptr)->list->items));
+			((tuple_object *) obj->ptr)->list = NULL;
+		}*/
+		break;
+	case TYPE_CODE:
+	/*
+		// printf("freeing code object @%x\n",obj);
+		objects_header_total -= sizeof(object);
+		objects_header_total -= strlen(((code_object *) obj->ptr)->name) + 1;
+		assert(mem_free(((code_object *) obj->ptr)->name));
+		FreeObject(((code_object *) obj->ptr)->code);
+		FreeObject(((code_object *) obj->ptr)->consts);
+		FreeObject(((code_object *) obj->ptr)->names);
+		FreeObject(((code_object *) obj->ptr)->varnames);
+		FreeObject(((code_object *) obj->ptr)->freevars);
+		FreeObject(((code_object *) obj->ptr)->cellvars);
+		*/
+		break;
+
+	}
+  return(ret);
+}
+
+void AppendDictItem(object * tuple,object *key,object *value)
+{
+	if (tuple == NULL || tuple->type != TYPE_TUPLE)
+		return;
+	if(((tuple_object *) tuple->ptr)->list == NULL)
+		((tuple_object *) tuple->ptr)->list = ptr_CreateList(0,0);
+	object *di = CopyObject(key);
+	di->value_ptr = value;
+	printf("appended to \n");
+	DumpObject(tuple,0);
+	printf("this\n");
+	DumpObject(di,0);
+	ptr_Push(((tuple_object *) tuple->ptr)->list,di);
+
+}
+
+void SetDictItem(object *tuple,object *key,object *value)
+{
+	int index = GetDictItemIndex(tuple,key);
+	printf("setting\n");
+	DumpObject(tuple,0);
+	printf("key\n");
+	DumpObject(key,0);
+	printf("value\n");
+	DumpObject(value,0);
+
+	if(index != -1)
+		{
+			printf("found index\n");
+			SetItem(tuple,index,value);
+		}
+	else
+	{
+	 AppendDictItem(tuple,key,value);
+	}
+}
+
+object *GetDictItem(object *tuple,object *key)
+{
+	int index = GetDictItemIndex(tuple,key);
+	if(index != -1)
+		{
+			return(GetItem(tuple,index));
+		}
+	return(NULL);
+}
+
+int GetDictItemIndex(object *tuple,object *key)
+{
+	if (tuple == NULL || tuple->type != TYPE_TUPLE || ((tuple_object *) tuple->ptr)->list == NULL)
+		return (-1);
+	 printf("checking in %d tuple items for\n",((tuple_object*)tuple->ptr)->list->num);
+	 DumpObject(key,0);
+	for (int i = 0; i < ((tuple_object *) tuple->ptr)->list->num; i++)
+	{
+		 printf("checking tuple:%d\n",i);
+		// if(((tuple_object*)tuple->ptr)->items[i]->type == TYPE_UNICODE)
+		// printf("checking %s against:
+		// %s\n",name,(char*)((tuple_object*)tuple->ptr)->items[i]->ptr);
+		if (((tuple_object *) tuple->ptr)->list->items[i] == NULL)
+			continue;
+		if ( !object_compare( ((object*)((tuple_object *) tuple->ptr)->list->items[i]),key))
+			return (i);
+	}
+	return (-1);
+}
+
 object *FindUnicodeTupleItem(object * tuple, char *name)
 {
-	// printf("checking for correct type\n");
-	if (tuple == NULL || tuple->type != TYPE_TUPLE)
+	//printf("checking for correct type\n");
+	if (tuple == NULL || tuple->type != TYPE_TUPLE || ((tuple_object *) tuple->ptr)->list == NULL)
 		return (NULL);
-	// printf("checking in %d tuple items for
-	// %s\n",((tuple_object*)tuple->ptr)->num,name);
-	for (int i = 0; i < ((tuple_object *) tuple->ptr)->num; i++)
+	 //printf("checking in %d tuple items for %s\n",((tuple_object*)tuple->ptr)->list->num,name);
+	for (int i = 0; i < ((tuple_object *) tuple->ptr)->list->num; i++)
 	{
 		// printf("checking tuple:%d\n",i);
 		// if(((tuple_object*)tuple->ptr)->items[i]->type == TYPE_UNICODE)
 		// printf("checking %s against:
 		// %s\n",name,(char*)((tuple_object*)tuple->ptr)->items[i]->ptr);
-		if (((tuple_object *) tuple->ptr)->items[i] == NULL)
+		if (((tuple_object *) tuple->ptr)->list->items[i] == NULL)
 			continue;
-		if (((tuple_object *) tuple->ptr)->items[i]->type == TYPE_UNICODE
-			&& !strcmp((char *)((tuple_object *) tuple->ptr)->items[i]->ptr,
+		if (((object*)((tuple_object *) tuple->ptr)->list->items[i])->type == TYPE_UNICODE
+			&& !strcmp((char *)((object*)((tuple_object *) tuple->ptr)->list->items[i])->ptr,
 					   name))
-			return (((tuple_object *) tuple->ptr)->items[i]);
+			return (((tuple_object *) tuple->ptr)->list->items[i]);
 	}
 	return (NULL);
 }
@@ -392,22 +593,22 @@ void ResetIteration(object * tuple)
 		return;
 	}
 
-	for (int i = 0; i < ((tuple_object *) tuple->ptr)->num; i++)
+	for (int i = 0; i < ((tuple_object *) tuple->ptr)->list->num; i++)
 	{
 		 //printf("checking tuple:%d\n",i);
 		// if(((tuple_object*)tuple->ptr)->items[i]->type == TYPE_UNICODE)
 		// printf("checking %s against:
 		// %s\n",name,(char*)((tuple_object*)tuple->ptr)->items[i]->ptr);
-		if (((tuple_object *) tuple->ptr)->items[i] != NULL
-			&& (((tuple_object *) tuple->ptr)->items[i]->
+		if (((tuple_object *) tuple->ptr)->list->items[i] != NULL
+			&& (((object*)((tuple_object *) tuple->ptr)->list->items[i])->
 				flags & OFLAG_TUPLE_PTR) > 0)
 		{
 			// update tuple ptr
-			((tuple_object *) tuple->ptr)->items[i]->flags ^= OFLAG_TUPLE_PTR;
+			((object*)((tuple_object *) tuple->ptr)->list->items[i])->flags ^= OFLAG_TUPLE_PTR;
 		}
 	}
-	if (((tuple_object *) tuple->ptr)->items[0] != NULL)
-		((tuple_object *) tuple->ptr)->items[0]->flags |= OFLAG_TUPLE_PTR;
+	if (((tuple_object *) tuple->ptr)->list->items[0] != NULL)
+		((object*)((tuple_object *) tuple->ptr)->list->items[0])->flags |= OFLAG_TUPLE_PTR;
 
 }
 
@@ -415,9 +616,9 @@ void SetItem(object * tuple, int index, object * obj)
 {
 	if (tuple == NULL || tuple->type != TYPE_TUPLE)
 		return;
-	if (index >= ((tuple_object *) tuple->ptr)->num || index < 0)
+	if (index >= ((tuple_object *) tuple->ptr)->list->num || index < 0)
 		return;
-	((tuple_object *) tuple->ptr)->items[index] = obj;
+	((tuple_object *) tuple->ptr)->list->items[index] = obj;
 	// obj->flags ^= OFLAG_ON_STACK;
 }
 
@@ -425,22 +626,22 @@ void DeleteItem(object * tuple, int index)
 {
 	if (tuple == NULL || tuple->type != TYPE_TUPLE)
 		return;
-	if (index >= ((tuple_object *) tuple->ptr)->num || index < 0)
+	if (index >= ((tuple_object *) tuple->ptr)->list->num || index < 0)
 		return;
-	if (((tuple_object *) tuple->ptr)->items[index] == NULL)
+	if (((tuple_object *) tuple->ptr)->list->items[index] == NULL)
 		return;
-	if (!(((tuple_object *) tuple->ptr)->items[index]->type & OFLAG_ON_STACK))
-		FreeObject(((tuple_object *) tuple->ptr)->items[index]);
-	((tuple_object *) tuple->ptr)->items[index] = NULL;
+	if (!(((object*)((tuple_object *) tuple->ptr)->list->items[index])->type & OFLAG_ON_STACK))
+		FreeObject(((tuple_object *) tuple->ptr)->list->items[index]);
+	((tuple_object *) tuple->ptr)->list->items[index] = NULL;
 }
 
 object *GetItem(object * tuple, int index)
 {
 	if (tuple == NULL || tuple->type != TYPE_TUPLE)
 		return (NULL);
-	if (index >= ((tuple_object *) tuple->ptr)->num || index < 0)
+	if (index >= ((tuple_object *) tuple->ptr)->list->num || index < 0)
 		return (NULL);
-	return (((tuple_object *) tuple->ptr)->items[index]);
+	return (((tuple_object *) tuple->ptr)->list->items[index]);
 }
 
 object *GetNextItem(object * tuple)
@@ -455,31 +656,31 @@ object *GetNextItem(object * tuple)
 	}
 
 
-	for (int i = 0; i < ((tuple_object *) tuple->ptr)->num; i++)
+	for (int i = 0; i < ((tuple_object *) tuple->ptr)->list->num; i++)
 	{
-		if (((tuple_object *) tuple->ptr)->items[i] == NULL)
+		if (((tuple_object *) tuple->ptr)->list->items[i] == NULL)
 			continue;
 		// printf ("checking tuple:%d\n", i);
 		// if(((tuple_object*)tuple->ptr)->items[i]->type == TYPE_UNICODE)
 		// printf("checking %s against:
 		// %s\n",name,(char*)((tuple_object*)tuple->ptr)->items[i]->ptr);
-		if ((((tuple_object *) tuple->ptr)->items[i]->
+		if ((((object*)((tuple_object *) tuple->ptr)->list->items[i])->
 			 flags & OFLAG_TUPLE_PTR) > 0)
 		{
 			// update tuple ptr
-			((tuple_object *) tuple->ptr)->items[i]->flags ^= OFLAG_TUPLE_PTR;
-			if (i + 1 < ((tuple_object *) tuple->ptr)->num)
-				((tuple_object *) tuple->ptr)->items[i + 1]->flags |=
+			((object*)((tuple_object *) tuple->ptr)->list->items[i])->flags ^= OFLAG_TUPLE_PTR;
+			if (i + 1 < ((tuple_object *) tuple->ptr)->list->num)
+				((object*)((tuple_object *) tuple->ptr)->list->items[i + 1])->flags |=
 					OFLAG_TUPLE_PTR;
 			else				// reset
 			{
-				((tuple_object *) tuple->ptr)->items[0]->flags |=
+				((object*)((tuple_object *) tuple->ptr)->list->items[0])->flags |=
 					OFLAG_TUPLE_PTR;
 				tuple->flags |= OFLAG_TUPLE_RESTART_FLAG;
 				// return(NULL);
 			}
 			// printf("returning tuple iteration\n");
-			return (((tuple_object *) tuple->ptr)->items[i]);
+			return (((tuple_object *) tuple->ptr)->list->items[i]);
 		}
 	}
 	return (NULL);
@@ -632,9 +833,10 @@ object *ReadObject(FILE * f)
 		// printf("items_num:%d\n",n);
 		if (n > 0)
 		{
-			to->items =
-				(object **) mem_malloc(n * sizeof(object *),
-									   "ReadObject() to->items");
+			//to->items =
+			//	(object **) mem_malloc(n * sizeof(object *),
+			//						   "ReadObject() to->items");
+			to->list = ptr_CreateList(n,PTR_STATIC_LIST);
 			for (int i = 0; i < n; i++)
 			{
 				object *tuple = ReadObject(f);
@@ -645,10 +847,12 @@ object *ReadObject(FILE * f)
 					// printf("setting tuple's iterate over ptr\n");
 				}
 				// printf("object type:%c\n",tuple->type);
-				to->items[i] = tuple;
+				to->list->items[i] = tuple;
 			}
 		}
-		to->num = n;
+		else
+		 to->list = NULL;
+		//to->num = n;
 		obj->ptr = to;
 		obj->type = TYPE_TUPLE;
 		obj->value_ptr = NULL;
