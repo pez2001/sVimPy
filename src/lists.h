@@ -74,4 +74,6 @@ void *ptr_Dequeue(ptr_list * list);
 
 int ptr_IsEmpty(ptr_list * list);
 
+int ptr_Contains(ptr_list *list,void *ptr);
+
 #endif

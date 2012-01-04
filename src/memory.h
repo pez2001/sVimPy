@@ -28,6 +28,8 @@
 
 #include "assert.h"
 
+extern int debug_level;
+
 typedef struct
 {
 	void *ptr;

@@ -24,6 +24,7 @@
 #define STACK_H
 #include "object.h"
 #include "lists.h"
+extern int debug_level;
 
 #define STACK_TYPE *object;
 
@@ -32,13 +33,12 @@
 typedef struct
 {
 	ptr_list *list;
-	void *recycle_stack;
 } stack;
 
 
-stack *stack_Init(stack * recycle);	// long items_num, 
+stack *stack_Init();	// long items_num, 
 
-object *stack_Pop(stack * stack);
+object *stack_Pop(stack * stack,ptr_list *gc);
 
 void stack_Push(stack * stack, object * x);
 

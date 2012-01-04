@@ -220,6 +220,16 @@ void *ptr_Dequeue(ptr_list * list)
 	return (tmp);
 }
 
+int ptr_Contains(ptr_list *list,void *ptr)
+{
+	for(int i=0;i<list->num;i++)
+	{	
+		if(list->items[i] == ptr)
+			return(1);
+	}
+	return(0);
+}
+
 int ptr_IsEmpty(ptr_list * list)
 {
 	return (!list->num);

@@ -22,7 +22,7 @@
 
 #include "vm.h"
 
-function_definition *CreateCFunction(object * (*func) (stack * stack),
+function_definition *CreateCFunction(object * (*func) (vm *vm,stack * stack),
 									 char *name)
 {
 	function_definition *fd =
@@ -33,7 +33,7 @@ function_definition *CreateCFunction(object * (*func) (stack * stack),
 	return (fd);
 }
 
-function_definition *CreateCObjFunction(object * (*func) (object * obj),
+function_definition *CreateCObjFunction(object * (*func) (vm *vm,object * obj),
 										char *name)
 {
 	function_definition *fd =
@@ -93,7 +93,7 @@ object *vm_ExecuteCFunction(vm * vm, char *name, stack * stack)
 	if (fd != NULL)
 	{
 		// printf("fd found:%s\n",fd->name);
-		return ((*fd->func.func) (stack));
+		return ((*fd->func.func) (vm,stack));
 
 	}
 }
@@ -104,7 +104,7 @@ object *vm_ExecuteCObjFunction(vm * vm, char *name, object * obj)
 
 	if (fd != NULL)
 	{
-		return ((*fd->func.func_obj) (obj));
+		return ((*fd->func.func_obj) (vm,obj));
 	}
 }
 
@@ -130,18 +130,20 @@ vm *vm_Init(code_object * co)
 	vm *tmp = (vm *) mem_malloc(sizeof(vm), "vm_Init() return");
 
 	tmp->functions = ptr_CreateList(0, 0);
-	tmp->recycle = stack_Init(NULL);
-	tmp->blocks = stack_Init(tmp->recycle);
+	//tmp->recycle = stack_Init(NULL);
+	tmp->blocks = stack_Init();
+	tmp->garbage = ptr_CreateList(0,0);
 
 	if (co != NULL)
 	{
 		block_object *bo = AllocBlockObject();
-
+		bo->type = TYPE_BLOCK;
 		bo->code = co;
 		bo->ip = 0;
 		bo->iter = NULL;
 		bo->start = 0;
 		bo->len = 0;
+		bo->ref_count = 0;
 		stack_Push(tmp->blocks, bo);
 	}
 	// else
@@ -158,10 +160,14 @@ void vm_Close(vm * vm)
 								   items[i]);
 	}
 	ptr_CloseList(vm->functions);
+	
+	gc_Clear(vm->garbage);
+	ptr_CloseList(vm->garbage);
 	// stack_Close(vm->blocks,0);
 	for(int i = 0;i<vm->blocks->list->num;i++)
 		assert(mem_free(vm->blocks->list->items[i]));
-	stack_Close(vm->recycle, 1);
+	//stack_Close(vm->recycle, 1);
+	
 	// stack_Dump(vm->blocks);
 	stack_Close(vm->blocks, 0);
 	assert(mem_free(vm));
@@ -170,12 +176,13 @@ void vm_Close(vm * vm)
 void vm_SetGlobal(vm * vm, code_object * co)
 {
 	block_object *bo = AllocBlockObject();
-
+	bo->type = TYPE_BLOCK;
 	bo->code = co;
 	bo->ip = 0;
 	bo->iter = NULL;
 	bo->start = 0;
 	bo->len = 0;
+	bo->ref_count = 0;
 	// printf("global : %d\n",vm->blocks->list->num);
 	if (vm->blocks->list->num > 0)
 		stack_SetBottom(vm->blocks, bo);
@@ -185,24 +192,34 @@ void vm_SetGlobal(vm * vm, code_object * co)
 
 }
 
-object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int argc, int debug)	// 
+object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int argc)	// 
 {
 	if (obj->type == TYPE_CODE)
 	{
 		// printf("showing bytecodes\n");
-		code_object *co = (code_object *) obj->ptr;
+		code_object *co = (code_object *) obj;
+		string_object *bytecodes = (string_object *) co->code;
+		char *string = bytecodes->content;
+		//long n = bytecodes->len;
 
+	block_object *bo = AllocBlockObject();
+	bo->type = TYPE_BLOCK;
+	bo->code = co;
+	bo->ip = 0;
+	bo->iter = NULL;
+	bo->start = 0;
+	bo->len = bytecodes->len;
+	bo->ref_count = 0;
+	// printf("global : %d\n",vm->blocks->list->num);
+	stack_Push(vm->blocks, bo);
+		
 		// printf("co_ptr=%x\n",(unsigned long)co);
 		// printf("stack size:%d\n",co->stacksize);
-		object *global = ((block_object *) stack_Bottom(vm->blocks))->code;
+		code_object *global = ((block_object *) stack_Bottom(vm->blocks))->code;
 
-		stack *_stack = stack_Init(vm->recycle);	// co->stacksize
+		stack *_stack = stack_Init();	// co->stacksize
 		// printf("local stack created\n");
-		string_object *bytecodes = (string_object *) co->code->ptr;
 
-		char *string = bytecodes->content;
-
-		long n = bytecodes->len;
 
 		// printf("run init complete\n");
 		if (argc > 0 && locals != NULL)
@@ -210,33 +227,48 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 			for (int i = 0; i < argc; i++)
 			{
 				// printf("adding local %d\n",i);
-				object *local = stack_Pop(locals);
+				object *local = stack_Pop(locals,vm->garbage);
 
-				tuple_object *co_varnames = (tuple_object *) co->varnames->ptr;
+				tuple_object *co_varnames = (tuple_object *) co->varnames;
 
-				char *varname = (char *)((object*)co_varnames->list->items[i])->ptr;
+				//char *varname = ((unicode_object*)co_varnames->list->items[i])->value;
 
-				if (debug && local->type == TYPE_UNICODE)
-					printf("fast storing %s in %s\n", (char *)local->ptr,
-						   varname);
-				if (debug && local->type == TYPE_INT)
-					printf("fast storing %d in %s\n", local->ptr, varname);
-				if (debug && local->type == TYPE_CODE)
-					printf("fast storing function %s in %s\n",
-						   ((code_object *) local->ptr)->name, varname);
-				((object*)co_varnames->list->items[i])->value_ptr = local;
+				//if (debug && local->type == TYPE_UNICODE)
+				//	printf("fast storing %s in %s\n", ((unicode_object *)local)->value,
+				//		   varname);
+				//if (debug && local->type == TYPE_INT)
+				//	printf("fast storing %d in %s\n", local->ptr, varname);
+				//if (debug && local->type == TYPE_CODE)
+				//	printf("fast storing function %s in %s\n",
+				//		   ((code_object *) local->ptr)->name, varname);
+				
+				if(GetItem(co_varnames,i)->type != TYPE_KV)
+					{
+						//printf("converting\n");
+						SetItem(co_varnames,i,ConvertToKVObjectValued(GetItem(co_varnames,i),local));
+					}
+				else
+				{
+					SetDictItemByIndex(co_varnames,i,local);
+				}
+			/*	if(((kv_object*)co_varnames->list->items[i])->type != TYPE_KV)
+					{
+						co_varnames->list->items[i] = ConvertToKVObjectValued(co_varnames->list->items[i],local);
+					}
+				else
+					((kv_object*)co_varnames->list->items[i])->value = local;*/
 			}
 		}
 
-		int i = 0;
+		//int i = 0;
 
 		int has_extended_arg = 0;
 
 		short extended_arg = 0;
 
-		while (i < n)
+		while (bo->ip < bo->len)
 		{
-			unsigned char op = (unsigned char)string[i++];	// get op and
+			unsigned char op = (unsigned char)string[bo->ip++];	// get op and
 															// increment code
 															// pointer
 
@@ -251,24 +283,24 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 			object *tos2 = NULL;
 
 			// FOR DEBUGGING
-			if (debug)
+			if (debug_level)
 			{
-				int old_i = i;
+				int old_i = bo->ip;
 				int index = GetOpcodeIndex(op);
 				if (index >= 0)
 				{
 					if (opcodes[index].argcount != 0)
-						printf("[%d,%xh] opcode: [ %s ] (%d)\n", i,
+						printf("[%d,%xh] opcode: [ %s ] (%d)\n", bo->ip,
 							   opcodes[index].opcode, opcodes[index].name,
-							   num_short(string[i], string[i + 1]));
+							   num_short(string[bo->ip], string[bo->ip + 1]));
 					else
-						printf("[%d,%xh] opcode: [ %s ]\n", i,
+						printf("[%d,%xh] opcode: [ %s ]\n", bo->ip,
 							   opcodes[index].opcode, opcodes[index].name);
 				}
 				else
 				{
-					printf("unknown opcode:%x at %d\n", (char)string[i - 1],
-						   i - 1);
+					printf("unknown opcode:%x at %d\n", (char)string[bo->ip - 1],
+						   bo->ip - 1);
 				}
 			}
 			// -- FOR DEBUGGING
@@ -296,36 +328,62 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 
 			case OPCODE_MAKE_FUNCTION:
 				{
-					i += 2;
+					bo->ip += 2;
 					op_thru = 1;
 				}
 				break;
 
 			case OPCODE_RETURN_VALUE:
 				{
-					object *ret = stack_Pop(_stack);
+					object *ret = stack_Top(_stack);
+					//IncRefCount(ret);
+					//ret->flags |= OFLAG_LEFT_NAMESPACE;
+					//ret->flags ^= OFLAG_ON_STACK;
+					//ret = DissolveRef(ret);
+					//	if(ret->type == TYPE_KV)
+					//	{
+					//		ret = ((kv_object*)ret)->value;
+					//		((kv_object*)ret)->value = NULL;
+					//	}
+					//assert(ret != NULL);
+					//ret->flags ^= OFLAG_ON_STACK;
+					//ret = stack_Pop(_stack,vm->garbage);
+					//object *t = stack_Pop(_stack);
+					//if((t->flags & OFLAG_ON_STACK) > 0)
+					//	printf("t on stack\n");
+					if(debug_level > 1)
+					{
+					printf("ret object @:%x\n",ret);
+					DumpObject(ret,0);
+					}
+					//ret = CopyObject(ret);
+					//ret = CreateRefObject(ret,0);
 					stack_Close(_stack, 0);
+					stack_Pop(vm->blocks,vm->garbage);
+					gc_Clear(vm->garbage);
+					//assert(mem_free(bo));
 					return (ret);
 				}
 
 			case OPCODE_STOP_CODE:
 				{
-					i = n;
+					bo->ip = bo->len;
 					op_thru = 1;
 				}
 				break;
 
 			case OPCODE_POP_TOP:
 				{
-					stack_Pop(_stack);
+					object *pt = stack_Pop(_stack,vm->garbage);
+					//FreeObject(pt);
 					op_thru = 1;
 				}
 				break;
 
 			case OPCODE_GET_ITER:
 				{
-					object *iter = stack_Pop(_stack);
-					if(debug >= 2)
+					object *iter = stack_Pop(_stack,vm->garbage);
+					if(debug_level >= 2)
 					{
 					 printf("iter:\n");
 					 DumpObject(iter,0);
@@ -346,7 +404,8 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 
 			case OPCODE_POP_BLOCK:
 				{
-					stack_Pop(vm->blocks);
+					block_object *rob = stack_Pop(vm->blocks,vm->garbage);
+					//assert(mem_free(rob));
 					op_thru = 1;
 				}
 				break;
@@ -355,9 +414,9 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 				{
 					block_object *bbo =
 						(block_object *) stack_Top(vm->blocks);
-					i = bbo->start + bbo->len - 1;
+					bo->ip = bbo->start + bbo->len - 1;
 					// printf("break to: %d ,start: %d ,len:
-					// %d\n",i,bbo->start,bbo->len);
+					// %d\n",bo->ip,bbo->start,bbo->len);
 					op_thru = 1;
 				}
 				break;
@@ -405,8 +464,8 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 
 			case OPCODE_EXTENDED_ARG:
 				{
-					extended_arg = num_short(string[i + 1], string[i + 2]);
-					i += 2;
+					extended_arg = num_short(string[bo->ip + 1], string[bo->ip + 2]);
+					bo->ip += 2;
 					op_thru = 1;
 					has_extended_arg = 1;
 				}
@@ -466,14 +525,14 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 					{
 						arg =
 							num_long((extended_arg >> 8) & 0xFF,
-									 extended_arg & 0xFF, string[i],
-									 string[i + 1]);
+									 extended_arg & 0xFF, string[bo->ip],
+									 string[bo->ip + 1]);
 						has_extended_arg = 0;
 						extended_arg = 0;
 					}
 					else
-						arg = (long)num_short(string[i], string[i + 1]);
-					i += 2;
+						arg = (long)num_short(string[bo->ip], string[bo->ip + 1]);
+					bo->ip += 2;
 				}
 				break;
 
@@ -492,6 +551,26 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 			// fetch tos items 
 			switch (op)
 			{
+			case OPCODE_UNARY_INVERT:
+			case OPCODE_UNARY_NOT:
+			case OPCODE_UNARY_NEGATIVE:
+			case OPCODE_UNARY_POSITIVE:
+			case OPCODE_UNPACK_SEQUENCE:
+			case OPCODE_POP_JUMP_IF_FALSE:
+			case OPCODE_POP_JUMP_IF_TRUE:
+			case OPCODE_JUMP_IF_FALSE:
+			case OPCODE_JUMP_IF_TRUE:
+			case OPCODE_STORE_FAST:
+			case OPCODE_STORE_NAME:
+			case OPCODE_STORE_GLOBAL:
+					tos = stack_Pop(_stack,vm->garbage);
+					tos = DissolveRef(tos);
+					if(tos->type == TYPE_KV)
+						tos = ((kv_object*)tos)->value;
+					assert(tos != NULL);
+				break;
+			
+			
 			case OPCODE_INPLACE_FLOOR_DIVIDE:
 			case OPCODE_INPLACE_TRUE_DIVIDE:
 			case OPCODE_INPLACE_ADD:
@@ -522,9 +601,9 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 			case OPCODE_BINARY_OR:
 			case OPCODE_BINARY_SUBSCR:
 				{
-					tos = stack_Pop(_stack);
-					tos1 = stack_Pop(_stack);
-					if (tos->type != TYPE_NONE && tos->type != TYPE_NULL
+					tos = stack_Pop(_stack,vm->garbage);
+					tos1 = stack_Pop(_stack,vm->garbage);
+/*					if (tos->type != TYPE_NONE && tos->type != TYPE_NULL
 						&& tos->type != TYPE_TRUE && tos->type != TYPE_FALSE
 						&& tos->value_ptr != NULL)
 						tos = (object *) tos->value_ptr;
@@ -532,18 +611,36 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 						&& tos1->type != TYPE_TRUE && tos1->type != TYPE_FALSE
 						&& tos1->value_ptr != NULL)
 						tos1 = (object *) tos1->value_ptr;
+						*/
+						tos = DissolveRef(tos);
+						tos1 = DissolveRef(tos1);
+						if(tos->type == TYPE_KV)
+							tos = ((kv_object*)tos)->value;
+						if(tos1->type == TYPE_KV)
+							tos1 = ((kv_object*)tos1)->value;
 					assert(tos != NULL);
 					assert(tos1 != NULL);
 				}
 				break;
 			case OPCODE_STORE_SUBSCR:
+			case OPCODE_STORE_MAP:
 				{
-					if(debug >=3)
+					if(debug_level >=3)
 					    stack_Dump(_stack);
-					tos = stack_Pop(_stack);
-					tos1 = stack_Pop(_stack);
-					tos2 = stack_Pop(_stack);
-					if (tos->type != TYPE_NONE && tos->type != TYPE_NULL
+					tos = stack_Pop(_stack,vm->garbage);
+					tos1 = stack_Pop(_stack,vm->garbage);
+					tos2 = stack_Pop(_stack,vm->garbage);
+						tos = DissolveRef(tos);
+						tos1 = DissolveRef(tos1);
+						tos2 = DissolveRef(tos2);
+						if(tos->type == TYPE_KV)
+							tos = ((kv_object*)tos)->value;
+						if(tos1->type == TYPE_KV)
+							tos1 = ((kv_object*)tos1)->value;
+						if(tos2->type == TYPE_KV)
+							tos2 = ((kv_object*)tos2)->value;
+
+					/*					if (tos->type != TYPE_NONE && tos->type != TYPE_NULL
 						&& tos->type != TYPE_TRUE && tos->type != TYPE_FALSE
 						&& tos->value_ptr != NULL)
 						tos = (object *) tos->value_ptr;
@@ -560,11 +657,11 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 						tos2 = (object *) tos2->value_ptr;
 					if(debug >= 2)
 					    stack_Dump(_stack);
-					
+					*/
 				}
 				break;
 			}
-			if (debug >= 2)
+			if (debug_level > 2)
 				printf("executing main ops\n");
 			// execute remaining ops here
 			switch (op)
@@ -578,61 +675,57 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 					//bo->type = TYPE_BLOCK;
 					//bo->ptr = block;
 					//bo->flags = OFLAG_ON_STACK;
-					block->start = i;
+					block->start = bo->ip;
 					block->len = arg;
+					block->ref_count = 0;
+					block->type = TYPE_BLOCK;
 					// printf("block - start: %d, len:
 					// %d\n",block->start,block->len);
 					stack_Push(vm->blocks, block);
 				}
 				break;
-
 			case OPCODE_POP_JUMP_IF_FALSE:
 				{
-					tos = stack_Pop(_stack);
 					if (tos->type == TYPE_FALSE)
 					{
-						i = arg;
+						bo->ip = arg;
 					}
 				}
 				break;
 			case OPCODE_POP_JUMP_IF_TRUE:
 				{
-					tos = stack_Pop(_stack);
 					if (tos->type == TYPE_TRUE)
 					{
-						i = arg;
+						bo->ip = arg;
 					}
 				}
 				break;
 			case OPCODE_JUMP_FORWARD:
 				{
-					i = i + arg;
+					bo->ip = bo->ip + arg;
 				}
 				break;
 			case OPCODE_JUMP_ABSOLUTE:
 				{
-					i = arg;
+					bo->ip = arg;
 				}
 				break;
 			case OPCODE_JUMP_IF_FALSE:
 				{
-					tos = stack_Top(_stack);
 					if (tos->type == TYPE_FALSE)
 					{
-						i = arg;
+						bo->ip = arg;
 					}
 				}
 				break;
 			case OPCODE_JUMP_IF_TRUE:
 				{
-					tos = stack_Top(_stack);
 					if (tos->type == TYPE_TRUE)
 					{
-						i = arg;
+						bo->ip = arg;
 					}
 				}
 				break;
-
 			case OPCODE_FOR_ITER:
 				{
 					// printf("for_iter delta jump\n");
@@ -655,24 +748,20 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 					else
 					{
 						// printf("for_iter delta jump\n");
-						i = i + arg;
+						bo->ip = bo->ip + arg;
 					}
 				}
 				break;
-
 			case OPCODE_BUILD_MAP:
 				{
 					tuple_object *to = AllocTupleObject();
 					to->list = ptr_CreateList(0,0);//arg
-					object *o = AllocObject();
-					o->ptr = to;
-					o->type = TYPE_TUPLE;
-					o->flags = OFLAG_ON_STACK | OFLAG_IS_DICT;
-					o->value_ptr = NULL;
-					stack_Push(_stack,o);
+					to->type = TYPE_TUPLE;
+					to->flags = OFLAG_ON_STACK;
+					to->flags |= OFLAG_IS_DICT;
+					stack_Push(_stack,to);
 				}
 				break;
-				
 			case OPCODE_BUILD_TUPLE:
 			case OPCODE_BUILD_LIST:
 				{
@@ -680,11 +769,11 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 					stack *blcall = NULL;
 
 					if (arg > 0)
-						blcall = stack_Init(vm->recycle);	// arg
+						blcall = stack_Init();	// arg
 					tos = NULL;
 					for (int i = 0; i < arg; i++)
 					{
-						stack_Push(blcall, stack_Pop(_stack));
+						stack_Push(blcall, stack_Pop(_stack,vm->garbage));
 					}
 					object *tmp =
 						vm_ExecuteCFunction(vm, "list", blcall);
@@ -701,29 +790,59 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 					// printf("push global name\n");
 					// code_object *co_global = (code_object*)global->ptr;
 
-					co_names = (tuple_object *) co->names->ptr;
-					code_object *co_global = (code_object *) global->ptr;
+					co_names = (tuple_object *) co->names;
 
 					// co_names = (tuple_object*)co->names->ptr;
-					name = (char *)((object*)co_names->list->items[arg])->ptr;
-					if (debug)
+					
+					//name = (unicode_object*)((object*)co_names->list->items[arg])->value;
+					if(((object*)co_names->list->items[arg])->type == TYPE_KV)
+						name = ((unicode_object*)((kv_object*)co_names->list->items[arg])->key)->value;
+					else
+						name = ((unicode_object*)co_names->list->items[arg])->value;
+					
+					if (debug_level>1)
 						printf("searching for:%s\n", name);
-					object *lgo = FindUnicodeTupleItem(co_global->names, name);
+					//object *lgo = FindUnicodeTupleItem(co_global->names, name);
+					//if (lgo == NULL)
+					//	lgo = FindUnicodeTupleItem(co_global->varnames, name);
+					//printf("global names type:%c\n",global->names->type);
+					//DumpObject(global->names,0);
+					int index = GetItemIndexByName(global->names,name);
+					object *lgo = NULL;
+					if(index != -1)
+					{
+						//lgo = (object*)((tuple_object*)global->names)->list->items[index];
+						lgo = GetItem(global->names,index);
+					}
+					index = GetItemIndexByName(global->varnames,name);
+					if(index != -1)
+					{
+						//lgo = (object*)((tuple_object*)global->varnames)->list->items[index];
+						lgo = GetItem(global->varnames,index);
+					}
+					
+					
 					if (lgo == NULL)
-						lgo = FindUnicodeTupleItem(co_global->varnames, name);
-					if (debug)
-						DumpObject(lgo, 1);
-					if (lgo == NULL)
-						if (vm_FindFunction(vm, name) != NULL)
+					{
+					if (vm_FindFunction(vm, name) != NULL)
 						{
-							lgo = AllocObject();
-							lgo->type = TYPE_UNICODE;
-							lgo->flags = OFLAG_ON_STACK;
-							lgo->ptr = str_Copy(name);
-							lgo->value_ptr = NULL;
+							lgo = CreateUnicodeObject(str_Copy(name),OFLAG_ON_STACK);
+							/*
+							lgo = AllocUnicodeObject();
+							((unicode_object*)lgo)->type = TYPE_UNICODE;
+							((unicode_object*)lgo)->flags = OFLAG_ON_STACK;
+							((unicode_object*)lgo)->value = str_Copy(name);
+							lgo->ref_count = 0;*/
 						}
+						else
+						{
+							printf("global not found\n");
+							break;
+						}
+					}
 					stack_Push(_stack, lgo);
-
+					if(debug_level >1)
+						DumpObject(lgo,1);
 					// stack_Dump(_stack);
 					// if(co_names->items[name_i]->type== TYPE_UNICODE)
 					// printf("pushing global (%d)%s =
@@ -735,55 +854,75 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 					// DumpObject(co_names->items[name_i],0);
 					// printf("pushed global\n");
 					// stack_Push(co_varnames->items[arg],_stack);
+					
 				}
 				break;
 
 			case OPCODE_STORE_GLOBAL:
 				{
-					tos = stack_Pop(_stack);
-					co_names = (tuple_object *) co->names->ptr;
-					code_object *co_global = (code_object *) global->ptr;
-
-					// co_names = (tuple_object*)co->names->ptr;
-					name = (char *)((object*)co_names->list->items[arg])->ptr;
-					object *sgo =
-						FindUnicodeTupleItem(co_global->names, name);
+					co_names = (tuple_object *) co->names;
+					if(((object*)co_names->list->items[arg])->type == TYPE_KV)
+						name = ((unicode_object*)((kv_object*)co_names->list->items[arg])->key)->value;
+					else
+						name = ((unicode_object*)co_names->list->items[arg])->value;
+					if(debug_level > 1)
+					{
+						printf("name:%s\n",name);
+						DumpObject(tos,0);
+					}
 					
-					if(sgo == NULL)
-					sgo =
-						FindUnicodeTupleItem(co_global->varnames, name);
-
-					if(debug && sgo == NULL)
-					 printf("no global tuple called %s found\n",name);
-					if (debug && tos->type == TYPE_UNICODE)
-						printf("fast storing %s in %s\n", (char *)tos->ptr,
-							   (char *)sgo->ptr);
-					if (debug && tos->type == TYPE_INT)
-						printf("fast storing %d in %s\n", tos->ptr,
-							   (char *)sgo->ptr);
-					if (debug && tos->type == TYPE_CODE)
-						printf("fast storing function %s in %s\n",
-							   ((code_object *) tos->ptr)->name,
-							   (char *)sgo->ptr);
-					// co_varnames->items[arg]->value_ptr = tos;
-					sgo->value_ptr = tos;
+					int index = GetItemIndexByName(global->names,name);
+					if(index != -1)
+					{
+					if(((object*)((tuple_object*)global->names)->list->items[index])->type != TYPE_KV)
+						((tuple_object*)global->names)->list->items[index] = ConvertToKVObjectValued(((tuple_object*)global->names)->list->items[index],tos);
+					else	
+							((kv_object*)((tuple_object*)global->names)->list->items[index])->value = tos;
+					break;		
+					}
+					index = GetItemIndexByName(global->varnames,name);
+					if(index != -1)
+					{
+					if(((object*)((tuple_object*)global->varnames)->list->items[index])->type != TYPE_KV)
+						((tuple_object*)global->varnames)->list->items[index] = ConvertToKVObjectValued(((tuple_object*)global->varnames)->list->items[index],tos);
+					else
+							((kv_object*)((tuple_object*)global->varnames)->list->items[index])->value = tos;
+					break;
+					}					
+				if(debug_level > 1)
+					printf("global not found\n");
 				}
 				break;
 
 			case OPCODE_DELETE_GLOBAL:
 				{
-					co_names = (tuple_object *) co->names->ptr;
-					code_object *co_global = (code_object *) global->ptr;
+					//TODO needs to be TYPE_KV aware and has to remove unneeded objects
+					co_names = (tuple_object *) co->names;
+					if(((object*)co_names->list->items[arg])->type == TYPE_KV)
+						name = ((unicode_object*)((kv_object*)co_names->list->items[arg])->key)->value;
+					else
+						name = ((unicode_object*)co_names->list->items[arg])->value;
 
-					name = (char *)((object*)co_names->list->items[arg])->ptr;
-					DeleteItem(co_global->varnames, arg);
+					int index = GetItemIndexByName(global->names,name);
+					if(index != -1)
+					{
+						SetDictItemByIndex(global->names,index,NULL);
+						//DeleteItem(global->names, index);
+						break;
+					}
+					index = GetItemIndexByName(global->varnames,name);
+					if(index != -1)
+					{
+						SetDictItemByIndex(global->varnames,index,NULL);
+						//DeleteItem(global->varnames, index);
+					}
 				}
 				break;
 
 			case OPCODE_LOAD_NAME:
 				{
 					// printf("push name\n");
-					co_names = (tuple_object *) co->names->ptr;
+					co_names = (tuple_object *) co->names;
 					// name = (char *) co_names->items[arg]->ptr;
 					// printf("opcode: [%s],(%d)
 					// [%s]\n",opcodes[index].name,name_i,name->content);
@@ -793,14 +932,19 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 					// if(co_names->items[name_i]->type== TYPE_INT)
 					// printf("pushing local (%d)%s =
 					// %d\n",name_i,name->content,co_names->items[name_i]->ptr);
-					stack_Push(_stack, co_names->list->items[arg]);
+					object *name = (object*)co_names->list->items[arg];
+					if(name->type == TYPE_KV)
+						name = ((kv_object*)name)->value;
+					stack_Push(_stack, name);
+					if(debug_level >1)
+						DumpObject(name,1);
 				}
 				break;
 
 			case OPCODE_LOAD_CONST:
 				{
 					// printf("push const\n");
-					co_consts = (tuple_object *) co->consts->ptr;
+					co_consts = (tuple_object *) co->consts;
 					// const_content = (char *) co_consts->items[arg]->ptr;
 					// if(((object*)co_consts->items[const_i]->value_ptr)->type== 
 					// TYPE_UNICODE)
@@ -809,14 +953,22 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 					// if(co_consts->items[const_i]->type== TYPE_INT)
 					// printf("pushing local const (%d)%s =
 					// %d\n",const_i,const_content->content,co_consts->items[const_i]->ptr);
-					stack_Push(_stack, co_consts->list->items[arg]);
+					object *lconst = (object*)co_consts->list->items[arg];
+					if(lconst->type == TYPE_KV)
+						lconst = ((kv_object*)lconst)->value;
+					//lconst = CreateRefObject(lconst,lconst->flags | OFLAG_ON_STACK); 
+					//printf("const:\n");
+					//DumpObject(lconst,0);
+					stack_Push(_stack, lconst);
+					if(debug_level >1)
+						DumpObject(lconst,1);
 				}
 				break;
 
 			case OPCODE_LOAD_FAST:
 				{
 					// printf("push name\n");
-					co_varnames = (tuple_object *) co->varnames->ptr;
+					co_varnames = (tuple_object *) co->varnames;
 					// varname = (char *) co_varnames->items[arg]->ptr;
 					// printf("opcode: [%s],(%d)
 					// [%s]\n",opcodes[index].name,name_i,name->content);
@@ -826,7 +978,13 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 					// if(co_varnames->items[varname_i]->type== TYPE_INT)
 					// printf("pushing local fast (%d,i)%s =
 					// %d\n",varname_i,varname->content,co_varnames->items[varname_i]->ptr);
-					stack_Push(_stack, ((object*)co_varnames->list->items[arg])->value_ptr);
+					object *fast = (object*)co_varnames->list->items[arg];
+					if(fast->type == TYPE_KV)
+						fast = ((kv_object*)fast)->value;
+					//fast = CreateRefObject(fast,fast->flags | OFLAG_ON_STACK); 
+					stack_Push(_stack, fast);
+					if(debug_level >1)
+						DumpObject(fast,1);
 				}
 				break;
 
@@ -848,54 +1006,20 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 				}
 				break;
 	*/			
-				
+	
 				
 			case OPCODE_STORE_NAME:
 				{
-					// printf("storing in name\n");
-					tos = stack_Pop(_stack);
-					co_names = (tuple_object *) co->names->ptr;
-					name = (char *)((object*)co_names->list->items[arg])->ptr;
-					// printf("opcode: [%s],(%d)
-					// [%s]\n",opcodes[index].name,name_i,name->content);
-					if (debug && tos->type == TYPE_UNICODE)
-						printf("storing %s in %s\n", (char *)tos->ptr, name);
-					if (debug && tos->type == TYPE_INT)
-						printf("storing %d in %s\n", tos->ptr, name);
-					if (debug && tos->type == TYPE_CODE)
-					{
-						// co_names =
-						// (tuple_object*)AsCodeObject(global)->names->ptr;
-						// name_i = num_short(string[i+1],string[i+2]);
-						// name =
-						// (unicode_object*)co_names->items[name_i]->ptr;
-						printf("storing function %s in %s\n",
-							   ((code_object *) tos->ptr)->name, name);
-						// co_names->items[name_i]->value_ptr = tos;
-
-					}
-					// else 
-					((object*)co_names->list->items[arg])->value_ptr = tos;
-				}
-				break;
-
-			case OPCODE_STORE_MAP:
-				{
-					// printf("storing in name\n");
-					object *w = stack_Top(_stack);
-					object *u = stack_Second(_stack);
-					object *v = stack_Third(_stack);
-					stack_Adjust(_stack,-2);
-					SetDictItem(v,w,u);
-    				//co_names = (tuple_object *) co->names->ptr;
+					//printf("storing in name\n");
+					co_names = (tuple_object *) co->names;
 					//name = (char *)((object*)co_names->list->items[arg])->ptr;
 					// printf("opcode: [%s],(%d)
 					// [%s]\n",opcodes[index].name,name_i,name->content);
-					//if (debug && tos->type == TYPE_UNICODE)
+					//if (debug>1 && tos->type == TYPE_UNICODE)
 					//	printf("storing %s in %s\n", (char *)tos->ptr, name);
-					//if (debug && tos->type == TYPE_INT)
+					//if (debug>1 && tos->type == TYPE_INT)
 					//	printf("storing %d in %s\n", tos->ptr, name);
-					//if (debug && tos->type == TYPE_CODE)
+					//if (debug>1 && tos->type == TYPE_CODE)
 					//{
 						// co_names =
 						// (tuple_object*)AsCodeObject(global)->names->ptr;
@@ -908,27 +1032,63 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 
 					//}
 					// else 
-					//((object*)co_names->list->items[arg])->value_ptr = tos;
+					//printf("checking for kv\n");
+					//if(tos->type == TYPE_CODE)
+						//tos = CreateRefObject(tos,0);
+					//else
+						//tos = CopyObject(tos);
+					if(GetItem(co_names,arg)->type != TYPE_KV)
+					{
+						//printf("converting\n");
+						SetItem(co_names,arg,ConvertToKVObjectValued(GetItem(co_names,arg),tos));
+					}
+				else
+				{
+					SetDictItemByIndex(co_names,arg,tos);
+					//((kv_object*)co_names->list->items[arg])->value = tos;
+				}
+				//printf("stored\n");
+				if(debug_level >1)
+					DumpObject(tos,1);
+				}
+				break;
+
+			case OPCODE_STORE_MAP:
+				{
+					/*object *w = stack_Top(_stack);
+					object *u = stack_Second(_stack);
+					object *v = stack_Third(_stack);
+					w = DissolveRef(tos);
+					u = DissolveRef(tos);
+					v = DissolveRef(tos);
+					stack_Adjust(_stack,-2);
+					*/
+					//SetDictItem(v,w,u);	
+					SetDictItem(tos2,tos,tos1);
+					stack_Push(_stack,tos2);
 				}
 				break;
 				
 			case OPCODE_STORE_FAST:
 				{
 					// printf("storing in fast\n");
-					tos = stack_Pop(_stack);
 					// printf("tos type:%c\n",tos->type);
-					co_varnames = (tuple_object*) co->varnames->ptr;
-					varname = (char *)((object*)co_varnames->list->items[arg])->ptr;
+					co_varnames = (tuple_object*) co->varnames;
+					//varname = (char *)((object*)co_varnames->list->items[arg])->ptr;
 					// printf("opcode: [%s],(%d)
 					// [%s]\n",opcodes[index].name,name_i,name->content);
-					/* if (tos->type == TYPE_UNICODE) printf ("fast storing %s 
-					   in %s\n", (char *) tos->ptr, varname); if (tos->type == 
-					   TYPE_INT) printf ("fast storing %d in %s\n", tos->ptr,
-					   varname); if (tos->type == TYPE_CODE) printf ("fast
-					   storing function %s in %s\n", ((code_object *)
-					   tos->ptr)->name, varname); */
-					tos->flags ^= OFLAG_ON_STACK;
-					((object*)co_varnames->list->items[arg])->value_ptr = tos;
+					//tos->flags ^= OFLAG_ON_STACK;
+					if(GetItem(co_varnames,arg)->type != TYPE_KV)
+					{
+						//printf("converting\n");
+						SetItem(co_varnames,arg,ConvertToKVObjectValued(GetItem(co_varnames,arg),tos));
+					}
+				else
+				{
+					SetDictItemByIndex(co_varnames,arg,tos);
+				}
+					if(debug_level >1)
+						DumpObject(tos,1);
 				}
 				break;
 
@@ -946,7 +1106,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 
 					if (tos->type == TYPE_INT)
 					{
-						dsa = tos->ptr;
+						dsa = ((int_object*)tos)->value;
 					}
 					if (tos1->type == TYPE_TUPLE)
 					{
@@ -960,39 +1120,31 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 
 			case OPCODE_UNPACK_SEQUENCE:
 				{
-					tos = stack_Pop(_stack);
-					if (tos->value_ptr != NULL)
-						tos = (object *) tos->value_ptr;
-					for (int i = 0; i < arg; i++)
+					for (int i = arg-1; i >= 0; i--)
 					{
 						switch (tos->type)
 						{
 						case TYPE_UNICODE:
 							{
-								object *uso = AllocObject();
-
-								uso->flags = OFLAG_ON_STACK;
-								uso->type = TYPE_UNICODE;
-								uso->ptr = str_FromChar(((char *)tos->ptr)[i]);
+								unicode_object *uso = CreateUnicodeObject(str_FromChar(((unicode_object*)tos)->value[i]),OFLAG_ON_STACK);
 								stack_Push(_stack, uso);
 							}
 						}
 					}
-					// stack_Dump(_stack);
+					if(debug_level>1)
+						stack_Dump(_stack);
 				}
 				break;
 
 			case OPCODE_UNARY_POSITIVE:
 				{
-					tos = stack_Pop(_stack);
 					if (tos->type == TYPE_INT)
 					{
-						object *up = AllocObject();
+						int_object *up = AllocIntObject();
 
 						up->type = TYPE_INT;
 						up->flags = OFLAG_ON_STACK;
-						up->value_ptr = NULL;
-						up->ptr = +(long)tos->ptr;
+						up->value = +((int_object*)tos)->value;
 						stack_Push(_stack, up);
 					}
 				}
@@ -1000,15 +1152,12 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 
 			case OPCODE_UNARY_NEGATIVE:
 				{
-					tos = stack_Pop(_stack);
 					if (tos->type == TYPE_INT)
 					{
-						object *up = AllocObject();
-
+						int_object *up = AllocIntObject();
 						up->flags = OFLAG_ON_STACK;
 						up->type = TYPE_INT;
-						up->value_ptr = NULL;
-						up->ptr = -(long)tos->ptr;
+						up->value = -((int_object*)tos)->value;
 						stack_Push(_stack, up);
 					}
 				}
@@ -1016,28 +1165,23 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 
 			case OPCODE_UNARY_NOT:
 				{
-					tos = stack_Pop(_stack);
 					if (tos->type == TYPE_INT)
 					{
 						object *up = AllocEmptyObject();
-
 						up->flags = OFLAG_ON_STACK;
-						up->type = tos->ptr > 0 ? TYPE_TRUE : TYPE_FALSE;
+						up->type = ((int_object*)tos)->value > 0 ? TYPE_TRUE : TYPE_FALSE;
 						stack_Push(_stack, up);
 					}
 					else if (tos->type == TYPE_TRUE || tos->type == TYPE_FALSE)
 					{
 						object *up = AllocEmptyObject();
-
 						up->flags = OFLAG_ON_STACK;
-						up->type =
-							tos->type == TYPE_TRUE ? TYPE_TRUE : TYPE_FALSE;
+						up->type = tos->type == TYPE_TRUE ? TYPE_TRUE : TYPE_FALSE;
 						stack_Push(_stack, up);
 					}
 					else if (tos->type == TYPE_NONE || tos->type == TYPE_NULL)
 					{
 						object *up = AllocEmptyObject();
-
 						up->flags = OFLAG_ON_STACK;
 						up->type = TYPE_FALSE;
 						stack_Push(_stack, up);
@@ -1047,15 +1191,12 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 
 			case OPCODE_UNARY_INVERT:
 				{
-					tos = stack_Pop(_stack);
 					if (tos->type == TYPE_INT)
 					{
-						object *up = AllocObject();
-
+						int_object *up = AllocIntObject();
 						up->flags = OFLAG_ON_STACK;
 						up->type = TYPE_INT;
-						up->value_ptr = NULL;
-						up->ptr = -(((long)tos->ptr) + 1);
+						up->value = -((((int_object*)tos)->value) + 1);
 						stack_Push(_stack, up);
 					}
 				}
@@ -1066,44 +1207,31 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 					if (tos->type == TYPE_UNICODE
 						&& tos1->type == TYPE_UNICODE)
 					{
-						char *tos_tmp = (char *)tos->ptr;
-
-						char *tos1_tmp = (char *)tos1->ptr;
+						char *tos_tmp = ((unicode_object *)tos)->value;
+						char *tos1_tmp = ((unicode_object *)tos1)->value;
 
 						char *tmp = str_Cat(tos1_tmp, tos_tmp);
 
-						// printf("cat:[%s]\n",tmp);
-						object *new_tos = AllocObject();
-
-						new_tos->flags = OFLAG_ON_STACK;
-						new_tos->type = TYPE_UNICODE;
-						new_tos->ptr = tmp;
-						new_tos->value_ptr = NULL;
+						unicode_object *new_tos = CreateUnicodeObject(tmp,OFLAG_ON_STACK);
 						stack_Push(_stack, new_tos);
 					}
 					else
 					{
 						long a = 0;
-
 						long b = 0;
 
-						object *new_tos = AllocObject();
-
-						new_tos->flags = OFLAG_ON_STACK;
-						new_tos->type = TYPE_INT;
-						new_tos->ptr = 0;
-						new_tos->value_ptr = NULL;
 						if (tos->type == TYPE_INT)
 						{
-							a = tos->ptr;
+							a = ((int_object*)tos)->value;
 						}
 						if (tos1->type == TYPE_INT)
 						{
-							b = tos1->ptr;
+							b = ((int_object*)tos1)->value;
 						}
-						new_tos->ptr = a + b;
-						// printf ("%d + %d = %d (%d)\n", a, b, a + b,
-						// new_tos->ptr);
+						int_object *new_tos = CreateIntObject(a + b,OFLAG_ON_STACK);
+						
+					if (debug_level)
+						printf ("%d + %d = %d (%d)\n", a, b, a + b, new_tos->value);
 						stack_Push(_stack, new_tos);
 					}
 				}
@@ -1112,27 +1240,22 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 			case OPCODE_BINARY_SUBTRACT:
 				{
 					long a = 0;
-
 					long b = 0;
 
-					object *new_tos = AllocObject();
-
-					new_tos->flags = OFLAG_ON_STACK;
-					new_tos->type = TYPE_INT;
-					new_tos->ptr = 0;
-					new_tos->value_ptr = NULL;
+					
 					if (tos->type == TYPE_INT)
 					{
-						a = tos->ptr;
+						a = ((int_object*)tos)->value;
 					}
 					if (tos1->type == TYPE_INT)
 					{
-						b = tos1->ptr;
+						b = ((int_object*)tos1)->value;
 					}
-					new_tos->ptr = b - a;
-					if (debug)
+					int_object *new_tos = CreateIntObject(b - a, OFLAG_ON_STACK);
+ 
+					if (debug_level)
 						printf("%d - %d = %d (%d)\n", b, a, b - a,
-							   new_tos->ptr);
+							   new_tos->value);
 					stack_Push(_stack, new_tos);
 				}
 				break;
@@ -1143,25 +1266,24 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 
 					long db = 0;
 
-					object *new_dtos = AllocObject();
+					int_object *new_dtos = AllocIntObject();
 
 					new_dtos->flags = OFLAG_ON_STACK;
 					new_dtos->type = TYPE_INT;
-					new_dtos->ptr = 0;
-					new_dtos->value_ptr = NULL;
+					new_dtos->value = 0;
 					if (tos->type == TYPE_INT)
 					{
-						da = tos->ptr;
+						da = ((int_object*)tos)->value;
 					}
 					if (tos1->type == TYPE_INT)
 					{
-						db = tos1->ptr;
+						db = ((int_object*)tos1)->value;
 					}
-					new_dtos->ptr = (long)db / da;	// TODO catch divide by
+					new_dtos->value = db / da;	// TODO catch divide by
 													// zero
-					if (debug)
+					if (debug_level)
 						printf("%d / %d = %d (%d)\n", db, da, db / da,
-							   new_dtos->ptr);
+							   new_dtos->value);
 					stack_Push(_stack, new_dtos);
 				}
 				break;
@@ -1172,25 +1294,24 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 
 					long fdb = 0;
 
-					object *new_fdtos = AllocObject();
+					int_object *new_fdtos = AllocIntObject();
 
 					new_fdtos->flags = OFLAG_ON_STACK;
 					new_fdtos->type = TYPE_INT;
-					new_fdtos->ptr = 0;
-					new_fdtos->value_ptr = NULL;
+					new_fdtos->value = 0;
 					if (tos->type == TYPE_INT)
 					{
-						fda = tos->ptr;
+						fda = ((int_object*)tos)->value;
 					}
 					if (tos1->type == TYPE_INT)
 					{
-						fdb = tos1->ptr;
+						fdb = ((int_object*)tos1)->value;
 					}
-					new_fdtos->ptr = (long)fdb / fda;	// TODO catch divide
+					new_fdtos->value = fdb / fda;	// TODO catch divide
 														// by zero
-					if (debug)
+					if (debug_level)
 						printf("%d / %d = %d (%d)\n", fdb, fda, fdb / fda,
-							   new_fdtos->ptr);
+							   new_fdtos->value);
 					stack_Push(_stack, new_fdtos);
 				}
 				break;
@@ -1201,24 +1322,23 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 
 					long mdb = 0;
 
-					object *new_mdtos = AllocObject();
+					int_object *new_mdtos = AllocIntObject();
 
 					new_mdtos->flags = OFLAG_ON_STACK;
 					new_mdtos->type = TYPE_INT;
-					new_mdtos->ptr = 0;
-					new_mdtos->value_ptr = NULL;
+					new_mdtos->value = 0;
 					if (tos->type == TYPE_INT)
 					{
-						mda = tos->ptr;
+						mda = ((int_object*)tos)->value;
 					}
 					if (tos1->type == TYPE_INT)
 					{
-						mdb = tos1->ptr;
+						mdb = ((int_object*)tos1)->value;
 					}
-					new_mdtos->ptr = (long)mdb % mda;	// TODO catch divide
+					new_mdtos->value = mdb % mda;	// TODO catch divide
 														// by zero
-					if (debug)
-						printf("%d %% %d = %d\n", mdb, mda, new_mdtos->ptr);
+					if (debug_level)
+						printf("%d %% %d = %d\n", mdb, mda, new_mdtos->value);
 					stack_Push(_stack, new_mdtos);
 				}
 				break;
@@ -1229,23 +1349,22 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 
 					long brsb = 0;
 
-					object *new_brstos = AllocObject();
+					int_object *new_brstos = AllocIntObject();
 
 					new_brstos->flags = OFLAG_ON_STACK;
 					new_brstos->type = TYPE_INT;
-					new_brstos->ptr = 0;
-					new_brstos->value_ptr = NULL;
+					new_brstos->value = 0;
 					if (tos->type == TYPE_INT)
 					{
-						brsa = tos->ptr;
+						brsa = ((int_object*)tos)->value;
 					}
 					if (tos1->type == TYPE_INT)
 					{
-						brsb = tos1->ptr;
+						brsb = ((int_object*)tos1)->value;
 					}
-					new_brstos->ptr = (long)brsb >> brsa;
-					if (debug)
-						printf("%d >> %d = %d\n", brsb, brsa, new_brstos->ptr);
+					new_brstos->value = brsb >> brsa;
+					if (debug_level)
+						printf("%d >> %d = %d\n", brsb, brsa, new_brstos->value);
 					stack_Push(_stack, new_brstos);
 				}
 				break;
@@ -1256,23 +1375,18 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 
 					long blsb = 0;
 
-					object *new_blstos = AllocObject();
-
-					new_blstos->flags = OFLAG_ON_STACK;
-					new_blstos->type = TYPE_INT;
-					new_blstos->ptr = 0;
-					new_blstos->value_ptr = NULL;
 					if (tos->type == TYPE_INT)
 					{
-						blsa = tos->ptr;
+						blsa = ((int_object*)tos)->value;
 					}
 					if (tos1->type == TYPE_INT)
 					{
-						blsb = tos1->ptr;
+						blsb = ((int_object*)tos1)->value;
 					}
-					new_blstos->ptr = (long)blsb << blsa;
-					if (debug)
-						printf("%d << %d = %d\n", blsb, blsa, new_blstos->ptr);
+					int_object *new_blstos = CreateIntObject(blsb << blsa,OFLAG_ON_STACK);
+					
+					if (debug_level)
+						printf("%d << %d = %d\n", blsb, blsa, new_blstos->value);
 					stack_Push(_stack, new_blstos);
 				}
 				break;
@@ -1283,24 +1397,17 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 
 					long pb = 0;
 
-					object *new_ptos = AllocObject();
-
-					new_ptos->flags = OFLAG_ON_STACK;
-					new_ptos->type = TYPE_INT;
-					new_ptos->ptr = 0;
-					new_ptos->value_ptr = NULL;
 					if (tos->type == TYPE_INT)
 					{
-						pa = tos->ptr;
+						pa = ((int_object*)tos)->value;
 					}
 					if (tos1->type == TYPE_INT)
 					{
-						pb = tos1->ptr;
+						pb = ((int_object*)tos1)->value;
 					}
-					new_ptos->ptr = long_pow(pb, pa);	// TODO catch divide
-														// by zero
-					if (debug)
-						printf("%d ** %d = %d\n", pb, pa, new_ptos->ptr);
+							int_object *new_ptos = CreateIntObject(long_pow(pb, pa),OFLAG_ON_STACK);
+					if (debug_level)
+						printf("%d ** %d = %d\n", pb, pa, new_ptos->value);
 					stack_Push(_stack, new_ptos);
 				}
 				break;
@@ -1308,28 +1415,19 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 			case OPCODE_BINARY_MULTIPLY:
 				{
 					long ma = 0;
-
 					long mb = 0;
 
-					object *new_mtos = AllocObject();
-
-					// printf("tos:%c\n",tos->type);
-					// printf("tos1:%c\n",tos1->type);
-					new_mtos->flags = OFLAG_ON_STACK;
-					new_mtos->type = TYPE_INT;
-					new_mtos->ptr = 0;
-					new_mtos->value_ptr = NULL;
 					if (tos->type == TYPE_INT)
 					{
-						ma = tos->ptr;
+						ma = ((int_object*)tos)->value;
 					}
 					if (tos1->type == TYPE_TUPLE)
 					{
 						// printf("multiplying with a tuple\n");
-						int mnum = ((tuple_object *) tos1->ptr)->list->num;
+						int mnum = ((tuple_object *) tos1)->list->num;
 						if (mnum == 1)
-							tos1 = ((tuple_object *) tos1->ptr)->list->items[0];
-						stack *mstack = stack_Init(vm->recycle);	// ma
+							tos1 = ((tuple_object *) tos1)->list->items[0];
+						stack *mstack = stack_Init();	// ma
 						for (int i = 0; i < ma; i++)
 						{
 							stack_Push(mstack, tos1);
@@ -1342,9 +1440,9 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 					}
 					if (tos1->type == TYPE_INT)
 					{
-						mb = tos1->ptr;
+						mb = ((int_object*)tos1)->value;
 					}
-					new_mtos->ptr = ma * mb;
+					int_object *new_mtos = CreateIntObject(ma * mb,OFLAG_ON_STACK);
 					// printf ("%d * %d = %d (%d)\n", ma, mb, ma * mb,
 					// new_mtos->ptr);
 					stack_Push(_stack, new_mtos);
@@ -1354,27 +1452,29 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 			case OPCODE_STORE_SUBSCR:
 				{
 					long ssa = 0;
-					if(debug >= 2)
+					//tos2 = CopyObject(tos2);
+					IncRefCount(tos2);
+					if(debug_level >= 2)
 					 {
 					 printf("tos:%c\n",tos->type);
 					 printf("tos1:%c\n",tos1->type);
 					 }
 					if (tos->type == TYPE_INT)
 					{
-						ssa = tos->ptr;
+						ssa = ((int_object*)tos)->value;
 					}
 					if (tos1->type == TYPE_TUPLE)
 					{
 						// DumpObject(tos2,0);
-					if(debug >= 2)
+					if(debug_level >= 2)
 						 printf("ssa: %d\n",ssa);
 					if (tos->type == TYPE_INT)
 						SetItem(tos1, ssa, tos2);
 					else
 						SetDictItem(tos1,tos,tos2);
 						// DumpObject(tos1,0);
-					if(debug >= 2)
-						 DumpObject(tos2,0);
+					if(debug_level >= 2)
+						 DumpObject(tos1,0);
 					}
 				}
 				break;
@@ -1386,12 +1486,12 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 					// printf("binary subscribe");
 					if (tos->type == TYPE_INT)
 					{
-						bsa = tos->ptr;
+						bsa = ((int_object*)tos)->value;
 					}
 				
 					if (tos1->type == TYPE_TUPLE)
 					{
-						if (debug >= 2)
+						if (debug_level >= 2)
 						{
 							DumpObject(tos1, 0);
 							DumpObject(tos,0);
@@ -1403,7 +1503,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 					else
 						bst = GetDictItem(tos1,tos);
 						
-						if (debug>= 2)
+						if (debug_level>= 2)
 							DumpObject(bst, 0);
 						stack_Push(_stack, bst);
 					}
@@ -1416,23 +1516,22 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 
 					long irb = 0;
 
-					object *new_irtos = AllocObject();
+					int_object *new_irtos = AllocIntObject();
 
 					new_irtos->flags = OFLAG_ON_STACK;
 					new_irtos->type = TYPE_INT;
-					new_irtos->ptr = 0;
-					new_irtos->value_ptr = NULL;
+					new_irtos->value = 0;
 					if (tos->type == TYPE_INT)
 					{
-						ira = tos->ptr;
+						ira = ((int_object*)tos)->value;
 					}
 					if (tos1->type == TYPE_INT)
 					{
-						irb = tos1->ptr;
+						irb = ((int_object*)tos1)->value;
 					}
-					new_irtos->ptr = irb >> ira;
-					if (debug)
-						printf("%d >> %d = %d\n", irb, ira, new_irtos->ptr);
+					new_irtos->value = irb >> ira;
+					if (debug_level)
+						printf("%d >> %d = %d\n", irb, ira, new_irtos->value);
 					stack_Push(_stack, new_irtos);
 				}
 				break;
@@ -1443,23 +1542,22 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 
 					long iab = 0;
 
-					object *new_iatos = AllocObject();
+					int_object *new_iatos = AllocIntObject();
 
 					new_iatos->flags = OFLAG_ON_STACK;
 					new_iatos->type = TYPE_INT;
-					new_iatos->ptr = 0;
-					new_iatos->value_ptr = NULL;
+					new_iatos->value = 0;
 					if (tos->type == TYPE_INT)
 					{
-						iaa = tos->ptr;
+						iaa = ((int_object*)tos)->value;
 					}
 					if (tos1->type == TYPE_INT)
 					{
-						iab = tos1->ptr;
+						iab = ((int_object*)tos1)->value;
 					}
-					new_iatos->ptr = iab & iaa;
-					if (debug)
-						printf("%d & %d = %d\n", iab, iaa, new_iatos->ptr);
+					new_iatos->value = iab & iaa;
+					if (debug_level)
+						printf("%d & %d = %d\n", iab, iaa, new_iatos->value);
 					stack_Push(_stack, new_iatos);
 				}
 				break;
@@ -1470,22 +1568,21 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 
 					long ixb = 0;
 
-					object *new_ixtos = AllocObject();
+					int_object *new_ixtos = AllocIntObject();
 
 					new_ixtos->flags = OFLAG_ON_STACK;
 					new_ixtos->type = TYPE_INT;
-					new_ixtos->ptr = 0;
-					new_ixtos->value_ptr = NULL;
+					new_ixtos->value = 0;
 					if (tos->type == TYPE_INT)
 					{
-						ixa = tos->ptr;
+						ixa = ((int_object*)tos)->value;
 					}
 					if (tos1->type == TYPE_INT)
 					{
-						ixb = tos1->ptr;
+						ixb = ((int_object*)tos1)->value;
 					}
-					new_ixtos->ptr = ixb ^ ixa;
-					printf("%d ^ %d = %d\n", ixb, ixa, new_ixtos->ptr);
+					new_ixtos->value = ixb ^ ixa;
+					printf("%d ^ %d = %d\n", ixb, ixa, new_ixtos->value);
 					stack_Push(_stack, new_ixtos);
 				}
 				break;
@@ -1496,23 +1593,22 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 
 					long ilsb = 0;
 
-					object *new_ilstos = AllocObject();
+					int_object *new_ilstos = AllocIntObject();
 
 					new_ilstos->flags = OFLAG_ON_STACK;
 					new_ilstos->type = TYPE_INT;
-					new_ilstos->ptr = 0;
-					new_ilstos->value_ptr = NULL;
+					new_ilstos->value = 0;
 					if (tos->type == TYPE_INT)
 					{
-						ilsa = tos->ptr;
+						ilsa = ((int_object*)tos)->value;
 					}
 					if (tos1->type == TYPE_INT)
 					{
-						ilsb = tos1->ptr;
+						ilsb = ((int_object*)tos1)->value;
 					}
-					new_ilstos->ptr = ilsb << ilsa;
-					if (debug)
-						printf("%d << %d = %d\n", ilsb, ilsa, new_ilstos->ptr);
+					new_ilstos->value = ilsb << ilsa;
+					if (debug_level)
+						printf("%d << %d = %d\n", ilsb, ilsa, new_ilstos->value);
 					stack_Push(_stack, new_ilstos);
 				}
 				break;
@@ -1523,23 +1619,22 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 
 					long iob = 0;
 
-					object *new_iotos = AllocObject();
+					int_object *new_iotos = AllocIntObject();
 
 					new_iotos->flags = OFLAG_ON_STACK;
 					new_iotos->type = TYPE_INT;
-					new_iotos->ptr = 0;
-					new_iotos->value_ptr = NULL;
+					new_iotos->value = 0;
 					if (tos->type == TYPE_INT)
 					{
-						ioa = tos->ptr;
+						ioa = ((int_object*)tos)->value;
 					}
 					if (tos1->type == TYPE_INT)
 					{
-						iob = tos1->ptr;
+						iob = ((int_object*)tos1)->value;
 					}
-					new_iotos->ptr = iob | ioa;
-					if (debug)
-						printf("%d | %d = %d\n", iob, ioa, new_iotos->ptr);
+					new_iotos->value = iob | ioa;
+					if (debug_level)
+						printf("%d | %d = %d\n", iob, ioa, new_iotos->value);
 					stack_Push(_stack, new_iotos);
 				}
 				break;
@@ -1550,23 +1645,22 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 
 					long iadb = 0;
 
-					object *new_iadtos = AllocObject();
+					int_object *new_iadtos = AllocIntObject();
 
 					new_iadtos->flags = OFLAG_ON_STACK;
 					new_iadtos->type = TYPE_INT;
-					new_iadtos->ptr = 0;
-					new_iadtos->value_ptr = NULL;
+					new_iadtos->value = 0;
 					if (tos->type == TYPE_INT)
 					{
-						iada = tos->ptr;
+						iada = ((int_object*)tos)->value;
 					}
 					if (tos1->type == TYPE_INT)
 					{
-						iadb = tos1->ptr;
+						iadb = ((int_object*)tos1)->value;
 					}
-					new_iadtos->ptr = iadb + iada;
-					if (debug)
-						printf("%d + %d = %d\n", iadb, iada, new_iadtos->ptr);
+					new_iadtos->value = iadb + iada;
+					if (debug_level)
+						printf("%d + %d = %d\n", iadb, iada, new_iadtos->value);
 					stack_Push(_stack, new_iadtos);
 				}
 				break;
@@ -1577,23 +1671,22 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 
 					long imb = 0;
 
-					object *new_imtos = AllocObject();
+					int_object *new_imtos = AllocIntObject();
 
 					new_imtos->flags = OFLAG_ON_STACK;
 					new_imtos->type = TYPE_INT;
-					new_imtos->ptr = 0;
-					new_imtos->value_ptr = NULL;
+					new_imtos->value = 0;
 					if (tos->type == TYPE_INT)
 					{
-						ima = tos->ptr;
+						ima = ((int_object*)tos)->value;
 					}
 					if (tos1->type == TYPE_INT)
 					{
-						imb = tos1->ptr;
+						imb = ((int_object*)tos1)->value;
 					}
-					new_imtos->ptr = imb * ima;
-					if (debug)
-						printf("%d * %d = %d\n", imb, ima, new_imtos->ptr);
+					new_imtos->value = imb * ima;
+					if (debug_level)
+						printf("%d * %d = %d\n", imb, ima, new_imtos->value);
 					stack_Push(_stack, new_imtos);
 				}
 				break;
@@ -1604,23 +1697,22 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 
 					long isb = 0;
 
-					object *new_istos = AllocObject();
+					int_object *new_istos = AllocIntObject();
 
 					new_istos->flags = OFLAG_ON_STACK;
 					new_istos->type = TYPE_INT;
-					new_istos->ptr = 0;
-					new_istos->value_ptr = NULL;
+					new_istos->value = 0;
 					if (tos->type == TYPE_INT)
 					{
-						isa = tos->ptr;
+						isa = ((int_object*)tos)->value;
 					}
 					if (tos1->type == TYPE_INT)
 					{
-						isb = tos1->ptr;
+						isb = ((int_object*)tos1)->value;
 					}
-					new_istos->ptr = isb - isa;
-					if (debug)
-						printf("%d - %d = %d\n", isb, isa, new_istos->ptr);
+					new_istos->value = isb - isa;
+					if (debug_level)
+						printf("%d - %d = %d\n", isb, isa, new_istos->value);
 					stack_Push(_stack, new_istos);
 				}
 				break;
@@ -1631,23 +1723,22 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 
 					long imob = 0;
 
-					object *new_imotos = AllocObject();
+					int_object *new_imotos = AllocIntObject();
 
 					new_imotos->flags = OFLAG_ON_STACK;
 					new_imotos->type = TYPE_INT;
-					new_imotos->ptr = 0;
-					new_imotos->value_ptr = NULL;
+					new_imotos->value = 0;
 					if (tos->type == TYPE_INT)
 					{
-						imoa = tos->ptr;
+						imoa = ((int_object*)tos)->value;
 					}
 					if (tos1->type == TYPE_INT)
 					{
-						imob = tos1->ptr;
+						imob = ((int_object*)tos1)->value;
 					}
-					new_imotos->ptr = imob % imoa;
-					if (debug)
-						printf("%d %% %d = %d\n", imob, imoa, new_imotos->ptr);
+					new_imotos->value = imob % imoa;
+					if (debug_level)
+						printf("%d %% %d = %d\n", imob, imoa, new_imotos->value);
 					stack_Push(_stack, new_imotos);
 				}
 				break;
@@ -1658,23 +1749,22 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 
 					long itdb = 0;
 
-					object *new_itdtos = AllocObject();
+					int_object *new_itdtos = AllocIntObject();
 
 					new_itdtos->flags = OFLAG_ON_STACK;
 					new_itdtos->type = TYPE_INT;
-					new_itdtos->ptr = 0;
-					new_itdtos->value_ptr = NULL;
+					new_itdtos->value = 0;
 					if (tos->type == TYPE_INT)
 					{
-						itda = tos->ptr;
+						itda = ((int_object*)tos)->value;
 					}
 					if (tos1->type == TYPE_INT)
 					{
-						itdb = tos1->ptr;
+						itdb = ((int_object*)tos1)->value;
 					}
-					new_itdtos->ptr = itdb / itda;
-					if (debug)
-						printf("%d / %d = %d\n", itdb, itda, new_itdtos->ptr);
+					new_itdtos->value = itdb / itda;
+					if (debug_level)
+						printf("%d / %d = %d\n", itdb, itda, new_itdtos->value);
 					stack_Push(_stack, new_itdtos);
 				}
 				break;
@@ -1685,23 +1775,22 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 
 					long ifdb = 0;
 
-					object *new_ifdtos = AllocObject();
+					int_object *new_ifdtos = AllocIntObject();
 
 					new_ifdtos->flags = OFLAG_ON_STACK;
 					new_ifdtos->type = TYPE_INT;
-					new_ifdtos->ptr = 0;
-					new_ifdtos->value_ptr = NULL;
+					new_ifdtos->value = 0;
 					if (tos->type == TYPE_INT)
 					{
-						ifda = tos->ptr;
+						ifda = ((int_object*)tos)->value;
 					}
 					if (tos1->type == TYPE_INT)
 					{
-						ifdb = tos1->ptr;
+						ifdb = ((int_object*)tos1)->value;
 					}
-					new_ifdtos->ptr = ifdb / ifda;
-					if (debug)
-						printf("%d // %d = %d\n", ifdb, ifda, new_ifdtos->ptr);
+					new_ifdtos->value = ifdb / ifda;
+					if (debug_level)
+						printf("%d // %d = %d\n", ifdb, ifda, new_ifdtos->value);
 					stack_Push(_stack, new_ifdtos);
 				}
 				break;
@@ -1712,23 +1801,22 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 
 					long ifpb = 0;
 
-					object *new_ifptos = AllocObject();
+					int_object *new_ifptos = AllocIntObject();
 
 					new_ifptos->flags = OFLAG_ON_STACK;
 					new_ifptos->type = TYPE_INT;
-					new_ifptos->ptr = 0;
-					new_ifptos->value_ptr = NULL;
+					new_ifptos->value = 0;
 					if (tos->type == TYPE_INT)
 					{
-						ifpa = tos->ptr;
+						ifpa = ((int_object*)tos)->value;
 					}
 					if (tos1->type == TYPE_INT)
 					{
-						ifpb = tos1->ptr;
+						ifpb = ((int_object*)tos1)->value;
 					}
-					new_ifptos->ptr = long_pow(ifpb, ifpa);
-					if (debug)
-						printf("%d ** %d = %d\n", ifpb, ifpa, new_ifptos->ptr);
+					new_ifptos->value = long_pow(ifpb, ifpa);
+					if (debug_level)
+						printf("%d ** %d = %d\n", ifpb, ifpa, new_ifptos->value);
 					stack_Push(_stack, new_ifptos);
 				}
 				break;
@@ -1741,21 +1829,18 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 					case 0:	// <
 						{
 						long ca = 0;
-
 						long cb = 0;
 
-						object *new_ctos = AllocEmptyObject();
 
-						new_ctos->flags = OFLAG_ON_STACK;
 						if (tos->type == TYPE_INT)
 						{
-							ca = tos->ptr;
+							ca = ((int_object*)tos)->value;
 						}
 						if (tos1->type == TYPE_INT)
 						{
-							cb = tos1->ptr;
+							cb = ((int_object*)tos1)->value;
 						}
-						new_ctos->type = cb < ca ? TYPE_TRUE : TYPE_FALSE;
+						empty_object *new_ctos = CreateEmptyObject(cb < ca ? TYPE_TRUE : TYPE_FALSE,OFLAG_ON_STACK);
 						// printf ("%d < %d == %c\n", cb, ca, new_ctos->type);
 						stack_Push(_stack, new_ctos);
 						}
@@ -1763,21 +1848,19 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 					case 4:	// >
 						{
 						long ca = 0;
-
 						long cb = 0;
 
-						object *new_ctos = AllocEmptyObject();
 
-						new_ctos->flags = OFLAG_ON_STACK;
 						if (tos->type == TYPE_INT)
 						{
-							ca = tos->ptr;
+							ca = ((int_object*)tos)->value;
 						}
 						if (tos1->type == TYPE_INT)
 						{
-							cb = tos1->ptr;
+							cb = ((int_object*)tos1)->value;
 						}
-						new_ctos->type = cb > ca ? TYPE_TRUE : TYPE_FALSE;
+						empty_object *new_ctos = CreateEmptyObject( cb > ca ? TYPE_TRUE : TYPE_FALSE,OFLAG_ON_STACK);
+						
 						// printf ("%d < %d == %c\n", cb, ca, new_ctos->type);
 						stack_Push(_stack, new_ctos);
 						}
@@ -1790,12 +1873,8 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 							&& (tos1->type == TYPE_FALSE
 								|| tos1->type == TYPE_TRUE))
 						{
-							object *new_ctos = AllocEmptyObject();
+							empty_object *new_ctos = CreateEmptyObject(tos1->type == tos->type ? TYPE_TRUE : TYPE_FALSE,OFLAG_ON_STACK);
 
-							new_ctos->flags = OFLAG_ON_STACK;
-							new_ctos->type =
-								tos1->type ==
-								tos->type ? TYPE_TRUE : TYPE_FALSE;
 							// printf ("%c == %c == %c\n", tos1->type,
 							// tos->type, new_ctos->type);
 							stack_Push(_stack, new_ctos);
@@ -1804,16 +1883,11 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 						else if (tos->type == TYPE_UNICODE
 								 && tos1->type == TYPE_UNICODE)
 						{
-							char *tos_tmp = (char *)tos->ptr;
+							char *tos_tmp = ((unicode_object*)tos)->value;
+							char *tos1_tmp = ((unicode_object*)tos1)->value;
 
-							char *tos1_tmp = (char *)tos1->ptr;
+							empty_object *new_ctos = CreateEmptyObject(!strcmp(tos_tmp,tos1_tmp) ? TYPE_TRUE : TYPE_FALSE,OFLAG_ON_STACK);
 
-							object *new_ctos = AllocEmptyObject();
-
-							new_ctos->flags = OFLAG_ON_STACK;
-							new_ctos->type =
-								!strcmp(tos_tmp,
-										tos1_tmp) ? TYPE_TRUE : TYPE_FALSE;
 							// printf ("%s == %s == %c\n", tos_tmp, tos1_tmp,
 							// new_ctos->type);
 							stack_Push(_stack, new_ctos);
@@ -1821,30 +1895,27 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 						else
 						{
 							long ca = 0;
-
 							long cb = 0;
 
-							object *new_ctos = AllocEmptyObject();
 
-							new_ctos->flags = OFLAG_ON_STACK;
 							if (tos->type == TYPE_INT)
 							{
-								ca = tos->ptr;
+								ca = ((int_object*)tos)->value;
 							}
 							if (tos1->type == TYPE_INT)
 							{
-								cb = tos1->ptr;
+								cb = ((int_object*)tos1)->value;
 							}
-							new_ctos->type = cb == ca ? TYPE_TRUE : TYPE_FALSE;
-							if (debug)
-								printf("%d == %d == %c\n", cb, ca,
-									   new_ctos->type);
+							empty_object *new_ctos = CreateEmptyObject(cb == ca ? TYPE_TRUE : TYPE_FALSE,OFLAG_ON_STACK);
+							
+							if (debug_level)
+								printf("%d == %d == %c\n", cb, ca, new_ctos->type);
 							stack_Push(_stack, new_ctos);
 						}
 						break;
 
 					default:
-						if (debug)
+						if (debug_level)
 							printf("compare op:%d not supported\n", arg);
 					}
 					// printf("compare op thru:%d\n",arg);
@@ -1870,47 +1941,33 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 					stack *call = NULL;
 
 					if (arg > 0)
-						call = stack_Init(vm->recycle);	// arg, 
+						call = stack_Init();	// arg, 
 					tos = NULL;
 					for (int i = 0; i < arg; i++)
 					{
-						stack_Push(call, stack_Pop(_stack));
+						stack_Push(call, stack_Pop(_stack,vm->garbage));
 					}
-					object *function_name = stack_Pop(_stack);
-
+					object *function_name = stack_Pop(_stack,vm->garbage);
+					if(function_name->type == TYPE_KV)
+						function_name = ((kv_object*)function_name)->value;
+					function_name = DissolveRef(function_name);
+					
 					if (function_name != NULL
 						&& function_name->type == TYPE_CODE)
 					{
-						if (debug)
+						if (debug_level>1)
 							printf
 								("executing direct local function object: %s\n",
-								 ((code_object *) function_name->ptr)->name);
-						/*for (int i = 0; i < arg; i++)
+								 ((code_object *) function_name)->name);
+		
+						object *ret = vm_RunObject(vm, (object *) function_name, obj, call, arg);	// ,global
+
+						if (ret != NULL)
 						{
-							stack_Push(_stack, stack_Pop(call));
-						}*/
-						object *ret = vm_RunObject(vm, (object *) function_name, obj, call, arg, debug);	// ,global
-
-						if (ret != NULL)
+							//ret->flags ^= OFLAG_LEFT_NAMESPACE;
 							stack_Push(_stack, ret);
-						if (arg > 0)
-							stack_Close(call, 0);
-						break;
-					}
-
-					if (function_name->value_ptr != NULL
-						&& ((object *) function_name->value_ptr)->type ==
-						TYPE_CODE)
-					{
-						if (debug)
-							printf("executing local function object: %s\n",
-								   (char *)function_name->ptr);
-						/* for (int i = 0; i < arg; i++) { stack_Push
-						   (_stack,stack_Pop (call)); } */
-						object *ret = vm_RunObject(vm, (object *) function_name->value_ptr, obj, call, arg, debug);	// ,global
-
-						if (ret != NULL)
-							stack_Push(_stack, ret);
+							//DecRefCountGC(ret,vm->garbage);
+						}
 						if (arg > 0)
 							stack_Close(call, 0);
 						break;
@@ -1919,12 +1976,11 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 					if (function_name != NULL
 						&& function_name->type == TYPE_UNICODE)
 					{
-						if (debug)
-							printf("executing C function: %s\n",
-								   (char *)function_name->ptr);
+						if (debug_level>1)
+							printf("executing C function: %s\n",  ((unicode_object*)function_name)->value);
 						object *tmp = vm_ExecuteCFunction(vm,
 														  (char *)
-														  function_name->ptr,
+														  ((unicode_object*)function_name)->value,
 														  call);
 
 						if (tmp != NULL)
@@ -1939,33 +1995,33 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 						{
 							// printf ("searching %s\n", (char *)
 							// function_name->ptr);
-							object *caller_func =
-								FindUnicodeTupleItem(AsCodeObject
-													 (global)->names,
-													 (char *)
-													 function_name->ptr);
-							if (debug && caller_func == NULL)
+							//object *caller_func =	FindUnicodeTupleItem(global->names,(char *) function_name->ptr);
+							object *caller_func = NULL;
+							int index = GetItemIndexByName(global->names,((unicode_object*)function_name)->value);
+							if(index != -1)
+							 caller_func = GetItem(global->names,index);
+							
+							if (debug_level>1 && caller_func == NULL)
 								printf("global function not found\n");
-							if (caller_func != NULL
-								&& ((object *) caller_func->value_ptr)->type ==
-								TYPE_CODE)
+							if (caller_func != NULL && ((object *) caller_func)->type == TYPE_CODE)
 							{
-								if (debug)
-									printf
-										("executing global function object: %s\n",
-										 (char *)function_name->ptr);
-								object *ret = vm_RunObject(vm, (object *) caller_func->value_ptr, obj, call, arg, debug);	// ,global
+								if (debug_level>1)
+									printf	("executing global function object: %s\n", ((unicode_object*)function_name)->value);
+								object *ret = vm_RunObject(vm, caller_func, obj, call, arg);	// ,global
 
 								if (ret != NULL)
+								{
 									stack_Push(_stack, ret);
+									//DecRefCountGC(ret,vm->garbage);
+								}
 								if (arg > 0)
 									stack_Close(call, 0);
 								break;
 							}
 						}
-						if (debug)
+						if (debug_level)
 							printf("function: [%s] not found\n",
-								   (char *)function_name->ptr);
+								   ((unicode_object*)function_name)->value);
 					}
 				}
 				break;
@@ -1977,12 +2033,15 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 			}
 
 			// printf("step\n");
-		}
-		if (debug)
+			gc_Clear(vm->garbage);
+		} //END OF WHILE LOOP
+		if (debug_level)
 			printf("code thru.\n");
-		object *ret = stack_Pop(_stack);
-
+		object *ret = stack_Pop(_stack,vm->garbage);
 		stack_Close(_stack, 0);
+		stack_Pop(vm->blocks,vm->garbage);
+		//assert(mem_free(bo));
+
 		return (ret);
 	}
 

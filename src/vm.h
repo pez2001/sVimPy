@@ -30,16 +30,20 @@
 #include "numops.h"
 #include "lists.h"
 #include "stream.h"
+#include "garbage.h"
 
 #include "assert.h"
 
 extern const opcode opcodes[];
+extern int debug_level;
+
 
 typedef struct
 {
-	stack *recycle;
+	//stack *recycle;
 	stack *blocks;
 	ptr_list *functions;
+	ptr_list *garbage;
 	// code_object *co;//global code object //Bottom of blocks stack is the
 	// global module
 	// int ip;//instruction pointer moved to block object
@@ -54,16 +58,16 @@ typedef struct
 	unsigned int type;
 	union func_def
 	{
-		object *(*func) (stack * stack);
-		object *(*func_obj) (object * object);
-		object *code;
+		object *(*func) (vm *vm,stack * stack);
+		object *(*func_obj) (vm *vm,object * object);
+		code_object *code;
 	} func;
 	char *name;
 } function_definition;
 
-function_definition *CreateCFunction(object * (*func) (stack * stack),
+function_definition *CreateCFunction(object * (*func) (vm *vm,stack * stack),
 									 char *name);
-function_definition *CreateCObjFunction(object * (*func) (object * obj),
+function_definition *CreateCObjFunction(object * (*func) (vm *vm,object * obj),
 										char *name);
 function_definition *CreatePythonFunction(object * code, char *name);
 
@@ -86,7 +90,7 @@ void vm_Close(vm * vm);
 // void vm_SetGlobal();
 void vm_SetGlobal(vm * vm, code_object * co);
 
-object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int argc, int debug);	// ,object 
+object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int argc);	// ,object 
 																									// *global
 
 object *vm_StepObject(vm * vm, object * obj, object * caller, stack * locals,

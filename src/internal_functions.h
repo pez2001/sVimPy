@@ -29,13 +29,13 @@
 
 // object *pow(object *base,object *exp);
 
-object *if_range(stack * stack);
+object *if_range(vm *vm,stack * stack);
 
-object *if_print(stack * stack);
+object *if_print(vm *vm,stack * stack);
 
-object *if_sum(stack * stack);
+object *if_sum(vm *vm,stack * stack);
 
-object *if_list(stack * stack);
+object *if_list(vm *vm,stack * stack);
 
 // object *BinaryOp(object *tos,object *tos1,object *tos2,char op);
 

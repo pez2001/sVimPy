@@ -22,11 +22,11 @@
 
 #include "stack.h"
 
-stack *stack_Init(stack * recycle)
+stack *stack_Init()
 {
 	stack *tmp = (stack *) mem_malloc(sizeof(stack), "stack_Init() return");
 	tmp->list = ptr_CreateList(0, 0);
-	tmp->recycle_stack = recycle;
+	//tmp->recycle_stack = recycle;
 	return (tmp);
 }
 
@@ -43,13 +43,13 @@ void stack_Close(stack * stack, int free_objects)
 		if (free_objects)
 		{
 			for (int i = 0; i < stack->list->num; i++)
-				if ((((object *) stack->list->items[i])->
-					 flags & OFLAG_ON_STACK) > 0)
-				{
+				//if ((((object *) stack->list->items[i])->
+				//	 flags & OFLAG_ON_STACK) > 0)
+				//{
 					FreeObject(stack->list->items[i]);
-				}
+				//}
 		}
-		else if (stack->list->num > 0)
+		else if (stack->list->num > 0 && debug_level > 1)
 			printf("%d items left untouched on stack\n", stack->list->num);
 		ptr_CloseList(stack->list);
 		assert(mem_free(stack));
@@ -62,6 +62,7 @@ void stack_Push(stack * stack, object * x)
 {
 	if (x == NULL)
 		return;
+	IncRefCount(x);
 	ptr_Push(stack->list, x);
 }
 
@@ -121,6 +122,7 @@ void stack_SetBottom(stack * stack, object * x)
 		return (NULL);
 	}
 	stack->list->items[0] = x;
+	IncRefCount(x);
 }
 
 void stack_SetTop(stack * stack, object * x)
@@ -131,6 +133,7 @@ void stack_SetTop(stack * stack, object * x)
 		return (NULL);
 	}
 	stack->list->items[stack->list->num - 1] = x;
+	IncRefCount(x);
 }
 
 void stack_SetSecond(stack * stack, object * x)
@@ -141,7 +144,7 @@ void stack_SetSecond(stack * stack, object * x)
 		return (NULL);
 	}
 	stack->list->items[stack->list->num - 2] = x;
-
+	IncRefCount(x);
 }
 
 void stack_SetThird(stack * stack, object * x)
@@ -152,7 +155,7 @@ void stack_SetThird(stack * stack, object * x)
 		return (NULL);
 	}
 	stack->list->items[stack->list->num - 3] = x;
-
+	IncRefCount(x);
 }
 
 void stack_Adjust(stack * stack, int by)
@@ -183,7 +186,7 @@ void stack_Dump(stack * stack)
 }
 
 
-object *stack_Pop(stack * _stack)
+object *stack_Pop(stack * _stack,ptr_list *gc)
 {
 	if (_stack->list->num < 1)
 	{
@@ -192,18 +195,19 @@ object *stack_Pop(stack * _stack)
 	}
 	object *r = ptr_Pop(_stack->list);
 
-	if ((r->flags & OFLAG_ON_STACK))
-	{
+	//if ((r->flags & OFLAG_ON_STACK))
+	//{
 		// printf("removed stack only item\n");
-		if (_stack->recycle_stack != NULL)
-		{
-			if (!stack_Contains((stack *) _stack->recycle_stack, r))
-			{
-			//	 printf("put object on recycle stack @:%d\n",((stack*)_stack->recycle_stack)->list->num);
-				stack_Push((stack *) _stack->recycle_stack, r);
-			}
-		}
-	}
+	//	if (_stack->recycle_stack != NULL)
+	//	{
+	//		if (!stack_Contains((stack *) _stack->recycle_stack, r))
+	//		{
+	//			 //printf("put object on recycle stack @:%d\n",((stack*)_stack->recycle_stack)->list->num);
+	//			stack_Push((stack *) _stack->recycle_stack, r);
+	//		}
+	//	}
+	//}
+	DecRefCountGC(r,gc);
 	return (r);
 }
 
