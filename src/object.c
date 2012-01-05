@@ -291,6 +291,11 @@ void FreeObject(object * obj)
 	if(obj->ref_count > 1)
 	{
 		DecRefCount(obj);
+		if(debug_level > 1)
+		{
+			printf("decreased object ref_count\n");
+			DumpObject(obj,0);
+		}
 		return;
 	}
 	//DecRefCount(obj);
@@ -451,6 +456,7 @@ void DumpObject(object * obj, int level)
 		printf("int object: %d\n", ((int_object*)obj)->value);
 		break;
 	case TYPE_KV:
+		printf("kv object\n");
 		DumpObject(((kv_object*)obj)->key,level);
 		DumpObject(((kv_object*)obj)->value,level + 1);
 		break;
@@ -699,28 +705,34 @@ void AppendDictItem(object * tuple,object *key,object *value)
 		return;
 	if(((tuple_object *) tuple)->list == NULL)
 		((tuple_object *) tuple)->list = ptr_CreateList(0,0);
-	object *di = CopyObject(key);//TODO needed??
-	kv_object *kv = ConvertToKVObjectValued(di,value);
-	if(debug_level > 4)
+	//object *di = CopyObject(key);//TODO needed??
+	//kv_object *kv = ConvertToKVObjectValued(di,value);
+	kv_object *kv = ConvertToKVObjectValued(key,value);
+	if(debug_level > 1)
 	{
 	printf("appended to \n");
 	DumpObject(tuple,0);
 	printf("this\n");
-	DumpObject(di,0);
+	//DumpObject(di,0);
+	DumpObject(key,0);
 	}
 	ptr_Push(((tuple_object *) tuple)->list,kv);
+	IncRefCount(kv);
 
 }
 
 void SetDictItem(object *tuple,object *key,object *value)
 {
 	int index = GetDictItemIndex(tuple,key);
-	//printf("setting\n");
-	//DumpObject(tuple,0);
-	//printf("key\n");
-	//DumpObject(key,0);
-	//printf("value\n");
-	//DumpObject(value,0);
+	if(debug_level >1)
+	{
+		printf("setting\n");
+		DumpObject(tuple,0);
+		printf("key\n");
+		DumpObject(key,0);
+		printf("value\n");
+		DumpObject(value,0);
+	}
 	if(index != -1)
 		{
 			//printf("found index\n");
@@ -800,8 +812,14 @@ void SetDictItemByIndex(object *tuple,int index,object *value)
 			if(k->value != NULL)
 				FreeObject(k->value);
 			//	DecRefCount(k->value);
-			k->value = value;
-			IncRefCount(value);
+			if(value != NULL)
+			{
+				k->value = value;
+				IncRefCount(value);
+			}
+			else
+				k->value = NULL;
+			
 		}
 }
 
@@ -908,10 +926,14 @@ void SetItem(object * tuple, int index, object * obj)
 	{
 		FreeObject((object*)((tuple_object *) tuple)->list->items[index]);
 	}
-	
-	((tuple_object *) tuple)->list->items[index] = obj;
-	IncRefCount(obj);
+	if(obj!=NULL)
+	{
+		((tuple_object *) tuple)->list->items[index] = obj;
+		IncRefCount(obj);
 	// obj->flags ^= OFLAG_ON_STACK;
+	}
+	else
+		((tuple_object *) tuple)->list->items[index] = NULL;
 }
 
 void DeleteItem(object * tuple, int index)

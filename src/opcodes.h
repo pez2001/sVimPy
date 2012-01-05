@@ -81,6 +81,7 @@
 #define OPCODE_DELETE_NAME 					0x5b
 #define OPCODE_UNPACK_SEQUENCE 			0x5c
 #define OPCODE_FOR_ITER 							0x5d
+#define OPCODE_UNPACK_EX				 			0x5e
 #define OPCODE_STORE_ATTR 						0x5f
 #define OPCODE_DELETE_ATTR 						0x60
 #define OPCODE_STORE_GLOBAL 					0x61
@@ -89,6 +90,7 @@
 #define OPCODE_LOAD_NAME 						0x65
 #define OPCODE_BUILD_TUPLE 						0x66
 #define OPCODE_BUILD_LIST 							0x67
+#define OPCODE_BUILD_SET 							0x68
 #define OPCODE_BUILD_MAP 							0x69
 #define OPCODE_LOAD_ATTR 							0x99 //WRONG ID
 #define OPCODE_COMPARE_OP						0x6b
@@ -118,7 +120,9 @@
 #define OPCODE_CALL_FUNCTION_KW 			0x8d
 #define OPCODE_CALL_FUNCTION_VAR_KW 	0x8e
 #define OPCODE_EXTENDED_ARG 					0x8f
-
+#define OPCODE_LIST_APPEND						0x90
+#define OPCODE_SET_ADD								0x91
+#define OPCODE_MAP_ADD								0x92
 
 
 

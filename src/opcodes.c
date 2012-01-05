@@ -27,7 +27,7 @@
 
 #ifdef DEBUG
 
-const unsigned int opcodecount = 92;
+const unsigned int opcodecount = 97;
 
 const opcode opcodes[] = { {OPCODE_STOP_CODE, "STOP_CODE", "Indicates end-of-code to the compiler, not used by the interpreter.", 0, 1},	// SUPPORTED
 {OPCODE_POP_TOP, "POP_TOP", "Removes the top-of-stack (TOS) item.", 0, 1},	// SUPPORTED
@@ -158,27 +158,23 @@ const opcode opcodes[] = { {OPCODE_STOP_CODE, "STOP_CODE", "Indicates end-of-cod
  "Loads all symbols not starting with \"_\" directly from the module TOS to the local namespace.\
 							The module is popped after loading all names. This opcode implements from module import *.",
  0, 0},
-{OPCODE_YIELD_VALUE, "YIELD_VALUE",
- "Pops TOS and yields it from a generator.", 0, 0},
+{OPCODE_YIELD_VALUE, "YIELD_VALUE", "Pops TOS and yields it from a generator.", 0, 0},
 {OPCODE_STORE_LOCALS, "STORE_LOCALS", "No description.", 0, 0},
 {OPCODE_STORE_MAP, "STORE_MAP", "No description.", 0, 1},
-{OPCODE_STORE_ATTR, "STORE_ATTR",
- "Implements TOS.name = TOS1, where /namei/ is the index of name in co_names.",
- 1, 0},
-{OPCODE_DELETE_ATTR, "DELETE_ATTR",
- "Implements del TOS.name, using /namei/ as index into co_names.", 1, 0},
-{OPCODE_SETUP_EXCEPT, "SETUP_EXCEPT",
- "Pushes a try block from a try-except clause onto the block stack. /delta/ points to the first except block.",
- 1, 0},
-{OPCODE_SETUP_FINALLY, "SETUP_FINALLY",
- "Pushes a try block from a try-except clause onto the block stack. /delta/ points to the finally block.",
- 1, 0},
+{OPCODE_STORE_ATTR, "STORE_ATTR", "Implements TOS.name = TOS1, where /namei/ is the index of name in co_names.", 1, 0},
+{OPCODE_DELETE_ATTR, "DELETE_ATTR", "Implements del TOS.name, using /namei/ as index into co_names.", 1, 0},
+{OPCODE_SETUP_EXCEPT, "SETUP_EXCEPT", "Pushes a try block from a try-except clause onto the block stack. /delta/ points to the first except block.", 1, 0},
+{OPCODE_SETUP_FINALLY, "SETUP_FINALLY", "Pushes a try block from a try-except clause onto the block stack. /delta/ points to the finally block.", 1, 0},
 {OPCODE_WITH_CLEANUP, "WITH_CLEANUP", "No description.", 0, 0},
-{OPCODE_BUILD_MAP, "BUILD_MAP",
- "Pushes a new empty dictionary object onto the stack.\
+{OPCODE_BUILD_MAP, "BUILD_MAP", "Pushes a new empty dictionary object onto the stack.\
 							The argument is ignored and set to /zero/ by the compiler.", 1, 1},
-{OPCODE_LOAD_ATTR, "LOAD_ATTR",
- "Replaces TOS with getattr(TOS, co_names[/namei/]).", 1, 0}
+{OPCODE_BUILD_SET, "BUILD_SET", "Pushes a new empty set object onto the stack.\
+							The argument is ignored and set to /zero/ by the compiler.", 1, 1},
+{OPCODE_LIST_APPEND,"LIST_APPEND", "No description.", 1, 0},
+{OPCODE_SET_ADD, "SET_ADD","No description.", 1, 0},
+{OPCODE_MAP_ADD, "MAP_ADD","No description.", 1, 0},
+{OPCODE_UNPACK_EX, "UNPACK_EX","No description.", 1, 0},
+{OPCODE_LOAD_ATTR, "LOAD_ATTR", "Replaces TOS with getattr(TOS, co_names[/namei/]).", 1, 0}
 };
 
 // {0x55,"EXEC_STMT","Implements exec TOS2,TOS1,TOS. The compiler fills

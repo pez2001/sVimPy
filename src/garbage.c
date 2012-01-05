@@ -28,7 +28,7 @@ void gc_Clear(ptr_list *gc_collection)
 for(int i=0;i<gc_collection->num;i++)
 	if(HasNoRefs(gc_collection->items[i]))
 	{
-	if(debug_level >2)
+	if(debug_level >1)
 	{
 		printf("object has no refs\n");
 		DumpObject(gc_collection->items[i],0);

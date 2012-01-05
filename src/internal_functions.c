@@ -27,12 +27,16 @@
 object *if_list(vm *vm,stack * stack)
 {
 	int num = stack->list->num;
-	tuple_object *r =CreateTuple(num,OFLAG_ON_STACK);
+	//printf("num:%d\n",num);
+	tuple_object *r = CreateTuple(num,OFLAG_ON_STACK);
 	for (int i = 0; i < num; i++)
 	{
-		SetItem(r,i,stack_Pop(stack,vm->garbage));
+		//object *t = stack_Top(stack);
+		//IncRefCount(t);
+		object *t = stack_Pop(stack,vm->garbage);
+		SetItem(r,i,t);
 	}
-	// DumpObject(r,0);
+	//DumpObject(r,0);
 	return (r);
 }
 

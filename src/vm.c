@@ -754,11 +754,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 				break;
 			case OPCODE_BUILD_MAP:
 				{
-					tuple_object *to = AllocTupleObject();
-					to->list = ptr_CreateList(0,0);//arg
-					to->type = TYPE_TUPLE;
-					to->flags = OFLAG_ON_STACK;
-					to->flags |= OFLAG_IS_DICT;
+					tuple_object *to =CreateTuple(0,OFLAG_ON_STACK | OFLAG_IS_DICT);
 					stack_Push(_stack,to);
 				}
 				break;
@@ -875,18 +871,30 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 					if(index != -1)
 					{
 					if(((object*)((tuple_object*)global->names)->list->items[index])->type != TYPE_KV)
+					{
 						((tuple_object*)global->names)->list->items[index] = ConvertToKVObjectValued(((tuple_object*)global->names)->list->items[index],tos);
+						IncRefCount(((tuple_object*)global->names)->list->items[index]);
+					}
 					else	
+					{
 							((kv_object*)((tuple_object*)global->names)->list->items[index])->value = tos;
+							IncRefCount(tos);
+					}
 					break;		
 					}
 					index = GetItemIndexByName(global->varnames,name);
 					if(index != -1)
 					{
 					if(((object*)((tuple_object*)global->varnames)->list->items[index])->type != TYPE_KV)
+					{
 						((tuple_object*)global->varnames)->list->items[index] = ConvertToKVObjectValued(((tuple_object*)global->varnames)->list->items[index],tos);
+						IncRefCount(((tuple_object*)global->varnames)->list->items[index]);
+					}
 					else
+					{
 							((kv_object*)((tuple_object*)global->varnames)->list->items[index])->value = tos;
+							IncRefCount(tos);
+					}
 					break;
 					}					
 				if(debug_level > 1)
@@ -1041,10 +1049,12 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 					{
 						//printf("converting\n");
 						SetItem(co_names,arg,ConvertToKVObjectValued(GetItem(co_names,arg),tos));
+						//IncRefCount(GetItem(co_names,arg));
 					}
 				else
 				{
 					SetDictItemByIndex(co_names,arg,tos);
+					//IncRefCount(GetItem(co_names,arg));
 					//((kv_object*)co_names->list->items[arg])->value = tos;
 				}
 				//printf("stored\n");
@@ -1420,6 +1430,8 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 					if (tos->type == TYPE_INT)
 					{
 						ma = ((int_object*)tos)->value;
+						if(debug_level > 1)
+							printf("ma:%d\n",ma);
 					}
 					if (tos1->type == TYPE_TUPLE)
 					{
@@ -1432,10 +1444,15 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 						{
 							stack_Push(mstack, tos1);
 						}
-						// printf("mnum:%d\n",mnum);
-						object *mtr = if_list(mstack);
+						if(debug_level > 1)
+						{
+							stack_Dump(mstack);
+							printf("mnum:%d\n",mnum);
+						}
+						object *mtr = if_list(vm,mstack);
 						stack_Push(_stack, mtr);
-						// DumpObject(mtr,0);
+						if(debug_level > 1)
+							DumpObject(mtr,0);
 						break;
 					}
 					if (tos1->type == TYPE_INT)
@@ -1642,14 +1659,8 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 			case OPCODE_INPLACE_ADD:
 				{
 					long iada = 0;
-
 					long iadb = 0;
 
-					int_object *new_iadtos = AllocIntObject();
-
-					new_iadtos->flags = OFLAG_ON_STACK;
-					new_iadtos->type = TYPE_INT;
-					new_iadtos->value = 0;
 					if (tos->type == TYPE_INT)
 					{
 						iada = ((int_object*)tos)->value;
@@ -1658,7 +1669,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 					{
 						iadb = ((int_object*)tos1)->value;
 					}
-					new_iadtos->value = iadb + iada;
+					int_object *new_iadtos = CreateIntObject(iadb + iada,OFLAG_ON_STACK);
 					if (debug_level)
 						printf("%d + %d = %d\n", iadb, iada, new_iadtos->value);
 					stack_Push(_stack, new_iadtos);
