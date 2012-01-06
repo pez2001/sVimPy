@@ -185,7 +185,10 @@ void vm_SetGlobal(vm * vm, code_object * co)
 	bo->ref_count = 0;
 	// printf("global : %d\n",vm->blocks->list->num);
 	if (vm->blocks->list->num > 0)
+	{
+		FreeObject(stack_Bottom(vm->blocks));
 		stack_SetBottom(vm->blocks, bo);
+	}
 	else
 		stack_Push(vm->blocks, bo);
 }
@@ -339,8 +342,8 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 					//ret = CopyObject(ret);
 					//ret = CreateRefObject(ret,0);
 					stack_Close(_stack, 0);
-					stack_Pop(vm->blocks,vm->garbage);
 					gc_Clear(vm->garbage);
+					stack_Pop(vm->blocks,vm->garbage);
 					//assert(mem_free(bo));
 					return (ret);
 				}
@@ -455,8 +458,8 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 				}
 				break;
 
-				// case OPCODE_LOAD_DEREF:
-				// case OPCODE_STORE_DEREF:
+			case OPCODE_LOAD_DEREF:
+			case OPCODE_STORE_DEREF:
 				// case OPCODE_STORE_MAP:
 				// case OPCODE_STORE_SUBSCR:
 				// case OPCODE_DELETE_SUBSCR:
@@ -490,8 +493,8 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 			case OPCODE_POP_JUMP_IF_FALSE:
 			case OPCODE_POP_JUMP_IF_TRUE:
 			case OPCODE_BUILD_SLICE:
-			//case OPCODE_MAKE_CLOSURE:
-			//case OPCODE_LOAD_CLOSURE:
+			case OPCODE_MAKE_CLOSURE:
+			case OPCODE_LOAD_CLOSURE:
 			case OPCODE_STORE_LOCALS:
 			case OPCODE_PRINT_EXPR:
 			case OPCODE_LOAD_BUILD_CLASS:
@@ -547,6 +550,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 			case OPCODE_STORE_FAST:
 			case OPCODE_STORE_NAME:
 			case OPCODE_STORE_GLOBAL:
+			case OPCODE_STORE_DEREF:
 					tos = stack_Pop(_stack,vm->garbage);
 					tos = DissolveRef(tos);
 					if(tos->type == TYPE_KV)
@@ -943,7 +947,9 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 				break;
 	*/			
 	
-				
+			case OPCODE_STORE_DEREF:
+				printf("storing deref\n");
+				break;
 			case OPCODE_STORE_NAME:
 				{
 					tuple_object *co_names = (tuple_object *) co->names;
@@ -973,13 +979,19 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 				
 			case OPCODE_STORE_FAST:
 				{
+					if(debug_level >1)
+						DumpObject(tos,1);
 					tuple_object *co_varnames = (tuple_object*) co->varnames;
 					if(GetItem(co_varnames,arg)->type != TYPE_KV)
 					{
+						if(debug_level >2)
+							printf("converting\n");
 						SetItem(co_varnames,arg,ConvertToKVObjectValued(GetItem(co_varnames,arg),tos));
 					}
 				else
 				{
+					if(debug_level >2)
+						printf("updating\n");
 					SetDictItemByIndex(co_varnames,arg,tos);
 				}
 					if(debug_level >1)
@@ -1107,7 +1119,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 						}
 						int_object *new_tos = CreateIntObject(a + b,OFLAG_ON_STACK);
 						
-					if (debug_level)
+					if (debug_level >1)
 						printf ("%d + %d = %d (%d)\n", a, b, a + b, new_tos->value);
 						stack_Push(_stack, new_tos);
 					}
@@ -1129,7 +1141,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 					}
 					int_object *new_tos = CreateIntObject(b - a, OFLAG_ON_STACK);
  
-					if (debug_level)
+					if (debug_level > 1)
 						printf("%d - %d = %d (%d)\n", b, a, b - a,
 							   new_tos->value);
 					stack_Push(_stack, new_tos);
@@ -1150,7 +1162,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 						db = ((int_object*)tos1)->value;
 					}
 					int_object *new_dtos = CreateIntObject(db / da,OFLAG_ON_STACK);// TODO catch divide by zero
-					if (debug_level)
+					if (debug_level > 1)
 						printf("%d / %d = %d (%d)\n", db, da, db / da,  new_dtos->value);
 					stack_Push(_stack, new_dtos);
 				}
@@ -1170,7 +1182,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 						fdb = ((int_object*)tos1)->value;
 					}
 					int_object *new_fdtos = CreateIntObject(fdb / fda,OFLAG_ON_STACK);// TODO catch divide by zero
-					if (debug_level)
+					if (debug_level > 1)
 						printf("%d / %d = %d (%d)\n", fdb, fda, fdb / fda, new_fdtos->value);
 					stack_Push(_stack, new_fdtos);
 				}
@@ -1191,7 +1203,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 					}
 					int_object *new_mdtos = CreateIntObject(mdb % mda,OFLAG_ON_STACK);
 
-					if (debug_level)
+					if (debug_level > 1)
 						printf("%d %% %d = %d\n", mdb, mda, new_mdtos->value);
 					stack_Push(_stack, new_mdtos);
 				}
@@ -1211,7 +1223,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 						brsb = ((int_object*)tos1)->value;
 					}
 					int_object *new_brstos = CreateIntObject(brsb >> brsa,OFLAG_ON_STACK);
-					if (debug_level)
+					if (debug_level > 1)
 						printf("%d >> %d = %d\n", brsb, brsa, new_brstos->value);
 					stack_Push(_stack, new_brstos);
 				}
@@ -1232,7 +1244,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 					}
 					int_object *new_blstos = CreateIntObject(blsb << blsa,OFLAG_ON_STACK);
 					
-					if (debug_level)
+					if (debug_level >1)
 						printf("%d << %d = %d\n", blsb, blsa, new_blstos->value);
 					stack_Push(_stack, new_blstos);
 				}
@@ -1252,7 +1264,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 						pb = ((int_object*)tos1)->value;
 					}
 					int_object *new_ptos = CreateIntObject(long_pow(pb, pa),OFLAG_ON_STACK);
-					if (debug_level)
+					if (debug_level >1)
 						printf("%d ** %d = %d\n", pb, pa, new_ptos->value);
 					stack_Push(_stack, new_ptos);
 				}
@@ -1381,7 +1393,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 						irb = ((int_object*)tos1)->value;
 					}
 					int_object *new_irtos = CreateIntObject(irb >> ira,OFLAG_ON_STACK);
-					if (debug_level)
+					if (debug_level >1)
 						printf("%d >> %d = %d\n", irb, ira, new_irtos->value);
 					stack_Push(_stack, new_irtos);
 				}
@@ -1401,7 +1413,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 						iab = ((int_object*)tos1)->value;
 					}
 					int_object *new_iatos = CreateIntObject(iab & iaa,OFLAG_ON_STACK);
-					if (debug_level)
+					if (debug_level >1)
 						printf("%d & %d = %d\n", iab, iaa, new_iatos->value);
 					stack_Push(_stack, new_iatos);
 				}
@@ -1441,7 +1453,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 						ilsb = ((int_object*)tos1)->value;
 					}
 					int_object *new_ilstos = CreateIntObject(ilsb << ilsa,OFLAG_ON_STACK);
-					if (debug_level)
+					if (debug_level >1)
 						printf("%d << %d = %d\n", ilsb, ilsa, new_ilstos->value);
 					stack_Push(_stack, new_ilstos);
 				}
@@ -1461,7 +1473,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 						iob = ((int_object*)tos1)->value;
 					}
 					int_object *new_iotos = CreateIntObject(iob | ioa,OFLAG_ON_STACK);
-					if (debug_level)
+					if (debug_level >1)
 						printf("%d | %d = %d\n", iob, ioa, new_iotos->value);
 					stack_Push(_stack, new_iotos);
 				}
@@ -1481,7 +1493,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 						iadb = ((int_object*)tos1)->value;
 					}
 					int_object *new_iadtos = CreateIntObject(iadb + iada,OFLAG_ON_STACK);
-					if (debug_level)
+					if (debug_level >1)
 						printf("%d + %d = %d\n", iadb, iada, new_iadtos->value);
 					stack_Push(_stack, new_iadtos);
 				}
@@ -1501,7 +1513,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 						imb = ((int_object*)tos1)->value;
 					}
 					int_object *new_imtos = CreateIntObject(imb * ima,OFLAG_ON_STACK);
-					if (debug_level)
+					if (debug_level >1)
 						printf("%d * %d = %d\n", imb, ima, new_imtos->value);
 					stack_Push(_stack, new_imtos);
 				}
@@ -1521,7 +1533,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 						isb = ((int_object*)tos1)->value;
 					}
 					int_object *new_istos = CreateIntObject(isb - isa,OFLAG_ON_STACK);
-					if (debug_level)
+					if (debug_level >1)
 						printf("%d - %d = %d\n", isb, isa, new_istos->value);
 					stack_Push(_stack, new_istos);
 				}
@@ -1541,7 +1553,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 						imob = ((int_object*)tos1)->value;
 					}
 					int_object *new_imotos = CreateIntObject(imob % imoa,OFLAG_ON_STACK);
-					if (debug_level)
+					if (debug_level >1)
 						printf("%d %% %d = %d\n", imob, imoa, new_imotos->value);
 					stack_Push(_stack, new_imotos);
 				}
@@ -1561,7 +1573,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 						itdb = ((int_object*)tos1)->value;
 					}
 					int_object *new_itdtos = CreateIntObject(itdb / itda,OFLAG_ON_STACK);
-					if (debug_level)
+					if (debug_level >1)
 						printf("%d / %d = %d\n", itdb, itda, new_itdtos->value);
 					stack_Push(_stack, new_itdtos);
 				}
@@ -1581,7 +1593,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 						ifdb = ((int_object*)tos1)->value;
 					}
 					int_object *new_ifdtos = CreateIntObject(ifdb / ifda,OFLAG_ON_STACK);
-					if (debug_level)
+					if (debug_level >1)
 						printf("%d // %d = %d\n", ifdb, ifda, new_ifdtos->value);
 					stack_Push(_stack, new_ifdtos);
 				}
@@ -1601,7 +1613,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 						ifpb = ((int_object*)tos1)->value;
 					}
 					int_object *new_ifptos = CreateIntObject(long_pow(ifpb, ifpa),OFLAG_ON_STACK);
-					if (debug_level)
+					if (debug_level >1)
 						printf("%d ** %d = %d\n", ifpb, ifpa, new_ifptos->value);
 					stack_Push(_stack, new_ifptos);
 				}
@@ -1688,14 +1700,14 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 							}
 							empty_object *new_ctos = CreateEmptyObject(cb == ca ? TYPE_TRUE : TYPE_FALSE,OFLAG_ON_STACK);
 							
-							if (debug_level)
+							if (debug_level >1)
 								printf("%d == %d == %c\n", cb, ca, new_ctos->type);
 							stack_Push(_stack, new_ctos);
 						}
 						break;
 
 					default:
-						if (debug_level)
+						if (debug_level >1)
 							printf("compare op:%d not supported\n", arg);
 					}
 					// printf("compare op thru:%d\n",arg);
@@ -1747,13 +1759,16 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 							//ret->flags ^= OFLAG_LEFT_NAMESPACE;
 							stack_Push(_stack, ret);
 							DecRefCountGC(ret,vm->garbage);
+							if(debug_level  >1)
+							{
+								printf("returned object:\n");
+								DumpObject(ret,0);
+							}
 						}
 						if (arg > 0)
 							stack_Close(call, 0);
-						break;
 					}
-
-					if (function_name != NULL
+					else if (function_name != NULL
 						&& function_name->type == TYPE_UNICODE)
 					{
 						if (debug_level>1)
@@ -1791,13 +1806,18 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 								{
 									stack_Push(_stack, ret);
 									DecRefCountGC(ret,vm->garbage);
+									if(debug_level  >1)
+									{
+										printf("returned object:\n");
+										DumpObject(ret,0);
+									}
 								}
 								if (arg > 0)
 									stack_Close(call, 0);
 								break;
 							}
 						}
-						if (debug_level)
+						if (debug_level >1)
 							printf("function: [%s] not found\n",
 								   ((unicode_object*)function_name)->value);
 					}
@@ -1805,15 +1825,18 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 				break;
 
 			default:
-				// printf("\n[%d,%xh] opcode: [ %s ] ,argcount:%d not
-				// supported\n(%s)\n",old_i,op,opcodes[index].name,opcodes[index].argcount,opcodes[index].description);
+				if(debug_level)
+				{
+					int index = GetOpcodeIndex(op);
+					printf("[%d,%xh] !! opcode: [ %s ] not supported !!\n", bo->ip,opcodes[index].opcode, opcodes[index].name);
+				}
 				break;
 			}
 
 			// printf("step\n");
 			gc_Clear(vm->garbage);
 		} //END OF WHILE LOOP
-		if (debug_level)
+		if (debug_level >1)
 			printf("code thru.\n");
 		object *ret = stack_Pop(_stack,vm->garbage);
 		stack_Close(_stack, 0);

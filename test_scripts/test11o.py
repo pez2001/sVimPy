@@ -14,15 +14,10 @@ def func():
 #	v = "Und bis morgen"
 #	print("y:"+ y+ " " + v +"\n")
 	sub_func()
-	if("hi" == "hi"):
-		print("== string compare added\n")
-
-	if(1 == 1):
-		print("== num compare added\n")
 
 def rek(e):
-	if(e < 1000):
-		e = rek(e*e)
+	if(e < 100000):
+		e = rek(e*e-1)
 	return(e)
 
 func()

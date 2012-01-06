@@ -126,9 +126,7 @@ const opcode opcodes[] = { {OPCODE_STOP_CODE, "STOP_CODE", "Indicates end-of-cod
 {OPCODE_LOAD_DEREF, "LOAD_DEREF",
  "Loads the cell contained in slot /i/ of the cell and free variable storage.\
 							Pushes a reference to the object the cell contains on the stack.", 1, 0},
-{OPCODE_STORE_DEREF, "STORE_DEREF",
- "Stores TOS into the cell contained in slot /i/ of the cell and free variable storage.",
- 1, 0},
+{OPCODE_STORE_DEREF, "STORE_DEREF", "Stores TOS into the cell contained in slot /i/ of the cell and free variable storage.", 1, 0},
 {OPCODE_CALL_FUNCTION_VAR, "CALL_FUNCTION_VAR",
  "Calls a function. /argc/ is interpreted as in CALL_FUNCTION.\
 							The top element on the stack contains the variable argument list, followed by keyword and positional arguments.", 1, 0},
@@ -170,6 +168,15 @@ const opcode opcodes[] = { {OPCODE_STOP_CODE, "STOP_CODE", "Indicates end-of-cod
 							The argument is ignored and set to /zero/ by the compiler.", 1, 1},
 {OPCODE_BUILD_SET, "BUILD_SET", "Pushes a new empty set object onto the stack.\
 							The argument is ignored and set to /zero/ by the compiler.", 1, 1},
+{OPCODE_MAKE_CLOSURE, "MAKE_CLOSURE",
+ "Creates a new function object, sets its func_closure slot, and pushes it on the stack.\
+							TOS is the code associated with the function. If the code object has N free variables, the next N items on the stack are the cells\
+							for these variables. The function also has /argc/ default parameters, where are found before the cells.",
+ 1, 0},
+{OPCODE_LOAD_CLOSURE, "LOAD_CLOSURE",
+ "Pushes a reference to the cell contained in slot /i/ of the cell and free variable storage.\
+							The name of the variable is co_cellvars[i] if i is less than the length of co_cellvars. Otherwise it is co_freevars[i - len(co_cellvars)].",
+ 1, 0},
 {OPCODE_LIST_APPEND,"LIST_APPEND", "No description.", 1, 0},
 {OPCODE_SET_ADD, "SET_ADD","No description.", 1, 0},
 {OPCODE_MAP_ADD, "MAP_ADD","No description.", 1, 0},
@@ -186,15 +193,6 @@ const opcode opcodes[] = { {OPCODE_STOP_CODE, "STOP_CODE", "Indicates end-of-cod
 // {0x05,"ROT_FOUR","Lifts second, third and forth stack item one position up, 
 // moves top down to position four.",0}, //DEPRECATED
 
-//{OPCODE_MAKE_CLOSURE, "MAKE_CLOSURE",
-// "Creates a new function object, sets its func_closure slot, and pushes it on the stack.\
-//							TOS is the code associated with the function. If the code object has N free variables, the next N items on the stack are the cells\
-//							for these variables. The function also has /argc/ default parameters, where are found before the cells.",
-// 1, 0},
-//{OPCODE_LOAD_CLOSURE, "LOAD_CLOSURE",
-// "Pushes a reference to the cell contained in slot /i/ of the cell and free variable storage.\
-//							The name of the variable is co_cellvars[i] if i is less than the length of co_cellvars. Otherwise it is co_freevars[i - len(co_cellvars)].",
-// 1, 0},
 
 // {0x6b,"IMPORT_NAME","Imports the module co_names[/namei/]. The module
 // object is pushed onto the stack.\

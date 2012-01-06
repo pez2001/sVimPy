@@ -419,6 +419,20 @@ void PrintObject(object * obj)
 		case TYPE_UNICODE:
 			printf("%s", ((unicode_object *)obj)->value);
 			break;
+		case TYPE_TUPLE:
+			{
+				tuple_object *to = (tuple_object*)obj;
+				//printf("printing tuple:%d\n",to->list->num);
+				for(int i = 0;i<to->list->num;i++)
+				{
+					if(i != 0)
+						printf(", ");
+					object *ti = to->list->items[i];
+					if(ti != NULL)
+						PrintObject(ti);
+				}
+			}
+			break;
 		}
 
 	}
@@ -813,8 +827,9 @@ void SetDictItemByIndex(object *tuple,int index,object *value)
 			//printf("found index\n");
 			//SetItem(tuple,index,value);
 			kv_object *k = GetItem(tuple,index);
-			if(k->value != NULL)
-				FreeObject(k->value);
+			//printf("k:\n");
+			//DumpObject(k,0);
+			object *old = k->value;
 			//	DecRefCount(k->value);
 			if(value != NULL)
 			{
@@ -823,7 +838,10 @@ void SetDictItemByIndex(object *tuple,int index,object *value)
 			}
 			else
 				k->value = NULL;
+			if(old != NULL)
+				FreeObject(old);
 		}
+
 }
 
 object *GetDictItem(object *tuple,object *key)

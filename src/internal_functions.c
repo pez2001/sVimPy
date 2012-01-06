@@ -152,9 +152,13 @@ object *if_print(vm *vm,stack * stack)
 			case TYPE_UNICODE:
 				printf("%s", ((unicode_object *)tos)->value);
 				break;
+			case TYPE_TUPLE:
+				PrintObject(tos);
+				break;
 			}
 	
 	}
+	printf("\n");
 	object *tmp =CreateEmptyObject(TYPE_NONE,OFLAG_ON_STACK);
 	//IncRefCount(tmp);
 	return (tmp);

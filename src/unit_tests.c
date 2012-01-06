@@ -23,7 +23,7 @@
 #define DEBUG
 #include "unit_tests.h"
 
-int debug_level = 5;
+int debug_level = 1;
 
 
 
@@ -176,51 +176,62 @@ int main(int argc, char *argv[])
 	vm_AddFunctionDefinition(vm, sum);
 	// vm_RemoveFunction (vm, "range");
 	// printf("Calling all Unit Tests\n");
-	//OpenPYC("tests/test1.pyc", vm);
-	//OpenPYC("tests/test2.pyc", vm);
-	//OpenPYC("tests/test3.pyc", vm);
-	//OpenPYC("tests/test6.pyc", vm);
-	//OpenPYC("tests/test13.pyc", vm);
+
+	//OpenPYC("tests/test.pyc", vm);
+	//OpenPYC("tests/test10.pyc", vm);
 
 	
+	//print + recursion
+	/*OpenPYC("tests/test8.pyc", vm);
+	OpenPYC("tests/test9.pyc", vm);
+	OpenPYC("tests/test17.pyc", vm);
+	OpenPYC("tests/test12.pyc", vm);
+	OpenPYC("tests/test11.pyc", vm);
+	*/
+	//crashing or leaking memory
+	//OpenPYC("tests/test21.pyc", vm);//leaking
+	//OpenPYC("tests/test20.pyc", vm);//leaking
+	//OpenPYC("tests/test21.pyc", vm);//leaking
 
+	//closures and deref opcodes
+	OpenPYC("tests/test29.pyc", vm);//not supported opcode store_deref
 
-	
+	//simple stuff
+	/*OpenPYC("tests/test1.pyc", vm);
+	OpenPYC("tests/test2.pyc", vm);
+	OpenPYC("tests/test3.pyc", vm);
+	OpenPYC("tests/test6.pyc", vm);
+	OpenPYC("tests/test13.pyc", vm);
+	OpenPYC("tests/test15.pyc", vm);
+	OpenPYC("tests/test16.pyc", vm);
+	OpenPYC("tests/test18.pyc", vm);
+	OpenPYC("tests/test19.pyc", vm);
+	OpenPYC("tests/test22.pyc", vm);
+	OpenPYC("tests/test7.pyc", vm);
+	OpenPYC("tests/test5.pyc", vm);
+	OpenPYC("tests/test4.pyc", vm);
+	OpenPYC("tests/test27.pyc", vm);
+	OpenPYC("tests/test28.pyc", vm);
+	OpenPYC("tests/e_small.pyc", vm);
+	OpenPYC("tests/e20.pyc", vm);
+	OpenPYC("tests/test23.pyc", vm);
+	*/
+	//most binary ops test
+	//OpenPYC("tests/test14.pyc", vm);
+
+	//dictionaries
+	//OpenPYC("tests/test30.pyc", vm);
 	//OpenPYC("tests/test31.pyc", vm);
 
-	//OpenPYC("tests/test21.pyc", vm);
-	//OpenPYC("tests/test11.pyc", vm);
-	//OpenPYC("tests/test.pyc", vm);
-	//OpenPYC("tests/test12.pyc", vm);
-	//OpenPYC("tests/test14.pyc", vm);
-	//OpenPYC("tests/test15.pyc", vm);
-	//OpenPYC("tests/test16.pyc", vm);
-	//OpenPYC("tests/test17.pyc", vm);
-	//OpenPYC("tests/test18.pyc", vm);
-	//OpenPYC("tests/test19.pyc", vm);
- 
-	//OpenPYC("tests/test22.pyc", vm);
-	//OpenPYC("tests/test7.pyc", vm);
-	//OpenPYC("tests/test5.pyc", vm);
-	//OpenPYC("tests/test4.pyc", vm);
-	//OpenPYC("tests/test9.pyc", vm);
-	//OpenPYC("tests/test10.pyc", vm);
-	//OpenPYC("tests/test8.pyc", vm);
-	
-	//OpenPYC("tests/test20.pyc", vm);
+	//generators
 	//OpenPYC("tests/test24.pyc", vm);
 	//OpenPYC("tests/test25.pyc", vm);
 	//OpenPYC("tests/test26.pyc", vm);
-	//OpenPYC("tests/test27.pyc", vm);
-	//OpenPYC("tests/test29.pyc", vm);
-	//OpenPYC("tests/test30.pyc", vm);
-	//OpenPYC("tests/test28.pyc", vm);
-	//OpenPYC("tests/e_small.pyc", vm);
-	OpenPYC("tests/e20.pyc", vm);
-	//OpenPYC("tests/test21.pyc", vm);
-	//OpenPYC("tests/e_med.pyc", vm, 0);
-	//OpenPYC("tests/e.pyc", vm, 0);
-	//OpenPYC("tests/test23.pyc", vm);
+
+
+	
+	//OpenPYC("tests/e_med.pyc", vm);
+	//OpenPYC("tests/e.pyc", vm);
 	// printf("clearing recycle stack\n");
 	// stack_Dump(vm->recycle);
 	printf("closing vm\n");
