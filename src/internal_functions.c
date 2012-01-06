@@ -71,6 +71,7 @@ object *if_range(vm *vm,stack * stack)
 		for (int i = 0; i < r->list->num; i++)
 		{
 			r->list->items[i] = CreateIntObject(i,0);
+			IncRefCount(r->list->items[i]);
 		}
 		// DumpObject(r,0);
 		return (r);
@@ -87,6 +88,7 @@ object *if_range(vm *vm,stack * stack)
 		for (int i = 0; i < r->list->num; i++)
 		{
 			r->list->items[i] = CreateIntObject( ((int_object*)s)->value + i,0);
+			IncRefCount(r->list->items[i]);
 		}
 		// DumpObject(r,0);
 		return (r);
@@ -103,7 +105,8 @@ object *if_range(vm *vm,stack * stack)
 		// printf("filling tuple\n");
 		for (int i = 0; i < r->list->num; i++)
 		{
-			 r->list->items[i] = CreateIntObject( ((int_object*)s)->value + (i * ((int_object*)st)->value),OFLAG_ON_STACK);
+			 r->list->items[i] = CreateIntObject( ((int_object*)s)->value + (i * ((int_object*)st)->value),0);
+			IncRefCount(r->list->items[i]);
 		}
 		// DumpObject(r,0);
 		return (r);

@@ -23,7 +23,7 @@
 #define DEBUG
 #include "unit_tests.h"
 
-int debug_level = 0;
+int debug_level = 2;
 
 
 
@@ -213,7 +213,7 @@ int main(int argc, char *argv[])
 	//OpenPYC("tests/test26.pyc", vm);
 	//OpenPYC("tests/test27.pyc", vm);
 	//OpenPYC("tests/test29.pyc", vm);
-	OpenPYC("tests/test30.pyc", vm);
+	//OpenPYC("tests/test30.pyc", vm);
 	//OpenPYC("tests/test28.pyc", vm);
 	OpenPYC("tests/e_small.pyc", vm);
 	//OpenPYC("tests/test21.pyc", vm);

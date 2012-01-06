@@ -247,9 +247,7 @@ empty_object *CreateEmptyObject(char type,int flags)
 }
    
 long objects_num = 0;
-
 long objects_max = 0;
-
 long objects_header_total = 0;
 
 kv_object *ConvertToKVObject(object *obj)
@@ -757,6 +755,7 @@ void IncRefCount(object *obj)
 {
 	obj->ref_count++;
 }
+
 void DecRefCountGC(object *obj,ptr_list *gc)
 {
 	if(obj->ref_count == 1)
@@ -776,6 +775,7 @@ void DecRefCountGC(object *obj,ptr_list *gc)
 	 }
 	obj->ref_count--;
 }
+
 void DecRefCount(object *obj)
 {
 	if(obj->ref_count == 1)
@@ -791,16 +791,16 @@ void DecRefCount(object *obj)
 	 }
 	obj->ref_count--;
 }
+
 int HasNoRefs(object *obj)
 {
 return(!obj->ref_count);
 }
+
 int HasRefs(object *obj)
 {
 return(obj->ref_count);
 }
-
-
 
 void SetDictItemByIndex(object *tuple,int index,object *value)
 {
@@ -808,7 +808,7 @@ void SetDictItemByIndex(object *tuple,int index,object *value)
 		{
 			//printf("found index\n");
 			//SetItem(tuple,index,value);
-			kv_object * k = GetItem(tuple,index);
+			kv_object *k = GetItem(tuple,index);
 			if(k->value != NULL)
 				FreeObject(k->value);
 			//	DecRefCount(k->value);
@@ -819,7 +819,6 @@ void SetDictItemByIndex(object *tuple,int index,object *value)
 			}
 			else
 				k->value = NULL;
-			
 		}
 }
 
@@ -999,7 +998,6 @@ object *GetNextItem(object * tuple)
 	}
 	return (NULL);
 }
-
 
 long ReadLong(FILE * f)
 {
