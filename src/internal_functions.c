@@ -29,6 +29,7 @@ object *if_list(vm *vm,stack * stack)
 	int num = stack->list->num;
 	//printf("num:%d\n",num);
 	tuple_object *r = CreateTuple(num,OFLAG_ON_STACK);
+	//IncRefCount(r);
 	for (int i = 0; i < num; i++)
 	{
 		//object *t = stack_Top(stack);
@@ -50,7 +51,7 @@ object *if_range(vm *vm,stack * stack)
 	if (stack->list->num < 1)
 	{
 		object *tmp = CreateEmptyObject(TYPE_NONE,OFLAG_ON_STACK);
-
+		//IncRefCount(tmp);
 		printf("not enough args for range\n");
 		return (tmp);
 	}
@@ -67,6 +68,7 @@ object *if_range(vm *vm,stack * stack)
 	{
 		// printf("range called with 2 args\n");
 		tuple_object *r = CreateTuple( ((int_object*)s)->value,OFLAG_ON_STACK);
+		//IncRefCount(r);
 
 		for (int i = 0; i < r->list->num; i++)
 		{
@@ -80,7 +82,7 @@ object *if_range(vm *vm,stack * stack)
 	{
 		// printf("range called with 2 args\n");
 		tuple_object *r = CreateTuple( ((int_object*)e)->value - ((int_object*)s)->value, OFLAG_ON_STACK);
-
+		//IncRefCount(r);
 		//printf("range(%d,%d) tuple will contain %d items\n", s->ptr, e->ptr, n);
 
 		//((tuple_object *) r->ptr)->items =
@@ -97,6 +99,7 @@ object *if_range(vm *vm,stack * stack)
 			 && st->type == TYPE_INT)
 	{
 		tuple_object *r = CreateTuple(((((int_object*)e)->value - ((int_object*)s)->value) / ((int_object*)st)->value) + 1,OFLAG_ON_STACK);
+		//IncRefCount(r);
 
 		// printf("range(%d,%d,%d) step tuple will contain %d
 		// items\n",s->ptr,e->ptr,st->ptr,n);
@@ -114,6 +117,8 @@ object *if_range(vm *vm,stack * stack)
 
 	}
 	object *tmp = CreateEmptyObject( TYPE_NONE,OFLAG_ON_STACK);
+	//IncRefCount(tmp);
+
 	return (tmp);
 }
 
@@ -151,6 +156,7 @@ object *if_print(vm *vm,stack * stack)
 	
 	}
 	object *tmp =CreateEmptyObject(TYPE_NONE,OFLAG_ON_STACK);
+	//IncRefCount(tmp);
 	return (tmp);
 }
 
@@ -176,5 +182,6 @@ object *if_sum(vm *vm,stack * stack)
 	}
 	int_object *tmp = CreateIntObject(sum,OFLAG_ON_STACK);
 	printf("returning sum:%d\n",sum);
+	//IncRefCount(tmp);
 	return (tmp);
 }

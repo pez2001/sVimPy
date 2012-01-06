@@ -301,7 +301,11 @@ void FreeObject(object * obj)
 	switch (obj->type)
 	{
 	case TYPE_BLOCK:
+		if(debug_level >3)
+			printf("Freeing block object %x\n",obj);
 		objects_header_total -= sizeof(block_object);
+		if(((block_object*)obj)->iter != NULL)
+			FreeObject(((block_object*)obj)->iter);
 		break;
 	case TYPE_REF:
 		if(debug_level > 3)

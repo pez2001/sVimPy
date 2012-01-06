@@ -386,7 +386,9 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 				{
 					block_object *rob = stack_Pop(vm->blocks,vm->garbage);
 					//if(rob->iter != NULL)
-					//	DecRefCount(rob->iter);
+						//FreeObject(rob->iter);
+					//	DecRefCountGC(rob->iter,vm->garbage);
+					//DecRefCountGC(rob,vm->garbage);
 					//assert(mem_free(rob));
 					op_thru = 1;
 				}
@@ -661,6 +663,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 					block->len = arg;
 					block->ref_count = 0;
 					block->type = TYPE_BLOCK;
+					block->iter = NULL;
 					// printf("block - start: %d, len:
 					// %d\n",block->start,block->len);
 					stack_Push(vm->blocks, block);
@@ -731,6 +734,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 					{
 						// printf("for_iter delta jump\n");
 						bo->ip = bo->ip + arg;
+						//block_object *rob = stack_Pop(vm->blocks,vm->garbage);
 					}
 				}
 				break;
@@ -758,6 +762,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 					if (tmp != NULL)
 					{
 						stack_Push(_stack, tmp);
+						//DecRefCount(tmp);
 					}
 					if (arg > 0)
 						stack_Close(blcall, 0);
@@ -1281,19 +1286,23 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 							printf("mnum:%d\n",mnum);
 						}
 						object *mtr = if_list(vm,mstack);
+						stack_Close(mstack,0);
 						stack_Push(_stack, mtr);
 						if(debug_level > 1)
 							DumpObject(mtr,0);
 						break;
 					}
-					if (tos1->type == TYPE_INT)
+					else
 					{
-						mb = ((int_object*)tos1)->value;
+						if (tos1->type == TYPE_INT)
+						{
+							mb = ((int_object*)tos1)->value;
+						}
+						int_object *new_mtos = CreateIntObject(ma * mb,OFLAG_ON_STACK);
+						// printf ("%d * %d = %d (%d)\n", ma, mb, ma * mb,
+						// new_mtos->ptr);
+						stack_Push(_stack, new_mtos);
 					}
-					int_object *new_mtos = CreateIntObject(ma * mb,OFLAG_ON_STACK);
-					// printf ("%d * %d = %d (%d)\n", ma, mb, ma * mb,
-					// new_mtos->ptr);
-					stack_Push(_stack, new_mtos);
 				}
 				break;
 
@@ -1737,7 +1746,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 						{
 							//ret->flags ^= OFLAG_LEFT_NAMESPACE;
 							stack_Push(_stack, ret);
-							//DecRefCountGC(ret,vm->garbage);
+							DecRefCountGC(ret,vm->garbage);
 						}
 						if (arg > 0)
 							stack_Close(call, 0);
@@ -1757,6 +1766,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 						if (tmp != NULL)
 						{
 							stack_Push(_stack, tmp);
+							//DecRefCount(tmp);
 							if (arg > 0)
 								stack_Close(call, 0);
 
@@ -1764,9 +1774,6 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 						}
 						else
 						{
-							// printf ("searching %s\n", (char *)
-							// function_name->ptr);
-							//object *caller_func =	FindUnicodeTupleItem(global->names,(char *) function_name->ptr);
 							object *caller_func = NULL;
 							int index = GetItemIndexByName(global->names,((unicode_object*)function_name)->value);
 							if(index != -1)
@@ -1778,12 +1785,12 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 							{
 								if (debug_level>1)
 									printf	("executing global function object: %s\n", ((unicode_object*)function_name)->value);
-								object *ret = vm_RunObject(vm, caller_func, obj, call, arg);	// ,global
+								object *ret = vm_RunObject(vm, caller_func, obj, call, arg);
 
 								if (ret != NULL)
 								{
 									stack_Push(_stack, ret);
-									//DecRefCountGC(ret,vm->garbage);
+									DecRefCountGC(ret,vm->garbage);
 								}
 								if (arg > 0)
 									stack_Close(call, 0);
