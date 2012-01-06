@@ -27,7 +27,7 @@
 
 #ifdef DEBUG
 
-const unsigned int opcodecount = 97;
+const unsigned int opcodecount = 100;
 
 const opcode opcodes[] = { {OPCODE_STOP_CODE, "STOP_CODE", "Indicates end-of-code to the compiler, not used by the interpreter.", 0, 1},	// SUPPORTED
 {OPCODE_POP_TOP, "POP_TOP", "Removes the top-of-stack (TOS) item.", 0, 1},	// SUPPORTED
@@ -125,8 +125,9 @@ const opcode opcodes[] = { {OPCODE_STOP_CODE, "STOP_CODE", "Indicates end-of-cod
  1, 0},
 {OPCODE_LOAD_DEREF, "LOAD_DEREF",
  "Loads the cell contained in slot /i/ of the cell and free variable storage.\
-							Pushes a reference to the object the cell contains on the stack.", 1, 0},
-{OPCODE_STORE_DEREF, "STORE_DEREF", "Stores TOS into the cell contained in slot /i/ of the cell and free variable storage.", 1, 0},
+							Pushes a reference to the object the cell contains on the stack.", 1, 1},
+{OPCODE_STORE_DEREF, "STORE_DEREF", "Stores TOS into the cell contained in slot /i/ of the cell and free variable storage.", 1, 1},
+{OPCODE_DELETE_DEREF, "DELETE_DEREF", "No description.", 1, 1},
 {OPCODE_CALL_FUNCTION_VAR, "CALL_FUNCTION_VAR",
  "Calls a function. /argc/ is interpreted as in CALL_FUNCTION.\
 							The top element on the stack contains the variable argument list, followed by keyword and positional arguments.", 1, 0},
@@ -172,11 +173,11 @@ const opcode opcodes[] = { {OPCODE_STOP_CODE, "STOP_CODE", "Indicates end-of-cod
  "Creates a new function object, sets its func_closure slot, and pushes it on the stack.\
 							TOS is the code associated with the function. If the code object has N free variables, the next N items on the stack are the cells\
 							for these variables. The function also has /argc/ default parameters, where are found before the cells.",
- 1, 0},
+ 1, 1},
 {OPCODE_LOAD_CLOSURE, "LOAD_CLOSURE",
  "Pushes a reference to the cell contained in slot /i/ of the cell and free variable storage.\
 							The name of the variable is co_cellvars[i] if i is less than the length of co_cellvars. Otherwise it is co_freevars[i - len(co_cellvars)].",
- 1, 0},
+ 1, 1},
 {OPCODE_LIST_APPEND,"LIST_APPEND", "No description.", 1, 0},
 {OPCODE_SET_ADD, "SET_ADD","No description.", 1, 0},
 {OPCODE_MAP_ADD, "MAP_ADD","No description.", 1, 0},

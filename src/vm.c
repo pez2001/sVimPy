@@ -460,6 +460,7 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 
 			case OPCODE_LOAD_DEREF:
 			case OPCODE_STORE_DEREF:
+			case OPCODE_DELETE_DEREF:
 				// case OPCODE_STORE_MAP:
 				// case OPCODE_STORE_SUBSCR:
 				// case OPCODE_DELETE_SUBSCR:
@@ -949,6 +950,28 @@ object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int
 	
 			case OPCODE_STORE_DEREF:
 				printf("storing deref\n");
+				break;
+			case OPCODE_LOAD_DEREF:
+				printf("load deref\n");
+				break;
+			case OPCODE_MAKE_CLOSURE:
+				printf("make closure\n");
+				break;
+			case OPCODE_LOAD_CLOSURE:
+				{
+					printf("load closure\n");
+					//tuple_object *co_freevars = (tuple_object *) co->freevars;
+					object *c = GetItem(co->freevars,arg);
+					if(c!= NULL)
+						stack_Push(_stack,c);
+				}
+				break;
+			case OPCODE_DELETE_DEREF:
+				{
+					tuple_object *co_freevars = (tuple_object *) co->freevars;
+					//if(
+					//SetDictItemByIndex(co_freevars,arg,NULL);
+				}
 				break;
 			case OPCODE_STORE_NAME:
 				{
