@@ -29,10 +29,12 @@
 #include "string.h"
 #include "memory.h"
 #include "lists.h"
-
 #include "assert.h"
 
 extern int debug_level;
+#include "debug.h"
+
+
 
 #define TYPE_NULL               '0'
 #define TYPE_NONE               'N'
@@ -64,17 +66,17 @@ extern int debug_level;
 // #define OFLAG_IS_VARNAME 8
 
 
-#define OFLAG_ON_STACK 1
+//#define OFLAG_ON_STACK 1
 #define OFLAG_UNLOADED 2		// set if object was unloaded -> obj->ptr ==
 								// seek_pos // or just dump to file and reread 
 								// if accessed
 
 #define OFLAG_HOLD_IN_MEMORY 4
-#define OFLAG_HAS_VALUE_PTR 8
+//#define OFLAG_HAS_VALUE_PTR 8
 #define OFLAG_TUPLE_PTR 16		// used to iterate over tuples
 #define OFLAG_TUPLE_RESTART_FLAG 32	// used to iterate over tuples
 #define OFLAG_IS_DICT 64 //used distinguish between tuples and dicts because both use the same structs
-#define OFLAG_LEFT_NAMESPACE 128
+//#define OFLAG_LEFT_NAMESPACE 128
 
 //code flags
 #define CO_OPTIMIZED	0x0001
@@ -88,8 +90,8 @@ extern int debug_level;
 
 
 // internal types
-#define TYPE_FUNCTION 'f'
-#define TYPE_CALLER 'C'
+//#define TYPE_FUNCTION 'f'
+//#define TYPE_CALLER 'C'
 #define TYPE_BLOCK 'b'
 #define TYPE_KV 'k'
 #define TYPE_REF 'r'
@@ -202,16 +204,7 @@ typedef struct
 	ptr_list *list
 } tuple_object;
 
-/* 
-   typedef struct { char *content; //long len;//TO DECREASE MEMORY USAGE
-     }unicode_object; */// TO DECREASE MEMORY USAGE
-/*
-typedef struct
-{
-	object *module;
-	long pos;
-} caller_object;
-*/
+
 //TODO repurpose for generator storage
 typedef struct
 {
@@ -219,6 +212,8 @@ typedef struct
 	// long pos;
 } function_object;
 
+
+struct _stack;
 
 typedef struct
 {
@@ -230,22 +225,30 @@ typedef struct
 	long len;
 	object *iter;
 	long ip;
+	char initiated_locals;
+	struct _stack *stack;
 } block_object;
-
-
 
 #pragma pack(pop)				/* restore original alignment from stack */
 
+
+block_object *AllocBlockObject();
+
+void FreeBlockObject(object *obj);
+
 void IncRefCount(object *obj);
+
 void DecRefCountGC(object *obj,ptr_list *gc);
+
 void DecRefCount(object *obj);
+
 int HasNoRefs(object *obj);
+
 int HasRefs(object *obj);
 
-
 kv_object *ConvertToKVObject(object *key);
-kv_object *ConvertToKVObjectValued(object *key,object *value);
 
+kv_object *ConvertToKVObjectValued(object *key,object *value);
 
 object *AllocObject();
 
@@ -254,7 +257,6 @@ object *AllocEmptyObject();
 object *AllocKVObject();
 
 object *AllocRefObject();
-
 
 string_object *AllocStringObject();
 
@@ -269,8 +271,6 @@ code_object *AllocCodeObject();
 int_object *AllocIntObject();
 
 function_object *AllocFunctionObject();
-
-block_object *AllocBlockObject();
 
 long ReadLong(FILE * f);
 
@@ -323,14 +323,12 @@ kv_object *CreateKVObject(object *key,object *value,int flags);
 
 empty_object *CreateEmptyObject(char type,int flags);
 
-
 void FreeObject(object * obj);
 
 void PrintObject(object * obj);
 
 void DumpObject(object * obj, int level);
 
-// void DumpObject(object *obj);
 object *GetNextItem(object * tuple);
 
 void ResetIteration(object * tuple);
@@ -339,7 +337,6 @@ void SetItem(object * tuple, int index, object * obj);
 
 object *GetItem(object * tuple, int index);
 
-// object *GetTupleItem(tuple_object *tuple,int index);
 int GetItemIndexByName(object * tuple, char *name);
 
 void SetDictItem(object *tuple,object *key,object *value);

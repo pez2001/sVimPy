@@ -23,6 +23,8 @@
 #ifndef OPCODES_H
 #define OPCODES_H
 
+#include "debug.h"
+
 
 #define OPCODE_STOP_CODE	 						0x00
 #define OPCODE_POP_TOP								0x01
@@ -126,6 +128,7 @@
 #define OPCODE_MAP_ADD								0x92
 
 
+extern int debug_level;
 
 
 
@@ -146,9 +149,5 @@ void DumpUnsupportedOpCodes();
 unsigned int GetSupportedOpcodesNum();
 
 int GetOpcodeIndex(unsigned char opcode);
-
-/* 
-   #ifdef OPCODES_C #define EXTERN #else #define EXTERN extern #endif */
-
 
 #endif

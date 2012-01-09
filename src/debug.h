@@ -20,30 +20,28 @@
  *
  */
 
-#include "garbage.h"
 
+#ifndef DEBUG_H
+#define DEBUG_H
 
-void gc_Clear(ptr_list *gc_collection)
-{
-for(int i=0;i<gc_collection->num;i++)
-	if(HasNoRefs(gc_collection->items[i]))
-	{
-	if((debug_level & DEBUG_GC) > 0)
-	{
-		printf("object has no refs\n");
-		DumpObject(gc_collection->items[i],0);
-	}
-	FreeObject(gc_collection->items[i]);
-	ptr_Remove(gc_collection,i);
-	}
-	else
-	{
-	if((debug_level & DEBUG_GC) > 0)
-		{
-			printf("object has gained refs\n");
-			DumpObject(gc_collection->items[i],0);
-		}
-		ptr_Remove(gc_collection,i);
-	}
-}
+#define DEBUG_MEMORY 1
+#define DEBUG_SHOW_OPCODES 2
+#define DEBUG_FULL_DUMP 4
+#define DEBUG_STACK 8
+#define DEBUG_LISTS 16
+#define DEBUG_GC 32
+#define DEBUG_VERBOSE_STEP 64
+#define DEBUG_INTERNAL_FUNCTIONS 128
+#define DEBUG_VM 256
+#define DEBUG_FREEING 512
+#define DEBUG_ALLOCS 1024
+#define DEBUG_DUMP_UNSUPPORTED 2048
+#define DEBUG_DUMP_OBJECT 4096
+#define DEBUG_INTERACTIVE 8192
+#define DEBUG_COUNT_OBJECTS 16384
+#define DEBUG_CREATION 32768
+#define DEBUG_VERBOSE_FREEING 65536
+#define DEBUG_PTR_LISTS 131072
+#define DEBUG_VERBOSE_TESTS 262144
 
+#endif

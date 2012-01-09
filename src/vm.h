@@ -32,6 +32,7 @@
 #include "stream.h"
 #include "garbage.h"
 
+#include "debug.h"
 #include "assert.h"
 
 extern const opcode opcodes[];
@@ -44,6 +45,7 @@ typedef struct
 	stack *blocks;
 	ptr_list *functions;
 	ptr_list *garbage;
+	code_object *global;
 	// code_object *co;//global code object //Bottom of blocks stack is the
 	// global module
 	// int ip;//instruction pointer moved to block object
@@ -65,10 +67,12 @@ typedef struct
 	char *name;
 } function_definition;
 
-function_definition *CreateCFunction(object * (*func) (vm *vm,stack * stack),
-									 char *name);
-function_definition *CreateCObjFunction(object * (*func) (vm *vm,object * obj),
-										char *name);
+
+
+function_definition *CreateCFunction(object * (*func) (vm *vm,stack * stack), char *name);
+
+function_definition *CreateCObjFunction(object * (*func) (vm *vm,object * obj),	char *name);
+
 function_definition *CreatePythonFunction(object * code, char *name);
 
 int vm_AddFunctionDefinition(vm * vm, function_definition * fd);
@@ -87,13 +91,12 @@ vm *vm_Init(code_object * co);
 
 void vm_Close(vm * vm);
 
-// void vm_SetGlobal();
 void vm_SetGlobal(vm * vm, code_object * co);
 
-object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int argc);	// ,object 
-																									// *global
+object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int argc);	
 
-object *vm_StepObject(vm * vm, object * obj, object * caller, stack * locals,
-					  int argc, int debug);
+block_object *vm_StartObject(vm *vm,object *obj,object *caller,stack *locals,int argc);
+
+object *vm_StepObject(vm * vm);
 
 #endif

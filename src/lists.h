@@ -26,6 +26,8 @@
 
 #include "memory.h"
 #include "assert.h"
+#include "debug.h"
+extern int debug_level;
 
 
 typedef struct
@@ -42,8 +44,7 @@ typedef struct
 	void *tag;
 } ptr_list_with_tag;
 
-#define PTR_STATIC_LIST 1		// TODO add support for static lists , so
-								// indices wont change
+#define PTR_STATIC_LIST 1		// TODO add support for static lists , so indices wont change
 #define PTR_LIST_HAS_TAG 2
 
 ptr_list *ptr_CreateList(unsigned int num, int flags);

@@ -22,15 +22,18 @@
 
 #ifndef STACK_H
 #define STACK_H
-#include "object.h"
+
 #include "lists.h"
+#include "object.h"
+
 extern int debug_level;
+#include "debug.h"
 
 #define STACK_TYPE *object;
 
 // #define stack ptr_list
 
-typedef struct
+typedef struct _stack
 {
 	ptr_list *list;
 } stack;
@@ -67,5 +70,7 @@ void stack_Adjust(stack * stack, int by);
 // void stack_IncreaseSize (int items_num, stack * stack);
 
 void stack_Dump(stack * stack);
+
+int stack_IsEmpty(stack *stack);
 
 #endif

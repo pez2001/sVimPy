@@ -234,3 +234,4 @@ int ptr_IsEmpty(ptr_list * list)
 {
 	return (!list->num);
 }
+
