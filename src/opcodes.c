@@ -63,21 +63,21 @@ const opcode opcodes[] = { {OPCODE_STOP_CODE, "STOP_CODE", "Indicates end-of-cod
 {OPCODE_BINARY_OR, "BINARY_OR", "Implements TOS = TOS1 | TOS.", 0, 1},	// SUPPORTED
 {OPCODE_INPLACE_POWER, "INPLACE_POWER", "Implements in-place TOS = TOS1 ** TOS.", 0, 1},	// SUPPORTED
 {OPCODE_GET_ITER, "GET_ITER", "Implements TOS = iter(TOS).", 0, 1},	// SUPPORTED
-{OPCODE_PRINT_EXPR, "PRINT_EXPR", "Implements the expression statement for the interactive mode.\
-							TOS is removed from the stack and printed. In non-interactive mode, an expression statement is terminated with POP_STACK.", 0, 1},	// SUPPORTED 
+{OPCODE_PRINT_EXPR, "PRINT_EXPR", "Implements the expression statement for the interactive mode.\n\
+TOS is removed from the stack and printed. In non-interactive mode, an expression statement is terminated with POP_STACK.", 0, 1},	// SUPPORTED 
 {OPCODE_INPLACE_AND, "INPLACE_AND", "Implements in-place TOS = TOS1 & TOS.", 0, 1},	// SUPPORTED
 {OPCODE_INPLACE_XOR, "INPLACE_XOR", "Implements in-place TOS = TOS1 ^ TOS.", 0, 1},	// SUPPORTED
 {OPCODE_INPLACE_OR, "INPLACE_OR", "Implements in-place TOS = TOS1 | TOS.", 0, 1},	// SUPPORTED
 {OPCODE_BREAK_LOOP, "BREAK_LOOP", "Terminates a loop due to a break statement.", 0, 1},	// SUPPORTED
 {OPCODE_RETURN_VALUE, "RETURN_VALUE", "Returns with TOS to the caller of the function.", 0, 1},	// SUPPORTED
 {OPCODE_POP_BLOCK, "POP_BLOCK", "Removes 1 block from the block stack.Per frame, there is a stack of blocks, denoting nested loops,try blocks,and such.", 0, 1},	// SUPPORTED
-{OPCODE_STORE_NAME, "STORE_NAME", "Implements name = TOS. /namei/ is the index of name in the attribute co_names of the code object.\
-							The compiler tries to use STORE_LOCAL or STORE_GLOBAL if possible.", 1, 1},	// SUPPORTED
+{OPCODE_STORE_NAME, "STORE_NAME", "Implements name = TOS. /namei/ is the index of name in the attribute co_names of the code object.\n\
+The compiler tries to use STORE_LOCAL or STORE_GLOBAL if possible.", 1, 1},	// SUPPORTED
 {OPCODE_DELETE_NAME, "DELETE_NAME", "Implements del name, where /namei/ is the index into co_names attribute of the code object.", 1, 1},	// SUPPORTED
 {OPCODE_UNPACK_SEQUENCE, "UNPACK_SEQUENCE", "Unpacks TOS into /count/ individual values, which are put onto the stack right-to-left.", 1, 1},	// SUPPORTED
-{OPCODE_FOR_ITER, "FOR_ITER", "TOS is an iterator. Call its next() method. If this yields a new value, push it on the stack\
-							(leaving the iterator below it). If the iterator indicates it is exhausted TOS is popped,\
-							and the byte code counter is incremented by /delta/.", 1, 1},	// SUPPORTED
+{OPCODE_FOR_ITER, "FOR_ITER", "TOS is an iterator. Call its next() method. If this yields a new value, push it on the stack\n\
+(leaving the iterator below it). If the iterator indicates it is exhausted TOS is popped,\n\
+and the byte code counter is incremented by /delta/.", 1, 1},	// SUPPORTED
 {OPCODE_STORE_GLOBAL, "STORE_GLOBAL", "Works as STORE_NAME(/namei/), but stores the name as a global.", 1, 1},	// SUPPORTED
 {OPCODE_DELETE_GLOBAL, "DELETE_GLOBAL", "Works as DELETE_NAME(/namei/), but deletes a global name.", 1, 1},	// SUPPORTED 																											// 
 {OPCODE_LOAD_CONST, "LOAD_CONST", "Pushes \"co_consts[/consti/]\" onto the stack.", 1, 1},	// SUPPORTED
@@ -92,8 +92,8 @@ const opcode opcodes[] = { {OPCODE_STOP_CODE, "STOP_CODE", "Indicates end-of-cod
 {OPCODE_POP_JUMP_IF_FALSE, "POP_JUMP_IF_FALSE", "If TOS is false, sets the bytecode counter to target. TOS is popped.", 1, 1},	// SUPPORTED
 {OPCODE_POP_JUMP_IF_TRUE, "POP_JUMP_IF_TRUE", "If TOS is true, sets the bytecode counter to target. TOS is popped.", 1, 1},	// SUPPORTED
 {OPCODE_LOAD_GLOBAL, "LOAD_GLOBAL", "Loads the global named co_names[/namei/] onto the stack.", 1, 1},	// SUPPORTED
-{OPCODE_SETUP_LOOP, "SETUP_LOOP", "Pushes a block for a loop onto the block stack.\
-							The block spans from the current instruction with a size of /delta/ bytes.", 1, 1},	// SUPPORTED
+{OPCODE_SETUP_LOOP, "SETUP_LOOP", "Pushes a block for a loop onto the block stack.\n\
+The block spans from the current instruction with a size of /delta/ bytes.", 1, 1},	// SUPPORTED
 {OPCODE_LOAD_FAST, "LOAD_FAST", "Pushes a reference to the local co_varnames[/var_num/] onto the stack.", 1, 1},	// SUPPORTED
 {OPCODE_STORE_FAST, "STORE_FAST", "Stores TOS into the local co_varnames[/var_num/].", 1, 1},	// SUPPORTED
 {OPCODE_DELETE_FAST, "DELETE_FAST", "Deletes local co_varnames[/var_num/].", 1, 1},	// SUPPORTED
@@ -102,36 +102,36 @@ const opcode opcodes[] = { {OPCODE_STOP_CODE, "STOP_CODE", "Indicates end-of-cod
 {OPCODE_BINARY_LSHIFT, "BINARY_LSHIFT", "Implements TOS = TOS1 << TOS.", 0, 1},	// SUPPORTED
 {OPCODE_BINARY_RSHIFT, "BINARY_RSHIFT", "Implements TOS = TOS1 >> TOS.", 0, 1},	// SUPPORTED
 {OPCODE_EXTENDED_ARG, "EXTENDED_ARG", "Support for opargs more than 16 bits long.", 1, 1},	// SUPPORTED
-{OPCODE_CALL_FUNCTION, "CALL_FUNCTION", "Calls a function. The low byte of /argc/ indicates the number of positional parameters,\
-							the high byte the number of keyword parameters. On the stack, the opcode finds the keyword parameters first.\
-							For each keyword argument, the value is on top of the key. Below the keyword parameters, the positional parameters are on the stack,\
-							with the right-most parameter on top. Below the parameters, the function object to call is on the stack.", 1, 1},	// SUPPORTED
-{OPCODE_MAKE_FUNCTION, "MAKE_FUNCTION", "Pushes a new function object on the stack. TOS is the code associated with the function.\
-							The function object is defined to have /argc/ default parameters, which are found below TOS.", 1, 1},	// SKIPPED 																																	// ATM
-{OPCODE_BUILD_SLICE, "BUILD_SLICE", "Pushes a slice object on the stack. /argc/ must be 2 or 3. If it is 2, slice(TOS1, TOS) is pushed;\
-							if it is 3, slice(TOS2, TOS1, TOS) is pushed. See the slice() built-in function for more information.", 1, 0},
-{OPCODE_LOAD_DEREF, "LOAD_DEREF", "Loads the cell contained in slot /i/ of the cell and free variable storage.\
-							Pushes a reference to the object the cell contains on the stack.", 1, 1},
+{OPCODE_CALL_FUNCTION, "CALL_FUNCTION", "Calls a function. The low byte of /argc/ indicates the number of positional parameters,\n\
+the high byte the number of keyword parameters. On the stack, the opcode finds the keyword parameters first.\n\
+For each keyword argument, the value is on top of the key. Below the keyword parameters, the positional parameters are on the stack,\n\
+with the right-most parameter on top. Below the parameters, the function object to call is on the stack.", 1, 1},	// SUPPORTED
+{OPCODE_MAKE_FUNCTION, "MAKE_FUNCTION", "Pushes a new function object on the stack. TOS is the code associated with the function.\n\
+The function object is defined to have /argc/ default parameters, which are found below TOS.", 1, 1},	// SKIPPED 																																	// ATM
+{OPCODE_BUILD_SLICE, "BUILD_SLICE", "Pushes a slice object on the stack. /argc/ must be 2 or 3. If it is 2, slice(TOS1, TOS) is pushed;\n\
+if it is 3, slice(TOS2, TOS1, TOS) is pushed. See the slice() built-in function for more information.", 1, 0},
+{OPCODE_LOAD_DEREF, "LOAD_DEREF", "Loads the cell contained in slot /i/ of the cell and free variable storage.\n\
+Pushes a reference to the object the cell contains on the stack.", 1, 1},
 {OPCODE_STORE_DEREF, "STORE_DEREF", "Stores TOS into the cell contained in slot /i/ of the cell and free variable storage.", 1, 1},
 {OPCODE_DELETE_DEREF, "DELETE_DEREF", "Empties the cell contained in slot i of the cell and free variable storage. Used by the del statement.", 1, 1},
-{OPCODE_CALL_FUNCTION_VAR, "CALL_FUNCTION_VAR", "Calls a function. /argc/ is interpreted as in CALL_FUNCTION.\
-							The top element on the stack contains the variable argument list, followed by keyword and positional arguments.", 1, 0},
-{OPCODE_CALL_FUNCTION_KW, "CALL_FUNCTION_KW", "Calls a function. /argc/ is interpreted as in CALL_FUNCTION.\
-							The top element on the stack contains the keyword arguments dictionary, followed by explicit keyword and positional arguments.", 1, 0},
-{OPCODE_CALL_FUNCTION_VAR_KW, "CALL_FUNCTION_VAR_KW", "Calls a function. /argc/ is interpreted as in CALL_FUNCTION.\
-							The top element on the stack contains the keyword arguments dictionary, followed by the variable-arguments tuple,\
-							followed by explicit keyword and positional arguments.", 1, 0},
-{OPCODE_END_FINALLY, "END_FINALLY", "Terminates a finally clause. The interpreter recalls whether the exception has to be re-raised,\
-							or whether the function returns, and continues with the outer-next block.", 0, 0},
+{OPCODE_CALL_FUNCTION_VAR, "CALL_FUNCTION_VAR", "Calls a function. /argc/ is interpreted as in CALL_FUNCTION.\n\
+The top element on the stack contains the variable argument list, followed by keyword and positional arguments.", 1, 0},
+{OPCODE_CALL_FUNCTION_KW, "CALL_FUNCTION_KW", "Calls a function. /argc/ is interpreted as in CALL_FUNCTION.\n\
+The top element on the stack contains the keyword arguments dictionary, followed by explicit keyword and positional arguments.", 1, 0},
+{OPCODE_CALL_FUNCTION_VAR_KW, "CALL_FUNCTION_VAR_KW", "Calls a function. /argc/ is interpreted as in CALL_FUNCTION.\n\
+The top element on the stack contains the keyword arguments dictionary, followed by the variable-arguments tuple,\n\
+followed by explicit keyword and positional arguments.", 1, 0},
+{OPCODE_END_FINALLY, "END_FINALLY", "Terminates a finally clause. The interpreter recalls whether the exception has to be re-raised,\n\
+or whether the function returns, and continues with the outer-next block.", 0, 0},
 {OPCODE_LOAD_BUILD_CLASS, "LOAD_BUILD_CLASS", "Pushes builtins.__build_class__() onto the stack. It is later called by CALL_FUNCTION to construct a class.", 0, 0},
-{OPCODE_BUILD_CLASS, "BUILD_CLASS", "Creates a new class object. TOS is the methods dictionary,\
-							TOS1 the tuple of the names of the base classes, and TOS2 the class name.", 0, 0},
-{OPCODE_RAISE_VARARGS, "RAISE_VARARGS", "Raises an exception. /argc/ indicates the number of parameters to the raise statement,\
-							ranging from 0 to 3. The handler will find the traceback as TOS2, the parameter as TOS1, and the exception as TOS.", 1, 0},
-{OPCODE_IMPORT_FROM, "IMPORT_FROM", "Loads the attribute co_names[/namei/] from the module found in TOS.\
-							The resulting object is pushed onto the stack, to be subsequently stored by a STORE_FAST instruction.", 1, 0},
-{OPCODE_IMPORT_STAR, "IMPORT_STAR", "Loads all symbols not starting with \"_\" directly from the module TOS to the local namespace.\
-							The module is popped after loading all names. This opcode implements from module import *.", 0, 0},
+{OPCODE_BUILD_CLASS, "BUILD_CLASS", "Creates a new class object. TOS is the methods dictionary,\n\
+TOS1 the tuple of the names of the base classes, and TOS2 the class name.", 0, 0},
+{OPCODE_RAISE_VARARGS, "RAISE_VARARGS", "Raises an exception. /argc/ indicates the number of parameters to the raise statement,\n\
+ranging from 0 to 3. The handler will find the traceback as TOS2, the parameter as TOS1, and the exception as TOS.", 1, 0},
+{OPCODE_IMPORT_FROM, "IMPORT_FROM", "Loads the attribute co_names[/namei/] from the module found in TOS.\n\
+The resulting object is pushed onto the stack, to be subsequently stored by a STORE_FAST instruction.", 1, 0},
+{OPCODE_IMPORT_STAR, "IMPORT_STAR", "Loads all symbols not starting with \"_\" directly from the module TOS to the local namespace.\n\
+The module is popped after loading all names. This opcode implements from module import *.", 0, 0},
 {OPCODE_YIELD_VALUE, "YIELD_VALUE", "Pops TOS and yields it from a generator.", 0, 0},
 {OPCODE_STORE_LOCALS, "STORE_LOCALS", "Pops TOS from the stack and stores it as the current frame’s f_locals. This is used in class construction.", 0, 0},
 {OPCODE_STORE_MAP, "STORE_MAP", "Store a key and value pair in a dictionary. Pops the key and value while leaving the dictionary on the stack.", 0, 1},
@@ -139,32 +139,32 @@ const opcode opcodes[] = { {OPCODE_STOP_CODE, "STOP_CODE", "Indicates end-of-cod
 {OPCODE_DELETE_ATTR, "DELETE_ATTR", "Implements del TOS.name, using /namei/ as index into co_names.", 1, 0},
 {OPCODE_SETUP_EXCEPT, "SETUP_EXCEPT", "Pushes a try block from a try-except clause onto the block stack. /delta/ points to the first except block.", 1, 0},
 {OPCODE_SETUP_FINALLY, "SETUP_FINALLY", "Pushes a try block from a try-except clause onto the block stack. /delta/ points to the finally block.", 1, 0},
-{OPCODE_WITH_CLEANUP, "WITH_CLEANUP", "Cleans up the stack when a with statement block exits.\
-							TOS is the context manager’s __exit__() bound method. Below TOS are 1–3 values\
-							indicating how/why the finally clause was entered:\
-							SECOND = None\
-							(SECOND, THIRD) = (WHY_{RETURN,CONTINUE}), retval\
-							SECOND = WHY_*; no retval below it\
-							(SECOND, THIRD, FOURTH) = exc_info()\
-							In the last case, TOS(SECOND, THIRD, FOURTH) is called, otherwise TOS(None, None, None). In addition, TOS is removed from the stack.\
-							If the stack represents an exception, and the function call returns a ‘true’ value, this information is “zapped”\
-							and replaced with a single WHY_SILENCED to prevent END_FINALLY from re-raising the exception. (But non-local gotos will still be resumed.)", 0, 0},
-{OPCODE_BUILD_MAP, "BUILD_MAP", "Pushes a new empty dictionary object onto the stack.\
-							The argument is ignored and set to /zero/ by the compiler.", 1, 1},
-{OPCODE_BUILD_SET, "BUILD_SET", "Pushes a new empty set object onto the stack.\
-							The argument is ignored and set to /zero/ by the compiler.", 1, 1},
-{OPCODE_MAKE_CLOSURE, "MAKE_CLOSURE", "Creates a new function object, sets its func_closure slot, and pushes it on the stack.\
-							TOS is the code associated with the function. If the code object has N free variables, the next N items on the stack are the cells\
-							for these variables. The function also has /argc/ default parameters, where are found before the cells.", 1, 1},
-{OPCODE_LOAD_CLOSURE, "LOAD_CLOSURE", "Pushes a reference to the cell contained in slot /i/ of the cell and free variable storage.\
-							The name of the variable is co_cellvars[i] if i is less than the length of co_cellvars. Otherwise it is co_freevars[i - len(co_cellvars)].", 1, 1},
+{OPCODE_WITH_CLEANUP, "WITH_CLEANUP", "Cleans up the stack when a with statement block exits.\n\
+TOS is the context manager’s __exit__() bound method. Below TOS are 1–3 values\n\
+indicating how/why the finally clause was entered:\n\
+SECOND = None\n\
+(SECOND, THIRD) = (WHY_{RETURN,CONTINUE}), retval\n\
+SECOND = WHY_*; no retval below it\n\
+(SECOND, THIRD, FOURTH) = exc_info()\n\
+In the last case, TOS(SECOND, THIRD, FOURTH) is called, otherwise TOS(None, None, None). In addition, TOS is removed from the stack.\n\
+If the stack represents an exception, and the function call returns a ‘true’ value, this information is “zapped”\n\
+and replaced with a single WHY_SILENCED to prevent END_FINALLY from re-raising the exception. (But non-local gotos will still be resumed.)", 0, 0},
+{OPCODE_BUILD_MAP, "BUILD_MAP", "Pushes a new empty dictionary object onto the stack.\n\
+The argument is ignored and set to /zero/ by the compiler.", 1, 1},
+{OPCODE_BUILD_SET, "BUILD_SET", "Pushes a new empty set object onto the stack.\n\
+The argument is ignored and set to /zero/ by the compiler.", 1, 1},
+{OPCODE_MAKE_CLOSURE, "MAKE_CLOSURE", "Creates a new function object, sets its func_closure slot, and pushes it on the stack.\n\
+TOS is the code associated with the function. If the code object has N free variables, the next N items on the stack are the cells\n\
+for these variables. The function also has /argc/ default parameters, where are found before the cells.", 1, 1},
+{OPCODE_LOAD_CLOSURE, "LOAD_CLOSURE", "Pushes a reference to the cell contained in slot /i/ of the cell and free variable storage.\n\
+The name of the variable is co_cellvars[i] if i is less than the length of co_cellvars. Otherwise it is co_freevars[i - len(co_cellvars)].", 1, 1},
 {OPCODE_LIST_APPEND,"LIST_APPEND", "Calls list.append(TOS[-i], TOS). Used to implement list comprehensions.", 1, 0},
 {OPCODE_SET_ADD, "SET_ADD","Calls set.add(TOS1[-i], TOS). Used to implement set comprehensions.", 1, 0},
 {OPCODE_MAP_ADD, "MAP_ADD","Calls dict.setitem(TOS1[-i], TOS, TOS1). Used to implement dict comprehensions.", 1, 0},
-{OPCODE_UNPACK_EX, "UNPACK_EX","Implements assignment with a starred target: Unpacks an iterable in TOS into individual values,\
-							where the total number of values can be smaller than the number of items in the iterable:\
-							one the new values will be a list of all leftover items.The low byte of counts is the number of values\
-							before the list value, the high byte of counts the number of values after it. The resulting values are put onto the stack right-to-left.", 1, 0},
+{OPCODE_UNPACK_EX, "UNPACK_EX","Implements assignment with a starred target: Unpacks an iterable in TOS into individual values,\n\
+where the total number of values can be smaller than the number of items in the iterable:\n\
+one the new values will be a list of all leftover items.The low byte of counts is the number of values\n\
+before the list value, the high byte of counts the number of values after it. The resulting values are put onto the stack right-to-left.", 1, 0},
 {OPCODE_LOAD_ATTR, "LOAD_ATTR", "Replaces TOS with getattr(TOS, co_names[/namei/]).", 1, 0}
 };
 

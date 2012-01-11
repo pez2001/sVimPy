@@ -37,6 +37,8 @@ object *if_sum(vm *vm,stack * stack);
 
 object *if_list(vm *vm,stack * stack);
 
-// object *BinaryOp(object *tos,object *tos1,object *tos2,char op);
+object *BinaryOp(object *tos,object *tos1,unsigned char op);
+
+object *custom_code(vm *vm,stack * stack);
 
 #endif

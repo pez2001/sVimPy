@@ -99,4 +99,6 @@ block_object *vm_StartObject(vm *vm,object *obj,object *caller,stack *locals,int
 
 object *vm_StepObject(vm * vm);
 
+void vm_DumpCode(vm *vm,int dump_descriptions,int from_start);
+
 #endif

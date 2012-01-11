@@ -41,35 +41,37 @@ typedef struct _stack
 
 stack *stack_Init();	// long items_num, 
 
-object *stack_Pop(stack * stack,ptr_list *gc);
+object *stack_Pop(stack *stack,ptr_list *gc);
 
-void stack_Push(stack * stack, object * x);
+void stack_Push(stack *stack, object * x);
 
-void stack_Close(stack * stack, int free_objects);
+void stack_Close(stack *stack, int free_objects);
 
-int stack_Contains(stack * stack, object * x);
+void stack_Clear(stack *stack, int free_objects);
 
-object *stack_Top(stack * stack);
+int stack_Contains(stack *stack, object * x);
 
-object *stack_Bottom(stack * stack);
+object *stack_Top(stack *stack);
 
-void stack_SetBottom(stack * stack, object * x);
+object *stack_Bottom(stack *stack);
 
-void stack_SetTop(stack * stack, object * x);
+void stack_SetBottom(stack *stack, object * x);
 
-object *stack_Second(stack * stack);
+void stack_SetTop(stack *stack, object * x);
 
-void stack_SetSecond(stack * stack, object * x);
+object *stack_Second(stack *stack);
 
-object *stack_Third(stack * stack);
+void stack_SetSecond(stack *stack, object * x);
 
-void stack_SetThird(stack * stack, object * x);
+object *stack_Third(stack *stack);
 
-void stack_Adjust(stack * stack, int by);
+void stack_SetThird(stack *stack, object * x);
+
+void stack_Adjust(stack *stack, int by);
 
 // void stack_IncreaseSize (int items_num, stack * stack);
 
-void stack_Dump(stack * stack);
+void stack_Dump(stack *stack);
 
 int stack_IsEmpty(stack *stack);
 

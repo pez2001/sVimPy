@@ -30,16 +30,6 @@ block_object *AllocBlockObject()
 			mem_malloc(sizeof(block_object), "AllocBlockObject() return"));
 }
 
-void FreeBlockObject(object *obj)
-{
-		if(((block_object*)obj)->iter != NULL)
-			FreeObject(((block_object*)obj)->iter);
-		//printf("closing block stack\n");
-		if(((block_object*)obj)->stack != NULL)
-			stack_Close(((block_object*)obj)->stack);
-		//printf("closed block\n");
-}
-
 object *AllocEmptyObject()
 {
 	return ((object *)
@@ -93,14 +83,29 @@ unicode_object *AllocUnicodeObject()
    return((unicode_object*)mem_malloc(sizeof(unicode_object), "AllocUnicodeObject() return")); 
 }
 
+object *AllocRefObject()
+{
+   return((ref_object*)mem_malloc(sizeof(ref_object), "AllocRefObject() return")); 
+}
+
 int_object *AllocIntObject() 
 {
    return((int_object*)mem_malloc(sizeof(int_object), "AllocIntObject() return")); 
 }
 
+float_object *AllocFloatObject() 
+{
+   return((float_object*)mem_malloc(sizeof(float_object), "AllocFloatObject() return")); 
+}
+
 int IsIntObject(object * obj)
 {
 	return (obj->type == TYPE_INT);
+}
+
+int IsFloatObject(object * obj)
+{
+	return (obj->type == TYPE_BINARY_FLOAT);
 }
 
 int IsStringObject(object * obj)
@@ -157,12 +162,12 @@ int_object *AsIntObject(object *obj)
  {
    return((int_object*)obj); 
   }
-   
-object *AllocRefObject()
-{
-   return((ref_object*)mem_malloc(sizeof(ref_object), "AllocRefObject() return")); 
-}
-   
+
+float_object *AsFloatObject(object *obj)
+ {
+   return((float_object*)obj); 
+  }   
+  
 ref_object *AsRefObject(object *obj)
 {   
    return((ref_object*)obj); 
@@ -200,6 +205,21 @@ int_object *CreateIntObject(long value,int flags)
 {
 	int_object *r = AllocIntObject();
 	r->type = TYPE_INT;
+	r->ref_count = 0;
+	r->flags = flags;
+	r->value = value;
+	if((debug_level & DEBUG_CREATION) > 0)
+	{
+		printf("created object\n");
+		DumpObject(r,0);
+	}
+	return(r);
+}
+
+float_object *CreateFloatObject(float value,int flags)
+{
+	float_object *r = AllocFloatObject();
+	r->type = TYPE_BINARY_FLOAT;
 	r->ref_count = 0;
 	r->flags = flags;
 	r->value = value;
@@ -318,6 +338,16 @@ kv_object *ConvertToKVObjectValued(object *key,object *value)
 	return(kv);
 }
 
+void FreeBlockObject(object *obj)
+{
+		if(((block_object*)obj)->iter != NULL)
+			FreeObject(((block_object*)obj)->iter);
+		//printf("closing block stack\n");
+		if(((block_object*)obj)->stack != NULL)
+			stack_Close(((block_object*)obj)->stack);
+		//printf("closed block\n");
+}
+
 void FreeObject(object * obj)
 {
 	//assert(obj != NULL);
@@ -364,7 +394,11 @@ void FreeObject(object * obj)
 		break;
 	case TYPE_INT:
 		// printf("freeing int object @%x\n",obj);
-		objects_header_total -= sizeof(empty_object);
+		objects_header_total -= sizeof(int_object);
+		break;
+	case TYPE_BINARY_FLOAT:
+		// printf("freeing float object @%x\n",obj);
+		objects_header_total -= sizeof(float_object);
 		break;
 	case TYPE_KV:
 		objects_header_total -= sizeof(kv_object);
@@ -452,8 +486,17 @@ void PrintObject(object * obj)
 		case TYPE_REF:
 			PrintObject(((ref_object*)obj)->ref);
 			break;
+		case TYPE_ELLIPSIS:
+			printf("Ellipsis");
+			break;
+		case TYPE_NONE:
+			printf("None");
+			break;
 		case TYPE_INT:
 			printf("%d", ((int_object*)obj)->value);
+			break;
+		case TYPE_BINARY_FLOAT:
+			printf("%7g", ((float_object*)obj)->value);
 			break;
 		case TYPE_KV:
 			PrintObject(((kv_object*)obj)->value);
@@ -509,6 +552,9 @@ void DumpObject(object * obj, int level)
 		printf("ref object\n");
 		DumpObject(((ref_object*)obj)->ref,level+1);
 		break;
+	case TYPE_ELLIPSIS:
+		printf("ellipsis	 object\n");
+		break;
 	case TYPE_TRUE:
 		printf("true object\n");
 		break;
@@ -520,6 +566,9 @@ void DumpObject(object * obj, int level)
 		break;
 	case TYPE_NONE:
 		printf("NONE object\n");
+		break;
+	case TYPE_BINARY_FLOAT:
+		printf("float object: %7g\n", ((float_object*)obj)->value);
 		break;
 	case TYPE_INT:
 		printf("int object: %d\n", ((int_object*)obj)->value);
@@ -633,7 +682,8 @@ int object_compare(object *a,object *b)
 		return(0);
 	if(a== NULL || b == NULL)
 		return (-1);
-	
+	if(a->type != b->type)
+		return(-1);
 	switch (a->type)
 	{
 	case TYPE_NULL:
@@ -646,6 +696,9 @@ int object_compare(object *a,object *b)
 		return(object_compare(((kv_object*)a)->key,((kv_object*)b)->key) && object_compare(((kv_object*)a)->value,((kv_object*)b)->value));
 	case TYPE_INT:
 		return(((int_object*)a)->value == ((int_object*)b)->value);
+		break;
+	case TYPE_BINARY_FLOAT:
+		return(((float_object*)a)->value == ((float_object*)b)->value);
 		break;
 	case TYPE_UNICODE:
 		return(strcmp(((unicode_object*)a)->value,((unicode_object*)b)->value));
@@ -705,6 +758,16 @@ object *CopyObject(object *obj)
 		r->ref_count  = 0;
 		r->flags = obj->flags;
 		r->value = ((int_object*)obj)->value;
+		return(r);
+		}
+		break;
+	case TYPE_BINARY_FLOAT:
+		{
+		float_object *r = AllocFloatObject();
+		r->type = obj->type;
+		r->ref_count  = 0;
+		r->flags = obj->flags;
+		r->value = ((float_object*)obj)->value;
 		return(r);
 		}
 		break;
@@ -830,6 +893,11 @@ void SetDictItem(object *tuple,object *key,object *value)
 void IncRefCount(object *obj)
 {
 	obj->ref_count++;
+	if((debug_level & DEBUG_GC) > 0)
+		{
+		printf("object has gained a ref \n");
+		DumpObject(obj,0);
+		}
 }
 
 void DecRefCountGC(object *obj,ptr_list *gc)
@@ -1093,6 +1161,63 @@ long ReadLong(FILE * f)
 	return (r);
 }
 
+#define CONV_PREC 4
+float ConvertDouble(double d)
+{
+long g[CONV_PREC];
+
+g[0] = 0;
+int e = (int)d;
+float ef = (float)e;
+float r = (float)((int)d);
+printf("d:%f,e:%d,r:%f\n",d,e,r);
+
+for(int i = 1;i<CONV_PREC;i++)
+{
+	double x = (double)long_pow(10,i);
+	printf("x:%f,d-e:%f\n",x,(d-ef));
+	float gf = x*(d-ef);
+	g[i] = (long)gf;
+}
+for(int i = 1;i<CONV_PREC;i++)
+{
+printf("g[%d]:%d\n",i,g[i]);
+
+}
+for(int i = CONV_PREC-1;i>0;i--)
+{
+long d = (g[i-1]*long_pow(10,i-2));
+printf("d:%d\n",d);
+
+g[i] = g[i] - d;
+printf("g[%d]:%d\n",i,g[i]);
+}
+for(int i = 1;i<CONV_PREC;i++)
+{
+float a = (float) g[i] /(float) long_pow(10,i);
+printf("a:%f\n",a);
+r+= a;
+
+}
+
+
+return(r);
+}
+
+float ReadFloat(FILE * f)
+{
+	float r = 0;
+	double t = 0;
+	int g = 0;
+	int read = fread(&t, 8, 1, f);
+	//int read = fread(&t, 4, 1, f);
+	//read = fread(&r, 4, 1, f);
+	//r = ConvertDouble(t);
+	r = (float)t;
+	//printf("r:%f\n",r);
+	//printf("r:%f,t:%f\n",r,t);
+	return (r);
+}
 char ReadChar(FILE * f)
 {
 	char r = 0;
@@ -1121,6 +1246,7 @@ object *ReadObject(FILE * f)
 		case TYPE_NULL:
 		case TYPE_TRUE:
 		case TYPE_FALSE:
+		case TYPE_ELLIPSIS:
 		{
 		// printf("allocating empty object\n");
 		empty_object *obj = AllocEmptyObject();
@@ -1281,21 +1407,24 @@ object *ReadObject(FILE * f)
 		return(obj);
 		}
 		break;
+	case TYPE_BINARY_FLOAT:
+		{
+		float_object *obj = AllocFloatObject();
+		float n = ReadFloat(f);
+		obj->ref_count = 1;
+		obj->flags = 0;
+		obj->value = n;
+		//printf("read float:%7g\n",obj->value);
+		obj->type = TYPE_BINARY_FLOAT;
+		return(obj);
+		}
+		break;
 	case TYPE_INT:
 		{
 		// printf("reading int\n");
 		int_object *obj = AllocIntObject();
 		long n = ReadLong(f);
 		obj->ref_count = 1;
-
-		// unicode_object *uo = AllocUnicodeObject(); 
-		// printf("len:%d\n",n);
-		// char *unicode_string = (char*)mem_malloc(n+1);
-		// memset(unicode_string,0,n+1);
-		// int uread = fread(unicode_string,n,1,f);
-		// uo->len = n;
-		// uo->content = unicode_string;
-		// obj->ptr = uo;
 		obj->flags = 0;
 		obj->value = n;
 		obj->type = TYPE_INT;

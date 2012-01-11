@@ -105,7 +105,7 @@ typedef struct
 {
 	char type;
 	unsigned char flags;
-	short ref_count;
+	unsigned short ref_count;
 	void *value;
 	//void *value_ptr;			// TODO remove this member --> TO DECREASE
 								// MEMORY USAGE
@@ -115,7 +115,7 @@ typedef struct
 {
 	char type;
 	unsigned char flags;
-	short ref_count;
+	unsigned short  ref_count;
 	object *ref;
 } ref_object;
 
@@ -124,7 +124,7 @@ typedef struct
 {
 	char type;
 	unsigned char flags;
-	short ref_count;
+	unsigned short  ref_count;
 	long value;
 } int_object;
 
@@ -132,7 +132,7 @@ typedef struct
 {
 	char type;
 	unsigned char flags;
-	short ref_count;
+	unsigned short  ref_count;
 	float value;
 } float_object;
 
@@ -140,7 +140,7 @@ typedef struct
 {
 	char type;
 	unsigned char flags;
-	short ref_count;
+	unsigned short  ref_count;
 	char *value;
 }unicode_object;
 
@@ -149,7 +149,7 @@ typedef struct
 {
 	char type;
 	unsigned char flags;
-	short ref_count;
+	unsigned short  ref_count;
 	void *value;
 	void *key;
 } kv_object;				// TO OPTIMIZE MEMORY USAGE -> only used in
@@ -159,14 +159,14 @@ typedef struct
 {
 	char type;
 	unsigned char flags;
-	short ref_count;
+	unsigned short  ref_count;
 } empty_object;					// TO OPTIMIZE MEMORY USAGE
 
 typedef struct
 {
 	char type;
 	unsigned char flags;
-	short ref_count;
+	unsigned short  ref_count;
 	long argcount;
 	long kwonlyargcount;
 	long nlocals;
@@ -190,7 +190,7 @@ typedef struct
 {
 	char type;
 	unsigned char flags;
-	short ref_count;
+	unsigned short  ref_count;
 	char *content;
 	long len;
 } string_object;
@@ -200,7 +200,7 @@ typedef struct
 {
 	char type;
 	unsigned char flags;
-	short ref_count;
+	unsigned short  ref_count;
 	ptr_list *list
 } tuple_object;
 
@@ -219,7 +219,7 @@ typedef struct
 {
 	char type;
 	unsigned char flags;
-	short ref_count;
+	unsigned short  ref_count;
 	code_object *code;
 	long start;
 	long len;
@@ -233,8 +233,6 @@ typedef struct
 
 
 block_object *AllocBlockObject();
-
-void FreeBlockObject(object *obj);
 
 void IncRefCount(object *obj);
 
@@ -270,13 +268,9 @@ code_object *AllocCodeObject();
 
 int_object *AllocIntObject();
 
+float_object *AllocFloatObject();
+
 function_object *AllocFunctionObject();
-
-long ReadLong(FILE * f);
-
-char ReadChar(FILE * f);
-
-object *ReadObject(FILE * f);
 
 object *AsObject(void *ptr);
 
@@ -289,6 +283,8 @@ ref_object *AsRefObject(object *obj);
 //caller_object *AsCallerObject(object * obj);
 int_object *AsIntObject(object * obj);
 
+float_object *AsFloatObject(object * obj);
+
 function_object *AsFunctionObject(object * obj);
 
 tuple_object *AsTupleObject(object * obj);
@@ -296,6 +292,8 @@ tuple_object *AsTupleObject(object * obj);
 unicode_object *AsUnicodeObject(object *obj);
 
 int IsIntObject(object * obj);
+
+int IsFloatObject(object * obj);
 
 int IsStringObject(object * obj);
 
@@ -307,11 +305,21 @@ int IsTupleObject(object * obj);
 
 int IsRefObject(object * obj);
 
+long ReadLong(FILE * f);
+
+float ReadFloat(FILE * f);
+
+char ReadChar(FILE * f);
+
+object *ReadObject(FILE * f);
+
 object *DissolveRef(object *obj);
 
 ref_object *CreateRefObject(object *ref_to,int flags);
 
 int_object *CreateIntObject(long value,int flags);
+
+float_object *CreateFloatObject(float value,int flags);
 
 unicode_object *CreateUnicodeObject(char *value,int flags);
 
@@ -322,6 +330,8 @@ string_object *CreateStringObject(char *bytes,int len,int flags);
 kv_object *CreateKVObject(object *key,object *value,int flags);
 
 empty_object *CreateEmptyObject(char type,int flags);
+
+void FreeBlockObject(object *obj);
 
 void FreeObject(object * obj);
 

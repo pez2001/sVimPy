@@ -170,25 +170,30 @@ void AddInternalFunctions(vm *vm)
 	vm_AddFunctionDefinition(vm, range);
 	vm_AddFunctionDefinition(vm, print);
 	vm_AddFunctionDefinition(vm, sum);
+
+	function_definition *cc = CreateCFunction(&custom_code, "custom_code");
+	vm_AddFunctionDefinition(vm, cc);
+
 }
 
 int main(int argc, char *argv[])
 {
-	debug_level |= DEBUG_INTERACTIVE;
+
+	//debug_level |= DEBUG_INTERACTIVE;
 	debug_level |= DEBUG_MEMORY;
-	debug_level |= DEBUG_SHOW_OPCODES;
+	//debug_level |= DEBUG_SHOW_OPCODES;
 	debug_level |= DEBUG_FULL_DUMP;
-	debug_level |= DEBUG_STACK;
-	debug_level |= DEBUG_LISTS;
-	debug_level |= DEBUG_GC;
-	debug_level |= DEBUG_VERBOSE_STEP;
-	debug_level |= DEBUG_VM;
-	debug_level |= DEBUG_FREEING;
-	debug_level |= DEBUG_ALLOCS;
+	//debug_level |= DEBUG_STACK;
+	//debug_level |= DEBUG_LISTS;
+	//debug_level |= DEBUG_GC;
+	//debug_level |= DEBUG_VERBOSE_STEP;
+	//debug_level |= DEBUG_VM;
+	//debug_level |= DEBUG_FREEING;
+	//debug_level |= DEBUG_ALLOCS;
 	debug_level |= DEBUG_DUMP_UNSUPPORTED;
-	debug_level |= DEBUG_DUMP_OBJECT;
-	debug_level |= DEBUG_CREATION;
-	debug_level |= DEBUG_VERBOSE_FREEING;
+	//debug_level |= DEBUG_DUMP_OBJECT;
+	//debug_level |= DEBUG_CREATION;
+	//debug_level |= DEBUG_VERBOSE_FREEING;
 	debug_level |= DEBUG_VERBOSE_TESTS;	
 	//debug_level |= DEBUG_PTR_LISTS;
 	//debug_level |= DEBUG_INTERNAL_FUNCTIONS;
@@ -207,13 +212,37 @@ int main(int argc, char *argv[])
 	
 	//crashing or leaking memory
 
+	//custom code
+	OpenPYC("tests/test45.pyc", vm);
 	
+	//most binary ops test
+	OpenPYC("tests/test14.pyc", vm);
+	OpenPYC("tests/test14b.pyc", vm);
+	OpenPYC("tests/test14f.pyc", vm);
+	OpenPYC("tests/test14bf.pyc", vm);
 
+	//floats
+	OpenPYC("tests/test44.pyc", vm);
+	OpenPYC("tests/test42.pyc", vm);
+	OpenPYC("tests/test41.pyc", vm);
+
+	//extended arg
+	OpenPYC("tests/test43.pyc", vm);
+	OpenPYC("tests/test40.pyc", vm);
+
+	
+	
+	//function parameters
+	OpenPYC("tests/test36.pyc", vm);//not supported opcode call_function_var
+	OpenPYC("tests/test37.pyc", vm);//not supported opcode call_function_kw
+	OpenPYC("tests/test38.pyc", vm);//not supported opcode call_function_var_kw 
+	OpenPYC("tests/test39.pyc", vm);//call_function
+	
 	
 	//closures and deref opcodes
-	//OpenPYC("tests/test29.pyc", vm);//not supported opcode store_deref
+	OpenPYC("tests/test29.pyc", vm);//not supported opcode store_deref
 
-	OpenPYC("tests/test21ba2.pyc", vm);
+	/*OpenPYC("tests/test21ba2.pyc", vm);
 	OpenPYC("tests/test21.pyc", vm);
 	OpenPYC("tests/test21b.pyc", vm);
 	OpenPYC("tests/test21ba.pyc", vm);
@@ -256,16 +285,14 @@ int main(int argc, char *argv[])
 	OpenPYC("tests/e_small.pyc", vm);
 	OpenPYC("tests/e20.pyc", vm);
 	
-	//most binary ops test
-	OpenPYC("tests/test14.pyc", vm);
-
 	//dictionaries
 	OpenPYC("tests/test30.pyc", vm);
 	OpenPYC("tests/test31.pyc", vm);
 
 	//brute prime (classless it takes longer because of range
 	OpenPYC("tests/e_med.pyc", vm);
-	
+	OpenPYC("tests/e_bigger.pyc", vm);*/
+
 	//generators
 	//OpenPYC("tests/test24.pyc", vm);
 	//OpenPYC("tests/test25.pyc", vm);
@@ -275,6 +302,7 @@ int main(int argc, char *argv[])
 	//OpenPYC("tests/test.pyc", vm);
 	//OpenPYC("tests/test10.pyc", vm);
 	//OpenPYC("tests/e.pyc", vm);
+	
 	if((debug_level & DEBUG_VERBOSE_TESTS) > 0)
 		printf("closing vm\n");
 	vm_Close(vm);

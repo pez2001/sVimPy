@@ -158,7 +158,7 @@ void *ptr_Remove(ptr_list * list, int index)
 		}
 		if (list->num - 1 == 0)
 		{
-			// printf("freeing empty list\n");
+			//printf("freeing empty list\n");
 			assert(mem_free(list->items));
 			list->items = NULL;
 			list->num = 0;

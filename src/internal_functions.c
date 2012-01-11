@@ -22,6 +22,290 @@
 
 #include "internal_functions.h"
 
+object *StringAdd(object *a,object *b)
+{
+	char *as;
+	char *bs;
+	as = ((unicode_object *)a)->value;
+	bs = ((unicode_object *)b)->value;
+	char *tmp = str_Cat(as,bs);
+	unicode_object *r = CreateUnicodeObject(tmp,0);
+	return(r);
+}
+
+object *BinaryOp(object *tos,object *tos1,unsigned char op)
+{
+	object *new_tos = NULL;
+	if (tos->type == TYPE_UNICODE && tos1->type == TYPE_UNICODE && op == OPCODE_BINARY_ADD)
+	{
+		return(StringAdd(tos,tos1));
+	}
+	
+	if (tos->type == TYPE_INT && tos1->type == TYPE_TUPLE && op == OPCODE_BINARY_MULTIPLY)
+	{
+		long a = ((int_object*)tos)->value;
+
+		int mnum = ((tuple_object *) tos1)->list->num;
+		if (mnum == 1)
+			tos1 = ((tuple_object *) tos1)->list->items[0];
+
+		tuple_object *mtr = CreateTuple(a,0);
+		for (int i = 0; i < a; i++)
+		{
+			SetItem(mtr,i,tos1);
+		}
+		if((debug_level & DEBUG_VERBOSE_STEP) > 0)
+			DumpObject(mtr,0);
+		return(mtr);
+	}
+	//printf("binary op:%02x\n",op);
+	if(tos->type == TYPE_BINARY_FLOAT || tos1->type == TYPE_BINARY_FLOAT)
+	{
+		float af = 0.0f;
+		float bf = 0.0f;
+		//printf("float ret\n");
+		
+		if (tos->type == TYPE_INT)
+		{
+			af = (float) ((int_object*)tos)->value;
+		}	
+		if (tos1->type == TYPE_INT)
+		{
+			bf = (float) ((int_object*)tos1)->value;
+		}	
+		if (tos->type == TYPE_BINARY_FLOAT)
+		{
+			af = ((float_object*)tos)->value;
+		}	
+		if (tos1->type == TYPE_BINARY_FLOAT)
+		{
+			bf = ((float_object*)tos1)->value;
+		}	
+		new_tos =CreateFloatObject(0,0);
+		switch(op)
+		{
+			case OPCODE_INPLACE_MULTIPLY:
+			case OPCODE_BINARY_MULTIPLY:
+				{
+					((float_object*)new_tos)->value = bf  * af;
+					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
+						printf ("%7g * %7g = %7g\n", bf, af, bf  * af);
+				}
+				break;
+			case OPCODE_INPLACE_OR:
+			case OPCODE_BINARY_OR:
+				{
+					((float_object*)new_tos)->value = (long)bf  | (long)af;
+					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
+						printf ("%7g | %7g = %7g\n", bf, af, (long)bf  | (long)af);
+				}
+				break;
+			case OPCODE_INPLACE_XOR:
+			case OPCODE_BINARY_XOR:
+				{
+					((float_object*)new_tos)->value = (long)bf  ^ (long)af;
+					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
+						printf ("%7g ^ %7g = %7g\n", bf, af, (long)bf  ^ (long)af);
+				}
+				break;			
+			case OPCODE_INPLACE_AND:
+			case OPCODE_BINARY_AND:
+				{
+					((float_object*)new_tos)->value = (long)bf  & (long)af;
+					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
+						printf ("%7g & %7g = %7g\n", bf, af, (long)bf  & (long)af);
+				}
+				break;
+			case OPCODE_INPLACE_LSHIFT:
+			case OPCODE_BINARY_LSHIFT:
+				{
+					((float_object*)new_tos)->value = (long)bf << (long)af;
+					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
+						printf ("%7g << %7g = %7g\n", bf, af, (long)bf << (long)af);
+				}
+				break;
+			case OPCODE_INPLACE_RSHIFT:
+			case OPCODE_BINARY_RSHIFT:
+				{
+					((float_object*)new_tos)->value =  (long)bf >>  (long)af;
+					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
+						printf ("%7g>> %7g = %7g\n", bf, af,  (long)bf >>  (long)af);
+				}
+				break;
+			case OPCODE_INPLACE_MODULO:
+			case OPCODE_BINARY_MODULO:
+				{
+					((float_object*)new_tos)->value =  (long)bf %  (long)af;
+					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
+						printf ("%7g %% %7g = %7g\n", bf, af,  (long)bf %  (long)af);
+				}
+				break;
+			case OPCODE_INPLACE_FLOOR_DIVIDE:
+			case OPCODE_BINARY_FLOOR_DIVIDE:
+				{
+					((float_object*)new_tos)->value = floor(bf / af);
+					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
+						printf ("%7g // %7g = %7g\n", bf, af, floor(bf / af));
+				}
+				break;
+			case OPCODE_INPLACE_TRUE_DIVIDE:
+			case OPCODE_BINARY_TRUE_DIVIDE:
+				{
+					((float_object*)new_tos)->value = bf / af;
+					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
+						printf ("%7g / %7g = %7g\n", bf, af, bf / af);
+				}
+				break;
+			case OPCODE_INPLACE_SUBTRACT:
+			case OPCODE_BINARY_SUBTRACT:
+				{
+					((float_object*)new_tos)->value = bf-af;
+					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
+						printf ("%7g - %7g = %7g\n", bf, af, bf - af);
+				}
+				break;
+			case OPCODE_INPLACE_POWER:
+			case OPCODE_BINARY_POWER:
+				{
+					((float_object*)new_tos)->value = long_pow(bf, af);
+					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
+						printf ("%7g ** %7g = %7g\n", bf, af, long_pow(bf, af));
+				}
+				break;
+			case OPCODE_INPLACE_ADD:
+			case OPCODE_BINARY_ADD:
+				{
+					((float_object*)new_tos)->value = bf + af;
+					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
+						printf ("%7g + %7g = %7g\n", bf, af, bf + af);
+				}
+				break;
+		}
+	}
+	else
+	{
+		long a = 0;
+		long b = 0;
+		a = ((int_object*)tos)->value;
+		b = ((int_object*)tos1)->value;
+		new_tos = CreateIntObject(0,0);
+		switch(op)
+		{
+			case OPCODE_INPLACE_MULTIPLY:
+			case OPCODE_BINARY_MULTIPLY:
+				{
+					((int_object*)new_tos)->value = b * a;
+					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
+						printf ("%d * %d = %d\n", b, a, b * a);
+				}
+				break;	
+			case OPCODE_INPLACE_OR:
+			case OPCODE_BINARY_OR:
+				{
+					((int_object*)new_tos)->value = b | a;
+					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
+						printf ("%d | %d = %d\n", b, a, b | a);
+				}
+				break;
+			case OPCODE_INPLACE_XOR:
+			case OPCODE_BINARY_XOR:
+				{
+					((int_object*)new_tos)->value = b ^ a;
+					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
+						printf ("%d ^ %d = %d\n", b, a, b ^ a);
+				}
+				break;
+			case OPCODE_INPLACE_AND:
+			case OPCODE_BINARY_AND:
+				{
+					((int_object*)new_tos)->value = b & a;
+					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
+						printf ("%d & %d = %d\n", b, a, b & a);
+				}
+				break;
+			case OPCODE_INPLACE_LSHIFT:
+			case OPCODE_BINARY_LSHIFT:
+				{
+					((int_object*)new_tos)->value = b << a;
+					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
+						printf ("%d << %d = %d\n", b, a, b << a);
+				}
+				break;
+			case OPCODE_INPLACE_RSHIFT:
+			case OPCODE_BINARY_RSHIFT:
+				{
+					((int_object*)new_tos)->value = b >> a;
+					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
+						printf ("%d >> %d = %d\n", b, a, b >> a);
+				}
+				break;
+			case OPCODE_INPLACE_MODULO:
+			case OPCODE_BINARY_MODULO:
+				{
+					((int_object*)new_tos)->value = b % a;
+					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
+						printf ("%d %% %d = %d\n", b, a, b % a);
+				}
+				break;
+			case OPCODE_INPLACE_FLOOR_DIVIDE:
+			case OPCODE_BINARY_FLOOR_DIVIDE:
+				{
+					((int_object*)new_tos)->value = b / a;
+					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
+						printf ("%d / %d = %d\n", b, a, b / a);
+				}
+				break;
+			case OPCODE_INPLACE_TRUE_DIVIDE:
+			case OPCODE_BINARY_TRUE_DIVIDE:
+				{
+					((int_object*)new_tos)->value = b / a;
+					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
+						printf ("%d / %d = %d\n", b, a, b / a);
+				}
+				break;
+			case OPCODE_INPLACE_SUBTRACT:
+			case OPCODE_BINARY_SUBTRACT:
+				{
+					((int_object*)new_tos)->value = b-a;
+					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
+						printf ("%d - %d = %d\n", b, a, b - a);
+				}
+				break;
+			case OPCODE_INPLACE_POWER:
+			case OPCODE_BINARY_POWER:
+				{
+					((int_object*)new_tos)->value = long_pow(b, a);
+					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
+						printf ("%d ** %d = %d\n", b, a, long_pow(b, a));
+				}
+				break;
+			case OPCODE_INPLACE_ADD:
+			case OPCODE_BINARY_ADD:
+				{
+					((int_object*)new_tos)->value = b + a;
+					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
+						printf ("%d + %d = %d\n", b, a, b + a);
+				}
+				break;
+		}
+	}
+	return(new_tos);
+}
+
+object *custom_code(vm *vm,stack * stack)
+{
+	object *a = stack_Pop(stack,vm->garbage);
+	object *b = stack_Pop(stack,vm->garbage);
+	//if(a->type == TYPE_INT && b->type == TYPE_INT)
+	//{
+	//	int_object *r = CreateIntObject(((int_object*)a)->value+((int_object*)b)->value,0);
+	//return (r);
+	//}
+	//object *tmp = CreateEmptyObject(TYPE_NONE,0);
+	//printf("wrong args for custom_code\n");
+	return(BinaryOp(a,b,OPCODE_BINARY_ADD));
+	//return (tmp);
+}
 
 
 object *if_list(vm *vm,stack * stack)
@@ -136,24 +420,7 @@ object *if_print(vm *vm,stack * stack)
 			printf(" ");
 		if (tos != NULL)
 			// printf("tos type:%c\n",tos->type);
-			switch (tos->type)
-			{
-			case TYPE_REF:
-				PrintObject(((ref_object*)tos)->ref);
-				break;
-			case TYPE_INT:
-				printf("%d", ((int_object*)tos)->value);
-				break;
-			case TYPE_KV:
-				PrintObject(((kv_object*)tos)->value);
-				break;
-			case TYPE_UNICODE:
-				printf("%s", ((unicode_object *)tos)->value);
-				break;
-			case TYPE_TUPLE:
-				PrintObject(tos);
-				break;
-			}
+			PrintObject(tos);
 	
 	}
 	printf("\n");

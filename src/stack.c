@@ -29,19 +29,33 @@ stack *stack_Init()
 	return (tmp);
 }
 
-void stack_Close(stack * stack, int free_objects)
+void stack_Close(stack *stack, int free_objects)
+{
+	if (stack != NULL)
+	{
+		stack_Clear(stack,free_objects);
+		ptr_CloseList(stack->list);
+		assert(mem_free(stack));
+	}
+}
+
+void stack_Clear(stack *stack, int free_objects)
 {
 	if (stack != NULL)
 	{
 		if (free_objects)
 		{
-			for (int i = 0; i < stack->list->num; i++)
-					FreeObject(stack->list->items[i]);
+			long num = stack->list->num;
+			//printf("before stack list num:%d\n",stack->list->num);
+			for (int i = 0; i < num; i++)
+			{
+					FreeObject(ptr_Pop(stack->list));
+					//printf("freed %d object\n",i);
+			}
+			//printf("stack list num:%d\n",stack->list->num);
 		}
 		else if (stack->list->num > 0 && (debug_level & DEBUG_STACK) > 0)
 			printf("%d items left untouched on stack\n", stack->list->num);
-		ptr_CloseList(stack->list);
-		assert(mem_free(stack));
 	}
 }
 
@@ -50,7 +64,7 @@ int stack_IsEmpty(stack *stack)
 	return(ptr_IsEmpty(stack->list));
 }
 
-void stack_Push(stack * stack, object * x)
+void stack_Push(stack *stack, object * x)
 {
 	if (x == NULL)
 		return;
@@ -58,7 +72,7 @@ void stack_Push(stack * stack, object * x)
 	ptr_Push(stack->list, x);
 }
 
-object *stack_Bottom(stack * stack)
+object *stack_Bottom(stack *stack)
 {
 	if (stack->list->num < 1)
 	{
@@ -71,7 +85,7 @@ object *stack_Bottom(stack * stack)
 	return (r);
 }
 
-object *stack_Top(stack * stack)
+object *stack_Top(stack *stack)
 {
 	if (stack->list->num < 1)
 	{
@@ -84,7 +98,7 @@ object *stack_Top(stack * stack)
 	return (r);
 }
 
-object *stack_Second(stack * stack)
+object *stack_Second(stack *stack)
 {
 	if (stack->list->num < 2)
 	{
@@ -96,7 +110,7 @@ object *stack_Second(stack * stack)
 	return (r);
 }
 
-object *stack_Third(stack * stack)
+object *stack_Third(stack *stack)
 {
 	if (stack->list->num < 3)
 	{
@@ -109,7 +123,7 @@ object *stack_Third(stack * stack)
 	return (r);
 }
 
-void stack_SetBottom(stack * stack, object * x)
+void stack_SetBottom(stack *stack, object * x)
 {
 	if (stack->list->num < 1)
 	{
@@ -121,7 +135,7 @@ void stack_SetBottom(stack * stack, object * x)
 	//IncRefCount(x);
 }
 
-void stack_SetTop(stack * stack, object * x)
+void stack_SetTop(stack *stack, object * x)
 {
 	if (stack->list->num < 1)
 	{
@@ -133,7 +147,7 @@ void stack_SetTop(stack * stack, object * x)
 	//IncRefCount(x);
 }
 
-void stack_SetSecond(stack * stack, object * x)
+void stack_SetSecond(stack *stack, object * x)
 {
 	if (stack->list->num < 2)
 	{
@@ -145,7 +159,7 @@ void stack_SetSecond(stack * stack, object * x)
 	//IncRefCount(x);
 }
 
-void stack_SetThird(stack * stack, object * x)
+void stack_SetThird(stack *stack, object * x)
 {
 	if (stack->list->num < 3)
 	{
@@ -157,7 +171,7 @@ void stack_SetThird(stack * stack, object * x)
 	//IncRefCount(x);
 }
 
-void stack_Adjust(stack * stack, int by)
+void stack_Adjust(stack *stack, int by)
 {
 	if(by>0)
 	for (int i = 0; i < by; i++)
@@ -167,7 +181,7 @@ void stack_Adjust(stack * stack, int by)
 		ptr_Pop(stack->list);
 }
 
-void stack_Dump(stack * stack)
+void stack_Dump(stack *stack)
 {
 	if(stack->list == NULL)
 	{
@@ -183,20 +197,20 @@ void stack_Dump(stack * stack)
 	}
 }
 
-object *stack_Pop(stack * _stack,ptr_list *gc)
+object *stack_Pop(stack *stack,ptr_list *gc)
 {
-	if (_stack->list->num < 1)
+	if (stack->list->num < 1)
 	{
 		if((debug_level & DEBUG_STACK) > 0)
 			printf("stack_Pop() - stack underflow\n");
 		return (NULL);
 	}
-	object *r = ptr_Pop(_stack->list);
+	object *r = ptr_Pop(stack->list);
 	DecRefCountGC(r,gc);
 	return (r);
 }
 
-int stack_Contains(stack * stack, object * x)
+int stack_Contains(stack *stack, object * x)
 {
 	for (int i = 0; i < stack->list->num; i++)
 		if (stack->list->items[i] == x)
