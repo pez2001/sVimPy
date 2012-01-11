@@ -724,6 +724,7 @@ object *vm_StepObject(vm * vm)
 			case OPCODE_BUILD_CLASS:
 			case OPCODE_COMPARE_OP:
 			case OPCODE_IMPORT_FROM:
+			case OPCODE_IMPORT_NAME:
 			case OPCODE_SETUP_EXCEPT:
 			case OPCODE_SETUP_FINALLY:
 			case OPCODE_RAISE_VARARGS:
@@ -875,25 +876,6 @@ object *vm_StepObject(vm * vm)
 			// execute remaining ops here
 			switch (op)
 			{
-			case OPCODE_SETUP_LOOP:
-				{
-					block_object *block = AllocBlockObject();
-					block->start = bo->ip;
-					block->code = co;
-					block->ip = bo->ip;
-					block->len = bo->ip + arg;
-					block->ref_count = 0;
-					block->type = TYPE_BLOCK;
-					block->iter = NULL;
-					//block->stack = bo->stack;
-					block->stack = stack_Init();
-					//printf("block - start: %d, len: %d\n",block->start,block->len);
-					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
-						DumpObject(bo,0);
-					stack_Push(vm->blocks, block);
-					bo->ip = block->len;
-				}
-				break;
 			case OPCODE_POP_JUMP_IF_FALSE:
 				{
 					if (tos->type == TYPE_FALSE)
@@ -934,6 +916,25 @@ object *vm_StepObject(vm * vm)
 					{
 						bo->ip = arg;
 					}
+				}
+				break;
+			case OPCODE_SETUP_LOOP:
+				{
+					block_object *block = AllocBlockObject();
+					block->start = bo->ip;
+					block->code = co;
+					block->ip = bo->ip;
+					block->len = bo->ip + arg;
+					block->ref_count = 0;
+					block->type = TYPE_BLOCK;
+					block->iter = NULL;
+					//block->stack = bo->stack;
+					block->stack = stack_Init();
+					//printf("block - start: %d, len: %d\n",block->start,block->len);
+					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
+						DumpObject(bo,0);
+					stack_Push(vm->blocks, block);
+					bo->ip = block->len;
 				}
 				break;
 			case OPCODE_FOR_ITER:
@@ -1547,6 +1548,24 @@ object *vm_StepObject(vm * vm)
 
 				   break; */
 
+			case OPCODE_CALL_FUNCTION_VAR:
+				{
+
+				}
+				break;
+
+			case OPCODE_CALL_FUNCTION_KW:
+				{
+
+				}
+				break;
+				   
+			case OPCODE_CALL_FUNCTION_VAR_KW:
+				{
+
+				}
+				break;
+		   
 			case OPCODE_CALL_FUNCTION:
 				{
 					stack *call = NULL;

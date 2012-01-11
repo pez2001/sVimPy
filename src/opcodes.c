@@ -27,7 +27,7 @@
 
 #ifdef DEBUG
 
-const unsigned int opcodecount = 100;
+const unsigned int opcodecount = 101;
 
 const opcode opcodes[] = { {OPCODE_STOP_CODE, "STOP_CODE", "Indicates end-of-code to the compiler, not used by the interpreter.", 0, 1},	// SUPPORTED
 {OPCODE_POP_TOP, "POP_TOP", "Removes the top-of-stack (TOS) item.", 0, 1},	// SUPPORTED
@@ -115,12 +115,12 @@ Pushes a reference to the object the cell contains on the stack.", 1, 1},
 {OPCODE_STORE_DEREF, "STORE_DEREF", "Stores TOS into the cell contained in slot /i/ of the cell and free variable storage.", 1, 1},
 {OPCODE_DELETE_DEREF, "DELETE_DEREF", "Empties the cell contained in slot i of the cell and free variable storage. Used by the del statement.", 1, 1},
 {OPCODE_CALL_FUNCTION_VAR, "CALL_FUNCTION_VAR", "Calls a function. /argc/ is interpreted as in CALL_FUNCTION.\n\
-The top element on the stack contains the variable argument list, followed by keyword and positional arguments.", 1, 0},
+The top element on the stack contains the variable argument list, followed by keyword and positional arguments.", 1, 1},
 {OPCODE_CALL_FUNCTION_KW, "CALL_FUNCTION_KW", "Calls a function. /argc/ is interpreted as in CALL_FUNCTION.\n\
-The top element on the stack contains the keyword arguments dictionary, followed by explicit keyword and positional arguments.", 1, 0},
+The top element on the stack contains the keyword arguments dictionary, followed by explicit keyword and positional arguments.", 1, 1},
 {OPCODE_CALL_FUNCTION_VAR_KW, "CALL_FUNCTION_VAR_KW", "Calls a function. /argc/ is interpreted as in CALL_FUNCTION.\n\
 The top element on the stack contains the keyword arguments dictionary, followed by the variable-arguments tuple,\n\
-followed by explicit keyword and positional arguments.", 1, 0},
+followed by explicit keyword and positional arguments.", 1, 1},
 {OPCODE_END_FINALLY, "END_FINALLY", "Terminates a finally clause. The interpreter recalls whether the exception has to be re-raised,\n\
 or whether the function returns, and continues with the outer-next block.", 0, 0},
 {OPCODE_LOAD_BUILD_CLASS, "LOAD_BUILD_CLASS", "Pushes builtins.__build_class__() onto the stack. It is later called by CALL_FUNCTION to construct a class.", 0, 0},
@@ -161,6 +161,10 @@ The name of the variable is co_cellvars[i] if i is less than the length of co_ce
 {OPCODE_LIST_APPEND,"LIST_APPEND", "Calls list.append(TOS[-i], TOS). Used to implement list comprehensions.", 1, 0},
 {OPCODE_SET_ADD, "SET_ADD","Calls set.add(TOS1[-i], TOS). Used to implement set comprehensions.", 1, 0},
 {OPCODE_MAP_ADD, "MAP_ADD","Calls dict.setitem(TOS1[-i], TOS, TOS1). Used to implement dict comprehensions.", 1, 0},
+{OPCODE_IMPORT_NAME, "IMPORT_NAME","Imports the module co_names[namei]. TOS and TOS1 are popped\n\
+and provide the fromlist and level arguments of __import__(). The module object is pushed onto the stack.\n\
+The current namespace is not affected: for a proper import statement,\n\
+a subsequent STORE_FAST instruction modifies the namespace.", 1, 0},
 {OPCODE_UNPACK_EX, "UNPACK_EX","Implements assignment with a starred target: Unpacks an iterable in TOS into individual values,\n\
 where the total number of values can be smaller than the number of items in the iterable:\n\
 one the new values will be a list of all leftover items.The low byte of counts is the number of values\n\

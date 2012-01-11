@@ -179,9 +179,9 @@ void AddInternalFunctions(vm *vm)
 int main(int argc, char *argv[])
 {
 
-	//debug_level |= DEBUG_INTERACTIVE;
+	debug_level |= DEBUG_INTERACTIVE;
 	debug_level |= DEBUG_MEMORY;
-	//debug_level |= DEBUG_SHOW_OPCODES;
+	debug_level |= DEBUG_SHOW_OPCODES;
 	debug_level |= DEBUG_FULL_DUMP;
 	//debug_level |= DEBUG_STACK;
 	//debug_level |= DEBUG_LISTS;
@@ -206,29 +206,11 @@ int main(int argc, char *argv[])
 	AddInternalFunctions(vm);
 	// printf("Calling all Unit Tests\n");
 
-	//brute ops + closures
-	//OpenPYC("tests/test32.pyc", vm);
+
 	
 	
 	//crashing or leaking memory
 
-	//custom code
-	OpenPYC("tests/test45.pyc", vm);
-	
-	//most binary ops test
-	OpenPYC("tests/test14.pyc", vm);
-	OpenPYC("tests/test14b.pyc", vm);
-	OpenPYC("tests/test14f.pyc", vm);
-	OpenPYC("tests/test14bf.pyc", vm);
-
-	//floats
-	OpenPYC("tests/test44.pyc", vm);
-	OpenPYC("tests/test42.pyc", vm);
-	OpenPYC("tests/test41.pyc", vm);
-
-	//extended arg
-	OpenPYC("tests/test43.pyc", vm);
-	OpenPYC("tests/test40.pyc", vm);
 
 	
 	
@@ -241,8 +223,12 @@ int main(int argc, char *argv[])
 	
 	//closures and deref opcodes
 	OpenPYC("tests/test29.pyc", vm);//not supported opcode store_deref
-
-	/*OpenPYC("tests/test21ba2.pyc", vm);
+	//brute ops + closures
+	//OpenPYC("tests/test32.pyc", vm);
+	
+	/*
+	//storing of globals/vars and deletion of globals/vars
+	OpenPYC("tests/test21ba2.pyc", vm);
 	OpenPYC("tests/test21.pyc", vm);
 	OpenPYC("tests/test21b.pyc", vm);
 	OpenPYC("tests/test21ba.pyc", vm);
@@ -285,6 +271,24 @@ int main(int argc, char *argv[])
 	OpenPYC("tests/e_small.pyc", vm);
 	OpenPYC("tests/e20.pyc", vm);
 	
+	//custom code
+	OpenPYC("tests/test45.pyc", vm);
+	
+	//ellipsis object
+	OpenPYC("tests/test43.pyc", vm);
+	OpenPYC("tests/test40.pyc", vm);
+
+	//most binary ops test
+	OpenPYC("tests/test14.pyc", vm);
+	OpenPYC("tests/test14b.pyc", vm);
+	OpenPYC("tests/test14f.pyc", vm);
+	OpenPYC("tests/test14bf.pyc", vm);
+
+	//floats
+	OpenPYC("tests/test44.pyc", vm);
+	OpenPYC("tests/test42.pyc", vm);
+	OpenPYC("tests/test41.pyc", vm);
+
 	//dictionaries
 	OpenPYC("tests/test30.pyc", vm);
 	OpenPYC("tests/test31.pyc", vm);

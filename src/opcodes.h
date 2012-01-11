@@ -94,9 +94,10 @@
 #define OPCODE_BUILD_LIST 							0x67
 #define OPCODE_BUILD_SET 							0x68
 #define OPCODE_BUILD_MAP 							0x69
-#define OPCODE_LOAD_ATTR 							0x99 //WRONG ID
+#define OPCODE_LOAD_ATTR 							0x6a
 #define OPCODE_COMPARE_OP						0x6b
 #define OPCODE_IMPORT_FROM 					0x6c
+#define OPCODE_IMPORT_NAME 					0x6d
 #define OPCODE_JUMP_FORWARD 					0x6e
 #define OPCODE_JUMP_IF_FALSE 					0x6f
 #define OPCODE_JUMP_IF_TRUE 					0x70
