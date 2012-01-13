@@ -519,6 +519,7 @@ object *vm_StepObject(vm *vm)
 			object *tos2 = NULL;
 
 			tuple_object *var_list = NULL;//used for simpler function calling
+			tuple_object *kw_list = NULL;//used for simpler function calling
 			
 			// FOR DEBUGGING
 			if((debug_level & DEBUG_SHOW_OPCODES) > 0)
@@ -1587,29 +1588,25 @@ object *vm_StepObject(vm *vm)
 				   printing\n",tos->type); }
 
 				   break; */
-
-			case OPCODE_CALL_FUNCTION_KW:
-				{
-
-				}
-				break;
 				   
 			case OPCODE_CALL_FUNCTION_VAR_KW:
+			case OPCODE_CALL_FUNCTION_KW:
 				{
-
+						kw_list = stack_Pop(bo->stack,vm->garbage);
 				}
-				break;
-		   
 			case OPCODE_CALL_FUNCTION_VAR:
 				{
-					var_list = stack_Pop(bo->stack,vm->garbage);
+					if(op == OPCODE_CALL_FUNCTION_VAR_KW || op == OPCODE_CALL_FUNCTION_VAR)
+						var_list = stack_Pop(bo->stack,vm->garbage);
 				}
 			case OPCODE_CALL_FUNCTION:
 				{
+					long narg = arg & 255;
+					long nkey = (arg >> 8) & 255;
 					stack *call = NULL;
-					if (arg > 0 || var_list != NULL)
+					if (narg > 0 || nkey > 0 || var_list != NULL)
 						call = stack_Init();	// arg, 
-					if(var_list != NULL)
+					if(var_list != NULL) //variable list arguments
 					{
 						//printf("var list found:%d\n",var_list->list->num);
 						for (int i = var_list->list->num-1; i >= 0 ;i--)
@@ -1619,12 +1616,18 @@ object *vm_StepObject(vm *vm)
 							//DumpObject(v,0);
 						}	
 					}
-					for (int i = 0; i < arg; i++)
+					for (int i = 0; i < nkey; i++)//keyword arguments
+					{
+						object *value = stack_Pop(bo->stack,vm->garbage);
+						object *key = stack_Pop(bo->stack,vm->garbage);
+						//now setdictitem in function code varnames
+					}
+					for (int i = 0; i < narg; i++)//positional arguments
 					{
 						stack_Push(call, stack_Pop(bo->stack,vm->garbage));
 					}
 					if(var_list != NULL)
- 						arg += var_list->list->num;
+ 						narg += var_list->list->num;
 
 					object *function_name = stack_Pop(bo->stack,vm->garbage);
 					if(function_name->type == TYPE_KV)
@@ -1645,7 +1648,7 @@ object *vm_StepObject(vm *vm)
 						//stack_Dump(call);
 						vm_StartFunctionObject(vm,function_name, call, arg);
 						
-						if (arg > 0 || var_list != NULL)
+						if (narg > 0 || nkey > 0 || var_list != NULL)
 							stack_Close(call, 0);
 					}else	if (function_name != NULL && function_name->type == TYPE_CODE)
 					{
@@ -1661,7 +1664,7 @@ object *vm_StepObject(vm *vm)
 						*/
 						vm_StartObject(vm,function_name, call, arg);
 						
-						if (arg > 0 || var_list != NULL)
+						if (narg > 0 || nkey > 0 || var_list != NULL)
 							stack_Close(call, 0);
 					}
 					else if (function_name != NULL && function_name->type == TYPE_UNICODE)
@@ -1674,7 +1677,7 @@ object *vm_StepObject(vm *vm)
 						{
 							stack_Push(bo->stack, tmp);
 							//DecRefCount(tmp);
-							if (arg > 0 || var_list != NULL)
+							if (narg > 0 || nkey > 0 || var_list != NULL)
 								stack_Close(call, 0);
 
 							break;
@@ -1692,7 +1695,7 @@ object *vm_StepObject(vm *vm)
 								if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 									printf	("executing global code object: %s\n", ((unicode_object*)function_name)->value);
 								vm_StartObject(vm, caller_func, call, arg);
-								if (arg > 0 || var_list != NULL)
+								if (narg > 0 || nkey > 0 || var_list != NULL)
 									stack_Close(call, 0);
 								break;
 							}else if (caller_func != NULL && ((object *) caller_func)->type == TYPE_FUNCTION)
@@ -1700,7 +1703,7 @@ object *vm_StepObject(vm *vm)
 								if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 									printf	("executing global function object: %s\n", ((unicode_object*)function_name)->value);
 								vm_StartFunctionObject(vm, caller_func, call, arg);
-								if (arg > 0 || var_list != NULL)
+								if (narg > 0 || nkey > 0 || var_list != NULL)
 									stack_Close(call, 0);
 								break;
 							}

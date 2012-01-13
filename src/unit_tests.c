@@ -214,7 +214,10 @@ int main(int argc, char *argv[])
 
 	
 	//function parameters
-	OpenPYC("tests/test48.pyc", vm);
+	OpenPYC("tests/test50.pyc", vm);//with keywords unordered
+	OpenPYC("tests/test49b.pyc", vm);//kw unordered
+	OpenPYC("tests/test49.pyc", vm);//kw
+	OpenPYC("tests/test48.pyc", vm);//var
 	OpenPYC("tests/test47.pyc", vm);
 	OpenPYC("tests/test46.pyc", vm);
 	OpenPYC("tests/test_functions.pyc", vm);
