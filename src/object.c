@@ -286,7 +286,8 @@ kv_object *CreateKVObject(object *key,object *value,int flags)
 	r->key = key;
 	IncRefCount(key);
 	r->value = value;
-	DecRefCount(value);
+	//DecRefCount(value);// ?? why did this not produce any memory leaks ?? strange
+	IncRefCount(value);
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
 		printf("created object\n");
@@ -301,6 +302,24 @@ empty_object *CreateEmptyObject(char type,int flags)
 	r->type = type;
 	r->flags = flags;
 	r->ref_count = 0;
+	if((debug_level & DEBUG_CREATION) > 0)
+	{
+		printf("created object\n");
+		DumpObject(r,0);
+	}
+	return(r);
+}
+
+function_object *CreateFunctionObject(code_object *function_code,tuple_object *defaults,int flags)
+{
+	function_object *r = AllocFunctionObject();
+	r->type = TYPE_FUNCTION;
+	r->flags = flags;
+	r->ref_count = 0;
+	r->code = function_code;
+	IncRefCount(function_code);
+	r->defaults = defaults;
+	IncRefCount(defaults);
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
 		printf("created object\n");
@@ -402,8 +421,13 @@ void FreeObject(object * obj)
 		break;
 	case TYPE_KV:
 		objects_header_total -= sizeof(kv_object);
-		FreeObject(((kv_object *) obj)->key);
-		FreeObject(((kv_object *) obj)->value);
+		FreeObject(((kv_object*) obj)->key);
+		FreeObject(((kv_object*) obj)->value);
+		break;
+	case TYPE_FUNCTION:
+		objects_header_total -= sizeof(function_object);
+		FreeObject(((function_object*) obj)->code);
+		FreeObject(((function_object*) obj)->defaults);
 		break;
 	case TYPE_UNICODE:
 		//if(obj->flags &OFLAG_ON_STACK)
@@ -577,6 +601,17 @@ void DumpObject(object * obj, int level)
 		printf("kv object\n");
 		DumpObject(((kv_object*)obj)->key,level);
 		DumpObject(((kv_object*)obj)->value,level + 1);
+		break;
+	case TYPE_FUNCTION:
+		printf("function object\n");
+		for (int i = 0; i < level; i++)
+		printf("\t");
+		printf("code:\n");
+		DumpObject(((function_object*)obj)->code,level + 1);
+		for (int i = 0; i < level; i++)
+		printf("\t");
+		printf("defaults:\n");
+		DumpObject(((function_object*)obj)->defaults,level + 1);
 		break;
 	case TYPE_UNICODE:
 		printf("unicode object: %s\n", ((unicode_object*)obj)->value);
@@ -811,6 +846,15 @@ object *CopyObject(object *obj)
 	//add reference object to decrease memory usage for code objects
 	//reference objects refs need no freeing
 	return(CreateRefObject(obj,obj->flags));
+
+	case TYPE_FUNCTION:
+	//code_object *c = AllocCodeObject();
+	//c->name = str_Copy(((code_object*)obj)->name);
+	//c-> = str_Copy(((code_object*)obj)->name);
+	//add reference object to decrease memory usage for code objects
+	//reference objects refs need no freeing
+	return(CreateRefObject(obj,obj->flags));
+
 	//return(c);	
 	/*
 		// printf("freeing code object @%x\n",obj);
@@ -1160,7 +1204,7 @@ long ReadLong(FILE * f)
 	// free(b);
 	return (r);
 }
-
+/*
 #define CONV_PREC 4
 float ConvertDouble(double d)
 {
@@ -1203,7 +1247,7 @@ r+= a;
 
 return(r);
 }
-
+*/
 float ReadFloat(FILE * f)
 {
 	float r = 0;
@@ -1218,6 +1262,7 @@ float ReadFloat(FILE * f)
 	//printf("r:%f,t:%f\n",r,t);
 	return (r);
 }
+
 char ReadChar(FILE * f)
 {
 	char r = 0;

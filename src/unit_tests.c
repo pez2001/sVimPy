@@ -133,9 +133,9 @@ void OpenPYC(char *filename, vm *vm)
 		DumpObject(obj, 0);
 	object *ret = NULL;
 	if((debug_level & DEBUG_INTERACTIVE) > 0)
-		ret = vm_InteractiveRunObject(vm, obj, obj, NULL, 0);	// ,obj
+		ret = vm_InteractiveRunObject(vm, obj, NULL, 0);	// ,obj
 	else
-		ret = vm_RunObject(vm, obj, obj, NULL, 0);	// ,obj
+		ret = vm_RunObject(vm, obj, NULL, 0);	// ,obj
     //object *ret = NULL;
 	printf("\n");
 	if (ret != NULL)
@@ -213,8 +213,11 @@ int main(int argc, char *argv[])
 
 
 	
-	
 	//function parameters
+	OpenPYC("tests/test48.pyc", vm);
+	OpenPYC("tests/test47.pyc", vm);
+	OpenPYC("tests/test46.pyc", vm);
+	OpenPYC("tests/test_functions.pyc", vm);
 	OpenPYC("tests/test36.pyc", vm);//not supported opcode call_function_var
 	OpenPYC("tests/test37.pyc", vm);//not supported opcode call_function_kw
 	OpenPYC("tests/test38.pyc", vm);//not supported opcode call_function_var_kw 
@@ -274,6 +277,9 @@ int main(int argc, char *argv[])
 	//custom code
 	OpenPYC("tests/test45.pyc", vm);
 	
+	//while loop + break + continue
+	OpenPYC("tests/test_while.pyc", vm);
+
 	//ellipsis object
 	OpenPYC("tests/test43.pyc", vm);
 	OpenPYC("tests/test40.pyc", vm);

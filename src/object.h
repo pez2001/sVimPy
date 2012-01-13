@@ -90,8 +90,7 @@ extern int debug_level;
 
 
 // internal types
-//#define TYPE_FUNCTION 'f'
-//#define TYPE_CALLER 'C'
+#define TYPE_FUNCTION 'f'
 #define TYPE_BLOCK 'b'
 #define TYPE_KV 'k'
 #define TYPE_REF 'r'
@@ -205,13 +204,16 @@ typedef struct
 } tuple_object;
 
 
-//TODO repurpose for generator storage
 typedef struct
 {
+	char type;
+	unsigned char flags;
+	unsigned short  ref_count;
 	code_object *code;
-	// long pos;
+	tuple_object *defaults;//set to default values in MAKE_FUNCTION opcode
 } function_object;
 
+//TODO create struct for generator storage
 
 struct _stack;
 
@@ -330,6 +332,8 @@ string_object *CreateStringObject(char *bytes,int len,int flags);
 kv_object *CreateKVObject(object *key,object *value,int flags);
 
 empty_object *CreateEmptyObject(char type,int flags);
+
+function_object *CreateFunctionObject(code_object *function_code,tuple_object *defaults,int flags);
 
 void FreeBlockObject(object *obj);
 

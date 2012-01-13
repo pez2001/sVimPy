@@ -23,6 +23,47 @@
 #ifndef VM_H
 #define VM_H
 
+/* keywords
+
+import
+is
+from
+nonlocal
+as
+yield
+assert
+lambda		not tested
+elif			not tested
+False		supported
+return		supported
+None		supported
+continue	supported
+for			supported
+True			supported
+def			supported
+while			supported
+and			supported
+del			supported
+global		supported
+not			supported
+if				supported
+or				supported
+else			supported
+pass			supported
+break		supported
+in				supported
+
+//classes and exceptions
+
+with
+try
+raise
+class
+finally
+except
+
+*/
+
 #define DEBUG
 #include "object.h"
 #include "opcodes.h"
@@ -69,36 +110,40 @@ typedef struct
 
 
 
-function_definition *CreateCFunction(object * (*func) (vm *vm,stack * stack), char *name);
+function_definition *CreateCFunction(object *(*func) (vm *vm,stack *stack), char *name);
 
-function_definition *CreateCObjFunction(object * (*func) (vm *vm,object * obj),	char *name);
+function_definition *CreateCObjFunction(object *(*func) (vm *vm,object *obj),	char *name);
 
-function_definition *CreatePythonFunction(object * code, char *name);
+function_definition *CreatePythonFunction(object *code, char *name);
 
-int vm_AddFunctionDefinition(vm * vm, function_definition * fd);
+int vm_AddFunctionDefinition(vm *vm, function_definition *fd);
 
-void vm_RemoveFunction(vm * vm, char *name);
+void vm_RemoveFunction(vm *vm, char *name);
 
-void vm_RemoveFunctionDefinition(vm * vm, function_definition * fd);
+void vm_RemoveFunctionDefinition(vm *vm, function_definition *fd);
 
-object *vm_ExecuteCFunction(vm * vm, char *name, stack * stack);
+object *vm_ExecuteCFunction(vm *vm, char *name, stack *stack);
 
-object *vm_ExecuteCObjFunction(vm * vm, char *name, object * obj);
+object *vm_ExecuteCObjFunction(vm *vm, char *name, object *obj);
 
-function_definition *vm_FindFunction(vm * vm, char *name);
+function_definition *vm_FindFunction(vm *vm, char *name);
 
-vm *vm_Init(code_object * co);
+vm *vm_Init(code_object *co);//init vm and set global object if given
 
-void vm_Close(vm * vm);
+void vm_Close(vm *vm);//close vm and free all of its used memory
 
-void vm_SetGlobal(vm * vm, code_object * co);
+void vm_SetGlobal(vm *vm, code_object * co);//set global code object
 
-object *vm_RunObject(vm * vm, object * obj, object * caller, stack * locals, int argc);	
+object *vm_RunObject(vm *vm, object *obj, stack *locals, int argc);//run a python code object
 
-block_object *vm_StartObject(vm *vm,object *obj,object *caller,stack *locals,int argc);
+block_object *vm_StartObject(vm *vm,object *obj,stack *locals,int argc);//run a python code object
 
-object *vm_StepObject(vm * vm);
+block_object *vm_StartFunctionObject(vm *vm,object *obj,stack *locals,int argc);//run a python function object
 
-void vm_DumpCode(vm *vm,int dump_descriptions,int from_start);
+object *vm_CallFunction(vm *vm,char *name,stack *locals);//call a python function from C
+
+object *vm_StepObject(vm *vm);//single step vm
+
+void vm_DumpCode(vm *vm,int dump_descriptions,int from_start);//dump human readable code of the vm's actual running block 
 
 #endif
