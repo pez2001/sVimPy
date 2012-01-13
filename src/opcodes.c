@@ -107,7 +107,7 @@ the high byte the number of keyword parameters. On the stack, the opcode finds t
 For each keyword argument, the value is on top of the key. Below the keyword parameters, the positional parameters are on the stack,\n\
 with the right-most parameter on top. Below the parameters, the function object to call is on the stack.", 1, 1},	// SUPPORTED
 {OPCODE_MAKE_FUNCTION, "MAKE_FUNCTION", "Pushes a new function object on the stack. TOS is the code associated with the function.\n\
-The function object is defined to have /argc/ default parameters, which are found below TOS.", 1, 1},	// SKIPPED 																																	// ATM
+The function object is defined to have /argc/ default parameters, which are found below TOS.", 1, 1},	// SUPPORTED
 {OPCODE_BUILD_SLICE, "BUILD_SLICE", "Pushes a slice object on the stack. /argc/ must be 2 or 3. If it is 2, slice(TOS1, TOS) is pushed;\n\
 if it is 3, slice(TOS2, TOS1, TOS) is pushed. See the slice() built-in function for more information.", 1, 0},
 {OPCODE_LOAD_DEREF, "LOAD_DEREF", "Loads the cell contained in slot /i/ of the cell and free variable storage.\n\
@@ -115,12 +115,12 @@ Pushes a reference to the object the cell contains on the stack.", 1, 1},
 {OPCODE_STORE_DEREF, "STORE_DEREF", "Stores TOS into the cell contained in slot /i/ of the cell and free variable storage.", 1, 1},
 {OPCODE_DELETE_DEREF, "DELETE_DEREF", "Empties the cell contained in slot i of the cell and free variable storage. Used by the del statement.", 1, 1},
 {OPCODE_CALL_FUNCTION_VAR, "CALL_FUNCTION_VAR", "Calls a function. /argc/ is interpreted as in CALL_FUNCTION.\n\
-The top element on the stack contains the variable argument list, followed by keyword and positional arguments.", 1, 1},
+The top element on the stack contains the variable argument list, followed by keyword and positional arguments.", 1, 1}, // SUPPORTED
 {OPCODE_CALL_FUNCTION_KW, "CALL_FUNCTION_KW", "Calls a function. /argc/ is interpreted as in CALL_FUNCTION.\n\
-The top element on the stack contains the keyword arguments dictionary, followed by explicit keyword and positional arguments.", 1, 1},
+The top element on the stack contains the keyword arguments dictionary, followed by explicit keyword and positional arguments.", 1, 1}, // SUPPORTED
 {OPCODE_CALL_FUNCTION_VAR_KW, "CALL_FUNCTION_VAR_KW", "Calls a function. /argc/ is interpreted as in CALL_FUNCTION.\n\
 The top element on the stack contains the keyword arguments dictionary, followed by the variable-arguments tuple,\n\
-followed by explicit keyword and positional arguments.", 1, 1},
+followed by explicit keyword and positional arguments.", 1, 1}, // SUPPORTED
 {OPCODE_END_FINALLY, "END_FINALLY", "Terminates a finally clause. The interpreter recalls whether the exception has to be re-raised,\n\
 or whether the function returns, and continues with the outer-next block.", 0, 0},
 {OPCODE_LOAD_BUILD_CLASS, "LOAD_BUILD_CLASS", "Pushes builtins.__build_class__() onto the stack. It is later called by CALL_FUNCTION to construct a class.", 0, 0},
@@ -150,7 +150,7 @@ In the last case, TOS(SECOND, THIRD, FOURTH) is called, otherwise TOS(None, None
 If the stack represents an exception, and the function call returns a ‘true’ value, this information is “zapped”\n\
 and replaced with a single WHY_SILENCED to prevent END_FINALLY from re-raising the exception. (But non-local gotos will still be resumed.)", 0, 0},
 {OPCODE_BUILD_MAP, "BUILD_MAP", "Pushes a new empty dictionary object onto the stack.\n\
-The argument is ignored and set to /zero/ by the compiler.", 1, 1},
+The argument is ignored and set to /zero/ by the compiler.", 1, 1}, // SUPPORTED
 {OPCODE_BUILD_SET, "BUILD_SET", "Pushes a new empty set object onto the stack.\n\
 The argument is ignored and set to /zero/ by the compiler.", 1, 1},
 {OPCODE_MAKE_CLOSURE, "MAKE_CLOSURE", "Creates a new function object, sets its func_closure slot, and pushes it on the stack.\n\
