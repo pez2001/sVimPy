@@ -120,7 +120,10 @@ vm *vm_Init(code_object *co)
 	tmp->functions = ptr_CreateList(0, 0);
 	tmp->blocks = stack_Init();
 	tmp->garbage = ptr_CreateList(0,0);
-
+	tmp->running = 0;
+	tmp->interrupt_vm = 0;
+	tmp->interrupt_handler = NULL;
+	
 	if (co != NULL)
 	{
 		tmp->global = co;
@@ -149,20 +152,32 @@ void vm_SetGlobal(vm *vm, code_object *co)
 	vm->global = co;
 }
 
-//void vm_Interrupt(vm *vm,object *(*interrupt) (vm *vm,stack *stack))
-//{
+void vm_Interrupt(vm *vm,object *(*interrupt) (struct _vm *vm,stack *stack))
+{
+	vm->interrupt_handler = interrupt;
+	vm->interrupt_vm = 1;
+	printf("forcing interrupt\n");
+}
 
-//}
-
-//void vm_SetInterrupt(object *(*interrupt) (vm *vm,stack *stack))
-//{
-
-
-//}
+void vm_SetInterrupt(vm*vm ,object *(*interrupt) (struct _vm *vm,stack *stack))
+{
+	vm->interrupt_handler = interrupt;
+}
 
 void vm_Continue(vm *vm)
 {
+	vm->interrupt_vm = 0;
+}
 
+void vm_Exit(vm *vm)//just a placeholder for things i didnt considered right now
+{
+	vm_Close(vm);
+}
+
+void vm_Stop(vm *vm)
+{
+	vm->interrupt_vm = 0;
+	vm->running = 0;
 }
 
 block_object *vm_StartObject(vm *vm,object *obj,stack *locals,int argc)
@@ -356,12 +371,22 @@ object *vm_InteractiveRunObject(vm *vm, object *obj, stack *locals, int argc)
 {
 		block_object *bo = vm_StartObject(vm,obj,locals,argc);
 		object *ret = NULL;
-		int run = 0;
 		int steps = 0;
 		while(ret == NULL)
 		{
-			if(!run && steps == 0)
+			if(vm->interrupt_vm)
 			{
+				//printf("catched an interrupt\n");
+				block_object *b = (block_object*)stack_Top(vm->blocks);
+				if(vm->interrupt_handler != NULL)
+					vm->interrupt_handler(vm,b->stack);
+				vm->running = 0;
+				vm->interrupt_vm = 0;
+			}
+			else
+			if(!vm->running && steps == 0)
+			{
+			printf("$");
 			char *cmd = mem_malloc(80,"vm_InteractiveRunObject() cmd string\n");
 			int r = scanf("%s",cmd);
 			//printf("%s\n",cmd);
@@ -517,13 +542,15 @@ object *vm_InteractiveRunObject(vm *vm, object *obj, stack *locals, int argc)
 			}else
 			if(strlen(cmd)>= 1 && cmd[0] == 'r')
 			{
-				run = 1;
+				vm->running = 1;
+				vm->interrupt_vm = 0;
 			}
 			assert(mem_free(cmd));
 			}
 			else //run or steps != 0
 			{
-				if(run)
+				//printf("running\n");
+				if(vm->running)
 					ret = vm_StepObject(vm);
 				else
 				{
@@ -538,6 +565,8 @@ object *vm_InteractiveRunObject(vm *vm, object *obj, stack *locals, int argc)
 				}
 			}
 		}
+		vm->running = 0;
+		vm->interrupt_vm = 0;
 		return(ret);
 }
 
@@ -554,7 +583,6 @@ object *vm_StepObject(vm *vm)
 {
 	block_object *bo = (block_object *) stack_Top(vm->blocks);
 	object *obj = bo->code;
-	
 	
 	if (obj->type == TYPE_CODE)
 	{
@@ -966,6 +994,7 @@ object *vm_StepObject(vm *vm)
 					}
 					function_object *fo = CreateFunctionObject_MAKE_FUNCTION(tos,r,0);
 					stack_Push(bo->stack,fo);
+					//vm_Interrupt(vm,NULL);
 				}
 				break;
 			case OPCODE_POP_JUMP_IF_FALSE:
@@ -1634,20 +1663,6 @@ object *vm_StepObject(vm *vm)
 					// printf("compare op thru:%d\n",arg);
 				}
 				break;
-
-				/* case OPCODE_PRINT_ITEM: tos = stack_Pop(bo->stack); if(tos !=
-				   NULL) switch(tos->type) { case TYPE_INT:
-				   printf("%d",(long)tos->ptr); break; case TYPE_UNICODE:
-				   if((object*)tos->value_ptr != NULL) {
-				   if(((object*)tos->value_ptr)->type == TYPE_UNICODE)
-				   printf("%s",(char*)((object*)tos->value_ptr)->ptr ); else
-				   if(((object*)tos->value_ptr)->type == TYPE_INT)
-				   printf("%d",((object*)tos->value_ptr)->ptr ); } else
-				   printf("%s",(char*)tos->ptr); break; default:
-				   printf("object on tos (type:%c) not supported for
-				   printing\n",tos->type); }
-
-				   break; */
 				   
 			case OPCODE_CALL_FUNCTION_VAR_KW:
 			case OPCODE_CALL_FUNCTION_KW:

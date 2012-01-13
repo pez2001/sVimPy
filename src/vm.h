@@ -90,24 +90,10 @@ typedef struct _vm
 	// code_object *co;//global code object //Bottom of blocks stack is the
 	// global module
 	// int ip;//instruction pointer moved to block object
-	object *(*vm_interrupt) (struct _vm *vm,stack *stack);
-	int interrpt_vm;
+	object *(*interrupt_handler) (struct _vm *vm,stack *stack);
+	int interrupt_vm;
+	int running;
 } vm;
-
-
-/*
-typedef struct
-{
-	unsigned int type;
-	union func_def
-	{
-		object *(*func) (vm *vm,stack * stack);
-		object *(*func_obj) (vm *vm,object * object);
-		code_object *code;
-	} func;
-	char *name;
-} function_definition;
-*/
 
 
 function_object *CreateCFunction(object *(*func) (vm *vm,stack *stack), char *name);
@@ -134,15 +120,15 @@ void vm_Close(vm *vm);//close vm and free all of its used memory
 
 void vm_SetGlobal(vm *vm, code_object * co);//set global code object
 
-//void vm_SetInterrupt(object *(*interrupt_func) (vm *vm,stack *stack)); //set interrupt handler function
+void vm_SetInterrupt(vm*vm,object *(*interrupt_func) (struct _vm *vm,stack *stack)); //set interrupt handler function
 
-//void vm_Interrupt(vm *vm, object *(*interrupt_func) (vm *vm,stack *stack)); //interrupt vm and call interrupt handler afterwards
+void vm_Interrupt(vm *vm, object *(*interrupt_func) (struct _vm *vm,stack *stack)); //interrupt vm and call interrupt handler afterwards
 
-//void vm_Continue(vm *vm);//continue vm execution
+void vm_Continue(vm *vm);//continue vm execution
 
-//void vm_Exit(vm *vm); //exit vm
+void vm_Exit(vm *vm); //exit vm
 
-//void vm_Stop(vm *vm); //pause vm execution
+void vm_Stop(vm *vm); //pause vm execution
 
 
 object *vm_CallFunction(vm *vm,char *name,stack *locals);//call a python function from C
