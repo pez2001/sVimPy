@@ -162,17 +162,17 @@ void OpenPYC(char *filename, vm *vm)
 
 void AddInternalFunctions(vm *vm)
 {
-	function_definition *list = CreateCFunction(&if_list, "list");
-	function_definition *range = CreateCFunction(&if_range, "range");
-	function_definition *print = CreateCFunction(&if_print, "print");
-	function_definition *sum = CreateCFunction(&if_sum, "sum");
-	vm_AddFunctionDefinition(vm, list);
-	vm_AddFunctionDefinition(vm, range);
-	vm_AddFunctionDefinition(vm, print);
-	vm_AddFunctionDefinition(vm, sum);
+	function_object *list = CreateCFunction(&if_list, "list");
+	function_object *range = CreateCFunction(&if_range, "range");
+	function_object *print = CreateCFunction(&if_print, "print");
+	function_object *sum = CreateCFunction(&if_sum, "sum");
+	vm_AddFunctionObject(vm, list);
+	vm_AddFunctionObject(vm, range);
+	vm_AddFunctionObject(vm, print);
+	vm_AddFunctionObject(vm, sum);
 
-	function_definition *cc = CreateCFunction(&custom_code, "custom_code");
-	vm_AddFunctionDefinition(vm, cc);
+	function_object *cc = CreateCFunction(&custom_code, "custom_code");
+	vm_AddFunctionObject(vm, cc);
 
 }
 
@@ -181,7 +181,7 @@ int main(int argc, char *argv[])
 
 	debug_level |= DEBUG_INTERACTIVE;
 	debug_level |= DEBUG_MEMORY;
-	debug_level |= DEBUG_SHOW_OPCODES;
+	//debug_level |= DEBUG_SHOW_OPCODES;
 	debug_level |= DEBUG_FULL_DUMP;
 	//debug_level |= DEBUG_STACK;
 	//debug_level |= DEBUG_LISTS;
@@ -190,7 +190,7 @@ int main(int argc, char *argv[])
 	//debug_level |= DEBUG_VM;
 	//debug_level |= DEBUG_FREEING;
 	//debug_level |= DEBUG_ALLOCS;
-	debug_level |= DEBUG_DUMP_UNSUPPORTED;
+	//debug_level |= DEBUG_DUMP_UNSUPPORTED;
 	//debug_level |= DEBUG_DUMP_OBJECT;
 	//debug_level |= DEBUG_CREATION;
 	//debug_level |= DEBUG_VERBOSE_FREEING;
@@ -212,6 +212,8 @@ int main(int argc, char *argv[])
 	//crashing or leaking memory
 
 
+	//custom code + import_from + import_star opcodes
+	//OpenPYC("tests/test45.pyc", vm);
 	
 	//function parameters
 	OpenPYC("tests/test50.pyc", vm);//with keywords unordered
@@ -221,14 +223,14 @@ int main(int argc, char *argv[])
 	OpenPYC("tests/test47.pyc", vm);
 	OpenPYC("tests/test46.pyc", vm);
 	OpenPYC("tests/test_functions.pyc", vm);
-	OpenPYC("tests/test36.pyc", vm);//not supported opcode call_function_var
-	OpenPYC("tests/test37.pyc", vm);//not supported opcode call_function_kw
-	OpenPYC("tests/test38.pyc", vm);//not supported opcode call_function_var_kw 
+	OpenPYC("tests/test36.pyc", vm);//call_function_var
+	OpenPYC("tests/test37.pyc", vm);//call_function_kw
+	OpenPYC("tests/test38.pyc", vm);//call_function_var_kw 
 	OpenPYC("tests/test39.pyc", vm);//call_function
 	
 	
 	//closures and deref opcodes
-	OpenPYC("tests/test29.pyc", vm);//not supported opcode store_deref
+	//OpenPYC("tests/test29.pyc", vm);//not supported opcode store_deref
 	//brute ops + closures
 	//OpenPYC("tests/test32.pyc", vm);
 	
@@ -277,8 +279,6 @@ int main(int argc, char *argv[])
 	OpenPYC("tests/e_small.pyc", vm);
 	OpenPYC("tests/e20.pyc", vm);
 	
-	//custom code
-	OpenPYC("tests/test45.pyc", vm);
 	
 	//while loop + break + continue
 	OpenPYC("tests/test_while.pyc", vm);

@@ -22,39 +22,34 @@
 
 #include "vm.h"
 
-function_definition *CreateCFunction(object *(*func) (vm *vm,stack *stack), char *name)
+function_object *CreateCFunction(object *(*func) (vm *vm,stack *stack), char *name)
 {
-	function_definition *fd =
-		mem_malloc(sizeof(function_definition), "CreateCFunction() fd");
-	fd->type = FUNC_C;
-	fd->func.func = func;
-	fd->name = str_Copy(name);
-	return (fd);
+	function_object *fo = CreateFunctionObject(FUNC_C,0);
+	fo->func.func = func;
+	fo->name = str_Copy(name);
+	return (fo);
 }
 
-function_definition *CreateCObjFunction(object *(*func) (vm *vm,object *obj),	char *name)
+function_object *CreateCObjFunction(object *(*func) (vm *vm,object *obj),	char *name)
 {
-	function_definition *fd =
-		mem_malloc(sizeof(function_definition), "CreateCObjFunction() fd");
-	fd->type = FUNC_C_OBJ;
-	fd->func.func_obj = (*func);
-	fd->name = str_Copy(name);
-	return (fd);
+	function_object *fo = CreateFunctionObject(FUNC_C_OBJ,0);
+	fo->func.func_obj = (*func);
+	fo->name = str_Copy(name);
+	return (fo);
 }
 
-function_definition *CreatePythonFunction(object *code, char *name)
+function_object *CreatePythonFunction(code_object *code)
 {
-	function_definition *fd =
-		mem_malloc(sizeof(function_definition), "CreatePythonFunction() fd");
-	fd->type = FUNC_PYTHON;
-	fd->func.code = code;
-	fd->name = str_Copy(name);
-	return (fd);
+	function_object *fo = CreateFunctionObject(FUNC_PYTHON,0);
+	fo->func.code = code;
+	fo->name = code->name;
+	return (fo);
 }
 
-int vm_AddFunctionDefinition(vm *vm, function_definition *fd)
+int vm_AddFunctionObject(vm *vm, function_object *fo)
 {
-	ptr_Push(vm->functions, fd);
+	ptr_Push(vm->functions, fo);
+	IncRefCount(fo);
 	return (vm->functions->num - 1);
 }
 
@@ -62,65 +57,60 @@ void vm_RemoveFunction(vm *vm, char *name)
 {
 	for (int i = 0; i < vm->functions->num; i++)
 	{
-		if (!strcmp
-			(((function_definition *) vm->functions->items[i])->name, name))
+		if (!strcmp(((function_object*) vm->functions->items[i])->name, name))
 		{
-			FreeFunctionDefinition((function_definition *) vm->functions->
-								   items[i]);
+			FreeObject(vm->functions->items[i]);
 			ptr_Remove(vm->functions, i);
+			return;
 		}
 	}
 }
 
-void vm_RemoveFunctionDefinition(vm *vm, function_definition *fd)
+void vm_RemoveFunctionObject(vm *vm, function_object *fo)
 {
 	for (int i = 0; i < vm->functions->num; i++)
 	{
-		if (vm->functions->items[i] == fd)
+		if (vm->functions->items[i] == fo)
 		{
-			FreeFunctionDefinition(fd);
+			FreeObject(fo);
 			ptr_Remove(vm->functions, i);
+			return;
 		}
 	}
 }
 
 object *vm_ExecuteCFunction(vm *vm, char *name, stack *stack)
 {
-	function_definition *fd = vm_FindFunction(vm, name);
+	function_object *fo = vm_FindFunction(vm, name);
 
-	if (fd != NULL)
+	if (fo != NULL && fo->func_type == FUNC_C)
 	{
 		// printf("fd found:%s\n",fd->name);
-		return ((*fd->func.func) (vm,stack));
-
+		
+		return ((*fo->func.func) (vm,stack));
 	}
+	return(NULL);
 }
 
 object *vm_ExecuteCObjFunction(vm *vm, char *name, object *obj)
 {
-	function_definition *fd = vm_FindFunction(vm, name);
+	function_object *fo = vm_FindFunction(vm, name);
 
-	if (fd != NULL)
+	if (fo != NULL && fo->func_type == FUNC_C_OBJ)
 	{
-		return ((*fd->func.func_obj) (vm,obj));
+		return ((*fo->func.func_obj) (vm,obj));
 	}
+	return(NULL);
 }
 
-function_definition *vm_FindFunction(vm *vm, char *name)
+function_object *vm_FindFunction(vm *vm, char *name)
 {
 	for (int i = 0; i < vm->functions->num; i++)
 	{
-		if (!strcmp
-			(((function_definition *) vm->functions->items[i])->name, name))
-			return ((function_definition *) (vm->functions->items[i]));
+		if (!strcmp(((function_object*) vm->functions->items[i])->name, name))
+			return ((function_object*) (vm->functions->items[i]));
 	}
 	return (NULL);
-}
-
-void FreeFunctionDefinition(function_definition *fd)
-{
-	assert(mem_free(fd->name));
-	assert(mem_free(fd));
 }
 
 vm *vm_Init(code_object *co)
@@ -143,8 +133,7 @@ void vm_Close(vm *vm)
 	if (vm->functions->num)
 	{
 		for (int i = 0; i < vm->functions->num; i++)
-			FreeFunctionDefinition((function_definition *) vm->functions->
-								   items[i]);
+			FreeObject(vm->functions->items[i]);
 	}
 	ptr_CloseList(vm->functions);
 	gc_Clear(vm->garbage);
@@ -158,6 +147,22 @@ void vm_Close(vm *vm)
 void vm_SetGlobal(vm *vm, code_object *co)
 {
 	vm->global = co;
+}
+
+//void vm_Interrupt(vm *vm,object *(*interrupt) (vm *vm,stack *stack))
+//{
+
+//}
+
+//void vm_SetInterrupt(object *(*interrupt) (vm *vm,stack *stack))
+//{
+
+
+//}
+
+void vm_Continue(vm *vm)
+{
+
 }
 
 block_object *vm_StartObject(vm *vm,object *obj,stack *locals,int argc)
@@ -198,54 +203,108 @@ block_object *vm_StartObject(vm *vm,object *obj,stack *locals,int argc)
 		return(bo);
 }
 
-block_object *vm_StartFunctionObject(vm *vm,object *obj,stack *locals,int argc)
+object *vm_StartFunctionObject(vm *vm,function_object *fo,stack *locals,int argc)
 {
-		function_object *fo = (function_object*) obj;
+		if(fo->func_type == FUNC_C)
+		{
+			if((debug_level & DEBUG_VERBOSE_STEP) > 0)
+				printf("executing C function: %s\n",  fo->name);
+			object *tmp = vm_ExecuteCFunction(vm, fo->name,locals);
+			return(tmp);
+		}
 		//code_object *co = (code_object*)fo->code;
 		//tuple_object *defaults = fo->defaults;
-		string_object *bytecodes = (string_object *) fo->code->code;
 		block_object *bo = AllocBlockObject();
 		bo->type = TYPE_BLOCK;
-		bo->code = fo->code;
 		bo->ip = 0;
 		bo->iter = NULL;
 		bo->start = 0;
-		bo->len = bytecodes->len;
 		bo->ref_count = 0;
 		bo->stack = stack_Init();		// co->stacksize
 		bo->initiated_locals = 1;
 		stack_Push(vm->blocks, bo);
-		int locals_num = ((tuple_object*)fo->code->varnames)->list->num;
-		//printf("locals num:%d\n",locals_num);
-		for(int i = 0;i < fo->defaults->list->num; i++) //load default values
+		if(fo->func_type == FUNC_PYTHON)
 		{
-				if(GetItem(fo->code->varnames,(locals_num-1) - i)->type != TYPE_KV)
-					{
-						SetItem(fo->code->varnames,(locals_num-1) - i,ConvertToKVObjectValued(GetItem(fo->code->varnames,(locals_num-1) - i),GetItem(fo->defaults,i)));
-					}
-				else
-				{
-					SetDictItemByIndex(fo->code->varnames,(locals_num-1) - i,GetItem(fo->defaults,i));
-				}
-		}
-
-		if (argc > 0 && locals != NULL)
-		{
-			for (int i = 0; i < argc; i++)
+			//printf("preparing python function\n");
+			string_object *bytecodes = (string_object *) fo->func.code->code;
+			bo->code = fo->func.code;
+			bo->len = bytecodes->len;
+			if(((tuple_object*)fo->func.code->varnames)->list != NULL)
 			{
-				object *local = stack_Pop(locals,vm->garbage);
-				tuple_object *co_varnames = (tuple_object *) fo->code->varnames;
-				if(GetItem(co_varnames,i)->type != TYPE_KV)
+				int locals_num = ((tuple_object*)fo->func.code->varnames)->list->num;
+				//printf("locals num:%d\n",locals_num);
+				//printf("loading default values\n");
+				for(int i = 0;i < fo->defaults->list->num; i++) //load default values
+				{
+					if(GetItem(fo->func.code->varnames,(locals_num-1) - i)->type != TYPE_KV)
+					{
+						SetItem(fo->func.code->varnames,(locals_num-1) - i,ConvertToKVObjectValued(GetItem(fo->func.code->varnames,(locals_num-1) - i),GetItem(fo->defaults,i)));
+					}		
+					else
+					{
+						SetDictItemByIndex(fo->func.code->varnames,(locals_num-1) - i,GetItem(fo->defaults,i));
+					}
+				}
+			}
+			//printf("loading arguments\n");
+			if (argc > 0 && locals != NULL)
+			{
+				for (int i = 0; i < argc; i++)
+				{
+					object *local = stack_Pop(locals,vm->garbage);
+					tuple_object *co_varnames = (tuple_object *) fo->func.code->varnames;
+					if(GetItem(co_varnames,i)->type != TYPE_KV)
 					{
 						SetItem(co_varnames,i,ConvertToKVObjectValued(GetItem(co_varnames,i),local));
 					}
-				else
-				{
-					SetDictItemByIndex(co_varnames,i,local);
+					else
+					{
+						SetDictItemByIndex(co_varnames,i,local);
+					}
 				}
 			}
 		}
-		return(bo);
+		return(NULL);//got nothing to return now
+}
+
+function_object *ResolveFunction(vm *vm,object *to_resolve)
+{
+	if(to_resolve->type == TYPE_KV)
+		to_resolve = ((kv_object*)to_resolve)->value;
+	to_resolve = DissolveRef(to_resolve);
+
+	if (to_resolve != NULL && to_resolve->type == TYPE_FUNCTION)
+	{
+		return(to_resolve); //nothing to done really here
+	}
+	else	if (to_resolve != NULL && to_resolve->type == TYPE_CODE)
+	{
+		printf("WARNING: cant resolve from code object\n");
+		return(NULL);
+	}
+	else if (to_resolve != NULL && to_resolve->type == TYPE_UNICODE)
+	{
+		object *f = vm_FindFunction(vm, ((unicode_object*)to_resolve)->value);
+		if(f != NULL)
+			return(f);
+		else
+		{
+			object *caller_func = NULL;
+			int index = GetItemIndexByName(vm->global->names,((unicode_object*)to_resolve)->value);
+			if(index != -1)
+				caller_func = GetItem(vm->global->names,index);
+			if (caller_func != NULL && ((object *) caller_func)->type == TYPE_CODE)
+			{
+				printf("WARNING: cant resolve from code object\n");
+				return(NULL);
+			}
+			else if (caller_func != NULL && ((object *) caller_func)->type == TYPE_FUNCTION)
+			{
+				return(caller_func);
+			}
+		}
+	}
+	return(NULL);
 }
 
 void vm_DumpCode(vm *vm,int dump_descriptions, int from_start)
@@ -905,7 +964,7 @@ object *vm_StepObject(vm *vm)
 							t = ((kv_object*)t)->value;
 						SetItem(r,i,t);
 					}
-					function_object *fo = CreateFunctionObject(tos,r,0);
+					function_object *fo = CreateFunctionObject_MAKE_FUNCTION(tos,r,0);
 					stack_Push(bo->stack,fo);
 				}
 				break;
@@ -1050,11 +1109,12 @@ object *vm_StepObject(vm *vm)
 					}
 					if (lgo == NULL)
 					{
-					if (vm_FindFunction(vm, name) != NULL)
-						{
-							lgo = CreateUnicodeObject(str_Copy(name),0);
-						}
-						else
+						lgo = vm_FindFunction(vm, name);
+						if (lgo  == NULL)
+						//{
+						//	lgo = CreateUnicodeObject(str_Copy(name),0);
+						//}
+						//else
 						{
 							if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 								printf("global not found\n");
@@ -1601,11 +1661,35 @@ object *vm_StepObject(vm *vm)
 				}
 			case OPCODE_CALL_FUNCTION:
 				{
-					long narg = arg & 255;
-					long nkey = (arg >> 8) & 255;
 					stack *call = NULL;
-					if (narg > 0 || nkey > 0 || var_list != NULL)
+					int narg = arg & 255;
+					int nkey = (arg >> 8) & 255;
+					int n = narg + (nkey*2);
+					//fetch function object from tos and Resolve to function object
+					object *function = stack_Get(bo->stack,stack_Pointer(bo->stack) - n);
+					//printf("calling function:\n");
+					//DumpObject(function,0);
+					function_object *fo = ResolveFunction(vm,function);
+					//printf("resolved to:\n");
+					//DumpObject(fo,0);
+					
+					if (narg > 0 || var_list != NULL)
 						call = stack_Init();	// arg, 
+					if(kw_list != NULL) //variable keyword arguments
+					{
+						//printf("var keywords found:%d\n",kw_list->list->num);
+						for (int i = kw_list->list->num-1; i >= 0 ;i--)
+						{
+							object *v = GetItem(kw_list,i);
+							//stack_Push(call, v);
+							//DumpObject(v,0);
+							if(fo->func_type == FUNC_PYTHON)
+							{
+								//printf("setting varname\n");
+								SetDictItem(fo->func.code->varnames,((kv_object*)v)->key,((kv_object*)v)->value);
+							}
+						}	
+					}
 					if(var_list != NULL) //variable list arguments
 					{
 						//printf("var list found:%d\n",var_list->list->num);
@@ -1616,11 +1700,22 @@ object *vm_StepObject(vm *vm)
 							//DumpObject(v,0);
 						}	
 					}
+
 					for (int i = 0; i < nkey; i++)//keyword arguments
 					{
 						object *value = stack_Pop(bo->stack,vm->garbage);
 						object *key = stack_Pop(bo->stack,vm->garbage);
 						//now setdictitem in function code varnames
+						//printf("keyword arg:\n");
+						//DumpObject(key,0);
+						//printf("value:\n");
+						//DumpObject(value,0);
+						
+						if(fo->func_type == FUNC_PYTHON)
+						{
+							//printf("setting varname\n");
+							SetDictItem(fo->func.code->varnames,key,value);
+						}
 					}
 					for (int i = 0; i < narg; i++)//positional arguments
 					{
@@ -1629,22 +1724,34 @@ object *vm_StepObject(vm *vm)
 					if(var_list != NULL)
  						narg += var_list->list->num;
 
-					object *function_name = stack_Pop(bo->stack,vm->garbage);
+					//pop function object
+					//object *function_name = stack_Pop(bo->stack,vm->garbage);
+					stack_Pop(bo->stack,vm->garbage);
+					
+					object *pret = vm_StartFunctionObject(vm,fo, call, narg);
+					if (pret != NULL)
+					{
+							stack_Push(bo->stack, pret);
+					}
+					if (narg > 0 || var_list != NULL)
+						stack_Close(call, 0);
+					
+					
+					/*
 					if(function_name->type == TYPE_KV)
 						function_name = ((kv_object*)function_name)->value;
 					function_name = DissolveRef(function_name);
 					if (function_name != NULL && function_name->type == TYPE_FUNCTION)
 					{
 						if((debug_level & DEBUG_VERBOSE_STEP) > 0)
-							printf("executing direct local function object: %s\n", ((function_object *) function_name)->code->name);
+							printf("executing direct local function object: %s\n", ((function_object*) function_name)->name);
 		
-						/*object *ret = vm_RunObject(vm, (object *) function_name, obj, call, arg);	// ,global
-						if (ret != NULL)
-						{
-							stack_Push(bo->stack, ret);
-							DecRefCountGC(ret,vm->garbage);
-						}
-						*/
+						//object *ret = vm_RunObject(vm, (object *) function_name, obj, call, arg);	// ,global
+						//if (ret != NULL)
+						//{
+						//	stack_Push(bo->stack, ret);
+						//	DecRefCountGC(ret,vm->garbage);
+						//}
 						//stack_Dump(call);
 						vm_StartFunctionObject(vm,function_name, call, arg);
 						
@@ -1655,13 +1762,13 @@ object *vm_StepObject(vm *vm)
 						if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 							printf("executing direct local code object: %s\n", ((code_object *) function_name)->name);
 		
-						/*object *ret = vm_RunObject(vm, (object *) function_name, obj, call, arg);	// ,global
-						if (ret != NULL)
-						{
-							stack_Push(bo->stack, ret);
-							DecRefCountGC(ret,vm->garbage);
-						}
-						*/
+						//object *ret = vm_RunObject(vm, (object *) function_name, obj, call, arg);	// ,global
+						//if (ret != NULL)
+						//{
+						//	stack_Push(bo->stack, ret);
+						//	DecRefCountGC(ret,vm->garbage);
+						//}
+						
 						vm_StartObject(vm,function_name, call, arg);
 						
 						if (narg > 0 || nkey > 0 || var_list != NULL)
@@ -1713,6 +1820,7 @@ object *vm_StepObject(vm *vm)
 							printf("function: [%s] not found\n",
 								   ((unicode_object*)function_name)->value);
 					}
+					*/
 				}
 				break;
 

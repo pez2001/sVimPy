@@ -95,6 +95,10 @@ extern int debug_level;
 #define TYPE_KV 'k'
 #define TYPE_REF 'r'
 
+//function types
+#define FUNC_PYTHON 1
+#define FUNC_C 2
+#define FUNC_C_OBJ 4
 
 
 #pragma pack(push)				/* push current alignment to stack */
@@ -204,18 +208,29 @@ typedef struct
 } tuple_object;
 
 
+struct _vm;
+struct _stack;
+
 typedef struct
 {
 	char type;
 	unsigned char flags;
 	unsigned short  ref_count;
-	code_object *code;
 	tuple_object *defaults;//set to default values in MAKE_FUNCTION opcode
+	//code_object *code;
+	char *name;//used quickly find functions by name
+	unsigned char func_type;
+	union func_def
+	{
+		object *(*func) (struct _vm *vm,struct _stack *stack);
+		object *(*func_obj) (struct _vm *vm,object *object);
+		code_object *code;
+	} func;
+
 } function_object;
 
 //TODO create struct for generator storage
 
-struct _stack;
 
 typedef struct
 {
@@ -333,7 +348,9 @@ kv_object *CreateKVObject(object *key,object *value,int flags);
 
 empty_object *CreateEmptyObject(char type,int flags);
 
-function_object *CreateFunctionObject(code_object *function_code,tuple_object *defaults,int flags);
+function_object *CreateFunctionObject_MAKE_FUNCTION(code_object *function_code,tuple_object *defaults,int flags);
+
+function_object *CreateFunctionObject(unsigned char func_type,int flags);
 
 void FreeBlockObject(object *obj);
 

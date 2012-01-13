@@ -85,6 +85,24 @@ object *stack_Bottom(stack *stack)
 	return (r);
 }
 
+object *stack_Get(stack *stack,int index)
+{
+	if (index >= stack->list->num || index < 0)
+	{
+		if((debug_level & DEBUG_STACK) > 0)
+			printf("stack_Get() - stack underflow - index out of range\n");
+		return (NULL);
+	}
+	object *r = stack->list->items[index];
+	return(r);
+}
+
+int stack_Pointer(stack *stack)
+{
+	return(stack->list->num-1);
+}
+
+
 object *stack_Top(stack *stack)
 {
 	if (stack->list->num < 1)
@@ -94,7 +112,6 @@ object *stack_Top(stack *stack)
 		return (NULL);
 	}
 	object *r = stack->list->items[stack->list->num - 1];
-
 	return (r);
 }
 

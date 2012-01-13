@@ -310,16 +310,38 @@ empty_object *CreateEmptyObject(char type,int flags)
 	return(r);
 }
 
-function_object *CreateFunctionObject(code_object *function_code,tuple_object *defaults,int flags)
+function_object *CreateFunctionObject_MAKE_FUNCTION(code_object *function_code,tuple_object *defaults,int flags)
 {
 	function_object *r = AllocFunctionObject();
 	r->type = TYPE_FUNCTION;
 	r->flags = flags;
 	r->ref_count = 0;
-	r->code = function_code;
+	r->func.code = function_code;
+	r->func_type = FUNC_PYTHON;
+	r->name = function_code->name;
 	IncRefCount(function_code);
-	r->defaults = defaults;
-	IncRefCount(defaults);
+	if(defaults != NULL)
+	{
+		r->defaults = defaults;
+		IncRefCount(defaults);
+	}
+	else
+		r->defaults = NULL;
+	if((debug_level & DEBUG_CREATION) > 0)
+	{
+		printf("created object\n");
+		DumpObject(r,0);
+	}
+	return(r);
+}
+
+function_object *CreateFunctionObject(unsigned char func_type,int flags)
+{
+	function_object *r = AllocFunctionObject();
+	r->type = TYPE_FUNCTION;
+	r->flags = flags;
+	r->ref_count = 0;
+	r->func_type = func_type;
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
 		printf("created object\n");
@@ -426,8 +448,16 @@ void FreeObject(object * obj)
 		break;
 	case TYPE_FUNCTION:
 		objects_header_total -= sizeof(function_object);
-		FreeObject(((function_object*) obj)->code);
-		FreeObject(((function_object*) obj)->defaults);
+		if(((function_object*) obj)->func_type == FUNC_PYTHON)
+		{
+			FreeObject(((function_object*) obj)->func.code);
+			FreeObject(((function_object*) obj)->defaults);
+		}else 
+		if(((function_object*) obj)->func_type == FUNC_C || ((function_object*) obj)->func_type == FUNC_C_OBJ)
+		{
+			assert(mem_free(((function_object*) obj)->name));
+		}
+		
 		break;
 	case TYPE_UNICODE:
 		//if(obj->flags &OFLAG_ON_STACK)
@@ -449,25 +479,27 @@ void FreeObject(object * obj)
 	case TYPE_TUPLE:
 		 //printf("freeing tuple object @%x\n",obj);
 		objects_header_total -= sizeof(tuple_object);
-		if (((tuple_object *)obj)->list != NULL  && ((tuple_object *) obj)->list->num > 0)
+		if (((tuple_object *)obj)->list != NULL)
 		{
-			for (int i = 0; i < ((tuple_object *) obj)->list->num; i++)
+			if(((tuple_object *) obj)->list->num > 0)
 			{
-						//printf("checking sub:%c\n",((object*)((tuple_object *) obj)->list->items[i])->type);
-				//if ((((tuple_object *) obj)->list->items[i]) != NULL && !(((object*)((tuple_object *) obj)->list->items[i])->flags & OFLAG_ON_STACK))
-				//{
-					//printf("freeing sub:%c\n",((object*)((tuple_object *) obj)->list->items[i])->type);
-					FreeObject(((tuple_object *) obj)->list->items[i]);
-					//if(((object*)((tuple_object *) obj->ptr)->list->items[i])->value_ptr != NULL && !(((object*)((tuple_object *) obj->ptr)->list->items[i])->flags & OFLAG_ON_STACK))
-					//	FreeObject(((object*)((tuple_object *) obj->ptr)->list->items[i])->value_ptr);
-				//}
-				((tuple_object *) obj)->list->items[i] = NULL;
+				for (int i = 0; i < ((tuple_object *) obj)->list->num; i++)
+				{
+					//printf("checking sub:%c\n",((object*)((tuple_object *) obj)->list->items[i])->type);
+					//if ((((tuple_object *) obj)->list->items[i]) != NULL && !(((object*)((tuple_object *) obj)->list->items[i])->flags & OFLAG_ON_STACK))
+					//{
+						//printf("freeing sub:%c\n",((object*)((tuple_object *) obj)->list->items[i])->type);
+						FreeObject(((tuple_object *) obj)->list->items[i]);
+						//if(((object*)((tuple_object *) obj->ptr)->list->items[i])->value_ptr != NULL && !(((object*)((tuple_object *) obj->ptr)->list->items[i])->flags & OFLAG_ON_STACK))
+						//	FreeObject(((object*)((tuple_object *) obj->ptr)->list->items[i])->value_ptr);
+					//}
+					((tuple_object *) obj)->list->items[i] = NULL;
+				}
 			}
 			ptr_CloseList(((tuple_object *) obj)->list);
-			
-			//assert(mem_free(((tuple_object *) obj->ptr)->list->items));
-			((tuple_object *) obj)->list = NULL;
 		}
+			//assert(mem_free(((tuple_object *) obj->ptr)->list->items));
+		((tuple_object *) obj)->list = NULL;
 		break;
 	case TYPE_CODE:
 		 //printf("freeing code object @%x\n",obj);
@@ -603,15 +635,34 @@ void DumpObject(object * obj, int level)
 		DumpObject(((kv_object*)obj)->value,level + 1);
 		break;
 	case TYPE_FUNCTION:
-		printf("function object\n");
-		for (int i = 0; i < level; i++)
-		printf("\t");
-		printf("code:\n");
-		DumpObject(((function_object*)obj)->code,level + 1);
-		for (int i = 0; i < level; i++)
-		printf("\t");
-		printf("defaults:\n");
-		DumpObject(((function_object*)obj)->defaults,level + 1);
+		printf("function object: %s\n",((function_object*)obj)->name);
+		if(((function_object*)obj)->func_type == FUNC_PYTHON)
+		{
+			for (int i = 0; i < level; i++)
+				printf("\t");
+			printf("Python function\n");
+			for (int i = 0; i < level; i++)
+				printf("\t");
+			printf("code:\n");
+			DumpObject(((function_object*)obj)->func.code,level + 1);
+			for (int i = 0; i < level; i++)
+				printf("\t");
+			printf("defaults:\n");
+			DumpObject(((function_object*)obj)->defaults,level + 1);
+		}else
+		if(((function_object*)obj)->func_type == FUNC_C)
+		{
+			for (int i = 0; i < level; i++)
+				printf("\t");
+			printf("C function\n");
+		}else
+		if(((function_object*)obj)->func_type == FUNC_C_OBJ)
+		{
+			for (int i = 0; i < level; i++)
+				printf("\t");
+			printf("C Object function\n");
+		}
+		
 		break;
 	case TYPE_UNICODE:
 		printf("unicode object: %s\n", ((unicode_object*)obj)->value);
@@ -712,6 +763,7 @@ void DumpObject(object * obj, int level)
 
 int object_compare(object *a,object *b)
 {
+	//printf("comparing objects\n");
 	assert(a != NULL && b != NULL);
 	if (a == NULL && b == NULL)
 		return(0);
@@ -874,66 +926,6 @@ object *CopyObject(object *obj)
   return(NULL);
 }
 
-void AppendDictItem(object * tuple,object *key,object *value)
-{
-	if (tuple == NULL || tuple->type != TYPE_TUPLE)
-		return;
-	if(((tuple_object *) tuple)->list == NULL)
-		((tuple_object *) tuple)->list = ptr_CreateList(0,0);
-	//object *di = CopyObject(key);//TODO needed??
-	//kv_object *kv = ConvertToKVObjectValued(di,value);
-	kv_object *kv = ConvertToKVObjectValued(key,value);
-	if((debug_level & DEBUG_LISTS) > 0)
-	{
-	printf("appended to \n");
-	DumpObject(tuple,0);
-	printf("this\n");
-	//DumpObject(di,0);
-	DumpObject(key,0);
-	}
-	ptr_Push(((tuple_object *) tuple)->list,kv);
-	IncRefCount(kv);
-
-}
-
-void SetDictItem(object *tuple,object *key,object *value)
-{
-	int index = GetDictItemIndex(tuple,key);
-	if((debug_level & DEBUG_LISTS) > 0)
-	{
-		printf("setting\n");
-		DumpObject(tuple,0);
-		printf("key\n");
-		DumpObject(key,0);
-		printf("value\n");
-		DumpObject(value,0);
-	}
-	if(index != -1)
-		{
-			//printf("found index\n");
-			//SetItem(tuple,index,value);
-			kv_object * k = GetItem(tuple,index);
-			object *old = k->value;
-			if(value != NULL)
-			{
-				k->value = value;
-				IncRefCount(value);
-			}
-			else
-				k->value = NULL;
-			if(old != NULL)
-				FreeObject(old);
-		}
-	else
-	{
-	//printf("Appending to dict\n");
-	//DumpObject(tuple,0);
-	//DumpObject(key,1);
-	//DumpObject(value,1);
-	 AppendDictItem(tuple,key,value);
-	}
-}
-
 void IncRefCount(object *obj)
 {
 	obj->ref_count++;
@@ -990,6 +982,76 @@ int HasRefs(object *obj)
 return(obj->ref_count);
 }
 
+void AppendDictItem(object * tuple,object *key,object *value)
+{
+	if (tuple == NULL || tuple->type != TYPE_TUPLE)
+		return;
+	if(((tuple_object *) tuple)->list == NULL)
+		((tuple_object *) tuple)->list = ptr_CreateList(0,0);
+	//object *di = CopyObject(key);//TODO needed??
+	//kv_object *kv = ConvertToKVObjectValued(di,value);
+	kv_object *kv = ConvertToKVObjectValued(key,value);
+	if((debug_level & DEBUG_LISTS) > 0)
+	{
+	printf("appended to \n");
+	DumpObject(tuple,0);
+	printf("this\n");
+	//DumpObject(di,0);
+	DumpObject(key,0);
+	}
+	ptr_Push(((tuple_object *) tuple)->list,kv);
+	IncRefCount(kv);
+
+}
+
+void SetDictItem(object *tuple,object *key,object *value)
+{
+	int index = GetDictItemIndex(tuple,key);
+	if((debug_level & DEBUG_LISTS) > 0)
+	{
+		printf("setting\n");
+		DumpObject(tuple,0);
+		printf("key\n");
+		DumpObject(key,0);
+		printf("value\n");
+		DumpObject(value,0);
+	}
+	if(index != -1)
+		{
+			//printf("found index\n");
+			//SetItem(tuple,index,value);
+			object * k = GetItem(tuple,index);
+			if(k->type == TYPE_KV)
+			{
+				object *old = k->value;
+				if(value != NULL)
+				{
+					k->value = value;
+					IncRefCount(value);
+				}
+				else
+					k->value = NULL;
+				if(old != NULL)
+					FreeObject(old);
+			}
+			else 
+			{
+					kv_object *kv = ConvertToKVObjectValued(k,value);
+					//FreeObject(k);
+					SetItem(tuple,index,kv);
+					//IncRefCount(kv);
+			}
+		}
+	else
+	{
+	//printf("Appending to dict\n");
+	//DumpObject(tuple,0);
+	//DumpObject(key,1);
+	//DumpObject(value,1);
+	 AppendDictItem(tuple,key,value);
+	}
+}
+
 void SetDictItemByIndex(object *tuple,int index,object *value)
 {
 	if(index != -1)
@@ -1039,9 +1101,15 @@ int GetDictItemIndex(object *tuple,object *key)
 		// printf("checking %s against:
 		// %s\n",name,(char*)((tuple_object*)tuple->ptr)->items[i]->ptr);
 		if (((tuple_object *) tuple)->list->items[i] == NULL || ((object*)((tuple_object *) tuple)->list->items[i])->type != TYPE_KV)
-			continue;
-		if ( !object_compare( ((kv_object*)((tuple_object *) tuple)->list->items[i])->key,key))
-			return (i);
+		{
+			if ( !object_compare( ((tuple_object *) tuple)->list->items[i],key))
+				return (i);
+		}
+		else
+		{
+			if ( !object_compare( ((kv_object*)((tuple_object *) tuple)->list->items[i])->key,key))
+				return (i);
+		}
 	}
 	return (-1);
 }

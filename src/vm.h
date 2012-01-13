@@ -80,7 +80,7 @@ extern const opcode opcodes[];
 extern int debug_level;
 
 
-typedef struct
+typedef struct _vm
 {
 	//stack *recycle;
 	stack *blocks;
@@ -90,12 +90,12 @@ typedef struct
 	// code_object *co;//global code object //Bottom of blocks stack is the
 	// global module
 	// int ip;//instruction pointer moved to block object
+	object *(*vm_interrupt) (struct _vm *vm,stack *stack);
+	int interrpt_vm;
 } vm;
 
-#define FUNC_PYTHON 1
-#define FUNC_C 2
-#define FUNC_C_OBJ 4
 
+/*
 typedef struct
 {
 	unsigned int type;
@@ -107,26 +107,26 @@ typedef struct
 	} func;
 	char *name;
 } function_definition;
+*/
 
 
+function_object *CreateCFunction(object *(*func) (vm *vm,stack *stack), char *name);
 
-function_definition *CreateCFunction(object *(*func) (vm *vm,stack *stack), char *name);
+function_object *CreateCObjFunction(object *(*func) (vm *vm,object *obj),	char *name);
 
-function_definition *CreateCObjFunction(object *(*func) (vm *vm,object *obj),	char *name);
+function_object *CreatePythonFunction(code_object *code);
 
-function_definition *CreatePythonFunction(object *code, char *name);
-
-int vm_AddFunctionDefinition(vm *vm, function_definition *fd);
+int vm_AddFunctionObject(vm *vm, function_object *fo);
 
 void vm_RemoveFunction(vm *vm, char *name);
 
-void vm_RemoveFunctionDefinition(vm *vm, function_definition *fd);
+void vm_RemoveFunctionObject(vm *vm, function_object *fo);
 
 object *vm_ExecuteCFunction(vm *vm, char *name, stack *stack);
 
 object *vm_ExecuteCObjFunction(vm *vm, char *name, object *obj);
 
-function_definition *vm_FindFunction(vm *vm, char *name);
+function_object *vm_FindFunction(vm *vm, char *name);
 
 vm *vm_Init(code_object *co);//init vm and set global object if given
 
@@ -134,13 +134,26 @@ void vm_Close(vm *vm);//close vm and free all of its used memory
 
 void vm_SetGlobal(vm *vm, code_object * co);//set global code object
 
+//void vm_SetInterrupt(object *(*interrupt_func) (vm *vm,stack *stack)); //set interrupt handler function
+
+//void vm_Interrupt(vm *vm, object *(*interrupt_func) (vm *vm,stack *stack)); //interrupt vm and call interrupt handler afterwards
+
+//void vm_Continue(vm *vm);//continue vm execution
+
+//void vm_Exit(vm *vm); //exit vm
+
+//void vm_Stop(vm *vm); //pause vm execution
+
+
+object *vm_CallFunction(vm *vm,char *name,stack *locals);//call a python function from C
+
 object *vm_RunObject(vm *vm, object *obj, stack *locals, int argc);//run a python code object
 
 block_object *vm_StartObject(vm *vm,object *obj,stack *locals,int argc);//run a python code object
 
-block_object *vm_StartFunctionObject(vm *vm,object *obj,stack *locals,int argc);//run a python function object
+object *vm_StartFunctionObject(vm *vm,function_object *fo,stack *locals,int argc);//run a python function object
 
-object *vm_CallFunction(vm *vm,char *name,stack *locals);//call a python function from C
+function_object *ResolveFunction(vm *vm,object *to_resolve);//input can be function_objects ,code_objects, unicode_objects -> returns a function_object if any
 
 object *vm_StepObject(vm *vm);//single step vm
 

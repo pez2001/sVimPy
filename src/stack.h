@@ -51,6 +51,10 @@ void stack_Clear(stack *stack, int free_objects);
 
 int stack_Contains(stack *stack, object * x);
 
+object *stack_Get(stack *stack,int index);
+
+int stack_Pointer(stack *stack);
+
 object *stack_Top(stack *stack);
 
 object *stack_Bottom(stack *stack);
