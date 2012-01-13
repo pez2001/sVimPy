@@ -79,6 +79,8 @@ except
 extern const opcode opcodes[];
 extern int debug_level;
 
+#pragma pack(push)				/* push current alignment to stack */
+#pragma pack(1)					/* set alignment to 1 byte boundary */
 
 typedef struct _vm
 {
@@ -91,9 +93,11 @@ typedef struct _vm
 	// global module
 	// int ip;//instruction pointer moved to block object
 	object *(*interrupt_handler) (struct _vm *vm,stack *stack);
-	int interrupt_vm;
-	int running;
+	unsigned char interrupt_vm;
+	unsigned char running;
 } vm;
+
+#pragma pack(pop)				/* restore original alignment from stack */
 
 
 function_object *CreateCFunction(object *(*func) (vm *vm,stack *stack), char *name);
