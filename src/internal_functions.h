@@ -26,6 +26,7 @@
 #include "object.h"
 #include "stack.h"
 #include "vm.h"
+#include "debug.h"
 
 // object *pow(object *base,object *exp);
 
@@ -38,6 +39,8 @@ object *if_sum(vm *vm,stack * stack);
 object *if_list(vm *vm,stack * stack);
 
 object *BinaryOp(object *tos,object *tos1,unsigned char op);
+
+object *CompareOp(object *tos,object *tos1,unsigned char cmp_op);
 
 object *custom_code(vm *vm,stack * stack);
 

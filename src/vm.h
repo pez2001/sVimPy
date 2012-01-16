@@ -77,7 +77,6 @@ except
 #include "assert.h"
 
 extern const opcode opcodes[];
-extern int debug_level;
 
 #pragma pack(push)				/* push current alignment to stack */
 #pragma pack(1)					/* set alignment to 1 byte boundary */
@@ -134,7 +133,6 @@ void vm_Exit(vm *vm); //exit vm
 
 void vm_Stop(vm *vm); //pause vm execution
 
-
 object *vm_CallFunction(vm *vm,char *name,stack *locals);//call a python function from C
 
 object *vm_RunObject(vm *vm, object *obj, stack *locals, int argc);//run a python code object
@@ -143,7 +141,7 @@ block_object *vm_StartObject(vm *vm,object *obj,stack *locals,int argc);//run a 
 
 object *vm_StartFunctionObject(vm *vm,function_object *fo,stack *locals,int argc);//run a python function object
 
-function_object *ResolveFunction(vm *vm,object *to_resolve);//input can be function_objects ,code_objects, unicode_objects -> returns a function_object if any
+function_object *vm_ResolveFunction(vm *vm,object *to_resolve);//input can be function_objects ,code_objects, unicode_objects -> returns a function_object if any
 
 object *vm_StepObject(vm *vm);//single step vm
 

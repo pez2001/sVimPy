@@ -27,7 +27,6 @@
 #include "stdlib.h"
 
 #include "assert.h"
-extern int debug_level;
 #include "debug.h"
 
 

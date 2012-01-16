@@ -26,7 +26,6 @@
 #include "lists.h"
 #include "object.h"
 
-extern int debug_level;
 #include "debug.h"
 
 #define STACK_TYPE *object;

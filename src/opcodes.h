@@ -96,8 +96,8 @@
 #define OPCODE_BUILD_MAP 							0x69
 #define OPCODE_LOAD_ATTR 							0x6a
 #define OPCODE_COMPARE_OP						0x6b
-#define OPCODE_IMPORT_FROM 					0x6c
-#define OPCODE_IMPORT_NAME 					0x6d
+#define OPCODE_IMPORT_NAME 					0x6c
+#define OPCODE_IMPORT_FROM 					0x6d
 #define OPCODE_JUMP_FORWARD 					0x6e
 #define OPCODE_JUMP_IF_FALSE 					0x6f
 #define OPCODE_JUMP_IF_TRUE 					0x70
@@ -129,8 +129,14 @@
 #define OPCODE_MAP_ADD								0x92
 
 
-extern int debug_level;
 
+typedef struct
+{
+	unsigned char cm_op;		// cmp op in bytecode representation
+#ifdef DEBUG
+	char *name;					// string version
+#endif
+} cmp_op;
 
 
 typedef struct

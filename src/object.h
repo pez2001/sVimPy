@@ -31,7 +31,6 @@
 #include "lists.h"
 #include "assert.h"
 
-extern int debug_level;
 #include "debug.h"
 
 
@@ -220,6 +219,7 @@ typedef struct
 	//code_object *code;
 	char *name;//used quickly find functions by name
 	unsigned char func_type;
+	object *closure;
 	union func_def
 	{
 		object *(*func) (struct _vm *vm,struct _stack *stack);
@@ -350,6 +350,9 @@ empty_object *CreateEmptyObject(char type,int flags);
 
 function_object *CreateFunctionObject_MAKE_FUNCTION(code_object *function_code,tuple_object *defaults,int flags);
 
+function_object *CreateFunctionObject_MAKE_CLOSURE(code_object *function_code,object *closure,tuple_object *defaults,int flags);
+
+
 function_object *CreateFunctionObject(unsigned char func_type,int flags);
 
 void FreeBlockObject(object *obj);
@@ -376,7 +379,13 @@ void SetDictItemByIndex(object *tuple,int index,object *value);
 
 object *GetDictItem(object *tuple,object *key);
 
+object *GetDictItemByIndex(object *tuple,int index);
+
+int GetTupleLen(object *tuple);
+
 int GetDictItemIndex(object *tuple,object *key);
+
+int GetItemIndex(object *tuple,object *obj);
 
 object *CopyObject(object *obj);
 

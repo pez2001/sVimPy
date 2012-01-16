@@ -27,9 +27,28 @@
 
 #ifdef DEBUG
 
+const unsigned int cmp_opscount = 12;
+
+const cmp_op cmp_ops[] = {
+{0, "<"},
+{1, "<="},
+{2, "=="},
+{3, "!="},
+{4, ">"},
+{5, ">="},
+{6, "in"},
+{7, "not in"},
+{8, "is"},
+{9, "is not"},
+{10, "exception match"}, //NOT SUPPORTED
+{11, "BAD"} //NOT SUPPORTED
+};
+
+
 const unsigned int opcodecount = 101;
 
-const opcode opcodes[] = { {OPCODE_STOP_CODE, "STOP_CODE", "Indicates end-of-code to the compiler, not used by the interpreter.", 0, 1},	// SUPPORTED
+const opcode opcodes[] = {
+{OPCODE_STOP_CODE, "STOP_CODE", "Indicates end-of-code to the compiler, not used by the interpreter.", 0, 1},	// SUPPORTED
 {OPCODE_POP_TOP, "POP_TOP", "Removes the top-of-stack (TOS) item.", 0, 1},	// SUPPORTED
 {OPCODE_ROT_TWO, "ROT_TWO", "Swaps the two top-most stack items.", 0, 1},	// SUPPORTED
 {OPCODE_ROT_THREE, "ROT_THREE", "Lifts second and third stack item one position up, moves top down to position three.", 0, 1},	// SUPPORTED

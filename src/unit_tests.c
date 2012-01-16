@@ -181,7 +181,7 @@ int main(int argc, char *argv[])
 
 	debug_level |= DEBUG_INTERACTIVE;
 	debug_level |= DEBUG_MEMORY;
-	//debug_level |= DEBUG_SHOW_OPCODES;
+	debug_level |= DEBUG_SHOW_OPCODES;
 	debug_level |= DEBUG_FULL_DUMP;
 	//debug_level |= DEBUG_STACK;
 	//debug_level |= DEBUG_LISTS;
@@ -207,13 +207,23 @@ int main(int argc, char *argv[])
 	// printf("Calling all Unit Tests\n");
 
 
+
+	//closures and deref opcodes
+	OpenPYC("tests/test29.pyc", vm);//not supported opcode store_deref
+	
+	//append ops
+	OpenPYC("tests/test52.pyc", vm);
+	OpenPYC("tests/test53.pyc", vm);
+	
+	//brute ops + closures
+	OpenPYC("tests/test32.pyc", vm);
 	
 	
 	//crashing or leaking memory
 
-
+	/*
 	//custom code + import_from + import_star opcodes
-	//OpenPYC("tests/test45.pyc", vm);
+	OpenPYC("tests/test45.pyc", vm);
 	
 	//function parameters
 	OpenPYC("tests/test50.pyc", vm);//with keywords unordered
@@ -228,13 +238,6 @@ int main(int argc, char *argv[])
 	OpenPYC("tests/test38.pyc", vm);//call_function_var_kw 
 	OpenPYC("tests/test39.pyc", vm);//call_function
 	
-	
-	//closures and deref opcodes
-	//OpenPYC("tests/test29.pyc", vm);//not supported opcode store_deref
-	//brute ops + closures
-	//OpenPYC("tests/test32.pyc", vm);
-	
-	/*
 	//storing of globals/vars and deletion of globals/vars
 	OpenPYC("tests/test21ba2.pyc", vm);
 	OpenPYC("tests/test21.pyc", vm);
@@ -258,6 +261,12 @@ int main(int argc, char *argv[])
 	OpenPYC("tests/test17.pyc", vm);
 	OpenPYC("tests/test12.pyc", vm);
 	OpenPYC("tests/test11.pyc", vm);
+
+	//nested tuple printing
+	OpenPYC("tests/test51.pyc", vm);
+	
+	//comparing
+	OpenPYC("tests/test_compare.pyc", vm);
 
 	//simple stuff
 	OpenPYC("tests/test1.pyc", vm);

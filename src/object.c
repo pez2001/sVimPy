@@ -318,6 +318,7 @@ function_object *CreateFunctionObject_MAKE_FUNCTION(code_object *function_code,t
 	r->ref_count = 0;
 	r->func.code = function_code;
 	r->func_type = FUNC_PYTHON;
+	r->closure = NULL;
 	r->name = function_code->name;
 	IncRefCount(function_code);
 	if(defaults != NULL)
@@ -335,11 +336,41 @@ function_object *CreateFunctionObject_MAKE_FUNCTION(code_object *function_code,t
 	return(r);
 }
 
+function_object *CreateFunctionObject_MAKE_CLOSURE(code_object *function_code,object *closure,tuple_object *defaults,int flags)
+{
+	function_object *r = AllocFunctionObject();
+	r->type = TYPE_FUNCTION;
+	r->flags = flags;
+	r->ref_count = 0;
+	r->func.code = function_code;
+	r->closure = closure;
+	IncRefCount(closure);
+	r->func_type = FUNC_PYTHON;
+	r->name = function_code->name;
+	IncRefCount(function_code);
+	if(defaults != NULL)
+	{
+		r->defaults = defaults;
+		IncRefCount(defaults);
+	}
+	else
+		r->defaults = NULL;
+	if((debug_level & DEBUG_CREATION) > 0)
+	{
+		printf("created object\n");
+		DumpObject(r,0);
+	}
+	return(r);
+}
+
+
 function_object *CreateFunctionObject(unsigned char func_type,int flags)
 {
 	function_object *r = AllocFunctionObject();
 	r->type = TYPE_FUNCTION;
 	r->flags = flags;
+	r->closure = NULL;
+	r->func.code = NULL;
 	r->ref_count = 0;
 	r->func_type = func_type;
 	if((debug_level & DEBUG_CREATION) > 0)
@@ -452,6 +483,7 @@ void FreeObject(object * obj)
 		{
 			FreeObject(((function_object*) obj)->func.code);
 			FreeObject(((function_object*) obj)->defaults);
+			FreeObject(((function_object*) obj)->closure);
 		}else 
 		if(((function_object*) obj)->func_type == FUNC_C || ((function_object*) obj)->func_type == FUNC_C_OBJ)
 		{
@@ -649,6 +681,10 @@ void DumpObject(object * obj, int level)
 				printf("\t");
 			printf("defaults:\n");
 			DumpObject(((function_object*)obj)->defaults,level + 1);
+			for (int i = 0; i < level; i++)
+				printf("\t");
+			printf("closure:\n");
+			DumpObject(((function_object*)obj)->closure,level + 1);
 		}else
 		if(((function_object*)obj)->func_type == FUNC_C)
 		{
@@ -763,29 +799,30 @@ void DumpObject(object * obj, int level)
 
 int object_compare(object *a,object *b)
 {
+	//return(CompareOp(a,b,2));
 	//printf("comparing objects\n");
 	assert(a != NULL && b != NULL);
 	if (a == NULL && b == NULL)
 		return(0);
 	if(a== NULL || b == NULL)
-		return (-1);
+		return (1);
 	if(a->type != b->type)
-		return(-1);
+		return(1);
 	switch (a->type)
 	{
 	case TYPE_NULL:
-		return(-1);
+		return(1);
 		break;
 	case TYPE_NONE:
-		return(-1);
+		return(1);
 		break;
 	case TYPE_KV:
 		return(object_compare(((kv_object*)a)->key,((kv_object*)b)->key) && object_compare(((kv_object*)a)->value,((kv_object*)b)->value));
 	case TYPE_INT:
-		return(((int_object*)a)->value == ((int_object*)b)->value);
+		return( !(((int_object*)a)->value == ((int_object*)b)->value));
 		break;
 	case TYPE_BINARY_FLOAT:
-		return(((float_object*)a)->value == ((float_object*)b)->value);
+		return( !(((float_object*)a)->value == ((float_object*)b)->value));
 		break;
 	case TYPE_UNICODE:
 		return(strcmp(((unicode_object*)a)->value,((unicode_object*)b)->value));
@@ -1076,6 +1113,20 @@ void SetDictItemByIndex(object *tuple,int index,object *value)
 
 }
 
+object *GetDictItemByIndex(object *tuple,int index)
+{
+	if (tuple == NULL || tuple->type != TYPE_TUPLE || ((tuple_object *) tuple)->list == NULL || index >= ((tuple_object *) tuple)->list->num || index < 0)
+		return(NULL);
+	return(((kv_object*)GetItem(tuple,index))->value);
+}
+
+int GetTupleLen(object *tuple)
+{
+	if (tuple == NULL || tuple->type != TYPE_TUPLE || ((tuple_object *) tuple)->list == NULL || ((tuple_object *) tuple)->list->num == 0)
+		return(0);
+	return(((tuple_object *) tuple)->list->num);
+}
+
 object *GetDictItem(object *tuple,object *key)
 {
 	int index = GetDictItemIndex(tuple,key);
@@ -1108,6 +1159,28 @@ int GetDictItemIndex(object *tuple,object *key)
 		else
 		{
 			if ( !object_compare( ((kv_object*)((tuple_object *) tuple)->list->items[i])->key,key))
+				return (i);
+		}
+	}
+	return (-1);
+}
+
+int GetItemIndex(object *tuple,object *obj)
+{
+	if (tuple == NULL || tuple->type != TYPE_TUPLE || ((tuple_object *) tuple)->list == NULL)
+		return (-1);
+
+	for (int i = 0; i < ((tuple_object *) tuple)->list->num; i++)
+	{
+
+		if (((tuple_object *) tuple)->list->items[i] == NULL || ((object*)((tuple_object *) tuple)->list->items[i])->type != TYPE_KV)
+		{
+			if ( !object_compare( ((tuple_object *) tuple)->list->items[i],obj))
+				return (i);
+		}
+		else
+		{
+			if ( !object_compare( ((kv_object*)((tuple_object *) tuple)->list->items[i])->value,obj))
 				return (i);
 		}
 	}

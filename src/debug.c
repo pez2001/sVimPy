@@ -20,15 +20,4 @@
  *
  */
 
-
-#ifndef GARBAGE_H
-#define GARBAGE_H
-
-#include "lists.h"
-#include "object.h"
 #include "debug.h"
-
-void gc_Clear(ptr_list *gc_collection);
-
-
-#endif

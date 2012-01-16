@@ -33,15 +33,27 @@ object *StringAdd(object *a,object *b)
 	return(r);
 }
 
+object *StringCompare(object *a,object *b)
+{
+	char *as;
+	char *bs;
+	as = ((unicode_object *)a)->value;
+	bs = ((unicode_object *)b)->value;
+	empty_object *r = CreateEmptyObject(!strcmp(as,bs) ? TYPE_TRUE : TYPE_FALSE,0);
+	if((debug_level & DEBUG_VERBOSE_STEP) > 0)							
+		printf ("%s == %s == %c\n", as, bs,r->type);
+	return(r);
+}
+
 object *BinaryOp(object *tos,object *tos1,unsigned char op)
 {
 	object *new_tos = NULL;
-	if (tos->type == TYPE_UNICODE && tos1->type == TYPE_UNICODE && op == OPCODE_BINARY_ADD)
+	if (tos->type == TYPE_UNICODE && tos1->type == TYPE_UNICODE && op == OPCODE_BINARY_ADD) //string add -> returns string
 	{
 		return(StringAdd(tos,tos1));
 	}
 	
-	if (tos->type == TYPE_INT && tos1->type == TYPE_TUPLE && op == OPCODE_BINARY_MULTIPLY)
+	if (tos->type == TYPE_INT && tos1->type == TYPE_TUPLE && op == OPCODE_BINARY_MULTIPLY) //tuple multiply -> returns tuple
 	{
 		long a = ((int_object*)tos)->value;
 
@@ -58,8 +70,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			DumpObject(mtr,0);
 		return(mtr);
 	}
-	//printf("binary op:%02x\n",op);
-	if(tos->type == TYPE_BINARY_FLOAT || tos1->type == TYPE_BINARY_FLOAT)
+	if(tos->type == TYPE_BINARY_FLOAT || tos1->type == TYPE_BINARY_FLOAT) //mixed op -> returns float
 	{
 		float af = 0.0f;
 		float bf = 0.0f;
@@ -182,7 +193,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 				break;
 		}
 	}
-	else
+	else	//int op -> returns int
 	{
 		long a = 0;
 		long b = 0;
@@ -292,6 +303,170 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 	return(new_tos);
 }
 
+object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
+{
+	object *new_tos = NULL;
+	if (tos->type == TYPE_UNICODE && tos1->type == TYPE_UNICODE && cmp_op == 2) //string compare
+	{
+	return(StringCompare(tos,tos1));
+	}
+	if ((tos->type == TYPE_FALSE || tos->type == TYPE_TRUE) && (tos1->type == TYPE_FALSE || tos1->type == TYPE_TRUE)) //bool compare
+	{
+		new_tos = CreateEmptyObject(tos1->type == tos->type ? TYPE_TRUE : TYPE_FALSE,0);
+		// printf ("%c == %c == %c\n", tos1->type, tos->type, new_ctos->type);
+		return(new_tos);
+	}
+	if(cmp_op == 8) // is (compare instances)
+	{
+		new_tos = CreateEmptyObject(tos == tos1 ? TYPE_TRUE : TYPE_FALSE,0);
+		if((debug_level & DEBUG_VERBOSE_STEP) > 0)						
+		printf ("%x is %x == %c\n",tos, tos1, new_tos->type);
+		return(new_tos);
+	}
+	if(cmp_op == 9) // is not (compare instances)
+	{
+		new_tos = CreateEmptyObject(tos != tos1 ? TYPE_TRUE : TYPE_FALSE,0);
+		if((debug_level & DEBUG_VERBOSE_STEP) > 0)						
+			printf ("%x is not %x == %c\n",tos, tos1, new_tos->type);
+		return(new_tos);
+		}
+	if(cmp_op == 6) // in (contained in tuple)
+	{
+		new_tos = CreateEmptyObject( GetItemIndex(tos, tos1) != -1 ? TYPE_TRUE : TYPE_FALSE,0);
+		if((debug_level & DEBUG_VERBOSE_STEP) > 0)						
+			printf ("%x in %x == %c\n",tos, tos1, new_tos->type);
+		return(new_tos);
+		}
+	if(cmp_op == 7) // not int (not contained in tuple)
+	{
+		printf("index:%d\n",GetItemIndex(tos, tos1));
+		new_tos = CreateEmptyObject( GetItemIndex(tos, tos1) == -1 ? TYPE_TRUE : TYPE_FALSE,0);
+		if((debug_level & DEBUG_VERBOSE_STEP) > 0)						
+			printf ("%x not in %x == %c\n",tos, tos1, new_tos->type);
+		return(new_tos);
+		}
+	if(tos->type == TYPE_BINARY_FLOAT || tos1->type == TYPE_BINARY_FLOAT) //mixed objects
+	{
+		float af = 0.0f;
+		float bf = 0.0f;
+		
+		if (tos->type == TYPE_INT)
+		{
+			af = (float) ((int_object*)tos)->value;
+		}	
+		if (tos1->type == TYPE_INT)
+		{
+			bf = (float) ((int_object*)tos1)->value;
+		}	
+		if (tos->type == TYPE_BINARY_FLOAT)
+		{
+			af = ((float_object*)tos)->value;
+		}	
+		if (tos1->type == TYPE_BINARY_FLOAT)
+		{
+			bf = ((float_object*)tos1)->value;
+		}	
+		switch (cmp_op)
+		{
+			case 0:	// <
+				{
+					new_tos = CreateEmptyObject(bf < af ? TYPE_TRUE : TYPE_FALSE,0);
+					if((debug_level & DEBUG_VERBOSE_STEP) > 0)						
+						printf ("%7g < %7g == %c\n", bf, af, new_tos->type);
+				}
+				break;
+			case 1:	// <=
+				{
+					new_tos = CreateEmptyObject(bf <= af ? TYPE_TRUE : TYPE_FALSE,0);
+					if((debug_level & DEBUG_VERBOSE_STEP) > 0)						
+						printf ("%7g <= %7g == %c\n", bf, af, new_tos->type);
+				}
+				break;
+			case 2:	// ==
+				{
+					new_tos = CreateEmptyObject(bf == af ? TYPE_TRUE : TYPE_FALSE,0);
+					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
+						printf("%7g == %7g == %c\n", bf, af, new_tos->type);
+				}
+				break;
+			case 3:	// !=
+				{
+					new_tos = CreateEmptyObject(bf != af ? TYPE_TRUE : TYPE_FALSE,0);
+					if((debug_level & DEBUG_VERBOSE_STEP) > 0)						
+						printf ("%7g != %7g == %c\n", bf, af, new_tos->type);
+				}
+				break;
+			case 4:	// >
+				{
+					new_tos = CreateEmptyObject( bf > af ? TYPE_TRUE : TYPE_FALSE,0);
+					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
+						printf ("%7g < %7g == %c\n", bf, af, new_tos->type);
+				}
+				break;
+			case 5:	// >=
+				{
+					new_tos = CreateEmptyObject(bf >= af ? TYPE_TRUE : TYPE_FALSE,0);
+					if((debug_level & DEBUG_VERBOSE_STEP) > 0)						
+						printf ("%7g >= %7g == %c\n", bf, af, new_tos->type);
+				}
+				break;
+		}
+	}
+	else //int objects
+	{
+		long a = 0;
+		long b = 0;
+		a = ((int_object*)tos)->value;
+		b = ((int_object*)tos1)->value;
+		switch (cmp_op)
+		{
+			case 0:	// <
+				{
+					new_tos = CreateEmptyObject(b < a ? TYPE_TRUE : TYPE_FALSE,0);
+					if((debug_level & DEBUG_VERBOSE_STEP) > 0)						
+						printf ("%d < %d == %c\n", b, a, new_tos->type);
+			}
+			break;
+			case 1:	// <=
+				{
+					new_tos = CreateEmptyObject(b <= a ? TYPE_TRUE : TYPE_FALSE,0);
+					if((debug_level & DEBUG_VERBOSE_STEP) > 0)						
+						printf ("%d <= %d == %c\n", b, a, new_tos->type);
+			}
+			break;
+			case 2:	// ==
+				{
+					new_tos = CreateEmptyObject(b == a ? TYPE_TRUE : TYPE_FALSE,0);
+					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
+						printf("%d == %d == %c\n", b, a, new_tos->type);
+				}
+				break;
+			case 3:	// !=
+				{
+					new_tos = CreateEmptyObject(b != a ? TYPE_TRUE : TYPE_FALSE,0);
+					if((debug_level & DEBUG_VERBOSE_STEP) > 0)						
+						printf ("%d != %d == %c\n", b, a, new_tos->type);
+			}
+			break;
+			case 4:	// >
+				{
+					new_tos = CreateEmptyObject( b > a ? TYPE_TRUE : TYPE_FALSE,0);
+					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
+						printf ("%d < %d == %c\n", b, a, new_tos->type);
+				}
+				break;
+			case 5:	// >=
+				{
+					new_tos = CreateEmptyObject(b >= a ? TYPE_TRUE : TYPE_FALSE,0);
+					if((debug_level & DEBUG_VERBOSE_STEP) > 0)						
+						printf ("%d >= %d == %c\n", b, a, new_tos->type);
+				}
+				break;
+		}
+	}
+	return(new_tos);
+}
+
 object *custom_code(vm *vm,stack * stack)
 {
 	object *a = stack_Pop(stack,vm->garbage);
@@ -306,7 +481,6 @@ object *custom_code(vm *vm,stack * stack)
 	return(BinaryOp(a,b,OPCODE_BINARY_ADD));
 	//return (tmp);
 }
-
 
 object *if_list(vm *vm,stack * stack)
 {
