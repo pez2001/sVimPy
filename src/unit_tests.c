@@ -208,8 +208,11 @@ int main(int argc, char *argv[])
 
 
 
+	//kw defaults
+	OpenPYC("tests/test54.pyc", vm);
+
 	//closures and deref opcodes
-	OpenPYC("tests/test29.pyc", vm);//not supported opcode store_deref
+	OpenPYC("tests/test29.pyc", vm);//not fully supported opcode store_deref
 	
 	//append ops
 	OpenPYC("tests/test52.pyc", vm);

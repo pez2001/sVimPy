@@ -216,6 +216,7 @@ typedef struct
 	unsigned char flags;
 	unsigned short  ref_count;
 	tuple_object *defaults;//set to default values in MAKE_FUNCTION opcode
+	tuple_object *kw_defaults;//set to default keyword values in MAKE_FUNCTION opcode
 	//code_object *code;
 	char *name;//used quickly find functions by name
 	unsigned char func_type;
@@ -348,10 +349,9 @@ kv_object *CreateKVObject(object *key,object *value,int flags);
 
 empty_object *CreateEmptyObject(char type,int flags);
 
-function_object *CreateFunctionObject_MAKE_FUNCTION(code_object *function_code,tuple_object *defaults,int flags);
+function_object *CreateFunctionObject_MAKE_FUNCTION(code_object *function_code,tuple_object *defaults,tuple_object *kw_defaults,int flags);
 
-function_object *CreateFunctionObject_MAKE_CLOSURE(code_object *function_code,object *closure,tuple_object *defaults,int flags);
-
+function_object *CreateFunctionObject_MAKE_CLOSURE(code_object *function_code,object *closure,tuple_object *defaults,tuple_object *kw_defaults,int flags);
 
 function_object *CreateFunctionObject(unsigned char func_type,int flags);
 
@@ -392,5 +392,7 @@ object *CopyObject(object *obj);
 int object_compare(object *a,object *b);
 
 void AppendDictItem(object * tuple,object *key,object *value);
+
+void AppendItem(object *tuple,object *value);
 
 #endif

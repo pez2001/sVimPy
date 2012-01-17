@@ -29,9 +29,10 @@ Features include:
 
 	0.3 implement closures and refs
 	0.4 better implementation of generators/iterators and implement yield opcode
-	0.5 vm feature complete (except classes and exceptions)
-	0.6 implement streams for reading/writing/printing
-	0.7 - 1.0 arduino bootloader
+	0.5 slices
+	0.6 vm feature complete (except classes and exceptions)
+	0.7 implement streams for reading/writing/printing
+	0.8 - 1.0 arduino bootloader
 	2.0 classes
 	
 	

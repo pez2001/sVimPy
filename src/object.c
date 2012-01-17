@@ -310,7 +310,7 @@ empty_object *CreateEmptyObject(char type,int flags)
 	return(r);
 }
 
-function_object *CreateFunctionObject_MAKE_FUNCTION(code_object *function_code,tuple_object *defaults,int flags)
+function_object *CreateFunctionObject_MAKE_FUNCTION(code_object *function_code,tuple_object *defaults,tuple_object *kw_defaults,int flags)
 {
 	function_object *r = AllocFunctionObject();
 	r->type = TYPE_FUNCTION;
@@ -328,6 +328,13 @@ function_object *CreateFunctionObject_MAKE_FUNCTION(code_object *function_code,t
 	}
 	else
 		r->defaults = NULL;
+	if(kw_defaults != NULL)
+	{
+		r->kw_defaults = kw_defaults;
+		IncRefCount(kw_defaults);
+	}
+	else
+		r->kw_defaults = NULL;
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
 		printf("created object\n");
@@ -336,7 +343,7 @@ function_object *CreateFunctionObject_MAKE_FUNCTION(code_object *function_code,t
 	return(r);
 }
 
-function_object *CreateFunctionObject_MAKE_CLOSURE(code_object *function_code,object *closure,tuple_object *defaults,int flags)
+function_object *CreateFunctionObject_MAKE_CLOSURE(code_object *function_code,object *closure,tuple_object *defaults,tuple_object *kw_defaults,int flags)
 {
 	function_object *r = AllocFunctionObject();
 	r->type = TYPE_FUNCTION;
@@ -355,6 +362,13 @@ function_object *CreateFunctionObject_MAKE_CLOSURE(code_object *function_code,ob
 	}
 	else
 		r->defaults = NULL;
+	if(kw_defaults != NULL)
+	{
+		r->kw_defaults = kw_defaults;
+		IncRefCount(kw_defaults);
+	}
+	else
+		r->kw_defaults = NULL;
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
 		printf("created object\n");
@@ -483,6 +497,7 @@ void FreeObject(object * obj)
 		{
 			FreeObject(((function_object*) obj)->func.code);
 			FreeObject(((function_object*) obj)->defaults);
+			FreeObject(((function_object*) obj)->kw_defaults);
 			FreeObject(((function_object*) obj)->closure);
 		}else 
 		if(((function_object*) obj)->func_type == FUNC_C || ((function_object*) obj)->func_type == FUNC_C_OBJ)
@@ -681,6 +696,10 @@ void DumpObject(object * obj, int level)
 				printf("\t");
 			printf("defaults:\n");
 			DumpObject(((function_object*)obj)->defaults,level + 1);
+			for (int i = 0; i < level; i++)
+				printf("\t");
+			printf("kw_defaults:\n");
+			DumpObject(((function_object*)obj)->kw_defaults,level + 1);
 			for (int i = 0; i < level; i++)
 				printf("\t");
 			printf("closure:\n");
@@ -1039,6 +1058,16 @@ void AppendDictItem(object * tuple,object *key,object *value)
 	ptr_Push(((tuple_object *) tuple)->list,kv);
 	IncRefCount(kv);
 
+}
+
+void AppendItem(object *tuple,object *value)
+{
+	if (tuple == NULL || tuple->type != TYPE_TUPLE)
+		return;
+	if(((tuple_object *) tuple)->list == NULL)
+		((tuple_object *) tuple)->list = ptr_CreateList(0,0);
+	ptr_Push(((tuple_object *) tuple)->list,value);
+	IncRefCount(value);
 }
 
 void SetDictItem(object *tuple,object *key,object *value)

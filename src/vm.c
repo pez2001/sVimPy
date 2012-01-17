@@ -702,9 +702,6 @@ object *vm_StepObject(vm *vm)
 
 			switch (op)
 			{
-			case OPCODE_MAP_ADD:
-			case OPCODE_SET_ADD:
-			case OPCODE_LIST_APPEND:
 			case OPCODE_UNPACK_EX	:
 			case OPCODE_BUILD_SLICE:
 			case OPCODE_IMPORT_NAME:
@@ -1004,6 +1001,7 @@ object *vm_StepObject(vm *vm)
 			case OPCODE_STORE_NAME:
 			case OPCODE_STORE_GLOBAL:
 			case OPCODE_STORE_DEREF:
+			case OPCODE_LIST_APPEND:
 				{
 					tos = stack_Pop(bo->stack,vm->garbage);
 					tos = DissolveRef(tos);
@@ -1044,6 +1042,7 @@ object *vm_StepObject(vm *vm)
 			case OPCODE_BINARY_OR:
 			case OPCODE_BINARY_SUBSCR:
 			case OPCODE_MAP_ADD:
+			case OPCODE_SET_ADD:
 				{
 					tos = stack_Pop(bo->stack,vm->garbage);
 					tos1 = stack_Pop(bo->stack,vm->garbage);
@@ -1083,7 +1082,11 @@ object *vm_StepObject(vm *vm)
 			{
 			case OPCODE_MAKE_FUNCTION:
 				{
-					tuple_object *r = CreateTuple(arg,0); //creating defaults tuple
+					int narg = arg & 255;
+					int nkey = (arg >> 8) & 255;
+					int n = narg + (nkey*2);
+
+					tuple_object *r = CreateTuple(narg,0); //creating defaults tuple
 					for (int i = 0; i < arg; i++)
 					{
 						object *t = stack_Pop(bo->stack,vm->garbage);
@@ -1098,7 +1101,11 @@ object *vm_StepObject(vm *vm)
 				break;
 			case OPCODE_MAKE_CLOSURE:
 				{
-					tuple_object *r = CreateTuple(arg,0); //creating defaults tuple
+					int narg = arg & 255;
+					int nkey = (arg >> 8) & 255;
+					int n = narg + (nkey*2);
+
+					tuple_object *r = CreateTuple(narg,0); //creating defaults tuple
 					for (int i = 0; i < arg; i++)
 					{
 						object *t = stack_Pop(bo->stack,vm->garbage);
@@ -1196,6 +1203,12 @@ object *vm_StepObject(vm *vm)
 						bo->ip = bo->ip + arg;
 						//block_object *rob = stack_Pop(vm->blocks,vm->garbage);
 					}
+				}
+				break;
+			case OPCODE_BUILD_SET:
+				{
+					tuple_object *to =CreateTuple(0,0);
+					stack_Push(bo->stack,to);
 				}
 				break;
 			case OPCODE_BUILD_MAP:
@@ -1456,13 +1469,35 @@ object *vm_StepObject(vm *vm)
 
 			case OPCODE_MAP_ADD:
 				{
-					//tos2 = stack_Get(bo->stack,);
+					tos2 = stack_Get(bo->stack,-arg);
 					tos2 = DissolveRef(tos2);
 					if(tos2->type == TYPE_KV)
 						tos2 = ((kv_object*)tos2)->value;
 					assert(tos2 != NULL);
-					//SetDictItem(,tos,tos1);
+					SetDictItem(tos2,tos,tos1);
 					//stack_Push(bo->stack,);
+				}
+				break;
+
+			case OPCODE_LIST_APPEND:
+				{
+					tos1 = stack_Get(bo->stack,-arg);
+					tos1 = DissolveRef(tos1);
+					if(tos1->type == TYPE_KV)
+						tos1 = ((kv_object*)tos1)->value;
+					assert(tos1 != NULL);
+					AppendItem(tos1,tos);
+				}
+				break;
+
+			case OPCODE_SET_ADD:
+				{
+					tos1 = stack_Get(bo->stack,-arg);
+					tos1 = DissolveRef(tos1);
+					if(tos1->type == TYPE_KV)
+						tos1 = ((kv_object*)tos1)->value;
+					assert(tos1 != NULL);
+					AppendItem(tos1,tos);
 				}
 				break;
 				

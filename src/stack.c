@@ -87,6 +87,9 @@ object *stack_Bottom(stack *stack)
 
 object *stack_Get(stack *stack,int index)
 {
+	if(index < 0)
+		index = stack->list->num-index;
+
 	if (index >= stack->list->num || index < 0)
 	{
 		if((debug_level & DEBUG_STACK) > 0)

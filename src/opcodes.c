@@ -177,9 +177,9 @@ TOS is the code associated with the function. If the code object has N free vari
 for these variables. The function also has /argc/ default parameters, where are found before the cells.", 1, 1},
 {OPCODE_LOAD_CLOSURE, "LOAD_CLOSURE", "Pushes a reference to the cell contained in slot /i/ of the cell and free variable storage.\n\
 The name of the variable is co_cellvars[i] if i is less than the length of co_cellvars. Otherwise it is co_freevars[i - len(co_cellvars)].", 1, 1},
-{OPCODE_LIST_APPEND,"LIST_APPEND", "Calls list.append(TOS[-i], TOS). Used to implement list comprehensions.", 1, 0},
-{OPCODE_SET_ADD, "SET_ADD","Calls set.add(TOS1[-i], TOS). Used to implement set comprehensions.", 1, 0},
-{OPCODE_MAP_ADD, "MAP_ADD","Calls dict.setitem(TOS1[-i], TOS, TOS1). Used to implement dict comprehensions.", 1, 0},
+{OPCODE_LIST_APPEND,"LIST_APPEND", "Calls list.append(TOS[-i], TOS). Used to implement list comprehensions.", 1, 1},
+{OPCODE_SET_ADD, "SET_ADD","Calls set.add(TOS1[-i], TOS). Used to implement set comprehensions.", 1, 1},
+{OPCODE_MAP_ADD, "MAP_ADD","Calls dict.setitem(TOS1[-i], TOS, TOS1). Used to implement dict comprehensions.", 1, 1},
 {OPCODE_IMPORT_NAME, "IMPORT_NAME","Imports the module co_names[namei]. TOS and TOS1 are popped\n\
 and provide the fromlist and level arguments of __import__(). The module object is pushed onto the stack.\n\
 The current namespace is not affected: for a proper import statement,\n\
