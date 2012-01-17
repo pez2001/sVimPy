@@ -26,7 +26,6 @@
 /* keywords
 
 import
-is
 from
 nonlocal
 as
@@ -52,6 +51,7 @@ else			supported
 pass			supported
 break		supported
 in				supported
+is				supported
 
 //classes and exceptions
 
@@ -139,7 +139,7 @@ object *vm_RunObject(vm *vm, object *obj, stack *locals, int argc);//run a pytho
 
 block_object *vm_StartObject(vm *vm,object *obj,stack *locals,int argc);//run a python code object
 
-object *vm_StartFunctionObject(vm *vm,function_object *fo,stack *locals,int argc);//run a python function object
+object *vm_StartFunctionObject(vm *vm,function_object *fo,stack *locals,stack *kw_locals,int argc,int kw_argc);//run a python function object
 
 function_object *vm_ResolveFunction(vm *vm,object *to_resolve);//input can be function_objects ,code_objects, unicode_objects -> returns a function_object if any
 

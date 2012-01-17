@@ -395,4 +395,6 @@ void AppendDictItem(object * tuple,object *key,object *value);
 
 void AppendItem(object *tuple,object *value);
 
+void ClearDictValues(object *tuple);
+
 #endif

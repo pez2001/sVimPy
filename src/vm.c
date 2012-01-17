@@ -270,7 +270,7 @@ block_object *vm_StartObject(vm *vm,object *obj,stack *locals,int argc)
 		return(bo);
 }
 
-object *vm_StartFunctionObject(vm *vm,function_object *fo,stack *locals,int argc)
+object *vm_StartFunctionObject(vm *vm,function_object *fo,stack *locals,stack *kw_locals,int argc,int kw_argc)
 {
 		if(fo->func_type == FUNC_C)
 		{
@@ -298,39 +298,82 @@ object *vm_StartFunctionObject(vm *vm,function_object *fo,stack *locals,int argc
 			bo->len = bytecodes->len;
 			if(((tuple_object*)fo->func.code->varnames)->list != NULL)
 			{
-				int locals_num = ((tuple_object*)fo->func.code->varnames)->list->num;
-				//printf("locals num:%d\n",locals_num);
-				//printf("loading default values\n");
-				for(int i = 0;i < fo->defaults->list->num; i++) //load default values
+				ClearDictValues(fo->func.code->varnames);
+				//int locals_num = ((tuple_object*)fo->func.code->varnames)->list->num;
+				if(fo->defaults!=NULL)
 				{
-					if(GetItem(fo->func.code->varnames,(locals_num-1) - i)->type != TYPE_KV)
+					int locals_num = fo->defaults->list->num;
+					//printf("locals num:%d\n",locals_num);
+					//printf("loading default values\n");
+					for(int i = 0;i < fo->defaults->list->num; i++) //load default values
 					{
-						SetItem(fo->func.code->varnames,(locals_num-1) - i,ConvertToKVObjectValued(GetItem(fo->func.code->varnames,(locals_num-1) - i),GetItem(fo->defaults,i)));
-					}		
-					else
+						if(GetItem(fo->func.code->varnames,(locals_num-1) - i)->type != TYPE_KV)
+						{
+							SetItem(fo->func.code->varnames,(locals_num-1) - i,ConvertToKVObjectValued(GetItem(fo->func.code->varnames,(locals_num-1) - i),GetItem(fo->defaults,i)));
+						}		
+						else
+						{
+							SetDictItemByIndex(fo->func.code->varnames,(locals_num-1) - i,GetItem(fo->defaults,i));
+						}
+					}
+				}
+				if(fo->kw_defaults != NULL)
 					{
-						SetDictItemByIndex(fo->func.code->varnames,(locals_num-1) - i,GetItem(fo->defaults,i));
+					//printf("loading kw defaults\n");
+					for(int i = 0;i < fo->kw_defaults->list->num; i++) //load default keyword values
+					{
+						kv_object *kv = GetItem(fo->kw_defaults,i);
+						SetDictItem(fo->func.code->varnames,kv->key,kv->value);
 					}
 				}
 			}
 			//printf("loading arguments\n");
 			if (argc > 0 && locals != NULL)
 			{
-				for (int i = 0; i < argc; i++)
+				int oarg = argc;
+				if(oarg > fo->func.code->argcount)
+					oarg = fo->func.code->argcount;
+				for (int i = 0; i < oarg; i++)
 				{
 					object *local = stack_Pop(locals,vm->garbage);
-					tuple_object *co_varnames = (tuple_object *) fo->func.code->varnames;
-					if(GetItem(co_varnames,i)->type != TYPE_KV)
+					if(GetItem(fo->func.code->varnames,i)->type != TYPE_KV)
 					{
-						SetItem(co_varnames,i,ConvertToKVObjectValued(GetItem(co_varnames,i),local));
+						SetItem(fo->func.code->varnames,i,ConvertToKVObjectValued(GetItem(fo->func.code->varnames,i),local));
 					}
 					else
 					{
-						SetDictItemByIndex(co_varnames,i,local);
+						SetDictItemByIndex(fo->func.code->varnames,i,local);
 					}
 				}
+				
+				if(argc > fo->func.code->argcount)
+				{
+					int narg = argc - fo->func.code->argcount;
+					//printf("more locals than argcount:%d\n",narg);
+					tuple_object *nt = CreateTuple(0,0); //creating tuple from the rest of the arguments
+					for (int i = 0; i < narg; i++)
+					{
+						object *t = stack_Pop(locals,vm->garbage);
+						t = DissolveRef(t);
+						if(t->type == TYPE_KV)
+							t = ((kv_object*)t)->value;
+						//DumpObject(t,0);
+						AppendItem(nt,t);
+					}
+					//DumpObject(nt,0);
+					SetDictItemByIndex(fo->func.code->varnames,fo->func.code->argcount+fo->func.code->kwonlyargcount,nt);
+				}		
 			}
-
+			//printf("loading keyword arguments\n");
+			if(kw_argc > 0 && kw_locals != NULL)
+			{
+				for(int i = 0;i< kw_argc;i++)
+				{
+					kv_object *kw_local = stack_Pop(kw_locals,vm->garbage);
+					SetDictItem(fo->func.code->varnames,kw_local->key,kw_local->value);
+				}
+			}
+			
 			if (fo->closure != NULL)
 			{
 				for (int i = 0; i < GetTupleLen(fo->closure); i++)
@@ -1085,17 +1128,32 @@ object *vm_StepObject(vm *vm)
 					int narg = arg & 255;
 					int nkey = (arg >> 8) & 255;
 					int n = narg + (nkey*2);
-
-					tuple_object *r = CreateTuple(narg,0); //creating defaults tuple
-					for (int i = 0; i < arg; i++)
+					tuple_object *defaults = NULL;
+					tuple_object *kw_defaults = NULL;
+					
+					if(narg > 0)
 					{
-						object *t = stack_Pop(bo->stack,vm->garbage);
-						t = DissolveRef(t);
-						if(t->type == TYPE_KV)
-							t = ((kv_object*)t)->value;
-						SetItem(r,i,t);
+						defaults = CreateTuple(narg,0); //creating defaults tuple
+						for (int i = 0; i < narg; i++)
+						{
+							object *t = stack_Pop(bo->stack,vm->garbage);
+							t = DissolveRef(t);
+							if(t->type == TYPE_KV)
+								t = ((kv_object*)t)->value;
+							SetItem(defaults,i,t);
+						}
 					}
-					function_object *fo = CreateFunctionObject_MAKE_FUNCTION(tos,r,0);
+					if(nkey >0)
+					{
+						kw_defaults = CreateTuple(0,0); //creating kw defaults tuple
+						for (int i = 0; i < nkey; i++)//keyword arguments
+						{
+							object *value = stack_Pop(bo->stack,vm->garbage);
+							object *key = stack_Pop(bo->stack,vm->garbage);
+							SetDictItem(kw_defaults,key,value);
+						}
+					}
+					function_object *fo = CreateFunctionObject_MAKE_FUNCTION(tos,defaults,kw_defaults,0);
 					stack_Push(bo->stack,fo);
 				}
 				break;
@@ -1104,17 +1162,32 @@ object *vm_StepObject(vm *vm)
 					int narg = arg & 255;
 					int nkey = (arg >> 8) & 255;
 					int n = narg + (nkey*2);
+					tuple_object *defaults = NULL;
+					tuple_object *kw_defaults = NULL;
 
-					tuple_object *r = CreateTuple(narg,0); //creating defaults tuple
-					for (int i = 0; i < arg; i++)
+					if(narg > 0)
 					{
-						object *t = stack_Pop(bo->stack,vm->garbage);
-						t = DissolveRef(t);
-						if(t->type == TYPE_KV)
-							t = ((kv_object*)t)->value;
-						SetItem(r,i,t);
+						defaults = CreateTuple(narg,0); //creating defaults tuple
+						for (int i = 0; i < narg; i++)
+						{
+							object *t = stack_Pop(bo->stack,vm->garbage);
+							t = DissolveRef(t);
+							if(t->type == TYPE_KV)
+								t = ((kv_object*)t)->value;
+							SetItem(defaults,i,t);
+						}
 					}
-					function_object *fo = CreateFunctionObject_MAKE_CLOSURE(tos,tos1,r,0);
+					if(nkey >0)
+					{
+						kw_defaults = CreateTuple(0,0); //creating kw defaults tuple
+						for (int i = 0; i < nkey; i++)//keyword arguments
+						{
+							object *value = stack_Pop(bo->stack,vm->garbage);
+							object *key = stack_Pop(bo->stack,vm->garbage);
+							SetDictItem(kw_defaults,key,value);
+						}
+					}
+					function_object *fo = CreateFunctionObject_MAKE_CLOSURE(tos,tos1,defaults,kw_defaults,0);
 					stack_Push(bo->stack,fo);
 				}
 				break;
@@ -1387,7 +1460,9 @@ object *vm_StepObject(vm *vm)
 
 			case OPCODE_LOAD_FAST:
 				{
-					object *fast = GetDictItemByIndex(co->varnames,arg);
+					object *fast = GetItem(co->varnames,arg);
+					if(fast->type == TYPE_KV)
+						fast = ((kv_object*)fast)->value;
 					stack_Push(bo->stack, fast);
 					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 						DumpObject(fast,1);
@@ -1732,6 +1807,7 @@ object *vm_StepObject(vm *vm)
 			case OPCODE_CALL_FUNCTION:
 				{
 					stack *call = NULL;
+					stack *kw_call = NULL;
 					int narg = arg & 255;
 					int nkey = (arg >> 8) & 255;
 					int n = narg + (nkey*2);
@@ -1745,6 +1821,8 @@ object *vm_StepObject(vm *vm)
 					
 					if (narg > 0 || var_list != NULL)
 						call = stack_Init();	// arg, 
+					if (nkey > 0 )
+						kw_call = stack_Init();
 					if(kw_list != NULL) //variable keyword arguments
 					{
 						//printf("var keywords found:%d\n",kw_list->list->num);
@@ -1770,7 +1848,13 @@ object *vm_StepObject(vm *vm)
 							//DumpObject(v,0);
 						}	
 					}
-
+					
+					//if(narg > fo->argcount)
+					//{
+					//	nkey 
+					//	narg = fo->argcount;
+					//}
+					
 					for (int i = 0; i < nkey; i++)//keyword arguments
 					{
 						object *value = stack_Pop(bo->stack,vm->garbage);
@@ -1784,9 +1868,12 @@ object *vm_StepObject(vm *vm)
 						if(fo->func_type == FUNC_PYTHON)
 						{
 							//printf("setting varname\n");
-							SetDictItem(fo->func.code->varnames,key,value);
+							//SetDictItem(fo->func.code->varnames,key,value);
+							kv_object *kv = CreateKVObject(key,value,0);
+							stack_Push(kw_call,kv);
 						}
 					}
+					//stack_Dump(kw_call);
 					//printf("narg:%d\n",narg);
 					for (int i = 0; i < narg; i++)//positional arguments
 					{
@@ -1799,13 +1886,15 @@ object *vm_StepObject(vm *vm)
 					//object *function_name = stack_Pop(bo->stack,vm->garbage);
 					stack_Pop(bo->stack,vm->garbage);
 					
-					object *pret = vm_StartFunctionObject(vm,fo, call, narg);
+					object *pret = vm_StartFunctionObject(vm,fo, call,kw_call,narg,nkey);
 					if (pret != NULL)
 					{
 							stack_Push(bo->stack, pret);
 					}
 					if (narg > 0 || var_list != NULL)
 						stack_Close(call, 0);
+					if (nkey > 0)
+						stack_Close(kw_call, 0);
 				}
 				break;
 

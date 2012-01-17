@@ -1124,29 +1124,58 @@ void SetDictItemByIndex(object *tuple,int index,object *value)
 		{
 			//printf("found index\n");
 			//SetItem(tuple,index,value);
-			kv_object *k = GetItem(tuple,index);
-			//printf("k:\n");
-			//DumpObject(k,0);
-			object *old = k->value;
-			//	DecRefCount(k->value);
-			if(value != NULL)
+			object * k = GetItem(tuple,index);
+			if(k->type == TYPE_KV)
 			{
-				k->value = value;
-				IncRefCount(value);
+				object *old = k->value;
+				if(value != NULL)
+				{
+					k->value = value;
+					IncRefCount(value);
+				}
+				else
+					k->value = NULL;
+				if(old != NULL)
+					FreeObject(old);
 			}
-			else
-				k->value = NULL;
-			if(old != NULL)
-				FreeObject(old);
+			else 
+			{
+					kv_object *kv = ConvertToKVObjectValued(k,value);
+					//FreeObject(k);
+					SetItem(tuple,index,kv);
+					//IncRefCount(kv);
+			}
 		}
 
+}
+
+void ClearDictValues(object *tuple)
+{
+	if (tuple == NULL || tuple->type != TYPE_TUPLE || ((tuple_object *) tuple)->list == NULL)
+		return;
+	//DumpObject(tuple,0);
+	//printf("clear dict values\n");
+	for (int i = 0; i < ((tuple_object *) tuple)->list->num; i++)
+	{
+		if (((tuple_object *) tuple)->list->items[i] == NULL || ((object*)((tuple_object *) tuple)->list->items[i])->type != TYPE_KV)
+			continue;
+		else
+		{
+			kv_object *kv = (kv_object*)((tuple_object *) tuple)->list->items[i];
+			((tuple_object *) tuple)->list->items[i] = kv->key;
+			IncRefCount(kv->key);
+			FreeObject(kv);
+		}
+	}
+	//printf("cleared dict values\n");
+	//DumpObject(tuple,0);
 }
 
 object *GetDictItemByIndex(object *tuple,int index)
 {
 	if (tuple == NULL || tuple->type != TYPE_TUPLE || ((tuple_object *) tuple)->list == NULL || index >= ((tuple_object *) tuple)->list->num || index < 0)
 		return(NULL);
-	return(((kv_object*)GetItem(tuple,index))->value);
+	return((GetItem(tuple,index))->value);
 }
 
 int GetTupleLen(object *tuple)

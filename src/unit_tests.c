@@ -181,7 +181,7 @@ int main(int argc, char *argv[])
 
 	debug_level |= DEBUG_INTERACTIVE;
 	debug_level |= DEBUG_MEMORY;
-	debug_level |= DEBUG_SHOW_OPCODES;
+	//debug_level |= DEBUG_SHOW_OPCODES;
 	debug_level |= DEBUG_FULL_DUMP;
 	//debug_level |= DEBUG_STACK;
 	//debug_level |= DEBUG_LISTS;
@@ -208,10 +208,8 @@ int main(int argc, char *argv[])
 
 
 
-	//kw defaults
-	OpenPYC("tests/test54.pyc", vm);
-
 	//closures and deref opcodes
+	OpenPYC("tests/test56.pyc", vm);
 	OpenPYC("tests/test29.pyc", vm);//not fully supported opcode store_deref
 	
 	//append ops
@@ -241,6 +239,14 @@ int main(int argc, char *argv[])
 	OpenPYC("tests/test38.pyc", vm);//call_function_var_kw 
 	OpenPYC("tests/test39.pyc", vm);//call_function
 	
+	//pos + kw defaults
+	OpenPYC("tests/test55c.pyc", vm);
+	OpenPYC("tests/test55b.pyc", vm);
+	OpenPYC("tests/test55.pyc", vm);
+
+	//kw defaults
+	OpenPYC("tests/test54.pyc", vm);
+
 	//storing of globals/vars and deletion of globals/vars
 	OpenPYC("tests/test21ba2.pyc", vm);
 	OpenPYC("tests/test21.pyc", vm);

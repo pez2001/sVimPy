@@ -36,6 +36,7 @@ typedef struct
 	unsigned int num;
 	int flags;
 } ptr_list;
+
 typedef struct
 {
 	void **items;
