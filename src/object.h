@@ -220,7 +220,7 @@ typedef struct
 	//code_object *code;
 	char *name;//used quickly find functions by name
 	unsigned char func_type;
-	object *closure;
+	tuple_object *closure;
 	union func_def
 	{
 		object *(*func) (struct _vm *vm,struct _stack *stack);

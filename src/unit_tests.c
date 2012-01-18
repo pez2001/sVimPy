@@ -209,12 +209,9 @@ int main(int argc, char *argv[])
 
 
 	//closures and deref opcodes
-	OpenPYC("tests/test56.pyc", vm);
+	OpenPYC("tests/test57.pyc", vm);
 	OpenPYC("tests/test29.pyc", vm);//not fully supported opcode store_deref
 	
-	//append ops
-	OpenPYC("tests/test52.pyc", vm);
-	OpenPYC("tests/test53.pyc", vm);
 	
 	//brute ops + closures
 	OpenPYC("tests/test32.pyc", vm);
@@ -294,6 +291,7 @@ int main(int argc, char *argv[])
 	OpenPYC("tests/test27.pyc", vm);
 	OpenPYC("tests/test28.pyc", vm);
 	OpenPYC("tests/test23.pyc", vm);
+	OpenPYC("tests/test56.pyc", vm);
 	OpenPYC("tests/e_small.pyc", vm);
 	OpenPYC("tests/e20.pyc", vm);
 	
@@ -329,6 +327,10 @@ int main(int argc, char *argv[])
 	//OpenPYC("tests/test25.pyc", vm);
 	//OpenPYC("tests/test26.pyc", vm);
 	//OpenPYC("tests/test20.pyc", vm);//leaking
+
+	//append ops + generators
+	//OpenPYC("tests/test52.pyc", vm);
+	//OpenPYC("tests/test53.pyc", vm);
 
 	//OpenPYC("tests/test.pyc", vm);
 	//OpenPYC("tests/test10.pyc", vm);

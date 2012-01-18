@@ -1,6 +1,6 @@
 def func(i):
 	def sub_func(f):
-		for b in range(0,5):
+		for b in range(0,f):
 			print(a*b)
 	x = i
 	x &= 5

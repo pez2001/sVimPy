@@ -448,7 +448,7 @@ void FreeObject(object * obj)
 	if(obj->ref_count > 1)
 	{
 		DecRefCount(obj);
-	if((debug_level & DEBUG_GC) > 0)
+		if((debug_level & DEBUG_GC) > 0)
 		{
 			printf("decreased object ref_count\n");
 			DumpObject(obj,0);
@@ -999,13 +999,13 @@ void DecRefCountGC(object *obj,ptr_list *gc)
 		obj->ref_count--;
 		if(!ptr_Contains(gc,obj))
 		{
-	if((debug_level & DEBUG_GC) > 0)
-		{
-		printf("object has no refs anymore -> put into gc\n");
-		DumpObject(obj,0);
-		}
-		//FreeObject(obj);
-		ptr_Queue(gc,obj);
+			if((debug_level & DEBUG_GC) > 0)
+			{
+				printf("object has no refs anymore -> put into gc\n");
+				DumpObject(obj,0);
+			}
+			//FreeObject(obj);
+			ptr_Queue(gc,obj);
 		}
 		return;
 	 }
@@ -1015,11 +1015,12 @@ void DecRefCountGC(object *obj,ptr_list *gc)
 void DecRefCount(object *obj)
 {
 	if(obj->ref_count == 1)
-	 {
-	if((debug_level & DEBUG_GC) > 0)
+	{
+		//obj->ref_count--;
+		if((debug_level & DEBUG_GC) > 0)
 		{
-		printf("object has no refs anymore -> freeing\n");
-		DumpObject(obj,0);
+			printf("object has no refs anymore -> freeing\n");
+			DumpObject(obj,0);
 		}
 		FreeObject(obj);
 		//ptr_Queue(gc,obj);
@@ -1157,7 +1158,7 @@ void ClearDictValues(object *tuple)
 	//printf("clear dict values\n");
 	for (int i = 0; i < ((tuple_object *) tuple)->list->num; i++)
 	{
-		if (((tuple_object *) tuple)->list->items[i] == NULL || ((object*)((tuple_object *) tuple)->list->items[i])->type != TYPE_KV)
+		if (((tuple_object *) tuple)->list->items[i] != NULL && ((object*)((tuple_object *) tuple)->list->items[i])->type != TYPE_KV)
 			continue;
 		else
 		{
@@ -1175,7 +1176,7 @@ object *GetDictItemByIndex(object *tuple,int index)
 {
 	if (tuple == NULL || tuple->type != TYPE_TUPLE || ((tuple_object *) tuple)->list == NULL || index >= ((tuple_object *) tuple)->list->num || index < 0)
 		return(NULL);
-	return((GetItem(tuple,index))->value);
+	return(((kv_object*)GetItem(tuple,index))->value);
 }
 
 int GetTupleLen(object *tuple)
@@ -1209,7 +1210,7 @@ int GetDictItemIndex(object *tuple,object *key)
 		// if(((tuple_object*)tuple->ptr)->items[i]->type == TYPE_UNICODE)
 		// printf("checking %s against:
 		// %s\n",name,(char*)((tuple_object*)tuple->ptr)->items[i]->ptr);
-		if (((tuple_object *) tuple)->list->items[i] == NULL || ((object*)((tuple_object *) tuple)->list->items[i])->type != TYPE_KV)
+		if (((tuple_object *) tuple)->list->items[i] != NULL && ((object*)((tuple_object *) tuple)->list->items[i])->type != TYPE_KV)
 		{
 			if ( !object_compare( ((tuple_object *) tuple)->list->items[i],key))
 				return (i);
@@ -1231,7 +1232,7 @@ int GetItemIndex(object *tuple,object *obj)
 	for (int i = 0; i < ((tuple_object *) tuple)->list->num; i++)
 	{
 
-		if (((tuple_object *) tuple)->list->items[i] == NULL || ((object*)((tuple_object *) tuple)->list->items[i])->type != TYPE_KV)
+		if (((tuple_object *) tuple)->list->items[i] != NULL && ((object*)((tuple_object *) tuple)->list->items[i])->type != TYPE_KV)
 		{
 			if ( !object_compare( ((tuple_object *) tuple)->list->items[i],obj))
 				return (i);
@@ -1243,6 +1244,25 @@ int GetItemIndex(object *tuple,object *obj)
 		}
 	}
 	return (-1);
+}
+
+void ConvertToDict(object *tuple)
+{
+	if (tuple == NULL || tuple->type != TYPE_TUPLE || ((tuple_object *) tuple)->list == NULL || ((tuple_object *) tuple)->list->num == 0)
+		return;
+
+	for (int i = 0; i < ((tuple_object *) tuple)->list->num; i++)
+	{
+
+		if (((tuple_object *) tuple)->list->items[i] != NULL && ((object*)((tuple_object *) tuple)->list->items[i])->type != TYPE_KV)
+		{
+			((tuple_object *) tuple)->list->items[i] = ConvertToKVObject(((tuple_object *) tuple)->list->items[i]);
+			IncRefCount(((tuple_object *) tuple)->list->items[i]);
+			DecRefCount(((kv_object*)((tuple_object *) tuple)->list->items[i])->key);
+		}
+		else
+			continue;
+	}
 }
 
 int GetItemIndexByName(object * tuple, char *name)
@@ -1524,6 +1544,8 @@ object *ReadObject(FILE * f)
 		co->varnames = ReadObject(f);
 		co->freevars = ReadObject(f);
 		co->cellvars = ReadObject(f);
+		ConvertToDict(co->freevars);
+		ConvertToDict(co->cellvars);
 		// printf("reading filename\n");
 		object *tmp_filename = ReadObject(f);
 

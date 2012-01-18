@@ -290,6 +290,7 @@ object *vm_StartFunctionObject(vm *vm,function_object *fo,stack *locals,stack *k
 		bo->stack = stack_Init();		// co->stacksize
 		bo->initiated_locals = 1;
 		stack_Push(vm->blocks, bo);
+		//printf("pushed block:%x\n",bo);
 		if(fo->func_type == FUNC_PYTHON)
 		{
 			//printf("preparing python function\n");
@@ -379,6 +380,8 @@ object *vm_StartFunctionObject(vm *vm,function_object *fo,stack *locals,stack *k
 				for (int i = 0; i < GetTupleLen(fo->closure); i++)
 				{
 					object *local = GetItem(fo->closure,i);
+					if(local->type == TYPE_KV)
+						local = ((kv_object*)local)->value;
 					if(GetItem(fo->func.code->freevars,i)->type != TYPE_KV)
 					{
 						SetItem(fo->func.code->freevars,i,ConvertToKVObjectValued(GetItem(fo->func.code->freevars,i),local));
@@ -800,7 +803,8 @@ object *vm_StepObject(vm *vm)
 					}
 					//ret = CopyObject(ret);
 					//ret = CreateRefObject(ret,0);
-					stack_Pop(vm->blocks,vm->garbage);
+					object *pbo = stack_Pop(vm->blocks,vm->garbage);
+					//printf("popped block:%x\n",pbo);
 					//if(!stack_IsEmpty(vm->blocks))
 					//{
 					//if(debug_level > 5)
@@ -820,6 +824,7 @@ object *vm_StepObject(vm *vm)
 					stack_Push(parent->stack,ret);
 					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 						printf("still blocks on the stack\n");
+					gc_Clear(vm->garbage);
 					}
 					else 
 					{
@@ -1040,6 +1045,7 @@ object *vm_StepObject(vm *vm)
 			case OPCODE_JUMP_IF_FALSE:
 			case OPCODE_JUMP_IF_TRUE:
 			case OPCODE_MAKE_FUNCTION:
+			case OPCODE_MAKE_CLOSURE:
 			case OPCODE_STORE_FAST:
 			case OPCODE_STORE_NAME:
 			case OPCODE_STORE_GLOBAL:
@@ -1054,7 +1060,6 @@ object *vm_StepObject(vm *vm)
 				}
 				break;
 			
-			case OPCODE_MAKE_CLOSURE:
 			case OPCODE_INPLACE_FLOOR_DIVIDE:
 			case OPCODE_INPLACE_TRUE_DIVIDE:
 			case OPCODE_INPLACE_ADD:
@@ -1164,7 +1169,8 @@ object *vm_StepObject(vm *vm)
 					int n = narg + (nkey*2);
 					tuple_object *defaults = NULL;
 					tuple_object *kw_defaults = NULL;
-
+					tos1 = stack_Pop(bo->stack,vm->garbage);
+					tos1 = DissolveRef(tos1);
 					if(narg > 0)
 					{
 						defaults = CreateTuple(narg,0); //creating defaults tuple
@@ -1187,6 +1193,7 @@ object *vm_StepObject(vm *vm)
 							SetDictItem(kw_defaults,key,value);
 						}
 					}
+					//DumpObject(tos1,0);
 					function_object *fo = CreateFunctionObject_MAKE_CLOSURE(tos,tos1,defaults,kw_defaults,0);
 					stack_Push(bo->stack,fo);
 				}
@@ -1471,13 +1478,27 @@ object *vm_StepObject(vm *vm)
 	
 			case OPCODE_STORE_DEREF:
 				{
-					if(GetItem(co->cellvars,arg)->type != TYPE_KV)
+					if(arg < GetTupleLen(co->cellvars))
 					{
-						SetItem(co->cellvars,arg,ConvertToKVObjectValued(GetItem(co->cellvars,arg),tos));
+						if(GetItem(co->cellvars,arg)->type != TYPE_KV)
+						{
+							SetItem(co->cellvars,arg,ConvertToKVObjectValued(GetItem(co->cellvars,arg),tos));
+						}
+						else
+						{
+							SetDictItemByIndex(co->cellvars,arg,tos);
+						}
 					}
 					else
 					{
-						SetDictItemByIndex(co->cellvars,arg,tos);
+						if(GetItem(co->freevars,arg - GetTupleLen(co->cellvars))->type != TYPE_KV)
+						{
+							SetItem(co->freevars,arg - GetTupleLen(co->cellvars),ConvertToKVObjectValued(GetItem(co->freevars,arg - GetTupleLen(co->cellvars)),tos));
+						}
+						else
+						{
+							SetDictItemByIndex(co->freevars,arg - GetTupleLen(co->cellvars),tos);
+						}
 					}
 					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 						DumpObject(tos,1);
@@ -1485,7 +1506,11 @@ object *vm_StepObject(vm *vm)
 				break;
 			case OPCODE_LOAD_DEREF:
 				{
-					object *cell = GetItem(co->freevars,arg);
+					object *cell =  NULL;
+					if(arg < GetTupleLen(co->cellvars))
+						cell = GetItem(co->cellvars,arg);
+					else
+						cell = GetItem(co->freevars,arg - GetTupleLen(co->cellvars));
 						if(cell->type == TYPE_KV)
 							cell = ((kv_object*)cell)->value;
 					stack_Push(bo->stack, cell);
@@ -1495,22 +1520,25 @@ object *vm_StepObject(vm *vm)
 				break;
 			case OPCODE_LOAD_CLOSURE:
 				{
-					object *fast = GetDictItemByIndex(co->cellvars,arg);
-					if(fast == NULL)
-						fast = GetDictItemByIndex(co->freevars,arg - GetTupleLen(co->cellvars));
+					object *fast = NULL;
+					if(arg < GetTupleLen(co->cellvars))
+						//GetDictItemByIndex(co->cellvars,arg);
+						fast = GetItem(co->cellvars,arg);
+						//fast = GetItem(co->freevars,arg);
+					//if(fast == NULL)
+					else
+						//fast = GetDictItemByIndex(co->freevars,arg - GetTupleLen(co->cellvars));
+						fast = GetItem(co->freevars,arg - GetTupleLen(co->cellvars));
+					//printf("closure:\n");
+					//DumpObject(fast,0);
+					//printf("-- closure\n");
 					stack_Push(bo->stack, fast);
 					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 						DumpObject(fast,1);
-					//printf("load closure\n");
-					//tuple_object *co_freevars = (tuple_object *) co->freevars;
-					//object *c = GetItem(co->freevars,arg);
-					//if(c!= NULL)
-					//	stack_Push(bo->stack,c);
 				}
 				break;
 			case OPCODE_DELETE_DEREF:
 				{
-					//tuple_object *co_freevars = (tuple_object *) co->freevars;
 					//if(
 					//SetDictItemByIndex(co_freevars,arg,NULL);
 				}
