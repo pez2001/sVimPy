@@ -199,6 +199,7 @@ int main(int argc, char *argv[])
 	//debug_level |= DEBUG_INTERNAL_FUNCTIONS;
 	//debug_level |= DEBUG_COUNT_OBJECTS;
 
+	debug_printf(DEBUG_MEMORY,"hi:%s\n","hi");
 
 	mem_Init();
 	//ptr_tests();
@@ -207,7 +208,7 @@ int main(int argc, char *argv[])
 	// printf("Calling all Unit Tests\n");
 
 	//import
-	//OpenPYC("tests/test_import.pyc", vm);
+	OpenPYC("tests/test_import.pyc", vm);
 
 	//simple generator with yield
 	//OpenPYC("tests/test59.pyc", vm);
@@ -215,7 +216,7 @@ int main(int argc, char *argv[])
 	
 	//crashing or leaking memory
 
-	
+	/*
 	//custom code + import_from + import_star opcodes
 	OpenPYC("tests/test45.pyc", vm);
 	
@@ -323,7 +324,8 @@ int main(int argc, char *argv[])
 	//dictionaries
 	OpenPYC("tests/test30.pyc", vm);
 	OpenPYC("tests/test31.pyc", vm);
-
+	*/
+	
 	//brute prime (classless it takes longer because of range
 	//OpenPYC("tests/e_med.pyc", vm);
 	//OpenPYC("tests/e_bigger.pyc", vm);

@@ -1,12 +1,15 @@
-	sVimPy-0.2a
+	sVimPy-0.3a
 
 sVimPy is a very small Python virtual machine intended for use in microcontroller projects.
 
-At the moment, it supports about 3/4 of all opcodes used in python3k.
-Most data types are supported.
+It supports most of the opcodes used in python3k.(except 6 opcodes used in classes,6 used for exception handling,1 to build slices, 1 to unpack objects,1 to yield)
 The intended goal is to use this VM in environments like Atmel's ATmega chips (2-8kb RAM).
+Classes,slices and generators are not supported at the moment.
+Most data types are supported including floats,ints,strings,tuples,dicts,lists.
+
 The microcontroller bootloader is still missing (no arduinos left for experimentation).
-Classes are not supported.
+
+
 Features include: 
 
  * function calling
@@ -26,14 +29,15 @@ Features include:
 
  
 	Roadmap :
-
+	
+	0.2 correct interpretation of function parameters
 	0.3 implement closures and refs
-	0.4 better implementation of generators/iterators and implement yield opcode
-	0.5 slices
+	0.4 implement streams for reading/writing/printing
+	0.5 better implementation of generators/iterators and implement yield opcode
 	0.6 vm feature complete (except classes and exceptions)
-	0.7 implement streams for reading/writing/printing
 	0.8 - 1.0 arduino bootloader
-	2.0 classes
+	2.0 slices
+	2.1 classes
 	
 	
 	

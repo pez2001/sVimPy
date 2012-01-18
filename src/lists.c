@@ -23,7 +23,7 @@
 #include "lists.h"
 
 
-ptr_list *ptr_CreateList(unsigned int num, int flags)
+ptr_list *ptr_CreateList(LIST_NUM_INT num, int flags)
 {
 	ptr_list *tmp =
 		(ptr_list *) mem_malloc(sizeof(ptr_list), "ptr_CreateList() return");
@@ -41,7 +41,7 @@ ptr_list *ptr_CreateList(unsigned int num, int flags)
 	return (tmp);
 }
 
-ptr_list_with_tag *ptr_CreateTaggedList(unsigned int num, int flags)
+ptr_list_with_tag *ptr_CreateTaggedList(LIST_NUM_INT num, int flags)
 {
 
 
@@ -89,7 +89,7 @@ void *ptr_Pop(ptr_list * list)
 	return (NULL);
 }
 
-int ptr_Insert(ptr_list * list, int index, void *ptr)
+int ptr_Insert(ptr_list * list, LIST_NUM_INT index, void *ptr)
 {
 	if (index == 0 && !list->num)
 	{
@@ -118,7 +118,7 @@ int ptr_Insert(ptr_list * list, int index, void *ptr)
 	return (0);
 }
 
-void ptr_MoveUp(ptr_list * list, int index)
+void ptr_MoveUp(ptr_list * list, LIST_NUM_INT index)
 {
 	if (!list->num)
 		return;
@@ -128,7 +128,7 @@ void ptr_MoveUp(ptr_list * list, int index)
 	}
 }
 
-void ptr_MoveDown(ptr_list * list, int index)
+void ptr_MoveDown(ptr_list * list, LIST_NUM_INT index)
 {
 	if (!list->num)
 		return;
@@ -138,7 +138,7 @@ void ptr_MoveDown(ptr_list * list, int index)
 	}
 }
 
-void *ptr_Remove(ptr_list * list, int index)
+void *ptr_Remove(ptr_list * list, LIST_NUM_INT index)
 {
 	if (!list->num)
 		return (NULL);
@@ -191,7 +191,7 @@ int ptr_GetNum(ptr_list * list)
 	return (list->num);
 }
 
-void *ptr_Get(ptr_list * list, int index)
+void *ptr_Get(ptr_list * list, LIST_NUM_INT index)
 {
 	if (index < list->num)
 		return (list->items[index]);
@@ -199,7 +199,7 @@ void *ptr_Get(ptr_list * list, int index)
 		return (NULL);
 }
 
-void ptr_Set(ptr_list * list, int index, void *ptr)
+void ptr_Set(ptr_list * list, LIST_NUM_INT index, void *ptr)
 {
 	if (index < list->num)
 		list->items[index] = ptr;

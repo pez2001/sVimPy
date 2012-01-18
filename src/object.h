@@ -241,9 +241,9 @@ typedef struct
 	code_object *code;
 	long start;
 	long len;
-	object *iter;
+	object *iter;  //TODO rename to tag ,and use it for yielding too
 	long ip;
-	char initiated_locals;
+	char initiated_locals;//TODO REMOVE NOT NEEDED
 	struct _stack *stack;
 } block_object;
 

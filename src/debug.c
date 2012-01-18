@@ -21,3 +21,16 @@
  */
 
 #include "debug.h"
+
+void debug_printf(int debug_level,char* format, ...)
+{
+	char *ptr = format;
+	char *output = NULL;
+	while(*ptr!= '\0')
+	{
+	
+		printf("%c",*ptr);
+		ptr++;
+	}
+
+}
