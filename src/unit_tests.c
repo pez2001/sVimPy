@@ -181,8 +181,8 @@ int main(int argc, char *argv[])
 
 	debug_level |= DEBUG_INTERACTIVE;
 	debug_level |= DEBUG_MEMORY;
-	//debug_level |= DEBUG_SHOW_OPCODES;
-	debug_level |= DEBUG_FULL_DUMP;
+	debug_level |= DEBUG_SHOW_OPCODES;
+	//debug_level |= DEBUG_FULL_DUMP;
 	//debug_level |= DEBUG_STACK;
 	//debug_level |= DEBUG_LISTS;
 	//debug_level |= DEBUG_GC;
@@ -190,7 +190,7 @@ int main(int argc, char *argv[])
 	//debug_level |= DEBUG_VM;
 	//debug_level |= DEBUG_FREEING;
 	//debug_level |= DEBUG_ALLOCS;
-	//debug_level |= DEBUG_DUMP_UNSUPPORTED;
+	debug_level |= DEBUG_DUMP_UNSUPPORTED;
 	//debug_level |= DEBUG_DUMP_OBJECT;
 	//debug_level |= DEBUG_CREATION;
 	//debug_level |= DEBUG_VERBOSE_FREEING;
@@ -206,7 +206,14 @@ int main(int argc, char *argv[])
 	AddInternalFunctions(vm);
 	// printf("Calling all Unit Tests\n");
 
+	//import
+	OpenPYC("tests/test_import.pyc", vm);
 
+	//simple generator with yield
+	OpenPYC("tests/test59.pyc", vm);
+
+	
+	//globals
 	OpenPYC("tests/test58.pyc", vm);
 
 	//closures and deref opcodes

@@ -148,9 +148,9 @@ TOS1 the tuple of the names of the base classes, and TOS2 the class name.", 0, 0
 {OPCODE_RAISE_VARARGS, "RAISE_VARARGS", "Raises an exception. /argc/ indicates the number of parameters to the raise statement,\n\
 ranging from 0 to 3. The handler will find the traceback as TOS2, the parameter as TOS1, and the exception as TOS.", 1, 0},
 {OPCODE_IMPORT_FROM, "IMPORT_FROM", "Loads the attribute co_names[/namei/] from the module found in TOS.\n\
-The resulting object is pushed onto the stack, to be subsequently stored by a STORE_FAST instruction.", 1, 0},
+The resulting object is pushed onto the stack, to be subsequently stored by a STORE_FAST instruction.", 1, 1},
 {OPCODE_IMPORT_STAR, "IMPORT_STAR", "Loads all symbols not starting with \"_\" directly from the module TOS to the local namespace.\n\
-The module is popped after loading all names. This opcode implements from module import *.", 0, 0},
+The module is popped after loading all names. This opcode implements from module import *.", 0, 1},
 {OPCODE_YIELD_VALUE, "YIELD_VALUE", "Pops TOS and yields it from a generator.", 0, 0},
 {OPCODE_STORE_LOCALS, "STORE_LOCALS", "Pops TOS from the stack and stores it as the current frame’s f_locals. This is used in class construction.", 0, 0},
 {OPCODE_STORE_MAP, "STORE_MAP", "Store a key and value pair in a dictionary. Pops the key and value while leaving the dictionary on the stack.", 0, 1},
@@ -183,7 +183,7 @@ The name of the variable is co_cellvars[i] if i is less than the length of co_ce
 {OPCODE_IMPORT_NAME, "IMPORT_NAME","Imports the module co_names[namei]. TOS and TOS1 are popped\n\
 and provide the fromlist and level arguments of __import__(). The module object is pushed onto the stack.\n\
 The current namespace is not affected: for a proper import statement,\n\
-a subsequent STORE_FAST instruction modifies the namespace.", 1, 0},
+a subsequent STORE_FAST instruction modifies the namespace.", 1, 1},
 {OPCODE_UNPACK_EX, "UNPACK_EX","Implements assignment with a starred target: Unpacks an iterable in TOS into individual values,\n\
 where the total number of values can be smaller than the number of items in the iterable:\n\
 one the new values will be a list of all leftover items.The low byte of counts is the number of values\n\

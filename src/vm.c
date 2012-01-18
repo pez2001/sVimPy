@@ -750,9 +750,6 @@ object *vm_StepObject(vm *vm)
 			{
 			case OPCODE_UNPACK_EX	:
 			case OPCODE_BUILD_SLICE:
-			case OPCODE_IMPORT_NAME:
-			case OPCODE_IMPORT_STAR:
-			case OPCODE_YIELD_VALUE:
 				printf("not supported\n");
 				vm_Interrupt(vm,NULL);
 				bo->ip--;
@@ -1128,6 +1125,21 @@ object *vm_StepObject(vm *vm)
 			// execute remaining ops here
 			switch (op)
 			{
+			case OPCODE_IMPORT_NAME:
+				{
+				
+				}
+				break;
+			case OPCODE_IMPORT_FROM:
+				{
+				
+				}
+				break;
+			case OPCODE_IMPORT_STAR:
+				{
+				
+				}
+				break;
 			case OPCODE_MAKE_FUNCTION:
 				{
 					int narg = arg & 255;
