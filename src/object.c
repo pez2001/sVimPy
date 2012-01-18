@@ -1544,7 +1544,7 @@ object *ReadObject(FILE * f)
 		co->varnames = ReadObject(f);
 		co->freevars = ReadObject(f);
 		co->cellvars = ReadObject(f);
-		ConvertToDict(co->freevars);
+		ConvertToDict(co->freevars); //TODO only needed as long deref and closure opcodes are not implemented using references
 		ConvertToDict(co->cellvars);
 		// printf("reading filename\n");
 		object *tmp_filename = ReadObject(f);

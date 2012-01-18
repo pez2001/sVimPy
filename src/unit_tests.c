@@ -207,10 +207,11 @@ int main(int argc, char *argv[])
 	// printf("Calling all Unit Tests\n");
 
 
+	OpenPYC("tests/test58.pyc", vm);
 
 	//closures and deref opcodes
 	OpenPYC("tests/test57.pyc", vm);
-	OpenPYC("tests/test29.pyc", vm);//not fully supported opcode store_deref
+	OpenPYC("tests/test29.pyc", vm);
 	
 	
 	//brute ops + closures
