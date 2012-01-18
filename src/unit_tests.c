@@ -325,8 +325,8 @@ int main(int argc, char *argv[])
 	OpenPYC("tests/test31.pyc", vm);
 
 	//brute prime (classless it takes longer because of range
-	OpenPYC("tests/e_med.pyc", vm);
-	OpenPYC("tests/e_bigger.pyc", vm);
+	//OpenPYC("tests/e_med.pyc", vm);
+	//OpenPYC("tests/e_bigger.pyc", vm);
 
 	//generators
 	//OpenPYC("tests/test24.pyc", vm);
