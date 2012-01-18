@@ -179,9 +179,9 @@ void AddInternalFunctions(vm *vm)
 int main(int argc, char *argv[])
 {
 
-	debug_level |= DEBUG_INTERACTIVE;
+	//debug_level |= DEBUG_INTERACTIVE;
 	debug_level |= DEBUG_MEMORY;
-	debug_level |= DEBUG_SHOW_OPCODES;
+	//debug_level |= DEBUG_SHOW_OPCODES;
 	//debug_level |= DEBUG_FULL_DUMP;
 	//debug_level |= DEBUG_STACK;
 	//debug_level |= DEBUG_LISTS;
@@ -207,27 +207,15 @@ int main(int argc, char *argv[])
 	// printf("Calling all Unit Tests\n");
 
 	//import
-	OpenPYC("tests/test_import.pyc", vm);
+	//OpenPYC("tests/test_import.pyc", vm);
 
 	//simple generator with yield
-	OpenPYC("tests/test59.pyc", vm);
+	//OpenPYC("tests/test59.pyc", vm);
 
-	
-	//globals
-	OpenPYC("tests/test58.pyc", vm);
-
-	//closures and deref opcodes
-	OpenPYC("tests/test57.pyc", vm);
-	OpenPYC("tests/test29.pyc", vm);
-	
-	
-	//brute ops + closures
-	OpenPYC("tests/test32.pyc", vm);
-	
 	
 	//crashing or leaking memory
 
-	/*
+	
 	//custom code + import_from + import_star opcodes
 	OpenPYC("tests/test45.pyc", vm);
 	
@@ -282,6 +270,16 @@ int main(int argc, char *argv[])
 	//comparing
 	OpenPYC("tests/test_compare.pyc", vm);
 
+	//globals
+	OpenPYC("tests/test58.pyc", vm);
+
+	//closures and deref opcodes
+	OpenPYC("tests/test57.pyc", vm);
+	OpenPYC("tests/test29.pyc", vm);
+	
+	//brute ops + closures
+	OpenPYC("tests/test32.pyc", vm);
+
 	//simple stuff
 	OpenPYC("tests/test1.pyc", vm);
 	OpenPYC("tests/test2.pyc", vm);
@@ -328,7 +326,7 @@ int main(int argc, char *argv[])
 
 	//brute prime (classless it takes longer because of range
 	OpenPYC("tests/e_med.pyc", vm);
-	OpenPYC("tests/e_bigger.pyc", vm);*/
+	OpenPYC("tests/e_bigger.pyc", vm);
 
 	//generators
 	//OpenPYC("tests/test24.pyc", vm);
