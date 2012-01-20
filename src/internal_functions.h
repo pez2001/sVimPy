@@ -44,4 +44,11 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op);
 
 object *custom_code(vm *vm,stack * stack);
 
+
+object *iter_Sequence(iter_object *iter);
+
+void iter_InitSequence(iter_object *iter,int start,int len,int step);
+
+
+
 #endif

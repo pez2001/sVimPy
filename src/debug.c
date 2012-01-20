@@ -22,15 +22,20 @@
 
 #include "debug.h"
 
-void debug_printf(int debug_level,char* format, ...)
+void debug_printf(int msg_debug_level,char* format, ...)
 {
-	char *ptr = format;
-	char *output = NULL;
-	while(*ptr!= '\0')
-	{
-	
-		printf("%c",*ptr);
-		ptr++;
-	}
-
+	if(msg_debug_level != 0 && (debug_level & msg_debug_level) == 0)
+	return;
+	va_list va;
+	va_start(va,format);
+	//printf("getting len\n");
+	int n = str_PrintfVaLen(format,va);
+	va_end(va);
+	//printf("getting string\n");
+	va_start(va,format);
+	char *output = str_PrintfVa(format,n,va);
+	va_end(va);
+	//printf("got string\n");
+	printf(output);
+	mem_free(output);
 }

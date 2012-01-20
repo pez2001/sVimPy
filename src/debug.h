@@ -27,6 +27,7 @@
 #include "stdio.h"
 #include "stdarg.h"
 
+#define DEBUG_ALL 0
 #define DEBUG_MEMORY 1
 #define DEBUG_SHOW_OPCODES 2
 #define DEBUG_FULL_DUMP 4
@@ -47,7 +48,7 @@
 #define DEBUG_PTR_LISTS 131072
 #define DEBUG_VERBOSE_TESTS 262144
 
-void debug_printf(int debug_level,char* format, ...);
+void debug_printf(int msg_debug_level,char* format, ...);
 
 extern int debug_level;
 

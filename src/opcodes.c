@@ -228,9 +228,9 @@ void DumpUnsupportedOpCodes()
 		if (!opcodes[i].supported)
 		{
 	if((debug_level & DEBUG_FULL_DUMP) > 0)
-			printf("[%d,%xh] opcode: [ %s ]\n%s\n\n", i, opcodes[i].opcode,opcodes[i].name,opcodes[i].description);
+			debug_printf(DEBUG_FULL_DUMP,"[%d,%xh] opcode: [ %s ]\n%s\n\n", i, opcodes[i].opcode,opcodes[i].name,opcodes[i].description);
 		else
-			printf("[%d,%xh] opcode: [ %s ]\n", i, opcodes[i].opcode,opcodes[i].name);
+			debug_printf(DEBUG_ALL,"[%d,%xh] opcode: [ %s ]\n", i, opcodes[i].opcode,opcodes[i].name);
 
 		
 		}

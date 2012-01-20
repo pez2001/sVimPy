@@ -54,8 +54,8 @@ void stack_Clear(stack *stack, int free_objects)
 			}
 			//printf("stack list num:%d\n",stack->list->num);
 		}
-		else if (stack->list->num > 0 && (debug_level & DEBUG_STACK) > 0)
-			printf("%d items left untouched on stack\n", stack->list->num);
+		else if (stack->list->num > 0)
+			debug_printf(DEBUG_STACK,"%d items left untouched on stack\n", stack->list->num);
 	}
 }
 
@@ -76,8 +76,7 @@ object *stack_Bottom(stack *stack)
 {
 	if (stack->list->num < 1)
 	{
-		if((debug_level & DEBUG_STACK) > 0)
-			printf("stack_Bottom() - stack underflow - no top\n");
+		debug_printf(DEBUG_STACK,"stack_Bottom() - stack underflow - no top\n");
 		return (NULL);
 	}
 	object *r = stack->list->items[0];
@@ -92,8 +91,7 @@ object *stack_Get(stack *stack,int index)
 
 	if (index >= stack->list->num || index < 0)
 	{
-		if((debug_level & DEBUG_STACK) > 0)
-			printf("stack_Get() - stack underflow - index out of range\n");
+		debug_printf(DEBUG_STACK,"stack_Get() - stack underflow - index out of range\n");
 		return (NULL);
 	}
 	object *r = stack->list->items[index];
@@ -110,8 +108,7 @@ object *stack_Top(stack *stack)
 {
 	if (stack->list->num < 1)
 	{
-		if((debug_level & DEBUG_STACK) > 0)
-			printf("stack_Top() - stack underflow - no top\n");
+		debug_printf(DEBUG_STACK,"stack_Top() - stack underflow - no top\n");
 		return (NULL);
 	}
 	object *r = stack->list->items[stack->list->num - 1];
@@ -122,8 +119,7 @@ object *stack_Second(stack *stack)
 {
 	if (stack->list->num < 2)
 	{
-		if((debug_level & DEBUG_STACK) > 0)
-			printf("stack_Second() - stack underflow - no top\n");
+		debug_printf(DEBUG_STACK,"stack_Second() - stack underflow - no top\n");
 		return (NULL);
 	}
 	object *r = stack->list->items[stack->list->num - 2];
@@ -134,8 +130,7 @@ object *stack_Third(stack *stack)
 {
 	if (stack->list->num < 3)
 	{
-		if((debug_level & DEBUG_STACK) > 0)
-			printf("stack_Third() - stack underflow - no top\n");
+		debug_printf(DEBUG_STACK,"stack_Third() - stack underflow - no top\n");
 		return (NULL);
 	}
 	object *r = stack->list->items[stack->list->num - 3];
@@ -147,8 +142,7 @@ void stack_SetBottom(stack *stack, object * x)
 {
 	if (stack->list->num < 1)
 	{
-		if((debug_level & DEBUG_STACK) > 0)
-			printf("stack_SetBottom() - stack underflow - no top\n");
+		debug_printf(DEBUG_STACK,"stack_SetBottom() - stack underflow - no top\n");
 		return (NULL);
 	}
 	stack->list->items[0] = x;
@@ -159,8 +153,7 @@ void stack_SetTop(stack *stack, object * x)
 {
 	if (stack->list->num < 1)
 	{
-		if((debug_level & DEBUG_STACK) > 0)
-			printf("stack_SetTop() - stack underflow - no top\n");
+		debug_printf(DEBUG_STACK,"stack_SetTop() - stack underflow - no top\n");
 		return (NULL);
 	}
 	stack->list->items[stack->list->num - 1] = x;
@@ -171,8 +164,7 @@ void stack_SetSecond(stack *stack, object * x)
 {
 	if (stack->list->num < 2)
 	{
-		if((debug_level & DEBUG_STACK) > 0)
-			printf("stack_SetSecond() - stack underflow - no top\n");
+		debug_printf(DEBUG_STACK,"stack_SetSecond() - stack underflow - no top\n");
 		return (NULL);
 	}
 	stack->list->items[stack->list->num - 2] = x;
@@ -183,8 +175,7 @@ void stack_SetThird(stack *stack, object * x)
 {
 	if (stack->list->num < 3)
 	{
-		if((debug_level & DEBUG_STACK) > 0)
-			printf("stack_SetThird() - stack underflow - no top\n");
+		debug_printf(DEBUG_STACK,"stack_SetThird() - stack underflow - no top\n");
 		return (NULL);
 	}
 	stack->list->items[stack->list->num - 3] = x;
@@ -205,13 +196,13 @@ void stack_Dump(stack *stack)
 {
 	if(stack->list == NULL)
 	{
-		printf("empty stack\n");
+		debug_printf(DEBUG_ALL,"empty stack\n");
 		return;
 	}
-	printf("Dumping %d stack items\n", stack->list->num);
+	debug_printf(DEBUG_ALL,"Dumping %d stack items\n", stack->list->num);
 	for (int i = 0; i < stack->list->num; i++)
 	{
-		printf("item: %d\n", i);
+		debug_printf(DEBUG_ALL,"item: %d\n", i);
 		DumpObject(stack->list->items[i], 1);
 
 	}
@@ -221,8 +212,7 @@ object *stack_Pop(stack *stack,ptr_list *gc)
 {
 	if (stack->list->num < 1)
 	{
-		if((debug_level & DEBUG_STACK) > 0)
-			printf("stack_Pop() - stack underflow\n");
+		debug_printf(DEBUG_STACK,"stack_Pop() - stack underflow\n");
 		return (NULL);
 	}
 	object *r = ptr_Pop(stack->list);

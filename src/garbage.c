@@ -30,7 +30,7 @@ for(int i=0;i<gc_collection->num;i++)
 	{
 	if((debug_level & DEBUG_GC) > 0)
 	{
-		printf("object has no refs\n");
+		debug_printf(DEBUG_GC,"object has no refs\n");
 		DumpObject(gc_collection->items[i],0);
 	}
 	FreeObject(gc_collection->items[i]);
@@ -40,7 +40,7 @@ for(int i=0;i<gc_collection->num;i++)
 	{
 	if((debug_level & DEBUG_GC) > 0)
 		{
-			printf("object has gained refs\n");
+			debug_printf(DEBUG_GC,"object has gained refs\n");
 			DumpObject(gc_collection->items[i],0);
 		}
 		ptr_Remove(gc_collection,i);

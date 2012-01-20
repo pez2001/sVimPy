@@ -208,7 +208,7 @@ void vm_Interrupt(vm *vm,object *(*interrupt) (struct _vm *vm,stack *stack))
 {
 	vm->interrupt_handler = interrupt;
 	vm->interrupt_vm = 1;
-	printf("forcing interrupt\n");
+	debug_printf(DEBUG_ALL,"forcing interrupt\n");
 }
 
 void vm_SetInterrupt(vm*vm ,object *(*interrupt) (struct _vm *vm,stack *stack))
@@ -274,8 +274,7 @@ object *vm_StartFunctionObject(vm *vm,function_object *fo,stack *locals,stack *k
 {
 		if(fo->func_type == FUNC_C)
 		{
-			if((debug_level & DEBUG_VERBOSE_STEP) > 0)
-				printf("executing C function: %s\n",  fo->name);
+			debug_printf(DEBUG_VERBOSE_STEP,"executing C function: %s\n",  fo->name);
 			object *tmp = vm_ExecuteCFunction(vm, fo->name,locals);
 			return(tmp);
 		}
@@ -410,7 +409,7 @@ function_object *vm_ResolveFunction(vm *vm,object *to_resolve)
 	}
 	else	if (to_resolve != NULL && to_resolve->type == TYPE_CODE)
 	{
-		printf("WARNING: cant resolve from code object\n");
+		debug_printf(DEBUG_ALL,"WARNING: cant resolve from code object\n");
 		return(NULL);
 	}
 	else if (to_resolve != NULL && to_resolve->type == TYPE_UNICODE)
@@ -426,7 +425,7 @@ function_object *vm_ResolveFunction(vm *vm,object *to_resolve)
 				caller_func = GetItem(vm->global->names,index);
 			if (caller_func != NULL && ((object *) caller_func)->type == TYPE_CODE)
 			{
-				printf("WARNING: cant resolve from code object\n");
+				debug_printf(DEBUG_ALL,"WARNING: cant resolve from code object\n");
 				return(NULL);
 			}
 			else if (caller_func != NULL && ((object *) caller_func)->type == TYPE_FUNCTION)
@@ -736,13 +735,13 @@ object *vm_StepObject(vm *vm)
 				if (index >= 0)
 				{
 					if (opcodes[index].argcount != 0)
-						printf("[%03d,%02xh] [ %s ] (%d)\n", bo->ip-1,opcodes[index].opcode, opcodes[index].name,num_short(string[bo->ip], string[bo->ip + 1]));
+						debug_printf(DEBUG_ALL,"[%03d,%02xh] [ %s ] (%d)\n", bo->ip-1,opcodes[index].opcode, opcodes[index].name,num_short(string[bo->ip], string[bo->ip + 1]));
 					else
-						printf("[%03d,%02xh] [ %s ]\n", bo->ip-1,opcodes[index].opcode, opcodes[index].name);
+						debug_printf(DEBUG_ALL,"[%03d,%02xh] [ %s ]\n", bo->ip-1,opcodes[index].opcode, opcodes[index].name);
 				}
 				else
 				{
-					printf("unknown opcode:%x at %d\n", (char)string[bo->ip - 1],bo->ip - 1);
+					debug_printf(DEBUG_ALL,"unknown opcode:%x at %d\n", (char)string[bo->ip - 1],bo->ip - 1);
 				}
 			}
 
@@ -750,9 +749,9 @@ object *vm_StepObject(vm *vm)
 			{
 			case OPCODE_UNPACK_EX	:
 			case OPCODE_BUILD_SLICE:
-				printf("not supported\n");
+				debug_printf(DEBUG_ALL,"not supported\n");
 				vm_Interrupt(vm,NULL);
-				bo->ip--;
+				//bo->ip--;
 				op_thru = 1;
 				break;
 
@@ -765,8 +764,7 @@ object *vm_StepObject(vm *vm)
 			// -- FOR DEBUGGING
 
 			
-	if((debug_level & DEBUG_VERBOSE_STEP) > 0)
-				printf("preparing opcode\n");
+			debug_printf(DEBUG_VERBOSE_STEP,"preparing opcode\n");
 			// prepare opcode argument,increment codepointer and intepret
 			// small opcodes not using an arg etc
 			switch (op)
@@ -795,7 +793,7 @@ object *vm_StepObject(vm *vm)
 
 					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 					{
-					printf("ret object @:%x\n",ret);
+					debug_printf(DEBUG_VERBOSE_STEP,"ret object @:%x\n",ret);
 					DumpObject(ret,0);
 					}
 					//ret = CopyObject(ret);
@@ -819,8 +817,7 @@ object *vm_StepObject(vm *vm)
 						//printf("stack shown\n");
 					}
 					stack_Push(parent->stack,ret);
-					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
-						printf("still blocks on the stack\n");
+					debug_printf(DEBUG_VERBOSE_STEP,"still blocks on the stack\n");
 					gc_Clear(vm->garbage);
 					}
 					else 
@@ -861,7 +858,7 @@ object *vm_StepObject(vm *vm)
 					object *iter = stack_Pop(bo->stack,vm->garbage);
 					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 					{
-					 printf("iter:\n");
+					 debug_printf(DEBUG_VERBOSE_STEP,"iter:\n");
 					 DumpObject(iter,0);
 					//printf("bo_stack:\n");
 					//stack_Dump(vm->blocks);
@@ -893,8 +890,7 @@ object *vm_StepObject(vm *vm)
 				{
 					block_object *bbo = (block_object *) stack_Pop(vm->blocks,vm->garbage);
 					//bo->ip = bbo->start + bbo->len - 1;
-					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
-						printf("break to: %d ,start: %d ,len:%d\n",bo->ip,bbo->start,bbo->len);
+					debug_printf(DEBUG_VERBOSE_STEP,"break to: %d ,start: %d ,len:%d\n",bo->ip,bbo->start,bbo->len);
 					op_thru = 1;
 				}
 				break;
@@ -955,8 +951,6 @@ object *vm_StepObject(vm *vm)
 			case OPCODE_STORE_DEREF:
 			case OPCODE_DELETE_DEREF:
 				// case OPCODE_STORE_MAP:
-				// case OPCODE_STORE_SUBSCR:
-				// case OPCODE_DELETE_SUBSCR:
 				// case OPCODE_STORE_ATTR:
 				// case OPCODE_DELETE_ATTR:
 				// case OPCODE_LOAD_ATTR:
@@ -1017,9 +1011,6 @@ object *vm_StepObject(vm *vm)
 					bo->ip += 2;
 				}
 				break;
-
-			case OPCODE_YIELD_VALUE:
-				break;
 			}
 
 			if (op_thru)
@@ -1027,8 +1018,7 @@ object *vm_StepObject(vm *vm)
 				gc_Clear(vm->garbage);
 				return(NULL);
 			}
-			if((debug_level & DEBUG_VERBOSE_STEP) > 0)
-				printf("fetching tos items\n");
+			debug_printf(DEBUG_VERBOSE_STEP,"fetching tos items\n");
 			// fetch tos items 
 			switch (op)
 			{
@@ -1120,11 +1110,15 @@ object *vm_StepObject(vm *vm)
 				}
 				break;
 			}
-			if((debug_level & DEBUG_VERBOSE_STEP) > 0)
-				printf("executing main ops\n");
+			debug_printf(DEBUG_VERBOSE_STEP,"executing main ops\n");
 			// execute remaining ops here
 			switch (op)
 			{
+			case OPCODE_YIELD_VALUE:
+				{
+			
+				}
+				break;
 			case OPCODE_IMPORT_NAME:
 				{
 				
@@ -1342,8 +1336,7 @@ object *vm_StepObject(vm *vm)
 					else
 						name = ((unicode_object*)co_names->list->items[arg])->value;
 					
-					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
-						printf("searching for:%s\n", name);
+					debug_printf(DEBUG_VERBOSE_STEP,"searching for:%s\n", name);
 					int index = GetItemIndexByName(global->names,name);
 					object *lgo = NULL;
 					if(index != -1)
@@ -1364,8 +1357,7 @@ object *vm_StepObject(vm *vm)
 						//}
 						//else
 						{
-							if((debug_level & DEBUG_VERBOSE_STEP) > 0)
-								printf("global not found\n");
+							debug_printf(DEBUG_VERBOSE_STEP,"global not found\n");
 							break;
 						}
 					}
@@ -1386,7 +1378,7 @@ object *vm_StepObject(vm *vm)
 						name = ((unicode_object*)co_names->list->items[arg])->value;
 					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 					{
-						printf("name:%s\n",name);
+						debug_printf(DEBUG_VERBOSE_STEP,"name:%s\n",name);
 						DumpObject(tos,0);
 					}
 					
@@ -1426,8 +1418,7 @@ object *vm_StepObject(vm *vm)
 					}
 					break;
 					}					
-				if((debug_level & DEBUG_VERBOSE_STEP) > 0)
-					printf("global not found\n");
+				debug_printf(DEBUG_VERBOSE_STEP,"global not found\n");
 				}
 				break;
 
@@ -1623,14 +1614,12 @@ object *vm_StepObject(vm *vm)
 					tuple_object *co_varnames = (tuple_object*) co->varnames;
 					if(GetItem(co_varnames,arg)->type != TYPE_KV)
 					{
-						if((debug_level & DEBUG_VERBOSE_STEP) > 0)
-							printf("converting\n");
+						debug_printf(DEBUG_VERBOSE_STEP,"converting\n");
 						SetItem(co_varnames,arg,ConvertToKVObjectValued(GetItem(co_varnames,arg),tos));
 					}
 				else
 				{
-					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
-						printf("updating\n");
+					debug_printf(DEBUG_VERBOSE_STEP,"updating\n");
 					SetDictItemByIndex(co_varnames,arg,tos);
 				}
 					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
@@ -1669,11 +1658,9 @@ object *vm_StepObject(vm *vm)
 					long ssa = 0;
 					//tos2 = CopyObject(tos2);
 					//IncRefCount(tos2);
-					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
-					 {
-					 printf("tos:%c\n",tos->type);
-					 printf("tos1:%c\n",tos1->type);
-					 }
+					debug_printf(DEBUG_VERBOSE_STEP,"tos:%c\n",tos->type);
+					debug_printf(DEBUG_VERBOSE_STEP,"tos1:%c\n",tos1->type);
+					 
 					if (tos->type == TYPE_INT)
 					{
 						ssa = ((int_object*)tos)->value;
@@ -1681,8 +1668,7 @@ object *vm_StepObject(vm *vm)
 					if (tos1->type == TYPE_TUPLE)
 					{
 						// DumpObject(tos2,0);
-					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
-						 printf("ssa: %d\n",ssa);
+					debug_printf(DEBUG_VERBOSE_STEP,"ssa: %d\n",ssa);
 					if (tos->type == TYPE_INT)
 						SetItem(tos1, ssa, tos2);
 					else
@@ -1710,7 +1696,7 @@ object *vm_StepObject(vm *vm)
 						{
 							DumpObject(tos1, 0);
 							DumpObject(tos,0);
-							printf("bsa:%d\n", bsa);
+							debug_printf(DEBUG_VERBOSE_STEP,"bsa:%d\n", bsa);
 						}
 					object *bst= NULL;
 					if (tos->type == TYPE_INT)
@@ -1942,7 +1928,7 @@ object *vm_StepObject(vm *vm)
 				if((debug_level & DEBUG_DUMP_UNSUPPORTED) > 0)
 				{
 					int index = GetOpcodeIndex(op);
-					printf("[%02xh] [ %s ] not supported !!\n",opcodes[index].opcode, opcodes[index].name);
+					debug_printf(DEBUG_DUMP_UNSUPPORTED,"[%02xh] [ %s ] not supported !!\n",opcodes[index].opcode, opcodes[index].name);
 				}
 				break;
 			}
@@ -1951,8 +1937,7 @@ object *vm_StepObject(vm *vm)
 			gc_Clear(vm->garbage);
 			return(NULL);
 		} //END OF STEP
-		if((debug_level & DEBUG_VERBOSE_STEP) > 0)
-			printf("code thru.\n");
+		debug_printf(DEBUG_VERBOSE_STEP,"code thru.\n");
 		object *ret = NULL;
 		if(stack_IsEmpty(bo->stack))
 		{
@@ -1964,8 +1949,6 @@ object *vm_StepObject(vm *vm)
 			ret = stack_Pop(bo->stack,vm->garbage);
 			return (ret);
 		}
-	
-
 	}
 	return (NULL);
 }

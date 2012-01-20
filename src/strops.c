@@ -24,11 +24,32 @@
 
 char *str_Cat(char *a, char *b)
 {
-	char *tmp =
-		(char *)mem_malloc(strlen(a) + strlen(b) + 1, "str_Cat() return");
+	if(a == NULL && b != NULL)
+		return(str_Copy(b));
+	else
+		if(a != NULL && b == NULL)
+			return(str_Copy(a));
+	else
+		if(a == NULL && b == NULL)
+			return(NULL);
+	char *tmp = (char *)mem_malloc(strlen(a) + strlen(b) + 1, "str_Cat() return");
 	memset(tmp, 0, strlen(a) + strlen(b) + 1);
 	memcpy(tmp, a, strlen(a));
 	memcpy(tmp + strlen(a), b, strlen(b));
+	return (tmp);
+}
+
+char *str_Substring(char *a,int start,int len)
+{
+	int e = start + len;
+	if(e> strlen(a))
+		e = strlen(a) - start;
+	else
+		e = len;
+	char *tmp = (char *)mem_malloc(e + 1, "str_Copy() return");
+
+	memset(tmp, 0, e + 1);
+	memcpy(tmp, *(a+start), e);
 	return (tmp);
 }
 
@@ -48,5 +69,41 @@ char *str_FromChar(char c)
 	memset(tmp, 0, 2);
 	memset(tmp, c, 1);
 	return (tmp);
+}
 
+char *str_Printf(char *format, ...)
+{
+	va_list va;
+	va_start(va,format);
+	//printf("getting len\n");
+	int n = str_PrintfVaLen(format,va);
+	va_end(va);
+	//printf("n:%d\n",n);
+	va_start(va,format);
+	char *output = str_PrintfVa(format,n,va);
+	va_end(va);
+	return(output);
+}
+
+int str_PrintfVaLen(char *format,va_list va)
+{
+	int n = vsnprintf(NULL,0,format,va) + 1;
+	return(n);
+}
+char *str_PrintfVa(char *format,int len,va_list va)
+{
+	char *output = NULL;
+	//va_start(va,format);
+	//va_list vc = va;
+	//int n = vsnprintf(NULL,0,format,va) + 1;
+	//va_end(va);
+	//printf("len:%d\n",len);
+	//printf("format:%s\n",format);
+	output = (char*) mem_malloc(len,"str_PrintfVA() - return");
+	//va_start(va,format);
+	//printf("alloced\n");
+	vsnprintf(output,len,format,va) + 1;
+	//va_end(va);
+	//printf("output:%s\n",output);
+	return(output);
 }

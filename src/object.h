@@ -93,6 +93,8 @@
 #define TYPE_BLOCK 'b'
 #define TYPE_KV 'k'
 #define TYPE_REF 'r'
+#define TYPE_ITER 'R'
+
 
 //function types
 #define FUNC_PYTHON 1
@@ -231,6 +233,15 @@ typedef struct
 } function_object;
 
 //TODO create struct for generator storage
+typedef struct _iter_object
+{
+	char type;
+	unsigned char flags;
+	unsigned short  ref_count;
+	object *tag;//used for storage of iter options and actual ptr
+	object *(*iter_func)(struct _iter_object);
+} iter_object;
+
 
 
 typedef struct
@@ -241,7 +252,7 @@ typedef struct
 	code_object *code;
 	long start;
 	long len;
-	object *iter;  //TODO rename to tag ,and use it for yielding too
+	iter_object *iter;  //TODO rename to tag ,and use it for yielding too
 	long ip;
 	char initiated_locals;//TODO REMOVE NOT NEEDED
 	struct _stack *stack;
@@ -282,7 +293,7 @@ unicode_object *AllocUnicodeObject();
 
 code_object *AllocCodeObject();
 
-//caller_object *AllocCallerObject();
+iter_object *AllocIterObject();
 
 int_object *AllocIntObject();
 
@@ -298,7 +309,8 @@ code_object *AsCodeObject(object * obj);
 
 ref_object *AsRefObject(object *obj);
 
-//caller_object *AsCallerObject(object * obj);
+iter_object *AsIterObject(object * obj);
+
 int_object *AsIntObject(object * obj);
 
 float_object *AsFloatObject(object * obj);
@@ -322,6 +334,8 @@ int IsCodeObject(object * obj);
 int IsTupleObject(object * obj);
 
 int IsRefObject(object * obj);
+
+int IsIterObject(object * obj);
 
 long ReadLong(FILE * f);
 
@@ -355,6 +369,8 @@ function_object *CreateFunctionObject_MAKE_CLOSURE(code_object *function_code,ob
 
 function_object *CreateFunctionObject(unsigned char func_type,int flags);
 
+iter_object *CreateIterObject(object *(*iter_func)(struct _iter_object),object *tag,int flags);
+
 void FreeBlockObject(object *obj);
 
 void FreeObject(object * obj);
@@ -362,6 +378,8 @@ void FreeObject(object * obj);
 void PrintObject(object * obj);
 
 void DumpObject(object * obj, int level);
+
+char *DumpObjectXml(object * obj, int level);
 
 object *GetNextItem(object * tuple);
 

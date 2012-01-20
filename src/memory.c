@@ -23,7 +23,7 @@ void mem_Close()
 	{
 		if (!mem_chunk_items[i]->is_freed)
 		{
-			printf("leaked chunk: %s (%d) @%x : ",
+			debug_printf(DEBUG_MEMORY,"leaked chunk: %s (%d) @%x : ",
 				   mem_chunk_items[i]->description, mem_chunk_items[i]->size,
 				   mem_chunk_items[i]->ptr);
 			for (int ix = 0; ix < mem_chunk_items[i]->size; ix++)
@@ -107,12 +107,11 @@ void *mem_malloc(size_t size, char *description)
 	{
 	if (size == 0)
 	{
-		printf("allocated zero bytes\n");
+		debug_printf(DEBUG_MEMORY,"allocated zero bytes\n");
 		// return(NULL);
 	}
 	// else
-	if((debug_level & DEBUG_ALLOCS) > 0)
-		printf("allocated %d bytes @%x\n",size,tmp);
+	debug_printf(DEBUG_ALLOCS,"allocated %d bytes @%x\n",size,tmp);
 
 	mem_Push(tmp, size, description);
 	}
@@ -136,12 +135,12 @@ int mem_free(void *ptr)
 	// assert(f);
 	if (!f)
 	{
-		printf("chunk not found @%x\n", ptr);
+		debug_printf(DEBUG_MEMORY,"chunk not found @%x\n", ptr);
 		return (0);
 	}
 	mem_chunks_num--;
 	if (mem_chunks_num < 0)
-		printf("more memory freed than allocated\n");
+		debug_printf(DEBUG_MEMORY,"more memory freed than allocated\n");
 	}
 	free(ptr);
 	if((debug_level & DEBUG_MEMORY) > 0)

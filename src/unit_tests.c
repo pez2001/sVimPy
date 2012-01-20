@@ -104,8 +104,7 @@ void OpenPYC(char *filename, vm *vm)
 	f = fopen(filename, "rb");
 	if (f == NULL)
 		return;
-	if((debug_level & DEBUG_VERBOSE_TESTS) > 0)
-		printf("executing object:%s\n", filename);
+	debug_printf(DEBUG_VERBOSE_TESTS,"executing object:%s\n", filename);
 	// int r = fread(bh,4,1,f);
 	// if(!memcmp(bh,(char*)&pyc_magic,4))
 	long magic = ReadLong(f);
@@ -137,21 +136,19 @@ void OpenPYC(char *filename, vm *vm)
 	else
 		ret = vm_RunObject(vm, obj, NULL, 0);	// ,obj
     //object *ret = NULL;
-	printf("\n");
+	debug_printf(DEBUG_ALL,"\n");
 	if (ret != NULL)
 	{
 		if((debug_level & DEBUG_DUMP_OBJECT) > 0)
 			DumpObject(ret, 0);
 		FreeObject(ret);
 	}
-	if((debug_level & DEBUG_VERBOSE_TESTS) > 0)
-		printf("object executed:%s\n", filename);
+	debug_printf(DEBUG_VERBOSE_TESTS,"object executed:%s\n", filename);
 
 	if((debug_level & DEBUG_DUMP_OBJECT) > 0)
 		DumpObject(obj,0);
 
-	if((debug_level & DEBUG_VERBOSE_TESTS) > 0)
-		printf("cleaning up object\n");
+	debug_printf(DEBUG_VERBOSE_TESTS,"cleaning up object\n");
 	FreeObject(obj);
 	// printf("objects headers total size : %d\n",objects_header_total);
 	fclose(f);
@@ -179,9 +176,9 @@ void AddInternalFunctions(vm *vm)
 int main(int argc, char *argv[])
 {
 
-	//debug_level |= DEBUG_INTERACTIVE;
+	debug_level |= DEBUG_INTERACTIVE;
 	debug_level |= DEBUG_MEMORY;
-	//debug_level |= DEBUG_SHOW_OPCODES;
+	debug_level |= DEBUG_SHOW_OPCODES;
 	//debug_level |= DEBUG_FULL_DUMP;
 	//debug_level |= DEBUG_STACK;
 	//debug_level |= DEBUG_LISTS;
@@ -199,13 +196,17 @@ int main(int argc, char *argv[])
 	//debug_level |= DEBUG_INTERNAL_FUNCTIONS;
 	//debug_level |= DEBUG_COUNT_OBJECTS;
 
-	debug_printf(DEBUG_MEMORY,"hi:%s\n","hi");
-
 	mem_Init();
+
+	debug_printf(DEBUG_ALL,"hi:%s\n","hi");
+
 	//ptr_tests();
 	vm *vm = vm_Init(NULL);
 	AddInternalFunctions(vm);
 	// printf("Calling all Unit Tests\n");
+
+	//iters
+	OpenPYC("tests/test60.pyc", vm);
 
 	//import
 	OpenPYC("tests/test_import.pyc", vm);
@@ -344,13 +345,12 @@ int main(int argc, char *argv[])
 	//OpenPYC("tests/test10.pyc", vm);
 	//OpenPYC("tests/e.pyc", vm);
 	
-	if((debug_level & DEBUG_VERBOSE_TESTS) > 0)
-		printf("closing vm\n");
+	debug_printf(DEBUG_VERBOSE_TESTS,"closing vm\n");
 	vm_Close(vm);
 	// printf("objects headers total size : %d\n",objects_header_total);
 	mem_Close();
 	if((debug_level & DEBUG_MEMORY) > 0)
-		printf("%d memory chunks leaked\n", mem_chunks_num);
+	debug_printf(DEBUG_MEMORY,"%d memory chunks leaked\n", mem_chunks_num);
 	if((debug_level & DEBUG_DUMP_UNSUPPORTED) > 0)
 		DumpUnsupportedOpCodes();
 	return (0);
