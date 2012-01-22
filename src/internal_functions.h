@@ -49,6 +49,14 @@ object *iter_Sequence(iter_object *iter);
 
 void iter_InitSequence(iter_object *iter,int start,int len,int step);
 
+object *iter_Generator(iter_object *iter);
+
+void iter_InitGenerator(iter_object *iter,function_object *fo);
+
+object *iter_Iteration(iter_object *iter);
+
+void iter_InitIteration(iter_object *iter,tuple_object *to);
+
 
 
 #endif
