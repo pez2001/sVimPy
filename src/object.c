@@ -94,7 +94,9 @@ float_object *AllocFloatObject()
 
 iter_object *AllocIterObject() 
 {
-   return((iter_object*)mem_malloc(sizeof(iter_object), "AllocIterObject() return")); 
+	iter_object *it = (iter_object*)mem_malloc(sizeof(iter_object), "AllocIterObject() return");
+	//printf("alloced iter@%x\n",it);
+	return(it); 
 }
 
 int IsIntObject(object * obj)
@@ -394,18 +396,19 @@ function_object *CreateFunctionObject(unsigned char func_type,int flags)
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
 		debug_printf(DEBUG_CREATION,"created object\n");
-		DumpObject(r,0);
+		//DumpObject(r,0);
 	}
 	return(r);
 }
 
-iter_object *CreateIterObject(object *(*iter_func)(struct _iter_object),object *tag,int flags)
+//iter_object *CreateIterObject(object *(*iter_func)(struct _iter_object *iter),object *tag,int flags)
+iter_object *CreateIterObject(int flags)
 {
 	iter_object *r = AllocIterObject();
 	r->type = TYPE_ITER;
 	r->flags = flags;
-	r->iter_func = iter_func;
-	r->tag = tag;
+	//r->iter_func = iter_func;
+	//r->tag = tag;
 	r->ref_count = 0;
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
@@ -493,8 +496,6 @@ void FreeObject(object * obj)
 		FreeObject(((iter_object*)obj)->tag);
 		objects_header_total -= sizeof(ref_object);
 		break;
-
-
 	case TYPE_NULL:
 		// printf("freeing NULL object @%x\n",obj);
 		objects_header_total -= sizeof(empty_object);
@@ -529,7 +530,6 @@ void FreeObject(object * obj)
 		{
 			assert(mem_free(((function_object*) obj)->name));
 		}
-		
 		break;
 	case TYPE_UNICODE:
 		//if(obj->flags &OFLAG_ON_STACK)
@@ -588,7 +588,6 @@ void FreeObject(object * obj)
 		// FreeObject(((code_object*)obj->ptr)->lnotab);//TO DECREASE MEMORY
 		// USAGE
 		break;
-
 	}
 	// recycle_Remove(obj);
 
@@ -669,12 +668,14 @@ void DumpObject(object * obj, int level)
 		debug_printf(DEBUG_ALL,"len: %d\n",((block_object*)obj)->len);
 		debug_printf(DEBUG_ALL,"ip: %d\n",((block_object*)obj)->ip);
 		//printf("stack @%x\n",((block_object*)obj)->stack);
-		
+		DumpObject(((block_object*)obj)->iter,0);
 		for (int i = 0; i < level; i++)
 				debug_printf(DEBUG_ALL,"\t");
 		debug_printf(DEBUG_ALL,"-- block object\n");
-		
 		break;
+	case TYPE_ITER:
+			debug_printf(DEBUG_ALL,"iter object\n");
+			break;
 	case TYPE_REF:
 		debug_printf(DEBUG_ALL,"ref object\n");
 		DumpObject(((ref_object*)obj)->ref,level+1);
@@ -706,7 +707,8 @@ void DumpObject(object * obj, int level)
 		DumpObject(((kv_object*)obj)->value,level + 1);
 		break;
 	case TYPE_FUNCTION:
-		debug_printf(DEBUG_ALL,"function object: %s\n",((function_object*)obj)->name);
+		if(((function_object*)obj)->func_type == FUNC_C || ((function_object*)obj)->func_type == FUNC_C_OBJ)
+			debug_printf(DEBUG_ALL,"function object: %s\n",((function_object*)obj)->name);
 		if(((function_object*)obj)->func_type == FUNC_PYTHON)
 		{
 			for (int i = 0; i < level; i++)

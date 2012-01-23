@@ -32,9 +32,10 @@ Features include:
 	
 	0.2 correct interpretation of function parameters
 	0.3 implement closures and refs
-	0.4 implement streams for reading/writing/printing
-	0.5 better implementation of generators/iterators and implement yield opcode
+	0.4 better implementation of generators/iterators and implement yield opcode
+	0.5 implement streams for reading/writing/printing & add module import abilities
 	0.6 vm feature complete (except classes and exceptions)
+	0.7 memory optimizations
 	0.8 - 1.0 arduino bootloader
 	2.0 slices
 	2.1 classes

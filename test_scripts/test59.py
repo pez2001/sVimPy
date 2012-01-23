@@ -4,3 +4,4 @@ def f():
 a = f()
 for i in a:
 	print(i)
+print("thru")

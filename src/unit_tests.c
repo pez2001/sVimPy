@@ -163,10 +163,12 @@ void AddInternalFunctions(vm *vm)
 	function_object *range = CreateCFunction(&if_range, "range");
 	function_object *print = CreateCFunction(&if_print, "print");
 	function_object *sum = CreateCFunction(&if_sum, "sum");
+	function_object *next = CreateCFunction(&if_next, "next");
 	vm_AddFunctionObject(vm, list);
 	vm_AddFunctionObject(vm, range);
 	vm_AddFunctionObject(vm, print);
 	vm_AddFunctionObject(vm, sum);
+	vm_AddFunctionObject(vm, next);
 
 	function_object *cc = CreateCFunction(&custom_code, "custom_code");
 	vm_AddFunctionObject(vm, cc);
@@ -179,7 +181,7 @@ int main(int argc, char *argv[])
 	debug_level |= DEBUG_INTERACTIVE;
 	debug_level |= DEBUG_MEMORY;
 	debug_level |= DEBUG_SHOW_OPCODES;
-	//debug_level |= DEBUG_FULL_DUMP;
+	debug_level |= DEBUG_FULL_DUMP;
 	//debug_level |= DEBUG_STACK;
 	//debug_level |= DEBUG_LISTS;
 	//debug_level |= DEBUG_GC;
@@ -187,7 +189,7 @@ int main(int argc, char *argv[])
 	//debug_level |= DEBUG_VM;
 	//debug_level |= DEBUG_FREEING;
 	//debug_level |= DEBUG_ALLOCS;
-	debug_level |= DEBUG_DUMP_UNSUPPORTED;
+	//debug_level |= DEBUG_DUMP_UNSUPPORTED;
 	//debug_level |= DEBUG_DUMP_OBJECT;
 	//debug_level |= DEBUG_CREATION;
 	//debug_level |= DEBUG_VERBOSE_FREEING;
@@ -198,29 +200,45 @@ int main(int argc, char *argv[])
 
 	mem_Init();
 
-	debug_printf(DEBUG_ALL,"hi:%s\n","hi");
+	//debug_printf(DEBUG_ALL,"hi:%s\n","hi");
 
 	//ptr_tests();
 	vm *vm = vm_Init(NULL);
 	AddInternalFunctions(vm);
 	// printf("Calling all Unit Tests\n");
 
-	//iters
-	OpenPYC("tests/test60.pyc", vm);
-
 	//import
-	OpenPYC("tests/test_import.pyc", vm);
+	//OpenPYC("tests/test_import.pyc", vm);
 
+	//custom code + import_from + import_star opcodes
+	//OpenPYC("tests/test45.pyc", vm);
+
+
+	//append ops + generators
+	OpenPYC("tests/test53.pyc", vm);
+	//OpenPYC("tests/test52.pyc", vm);
+
+	//generators
+	OpenPYC("tests/test24.pyc", vm);
+	OpenPYC("tests/test25.pyc", vm);
+	//OpenPYC("tests/test26.pyc", vm);
+	//OpenPYC("tests/test20.pyc", vm);
+	
 	//simple generator with yield
 	//OpenPYC("tests/test59.pyc", vm);
 
-	
 	//crashing or leaking memory
 
-	/*
-	//custom code + import_from + import_star opcodes
-	OpenPYC("tests/test45.pyc", vm);
 	
+	//iters
+	//OpenPYC("tests/test61.pyc", vm);
+	//OpenPYC("tests/test60.pyc", vm);
+	//OpenPYC("tests/e_small.pyc", vm);
+	//OpenPYC("tests/e_med.pyc", vm);
+	//OpenPYC("tests/e_bigger.pyc", vm);
+	//OpenPYC("tests/e_max.pyc", vm);
+
+	/*
 	//function parameters
 	OpenPYC("tests/test50.pyc", vm);//with keywords unordered
 	OpenPYC("tests/test49b.pyc", vm);//kw unordered
@@ -331,16 +349,6 @@ int main(int argc, char *argv[])
 	//OpenPYC("tests/e_med.pyc", vm);
 	//OpenPYC("tests/e_bigger.pyc", vm);
 
-	//generators
-	//OpenPYC("tests/test24.pyc", vm);
-	//OpenPYC("tests/test25.pyc", vm);
-	//OpenPYC("tests/test26.pyc", vm);
-	//OpenPYC("tests/test20.pyc", vm);//leaking
-
-	//append ops + generators
-	//OpenPYC("tests/test52.pyc", vm);
-	//OpenPYC("tests/test53.pyc", vm);
-
 	//OpenPYC("tests/test.pyc", vm);
 	//OpenPYC("tests/test10.pyc", vm);
 	//OpenPYC("tests/e.pyc", vm);
@@ -348,10 +356,10 @@ int main(int argc, char *argv[])
 	debug_printf(DEBUG_VERBOSE_TESTS,"closing vm\n");
 	vm_Close(vm);
 	// printf("objects headers total size : %d\n",objects_header_total);
-	mem_Close();
-	if((debug_level & DEBUG_MEMORY) > 0)
-	debug_printf(DEBUG_MEMORY,"%d memory chunks leaked\n", mem_chunks_num);
 	if((debug_level & DEBUG_DUMP_UNSUPPORTED) > 0)
 		DumpUnsupportedOpCodes();
+	mem_Close();
+	if((debug_level & DEBUG_MEMORY)>0)
+		printf("%d memory chunks leaked\n", mem_chunks_num);
 	return (0);
 }

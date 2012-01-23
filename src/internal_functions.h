@@ -38,25 +38,13 @@ object *if_sum(vm *vm,stack * stack);
 
 object *if_list(vm *vm,stack * stack);
 
+object *if_next(vm *vm,stack * stack);
+
 object *BinaryOp(object *tos,object *tos1,unsigned char op);
 
 object *CompareOp(object *tos,object *tos1,unsigned char cmp_op);
 
 object *custom_code(vm *vm,stack * stack);
-
-
-object *iter_Sequence(iter_object *iter);
-
-void iter_InitSequence(iter_object *iter,int start,int len,int step);
-
-object *iter_Generator(iter_object *iter);
-
-void iter_InitGenerator(iter_object *iter,function_object *fo);
-
-object *iter_Iteration(iter_object *iter);
-
-void iter_InitIteration(iter_object *iter,tuple_object *to);
-
 
 
 #endif

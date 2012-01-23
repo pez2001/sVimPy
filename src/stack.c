@@ -87,8 +87,8 @@ object *stack_Bottom(stack *stack)
 object *stack_Get(stack *stack,int index)
 {
 	if(index < 0)
-		index = stack->list->num-index;
-
+		index = stack->list->num- (-index);
+	printf("get %d\n",index);
 	if (index >= stack->list->num || index < 0)
 	{
 		debug_printf(DEBUG_STACK,"stack_Get() - stack underflow - index out of range\n");

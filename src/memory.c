@@ -111,8 +111,9 @@ void *mem_malloc(size_t size, char *description)
 		// return(NULL);
 	}
 	// else
-	debug_printf(DEBUG_ALLOCS,"allocated %d bytes @%x\n",size,tmp);
-
+	//debug_printf(DEBUG_ALLOCS,"allocated %d bytes @%x\n",size,tmp);
+	if((debug_level & DEBUG_ALLOCS)>0)
+		printf("allocated %d bytes @%x\n",size,tmp);
 	mem_Push(tmp, size, description);
 	}
 	return (tmp);

@@ -229,7 +229,6 @@ typedef struct
 		object *(*func_obj) (struct _vm *vm,object *object);
 		code_object *code;
 	} func;
-
 } function_object;
 
 //TODO create struct for generator storage
@@ -239,10 +238,8 @@ typedef struct _iter_object
 	unsigned char flags;
 	unsigned short  ref_count;
 	object *tag;//used for storage of iter options and actual ptr
-	object *(*iter_func)(struct _iter_object);
+	object *(*iter_func)(struct _iter_object *iter);
 } iter_object;
-
-
 
 typedef struct
 {
@@ -369,7 +366,9 @@ function_object *CreateFunctionObject_MAKE_CLOSURE(code_object *function_code,ob
 
 function_object *CreateFunctionObject(unsigned char func_type,int flags);
 
-iter_object *CreateIterObject(object *(*iter_func)(struct _iter_object),object *tag,int flags);
+//iter_object *CreateIterObject(object *(*iter_func)(struct _iter_object *iter),object *tag,int flags);
+
+iter_object *CreateIterObject(int flags);
 
 void FreeBlockObject(object *obj);
 

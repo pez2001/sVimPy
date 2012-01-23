@@ -288,8 +288,6 @@ object *vm_StartFunctionObject(vm *vm,function_object *fo,stack *locals,stack *k
 		bo->ref_count = 0;
 		bo->stack = stack_Init();		// co->stacksize
 		bo->initiated_locals = 1;
-		stack_Push(vm->blocks, bo);
-		//printf("pushed block:%x\n",bo);
 		if(fo->func_type == FUNC_PYTHON)
 		{
 			//printf("preparing python function\n");
@@ -394,6 +392,19 @@ object *vm_StartFunctionObject(vm *vm,function_object *fo,stack *locals,stack *k
 			
 
 		}
+		if(fo->func_type == FUNC_PYTHON && ((fo->func.code->co_flags & CO_NESTED)>0 || (fo->func.code->co_flags & CO_GENERATOR)>0) )
+		{
+			if((fo->func.code->co_flags & CO_GENERATOR) >0)
+				printf("function is a generator\n");
+			else
+				printf("function is nested\n");
+			iter_object *iter = CreateIterObject(0);
+			iter_InitGenerator(iter,bo);
+			return(iter);
+		}
+		//normal functions get pushed on the block stack
+		stack_Push(vm->blocks, bo);
+		//printf("pushed block:%x\n",bo);
 		return(NULL);//got nothing to return now
 }
 
@@ -762,8 +773,7 @@ object *vm_StepObject(vm *vm)
 				return(NULL);
 			}
 			// -- FOR DEBUGGING
-
-			
+		
 			debug_printf(DEBUG_VERBOSE_STEP,"preparing opcode\n");
 			// prepare opcode argument,increment codepointer and intepret
 			// small opcodes not using an arg etc
@@ -775,7 +785,7 @@ object *vm_StepObject(vm *vm)
 			case OPCODE_IMPORT_STAR:
 				op_thru = 1;
 				break;
-
+			case OPCODE_YIELD_VALUE:
 			case OPCODE_RETURN_VALUE:
 				{
 					object *ret = stack_Pop(bo->stack,vm->garbage);
@@ -853,27 +863,6 @@ object *vm_StepObject(vm *vm)
 				}
 				break;
 
-			case OPCODE_GET_ITER:
-				{
-					object *iter = stack_Pop(bo->stack,vm->garbage);
-					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
-					{
-					 debug_printf(DEBUG_VERBOSE_STEP,"iter:\n");
-					 DumpObject(iter,0);
-					//printf("bo_stack:\n");
-					//stack_Dump(vm->blocks);
-					//printf("bo:\n");
-					//DumpObject(stack_Top(vm->blocks),0);
-					}
-					block_object *abo = (block_object *) stack_Top(vm->blocks);
-					abo->iter = iter;
-					IncRefCount(iter);
-					ResetIteration(iter);
-					stack_Push(bo->stack,iter);
-					op_thru = 1;
-				}
-				break;
-
 			case OPCODE_POP_BLOCK:
 				{
 					block_object *rob = stack_Pop(vm->blocks,vm->garbage);
@@ -938,6 +927,36 @@ object *vm_StepObject(vm *vm)
 				}
 				break;
 
+			case OPCODE_GET_ITER:
+				{
+					object *iter = stack_Pop(bo->stack,vm->garbage);
+					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
+					{
+					 debug_printf(DEBUG_VERBOSE_STEP,"iter:\n");
+					 DumpObject(iter,0);
+					//printf("bo_stack:\n");
+					//stack_Dump(vm->blocks);
+					//printf("bo:\n");
+					//DumpObject(stack_Top(vm->blocks),0);
+					}
+					block_object *abo = (block_object *) stack_Top(vm->blocks);
+					//abo->iter = iter;
+					//IncRefCount(iter);
+					//ResetIteration(iter);
+					//stack_Push(bo->stack,iter);
+					if(abo->iter != NULL)
+					{
+						printf("block iter already used\n");
+						DecRefCountGC(abo->iter,vm->garbage);
+					}
+					iter_object *it = iter_CreateIter(iter);
+					stack_Push(bo->stack,it);
+					abo->iter = it;
+					IncRefCount(it);	
+					op_thru = 1;
+				}
+				break;
+
 			case OPCODE_EXTENDED_ARG:
 				{
 					extended_arg = num_short(string[bo->ip + 1], string[bo->ip + 2]);
@@ -946,14 +965,12 @@ object *vm_StepObject(vm *vm)
 					has_extended_arg = 1;
 				}
 				break;
-
+				
+			case OPCODE_MAP_ADD:				
+			case OPCODE_SET_ADD:
 			case OPCODE_LOAD_DEREF:
 			case OPCODE_STORE_DEREF:
 			case OPCODE_DELETE_DEREF:
-				// case OPCODE_STORE_MAP:
-				// case OPCODE_STORE_ATTR:
-				// case OPCODE_DELETE_ATTR:
-				// case OPCODE_LOAD_ATTR:
 			case OPCODE_LOAD_GLOBAL:
 			case OPCODE_STORE_GLOBAL:
 			case OPCODE_DELETE_GLOBAL:
@@ -967,6 +984,7 @@ object *vm_StepObject(vm *vm)
 			case OPCODE_BUILD_TUPLE:
 			case OPCODE_BUILD_LIST:
 			case OPCODE_BUILD_MAP:
+			case OPCODE_BUILD_SET:
 			case OPCODE_FOR_ITER:
 			case OPCODE_UNPACK_SEQUENCE:
 			case OPCODE_SETUP_LOOP:
@@ -1018,6 +1036,7 @@ object *vm_StepObject(vm *vm)
 				gc_Clear(vm->garbage);
 				return(NULL);
 			}
+
 			debug_printf(DEBUG_VERBOSE_STEP,"fetching tos items\n");
 			// fetch tos items 
 			switch (op)
@@ -1038,6 +1057,7 @@ object *vm_StepObject(vm *vm)
 			case OPCODE_STORE_GLOBAL:
 			case OPCODE_STORE_DEREF:
 			case OPCODE_LIST_APPEND:
+			case OPCODE_SET_ADD:
 				{
 					tos = stack_Pop(bo->stack,vm->garbage);
 					tos = DissolveRef(tos);
@@ -1077,7 +1097,6 @@ object *vm_StepObject(vm *vm)
 			case OPCODE_BINARY_OR:
 			case OPCODE_BINARY_SUBSCR:
 			case OPCODE_MAP_ADD:
-			case OPCODE_SET_ADD:
 				{
 					tos = stack_Pop(bo->stack,vm->garbage);
 					tos1 = stack_Pop(bo->stack,vm->garbage);
@@ -1110,13 +1129,39 @@ object *vm_StepObject(vm *vm)
 				}
 				break;
 			}
+
 			debug_printf(DEBUG_VERBOSE_STEP,"executing main ops\n");
 			// execute remaining ops here
 			switch (op)
 			{
-			case OPCODE_YIELD_VALUE:
+			case OPCODE_FOR_ITER:
 				{
-			
+					block_object *fabo = (block_object *) stack_Top(vm->blocks);
+					//object *next = iter_Next(fabo->iter);
+					object *next =  NULL;
+					if(fabo->iter != NULL)
+						next = iter_Next(fabo->iter);
+					else if(stack_Top(bo->stack)->type == TYPE_ITER)
+						next = iter_Next(stack_Top(bo->stack));
+					if(next != NULL && next->type == TYPE_BLOCK)
+					{
+						stack_Push(vm->blocks, next);
+					}
+					else if (next != NULL && next->type != TYPE_NONE)
+					{
+						stack_Push(bo->stack, next);
+					}
+					else
+					{
+						if(next != NULL)
+							DecRefCountGC(next,vm->garbage);
+							//FreeObject(next);
+						stack_Pop(bo->stack,vm->garbage);
+						if(fabo->iter != NULL)
+							DecRefCountGC(fabo->iter,vm->garbage);
+						fabo->iter = NULL;
+						bo->ip = bo->ip + arg;
+					}
 				}
 				break;
 			case OPCODE_IMPORT_NAME:
@@ -1265,32 +1310,6 @@ object *vm_StepObject(vm *vm)
 					bo->ip = block->len;
 				}
 				break;
-			case OPCODE_FOR_ITER:
-				{
-					// printf("for_iter delta jump\n");
-					// i = i + delta;
-					// break;
-					block_object *fabo = (block_object *) stack_Top(vm->blocks);
-					object *next = GetNextItem(fabo->iter);
-
-					if (next != NULL)
-					{
-						// if(next->value_ptr != NULL)
-						// next = next->value_ptr;
-						// printf("next pushed:");
-						// PrintObject(next);
-						// stack_Dump(bo->stack);
-						stack_Push(bo->stack, next);
-						// printf("\n");
-					}
-					else
-					{
-						// printf("for_iter delta jump\n");
-						bo->ip = bo->ip + arg;
-						//block_object *rob = stack_Pop(vm->blocks,vm->garbage);
-					}
-				}
-				break;
 			case OPCODE_BUILD_SET:
 				{
 					tuple_object *to =CreateTuple(0,0);
@@ -1308,9 +1327,7 @@ object *vm_StepObject(vm *vm)
 				{
 					// stack_Push(BuildList(bo->stack,arg),bo->stack);
 					stack *blcall = NULL;
-
-					if (arg > 0)
-						blcall = stack_Init();	// arg
+					blcall = stack_Init();	// arg
 					tos = NULL;
 					for (int i = 0; i < arg; i++)
 					{
@@ -1323,8 +1340,7 @@ object *vm_StepObject(vm *vm)
 						stack_Push(bo->stack, tmp);
 						//DecRefCount(tmp);
 					}
-					if (arg > 0)
-						stack_Close(blcall, 0);
+					stack_Close(blcall, 0);
 				}
 				break;
 			case OPCODE_LOAD_GLOBAL:
@@ -1507,6 +1523,7 @@ object *vm_StepObject(vm *vm)
 						DumpObject(tos,1);
 				}
 				break;
+
 			case OPCODE_LOAD_DEREF:
 				{
 					object *cell =  NULL;
@@ -1521,6 +1538,7 @@ object *vm_StepObject(vm *vm)
 						DumpObject(cell,1);
 				}
 				break;
+
 			case OPCODE_LOAD_CLOSURE:
 				{
 					object *fast = NULL;
@@ -1540,12 +1558,14 @@ object *vm_StepObject(vm *vm)
 						DumpObject(fast,1);
 				}
 				break;
+
 			case OPCODE_DELETE_DEREF:
 				{
 					//if(
 					//SetDictItemByIndex(co_freevars,arg,NULL);
 				}
 				break;
+
 			case OPCODE_STORE_NAME:
 				{
 					//tuple_object *co_names = (tuple_object *) co->names;
@@ -1580,6 +1600,11 @@ object *vm_StepObject(vm *vm)
 					if(tos2->type == TYPE_KV)
 						tos2 = ((kv_object*)tos2)->value;
 					assert(tos2 != NULL);
+					DumpObject(tos2,0);
+					printf("append dict item:\n");
+					DumpObject(tos,0);
+					printf("value:\n");
+					DumpObject(tos1,0);
 					SetDictItem(tos2,tos,tos1);
 					//stack_Push(bo->stack,);
 				}
@@ -1603,6 +1628,9 @@ object *vm_StepObject(vm *vm)
 					if(tos1->type == TYPE_KV)
 						tos1 = ((kv_object*)tos1)->value;
 					assert(tos1 != NULL);
+					DumpObject(tos1,0);
+					printf("append item:\n");
+					DumpObject(tos,0);
 					AppendItem(tos1,tos);
 				}
 				break;
@@ -1628,11 +1656,15 @@ object *vm_StepObject(vm *vm)
 				break;
 
 			case OPCODE_DELETE_NAME:
+				{
 				DeleteItem(co->names, arg);
+				}
 				break;
 
 			case OPCODE_DELETE_FAST:
+				{
 				DeleteItem(co->varnames, arg);
+				}
 				break;
 
 			case OPCODE_DELETE_SUBSCR:
@@ -1875,11 +1907,6 @@ object *vm_StepObject(vm *vm)
 						}	
 					}
 					
-					//if(narg > fo->argcount)
-					//{
-					//	nkey 
-					//	narg = fo->argcount;
-					//}
 					
 					for (int i = 0; i < nkey; i++)//keyword arguments
 					{
@@ -1943,7 +1970,8 @@ object *vm_StepObject(vm *vm)
 		{
 			stack_Pop(vm->blocks,vm->garbage);
 			return(NULL);
-		}else
+		}
+		else
 		{
 			stack_Pop(vm->blocks,vm->garbage);
 			ret = stack_Pop(bo->stack,vm->garbage);

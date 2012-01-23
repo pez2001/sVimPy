@@ -1,5 +1,5 @@
 def e():
-	o = 35000
+	o = 40000
 	n = o*o
 	tossed = [False]*(o+1)
 

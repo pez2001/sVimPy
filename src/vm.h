@@ -72,6 +72,7 @@ except
 #include "lists.h"
 #include "stream.h"
 #include "garbage.h"
+#include "iterators.h"
 
 #include "debug.h"
 #include "assert.h"

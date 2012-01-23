@@ -49,7 +49,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 	object *new_tos = NULL;
 	if (tos->type == TYPE_UNICODE && tos1->type == TYPE_UNICODE && op == OPCODE_BINARY_ADD) //string add -> returns string
 	{
-		return(StringAdd(tos,tos1));
+		return(StringAdd(tos1,tos));
 	}
 	
 	if (tos->type == TYPE_INT && tos1->type == TYPE_TUPLE && op == OPCODE_BINARY_MULTIPLY) //tuple multiply -> returns tuple
@@ -458,6 +458,53 @@ object *if_list(vm *vm,stack * stack)
 	return (r);
 }
 
+object *if_next(vm *vm,stack * stack)
+{
+	object *iter = stack_Pop(stack,vm->garbage);
+	object *next = iter_Next(iter);
+	if(next != NULL && next->type == TYPE_BLOCK)
+	{
+		stack_Push(vm->blocks, next);
+		return(NULL);
+	}
+	else
+		return(next);
+}
+
+object *if_range(vm *vm,stack * stack)
+{
+	if (stack->list->num < 1)
+	{
+		object *tmp = CreateEmptyObject(TYPE_NONE,0);
+		debug_printf(DEBUG_ALL,"not enough args for range\n");
+		return (tmp);
+	}
+	iter_object *iter = CreateIterObject(0);
+	object *s = stack_Pop(stack,vm->garbage);
+	object *e =  NULL;
+	if (stack->list->num > 0)
+		e = stack_Pop(stack,vm->garbage);
+	object *st = NULL;
+	if (stack->list->num > 0)
+		st = stack_Pop(stack,vm->garbage);
+
+	if (st == NULL && e == NULL && s->type == TYPE_INT)
+	{
+		iter_InitSequence(iter,0,((int_object*)s)->value,1);
+	}
+	else if (st == NULL && s->type == TYPE_INT && e->type == TYPE_INT)
+	{
+		iter_InitSequence(iter,((int_object*)s)->value,((int_object*)e)->value,1);
+	}
+	else if (st != NULL && s->type == TYPE_INT && e->type == TYPE_INT
+			 && st->type == TYPE_INT)
+	{
+		iter_InitSequence(iter,((int_object*)s)->value,((int_object*)e)->value,((int_object*)st)->value);
+	}
+	return (iter);
+}
+
+/*
 object *if_range(vm *vm,stack * stack)
 {
 	// TODO dirty hack in a classless world
@@ -533,15 +580,15 @@ object *if_range(vm *vm,stack * stack)
 	}
 	object *tmp = CreateEmptyObject( TYPE_NONE,0);
 	//IncRefCount(tmp);
-
 	return (tmp);
 }
+*/
 
 object *if_print(vm *vm,stack * stack)
 {
 	// printf("print called\n");
 	int num = stack->list->num;
-
+	int printed_something = 0;
 	for (int i = 0; i < num; i++)
 	{
 		object *tos = stack_Pop(stack,vm->garbage);
@@ -549,14 +596,17 @@ object *if_print(vm *vm,stack * stack)
 		// if(tos != NULL && tos->type == TYPE_UNICODE)
 		// printf("arg[%d]:%s\n",i,((unicode_object*)tos->ptr)->content );
 		// else 
+		if(tos->type == TYPE_NONE)
+			continue;
 		if (i)
 			printf(" ");
 		if (tos != NULL)
 			// printf("tos type:%c\n",tos->type);
 			PrintObject(tos);
-	
+		printed_something = 1;
 	}
-	printf("\n");
+	if(printed_something)
+		printf("\n");
 	object *tmp =CreateEmptyObject(TYPE_NONE,0);
 	//IncRefCount(tmp);
 	return (tmp);
@@ -580,6 +630,22 @@ object *if_sum(vm *vm,stack * stack)
 				break;
 			case TYPE_UNICODE:
 				break;
+			case TYPE_ITER:
+				{
+					object *n = iter_NextNow(tos,vm);
+					do
+					{
+						if(n!= NULL)
+						{
+							printf("in iter:%c\n",n->type);
+							if(n->type == TYPE_INT)
+								sum += ((int_object*)n)->value;
+							n = iter_NextNow(tos,vm);
+						}
+					}while(n != NULL && n->type != TYPE_NONE);
+				
+				}
+				break;
 			}
 	}
 	int_object *tmp = CreateIntObject(sum,0);
@@ -587,3 +653,4 @@ object *if_sum(vm *vm,stack * stack)
 	//IncRefCount(tmp);
 	return (tmp);
 }
+
