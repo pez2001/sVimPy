@@ -90,7 +90,7 @@ object *iter_Sequence(iter_object *iter)
 	}
 }
 
-void iter_InitSequence(iter_object *iter,int start,int end,int step)
+void iter_InitSequence(iter_object *iter,INDEX start,NUM end,NUM step)
 {
 	tuple_object *seq = CreateTuple(3,0);
 	int_object *iend = CreateIntObject(end,0);

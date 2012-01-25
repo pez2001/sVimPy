@@ -23,6 +23,7 @@
 #ifndef INTERNAL_FUNCTIONS_H
 #define INTERNAL_FUNCTIONS_H
 
+#include "types.h"
 #include "object.h"
 #include "stack.h"
 #include "vm.h"

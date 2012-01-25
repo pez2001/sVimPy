@@ -23,6 +23,7 @@
 #ifndef OPCODES_H
 #define OPCODES_H
 
+#include "types.h"
 #include "debug.h"
 
 
@@ -128,7 +129,7 @@
 #define OPCODE_SET_ADD								0x91
 #define OPCODE_MAP_ADD								0x92
 
-
+#ifdef DEBUGGING
 
 typedef struct
 {
@@ -146,15 +147,17 @@ typedef struct
 	char *name;					// string version
 	char *description;			// a short description
 	// unsigned int num_parameters; //number of parameters
-	unsigned int argcount;
-	unsigned int supported;
+	NUM argcount;
+	BOOL supported;
 #endif
 } opcode;
 
 void DumpUnsupportedOpCodes();
 
-unsigned int GetSupportedOpcodesNum();
+NUM GetSupportedOpcodesNum();
 
-int GetOpcodeIndex(unsigned char opcode);
+INDEX GetOpcodeIndex(unsigned char opcode);
+
+#endif
 
 #endif

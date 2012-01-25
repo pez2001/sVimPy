@@ -23,6 +23,7 @@
 #ifndef STACK_H
 #define STACK_H
 
+#include "types.h"
 #include "lists.h"
 #include "object.h"
 
@@ -38,19 +39,19 @@ typedef struct _stack
 } stack;
 
 
-stack *stack_Init();	// long items_num, 
+stack *stack_Init();
 
 object *stack_Pop(stack *stack,ptr_list *gc);
 
 void stack_Push(stack *stack, object * x);
 
-void stack_Close(stack *stack, int free_objects);
+void stack_Close(stack *stack, BOOL free_objects);
 
-void stack_Clear(stack *stack, int free_objects);
+void stack_Clear(stack *stack, BOOL free_objects);
 
 int stack_Contains(stack *stack, object * x);
 
-object *stack_Get(stack *stack,int index);
+object *stack_Get(stack *stack,INDEX index);
 
 int stack_Pointer(stack *stack);
 
@@ -70,11 +71,11 @@ object *stack_Third(stack *stack);
 
 void stack_SetThird(stack *stack, object * x);
 
-void stack_Adjust(stack *stack, int by);
+void stack_Adjust(stack *stack, REL_NUM by);
 
-// void stack_IncreaseSize (int items_num, stack * stack);
-
+#ifdef DEBUGGING
 void stack_Dump(stack *stack);
+#endif
 
 int stack_IsEmpty(stack *stack);
 

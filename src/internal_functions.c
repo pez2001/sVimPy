@@ -39,8 +39,10 @@ object *StringCompare(object *a,object *b)
 	char *bs;
 	as = ((unicode_object *)a)->value;
 	bs = ((unicode_object *)b)->value;
-	empty_object *r = CreateEmptyObject(!strcmp(as,bs) ? TYPE_TRUE : TYPE_FALSE,0);
+	object *r = CreateEmptyObject(!strcmp(as,bs) ? TYPE_TRUE : TYPE_FALSE,0);
+	#ifdef DEBUGGING
 	debug_printf (DEBUG_VERBOSE_STEP,"%s == %s == %c\n", as, bs,r->type);
+	#endif
 	return(r);
 }
 
@@ -54,34 +56,36 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 	
 	if (tos->type == TYPE_INT && tos1->type == TYPE_TUPLE && op == OPCODE_BINARY_MULTIPLY) //tuple multiply -> returns tuple
 	{
-		long a = ((int_object*)tos)->value;
+		NUM a =(NUM) ((int_object*)tos)->value;
 
-		int mnum = ((tuple_object *) tos1)->list->num;
+		NUM mnum = ((tuple_object *) tos1)->list->num;
 		if (mnum == 1)
 			tos1 = ((tuple_object *) tos1)->list->items[0];
 
 		tuple_object *mtr = CreateTuple(a,0);
-		for (int i = 0; i < a; i++)
+		for (NUM i = 0; i < a; i++)
 		{
 			SetItem(mtr,i,tos1);
 		}
+		#ifdef DEBUGGING
 		if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 			DumpObject(mtr,0);
+		#endif
 		return(mtr);
 	}
 	if(tos->type == TYPE_BINARY_FLOAT || tos1->type == TYPE_BINARY_FLOAT) //mixed op -> returns float
 	{
-		float af = 0.0f;
-		float bf = 0.0f;
+		FLOAT af = 0.0f;
+		FLOAT bf = 0.0f;
 		//printf("float ret\n");
 		
 		if (tos->type == TYPE_INT)
 		{
-			af = (float) ((int_object*)tos)->value;
+			af = (FLOAT) ((int_object*)tos)->value;
 		}	
 		if (tos1->type == TYPE_INT)
 		{
-			bf = (float) ((int_object*)tos1)->value;
+			bf = (FLOAT) ((int_object*)tos1)->value;
 		}	
 		if (tos->type == TYPE_BINARY_FLOAT)
 		{
@@ -98,92 +102,116 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_BINARY_MULTIPLY:
 				{
 					((float_object*)new_tos)->value = bf  * af;
+					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g * %7g = %7g\n", bf, af, bf  * af);
+					#endif
 				}
 				break;
 			case OPCODE_INPLACE_OR:
 			case OPCODE_BINARY_OR:
 				{
 					((float_object*)new_tos)->value = (long)bf  | (long)af;
+					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g | %7g = %7g\n", bf, af, (long)bf  | (long)af);
+					#endif
 				}
 				break;
 			case OPCODE_INPLACE_XOR:
 			case OPCODE_BINARY_XOR:
 				{
 					((float_object*)new_tos)->value = (long)bf  ^ (long)af;
+					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g ^ %7g = %7g\n", bf, af, (long)bf  ^ (long)af);
+					#endif
 				}
 				break;			
 			case OPCODE_INPLACE_AND:
 			case OPCODE_BINARY_AND:
 				{
 					((float_object*)new_tos)->value = (long)bf  & (long)af;
+					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g & %7g = %7g\n", bf, af, (long)bf  & (long)af);
+					#endif
 				}
 				break;
 			case OPCODE_INPLACE_LSHIFT:
 			case OPCODE_BINARY_LSHIFT:
 				{
 					((float_object*)new_tos)->value = (long)bf << (long)af;
+					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g << %7g = %7g\n", bf, af, (long)bf << (long)af);
+					#endif
 				}
 				break;
 			case OPCODE_INPLACE_RSHIFT:
 			case OPCODE_BINARY_RSHIFT:
 				{
 					((float_object*)new_tos)->value =  (long)bf >>  (long)af;
+					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g>> %7g = %7g\n", bf, af,  (long)bf >>  (long)af);
+					#endif
 				}
 				break;
 			case OPCODE_INPLACE_MODULO:
 			case OPCODE_BINARY_MODULO:
 				{
 					((float_object*)new_tos)->value =  (long)bf %  (long)af;
+					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g %% %7g = %7g\n", bf, af,  (long)bf %  (long)af);
+					#endif
 				}
 				break;
 			case OPCODE_INPLACE_FLOOR_DIVIDE:
 			case OPCODE_BINARY_FLOOR_DIVIDE:
 				{
 					((float_object*)new_tos)->value = floor(bf / af);
+					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g // %7g = %7g\n", bf, af, floor(bf / af));
+					#endif
 				}
 				break;
 			case OPCODE_INPLACE_TRUE_DIVIDE:
 			case OPCODE_BINARY_TRUE_DIVIDE:
 				{
 					((float_object*)new_tos)->value = bf / af;
+					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g / %7g = %7g\n", bf, af, bf / af);
+					#endif
 				}
 				break;
 			case OPCODE_INPLACE_SUBTRACT:
 			case OPCODE_BINARY_SUBTRACT:
 				{
 					((float_object*)new_tos)->value = bf-af;
+					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g - %7g = %7g\n", bf, af, bf - af);
+					#endif
 				}
 				break;
 			case OPCODE_INPLACE_POWER:
 			case OPCODE_BINARY_POWER:
 				{
 					((float_object*)new_tos)->value = long_pow(bf, af);
+					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g ** %7g = %7g\n", bf, af, long_pow(bf, af));
+					#endif
 				}
 				break;
 			case OPCODE_INPLACE_ADD:
 			case OPCODE_BINARY_ADD:
 				{
 					((float_object*)new_tos)->value = bf + af;
+					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g + %7g = %7g\n", bf, af, bf + af);
+					#endif					
 				}
 				break;
 		}
 	}
 	else	//int op -> returns int
 	{
-		long a = 0;
-		long b = 0;
+		INT a = 0;
+		INT b = 0;
 		a = ((int_object*)tos)->value;
 		b = ((int_object*)tos1)->value;
 		new_tos = CreateIntObject(0,0);
@@ -193,84 +221,108 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_BINARY_MULTIPLY:
 				{
 					((int_object*)new_tos)->value = b * a;
+					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d * %d = %d\n", b, a, b * a);
+					#endif
 				}
 				break;	
 			case OPCODE_INPLACE_OR:
 			case OPCODE_BINARY_OR:
 				{
 					((int_object*)new_tos)->value = b | a;
+					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d | %d = %d\n", b, a, b | a);
+					#endif
 				}
 				break;
 			case OPCODE_INPLACE_XOR:
 			case OPCODE_BINARY_XOR:
 				{
 					((int_object*)new_tos)->value = b ^ a;
+					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d ^ %d = %d\n", b, a, b ^ a);
+					#endif
 				}
 				break;
 			case OPCODE_INPLACE_AND:
 			case OPCODE_BINARY_AND:
 				{
 					((int_object*)new_tos)->value = b & a;
+					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d & %d = %d\n", b, a, b & a);
+					#endif
 				}
 				break;
 			case OPCODE_INPLACE_LSHIFT:
 			case OPCODE_BINARY_LSHIFT:
 				{
 					((int_object*)new_tos)->value = b << a;
+					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d << %d = %d\n", b, a, b << a);
+					#endif
 				}
 				break;
 			case OPCODE_INPLACE_RSHIFT:
 			case OPCODE_BINARY_RSHIFT:
 				{
 					((int_object*)new_tos)->value = b >> a;
+					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d >> %d = %d\n", b, a, b >> a);
+					#endif
 				}
 				break;
 			case OPCODE_INPLACE_MODULO:
 			case OPCODE_BINARY_MODULO:
 				{
 					((int_object*)new_tos)->value = b % a;
+					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d %% %d = %d\n", b, a, b % a);
+					#endif
 				}
 				break;
 			case OPCODE_INPLACE_FLOOR_DIVIDE:
 			case OPCODE_BINARY_FLOOR_DIVIDE:
 				{
 					((int_object*)new_tos)->value = b / a;
+					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d / %d = %d\n", b, a, b / a);
+					#endif
 				}
 				break;
 			case OPCODE_INPLACE_TRUE_DIVIDE:
 			case OPCODE_BINARY_TRUE_DIVIDE:
 				{
 					((int_object*)new_tos)->value = b / a;
+					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d / %d = %d\n", b, a, b / a);
+					#endif
 				}
 				break;
 			case OPCODE_INPLACE_SUBTRACT:
 			case OPCODE_BINARY_SUBTRACT:
 				{
 					((int_object*)new_tos)->value = b-a;
+					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d - %d = %d\n", b, a, b - a);
+					#endif
 				}
 				break;
 			case OPCODE_INPLACE_POWER:
 			case OPCODE_BINARY_POWER:
 				{
 					((int_object*)new_tos)->value = long_pow(b, a);
+					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d ** %d = %d\n", b, a, long_pow(b, a));
+					#endif
 				}
 				break;
 			case OPCODE_INPLACE_ADD:
 			case OPCODE_BINARY_ADD:
 				{
 					((int_object*)new_tos)->value = b + a;
+					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d + %d = %d\n", b, a, b + a);
+					#endif
 				}
 				break;
 		}
@@ -288,46 +340,58 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 	if ((tos->type == TYPE_FALSE || tos->type == TYPE_TRUE) && (tos1->type == TYPE_FALSE || tos1->type == TYPE_TRUE)) //bool compare
 	{
 		new_tos = CreateEmptyObject(tos1->type == tos->type ? TYPE_TRUE : TYPE_FALSE,0);
+		#ifdef DEBUGGING
 		debug_printf (DEBUG_VERBOSE_STEP,"%c == %c == %c\n", tos1->type, tos->type, new_tos->type);
+		#endif
 		return(new_tos);
 	}
 	if(cmp_op == 8) // is (compare instances)
 	{
 		new_tos = CreateEmptyObject(tos == tos1 ? TYPE_TRUE : TYPE_FALSE,0);
+		#ifdef DEBUGGING
 		debug_printf(DEBUG_VERBOSE_STEP,"%x is %x == %c\n",tos, tos1, new_tos->type);
+		#endif
 		return(new_tos);
 	}
 	if(cmp_op == 9) // is not (compare instances)
 	{
 		new_tos = CreateEmptyObject(tos != tos1 ? TYPE_TRUE : TYPE_FALSE,0);
+		#ifdef DEBUGGING
 		debug_printf(DEBUG_VERBOSE_STEP,"%x is not %x == %c\n",tos, tos1, new_tos->type);
+		#endif
 		return(new_tos);
 		}
 	if(cmp_op == 6) // in (contained in tuple)
 	{
 		new_tos = CreateEmptyObject( GetItemIndex(tos, tos1) != -1 ? TYPE_TRUE : TYPE_FALSE,0);
+		#ifdef DEBUGGING
 		debug_printf(DEBUG_VERBOSE_STEP,"%x in %x == %c\n",tos, tos1, new_tos->type);
+		#endif
 		return(new_tos);
 		}
 	if(cmp_op == 7) // not int (not contained in tuple)
 	{
+		#ifdef DEBUGGING
 		debug_printf(DEBUG_VERBOSE_STEP,"index:%d\n",GetItemIndex(tos, tos1));
+		#endif
 		new_tos = CreateEmptyObject( GetItemIndex(tos, tos1) == -1 ? TYPE_TRUE : TYPE_FALSE,0);
+		#ifdef DEBUGGING
 		debug_printf(DEBUG_VERBOSE_STEP,"%x not in %x == %c\n",tos, tos1, new_tos->type);
+		#endif
 		return(new_tos);
 		}
 	if(tos->type == TYPE_BINARY_FLOAT || tos1->type == TYPE_BINARY_FLOAT) //mixed objects
 	{
-		float af = 0.0f;
-		float bf = 0.0f;
+		FLOAT af = 0.0f;
+		FLOAT bf = 0.0f;
 		
 		if (tos->type == TYPE_INT)
 		{
-			af = (float) ((int_object*)tos)->value;
+			af = (FLOAT) ((int_object*)tos)->value;
 		}	
 		if (tos1->type == TYPE_INT)
 		{
-			bf = (float) ((int_object*)tos1)->value;
+			bf = (FLOAT) ((int_object*)tos1)->value;
 		}	
 		if (tos->type == TYPE_BINARY_FLOAT)
 		{
@@ -342,45 +406,57 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 			case 0:	// <
 				{
 					new_tos = CreateEmptyObject(bf < af ? TYPE_TRUE : TYPE_FALSE,0);
+					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g < %7g == %c\n", bf, af, new_tos->type);
+					#endif
 				}
 				break;
 			case 1:	// <=
 				{
 					new_tos = CreateEmptyObject(bf <= af ? TYPE_TRUE : TYPE_FALSE,0);
+					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g <= %7g == %c\n", bf, af, new_tos->type);
+					#endif
 				}
 				break;
 			case 2:	// ==
 				{
 					new_tos = CreateEmptyObject(bf == af ? TYPE_TRUE : TYPE_FALSE,0);
+					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g == %7g == %c\n", bf, af, new_tos->type);
+					#endif
 				}
 				break;
 			case 3:	// !=
 				{
 					new_tos = CreateEmptyObject(bf != af ? TYPE_TRUE : TYPE_FALSE,0);
+					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g != %7g == %c\n", bf, af, new_tos->type);
+					#endif
 				}
 				break;
 			case 4:	// >
 				{
 					new_tos = CreateEmptyObject( bf > af ? TYPE_TRUE : TYPE_FALSE,0);
+					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g < %7g == %c\n", bf, af, new_tos->type);
+					#endif
 				}
 				break;
 			case 5:	// >=
 				{
 					new_tos = CreateEmptyObject(bf >= af ? TYPE_TRUE : TYPE_FALSE,0);
+					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g >= %7g == %c\n", bf, af, new_tos->type);
+					#endif
 				}
 				break;
 		}
 	}
 	else //int objects
 	{
-		long a = 0;
-		long b = 0;
+		INT a = 0;
+		INT b = 0;
 		a = ((int_object*)tos)->value;
 		b = ((int_object*)tos1)->value;
 		switch (cmp_op)
@@ -388,37 +464,49 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 			case 0:	// <
 				{
 					new_tos = CreateEmptyObject(b < a ? TYPE_TRUE : TYPE_FALSE,0);
+					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d < %d == %c\n", b, a, new_tos->type);
+					#endif
 			}
 			break;
 			case 1:	// <=
 				{
 					new_tos = CreateEmptyObject(b <= a ? TYPE_TRUE : TYPE_FALSE,0);
+					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d <= %d == %c\n", b, a, new_tos->type);
+					#endif
 			}
 			break;
 			case 2:	// ==
 				{
 					new_tos = CreateEmptyObject(b == a ? TYPE_TRUE : TYPE_FALSE,0);
+					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d == %d == %c\n", b, a, new_tos->type);
+					#endif
 				}
 				break;
 			case 3:	// !=
 				{
 					new_tos = CreateEmptyObject(b != a ? TYPE_TRUE : TYPE_FALSE,0);
+					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d != %d == %c\n", b, a, new_tos->type);
+					#endif
 			}
 			break;
 			case 4:	// >
 				{
 					new_tos = CreateEmptyObject( b > a ? TYPE_TRUE : TYPE_FALSE,0);
+					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d < %d == %c\n", b, a, new_tos->type);
+					#endif
 				}
 				break;
 			case 5:	// >=
 				{
 					new_tos = CreateEmptyObject(b >= a ? TYPE_TRUE : TYPE_FALSE,0);
+					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d >= %d == %c\n", b, a, new_tos->type);
+					#endif
 				}
 				break;
 		}
@@ -443,11 +531,11 @@ object *custom_code(vm *vm,stack * stack)
 
 object *if_list(vm *vm,stack * stack)
 {
-	int num = stack->list->num;
+	NUM num = stack->list->num;
 	//printf("num:%d\n",num);
 	tuple_object *r = CreateTuple(num,0);
 	//IncRefCount(r);
-	for (int i = 0; i < num; i++)
+	for (NUM i = 0; i < num; i++)
 	{
 		//object *t = stack_Top(stack);
 		//IncRefCount(t);
@@ -476,7 +564,9 @@ object *if_range(vm *vm,stack * stack)
 	if (stack->list->num < 1)
 	{
 		object *tmp = CreateEmptyObject(TYPE_NONE,0);
+		#ifdef DEBUGGING
 		debug_printf(DEBUG_ALL,"not enough args for range\n");
+		#endif
 		return (tmp);
 	}
 	iter_object *iter = CreateIterObject(0);
@@ -587,9 +677,9 @@ object *if_range(vm *vm,stack * stack)
 object *if_print(vm *vm,stack * stack)
 {
 	// printf("print called\n");
-	int num = stack->list->num;
-	int printed_something = 0;
-	for (int i = 0; i < num; i++)
+	NUM num = stack->list->num;
+	BOOL printed_something = 0;
+	for (NUM i = 0; i < num; i++)
 	{
 		object *tos = stack_Pop(stack,vm->garbage);
 
@@ -615,10 +705,10 @@ object *if_print(vm *vm,stack * stack)
 object *if_sum(vm *vm,stack * stack)
 {
 	// printf("print called\n");
-	int num = stack->list->num;
+	NUM num = stack->list->num;
 
-	long sum = 0;
-	for (int i = 0; i < num; i++)
+	INT sum = 0;
+	for (NUM i = 0; i < num; i++)
 	{
 		object *tos = stack_Pop(stack,vm->garbage);
 
@@ -632,24 +722,25 @@ object *if_sum(vm *vm,stack * stack)
 				break;
 			case TYPE_ITER:
 				{
-					object *n = iter_NextNow(tos,vm);
+					object *n = iter_NextNow(tos,vm);//TODO wont work right now cause it executes all block atm
 					do
 					{
 						if(n!= NULL)
 						{
-							printf("in iter:%c\n",n->type);
+							//printf("in iter:%c\n",n->type);
 							if(n->type == TYPE_INT)
 								sum += ((int_object*)n)->value;
 							n = iter_NextNow(tos,vm);
 						}
 					}while(n != NULL && n->type != TYPE_NONE);
-				
 				}
 				break;
 			}
 	}
 	int_object *tmp = CreateIntObject(sum,0);
+	#ifdef DEBUGGING
 	debug_printf(DEBUG_VERBOSE_STEP,"returning sum:%d\n",sum);
+	#endif
 	//IncRefCount(tmp);
 	return (tmp);
 }

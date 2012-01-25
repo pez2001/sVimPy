@@ -21,13 +21,11 @@
  */
 
 
-#define DEBUG
-// #define OPCODES_C
 #include "opcodes.h"
 
-#ifdef DEBUG
+#ifdef DEBUGGING
 
-const unsigned int cmp_opscount = 12;
+const NUM cmp_opscount = 12;
 
 const cmp_op cmp_ops[] = {
 {0, "<"},
@@ -45,7 +43,7 @@ const cmp_op cmp_ops[] = {
 };
 
 
-const unsigned int opcodecount = 101;
+const NUM opcodecount = 101;
 
 const opcode opcodes[] = {
 {OPCODE_STOP_CODE, "STOP_CODE", "Indicates end-of-code to the compiler, not used by the interpreter.", 0, 1},	// SUPPORTED
@@ -191,40 +189,11 @@ before the list value, the high byte of counts the number of values after it. Th
 {OPCODE_LOAD_ATTR, "LOAD_ATTR", "Replaces TOS with getattr(TOS, co_names[/namei/]).", 1, 0}
 };
 
-// {0x55,"EXEC_STMT","Implements exec TOS2,TOS1,TOS. The compiler fills
-// missing optional parameters with None.",0}, //DEPRECATED AND WILL NEVER BE
-// SUPPORTED (BLOATING)
-// {0x12,"LIST_APPEND","Calls list.append(TOS1, TOS). Used to implement list
-// comprehensions.",0}, //DEPRECATED
-// {0x0d,"UNARY_CONVERT","Implements TOS = `TOS`.",0}, //DEPRECATED
-// {0x05,"ROT_FOUR","Lifts second, third and forth stack item one position up, 
-// moves top down to position four.",0}, //DEPRECATED
-
-
-// {0x6b,"IMPORT_NAME","Imports the module co_names[/namei/]. The module
-// object is pushed onto the stack.\
-// The current namespace is not affected: for a proper import statement, a
-// subsequent STORE_FAST instruction modifies the namespace.",2}, 
-
- // {0x63,"DUP_TOPX","Duplicate /count/ items, keeping them in the same
- // order.\
-// Due to implementation limits, count should be between 1 and 5
-// inclusive.",0,0}, //DEPRECATED
-
-// {0x52,"LOAD_LOCALS","Pushes a reference to the locals of the current scope
-// on the stack.\
-// This is used in the code for a class definition: After the class body is
-// evaluated, the locals are passed to the class definition.",0}, //DEPRECATED
-
-// {0x77,"CONTINUE_LOOP","Continues a loop due to a continue statement.
-// /target/ is the address\
-// to jump to (which should be a FOR_ITER instruction).",2,1}, //DEPRECATED
-
 void DumpUnsupportedOpCodes()
 {
 	printf("unsupported opcodes(%d of %d):\n",
 		   opcodecount - GetSupportedOpcodesNum(), opcodecount);
-	for (int i = 0; i < opcodecount; i++)
+	for (NUM i = 0; i < opcodecount; i++)
 		if (!opcodes[i].supported)
 		{
 	if((debug_level & DEBUG_FULL_DUMP) > 0)
@@ -236,22 +205,22 @@ void DumpUnsupportedOpCodes()
 		}
 }
 
-unsigned int GetSupportedOpcodesNum()
+NUM GetSupportedOpcodesNum()
 {
 	unsigned int r = 0;
 
-	for (int i = 0; i < opcodecount; i++)
+	for (NUM i = 0; i < opcodecount; i++)
 		if (opcodes[i].supported)
 			r++;
 	return (r);
 }
 
-int GetOpcodeIndex(unsigned char opcode)
+INDEX GetOpcodeIndex(unsigned char opcode)
 {
 	int r = -1;
 
 	// int i = 0;
-	for (int i = 0; i < opcodecount; i++)
+	for (NUM i = 0; i < opcodecount; i++)
 	{
 		if (opcode == opcodes[i].opcode)
 		{
@@ -261,5 +230,7 @@ int GetOpcodeIndex(unsigned char opcode)
 	}
 	return (r);
 }
+
+
 
 #endif

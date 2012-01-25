@@ -23,15 +23,20 @@
 #include "lists.h"
 
 
-ptr_list *ptr_CreateList(LIST_NUM_INT num, int flags)
+ptr_list *ptr_CreateList(NUM num, int flags)
 {
-	ptr_list *tmp =
-		(ptr_list *) mem_malloc(sizeof(ptr_list), "ptr_CreateList() return");
+	#ifdef DEBUGGING
+	ptr_list *tmp = (ptr_list *) mem_malloc(sizeof(ptr_list), "ptr_CreateList() return");
+	#else
+	ptr_list *tmp = (ptr_list *) malloc(sizeof(ptr_list));
+	#endif
 	if (num)
 	{
-		tmp->items =
-			(void **)mem_malloc(num * sizeof(void *),
-								"ptr_CreateList() items");
+		#ifdef DEBUGGING
+		tmp->items = (void **)mem_malloc(num * sizeof(void *),"ptr_CreateList() items");
+		#else
+		tmp->items = (void **)malloc(num * sizeof(void *));
+		#endif
 		memset(tmp->items,0,num*sizeof(void*));
 	}
 	else
@@ -41,10 +46,8 @@ ptr_list *ptr_CreateList(LIST_NUM_INT num, int flags)
 	return (tmp);
 }
 
-ptr_list_with_tag *ptr_CreateTaggedList(LIST_NUM_INT num, int flags)
+ptr_list_with_tag *ptr_CreateTaggedList(NUM num, int flags)
 {
-
-
 	return (NULL);
 }
 
@@ -52,9 +55,17 @@ void ptr_CloseList(ptr_list * list)
 {
 	if (list->num > 0)
 	{
+		#ifdef DEBUGGING
 		assert(mem_free(list->items));
+		#else
+		free(list->items);
+		#endif
 	}
+	#ifdef DEBUGGING
 	assert(mem_free(list));
+	#else
+	free(list);
+	#endif
 }
 
 void ptr_Push(ptr_list * list, void *ptr)
@@ -62,16 +73,20 @@ void ptr_Push(ptr_list * list, void *ptr)
 	if (!list->num)
 	{
 		list->num = 1;
-		list->items =
-			(void **)mem_malloc(list->num * sizeof(void *),
-								"ptr_Push() items");
+		#ifdef DEBUGGING
+		list->items = (void **)mem_malloc(list->num * sizeof(void *),"ptr_Push() items");
+		#else
+		list->items = (void **)malloc(list->num * sizeof(void *));
+		#endif
 		list->items[0] = ptr;
 	}
 	else
 	{
-		list->items =
-			(void **)mem_realloc(list->items,
-								 (list->num + 1) * sizeof(void *));
+		#ifdef DEBUGGING
+		list->items = (void **)mem_realloc(list->items,(list->num + 1) * sizeof(void *));
+		#else
+		list->items = (void **)realloc(list->items,(list->num + 1) * sizeof(void *));
+		#endif
 		list->items[list->num] = ptr;
 		list->num++;
 	}
@@ -83,13 +98,12 @@ void *ptr_Pop(ptr_list * list)
 	{
 		// printf("ptr pop:%d\n",list->num-1);
 		void *tmp = ptr_Remove(list, list->num - 1);
-
 		return (tmp);
 	}
 	return (NULL);
 }
 
-int ptr_Insert(ptr_list * list, LIST_NUM_INT index, void *ptr)
+int ptr_Insert(ptr_list * list, INDEX index, void *ptr)
 {
 	if (index == 0 && !list->num)
 	{
@@ -98,12 +112,15 @@ int ptr_Insert(ptr_list * list, LIST_NUM_INT index, void *ptr)
 	else if (index < list->num - 1)
 	{
 		list->num++;
-		list->items =
-			(void **)mem_realloc(list->items, (list->num) * sizeof(void *));
+		#ifdef DEBUGGING
+		list->items = (void **)mem_realloc(list->items, (list->num) * sizeof(void *));
+		#else
+		list->items = (void **)realloc(list->items, (list->num) * sizeof(void *));
+		#endif
 		// int len = (list->num-1) - index;
 		// if(len)
 		// {
-		for (int i = list->num - 2; i >= index; i--)
+		for (NUM i = list->num - 2; i >= index; i--)
 		{
 			ptr_MoveDown(list, i);
 			// memcpy(&list->items[index+1],&list->items[index],len *
@@ -118,7 +135,7 @@ int ptr_Insert(ptr_list * list, LIST_NUM_INT index, void *ptr)
 	return (0);
 }
 
-void ptr_MoveUp(ptr_list * list, LIST_NUM_INT index)
+void ptr_MoveUp(ptr_list * list, INDEX index)
 {
 	if (!list->num)
 		return;
@@ -128,7 +145,7 @@ void ptr_MoveUp(ptr_list * list, LIST_NUM_INT index)
 	}
 }
 
-void ptr_MoveDown(ptr_list * list, LIST_NUM_INT index)
+void ptr_MoveDown(ptr_list * list, INDEX index)
 {
 	if (!list->num)
 		return;
@@ -138,7 +155,7 @@ void ptr_MoveDown(ptr_list * list, LIST_NUM_INT index)
 	}
 }
 
-void *ptr_Remove(ptr_list * list, LIST_NUM_INT index)
+void *ptr_Remove(ptr_list * list, INDEX index)
 {
 	if (!list->num)
 		return (NULL);
@@ -149,7 +166,7 @@ void *ptr_Remove(ptr_list * list, LIST_NUM_INT index)
 		// int len = (list->num-1) - index;
 		// if(len)
 		// {
-		for (int i = list->num - 1; i > index; i--)
+		for (NUM i = list->num - 1; i > index; i--)
 		{
 			// printf("move up\n");
 			ptr_MoveUp(list, i);
@@ -159,15 +176,21 @@ void *ptr_Remove(ptr_list * list, LIST_NUM_INT index)
 		if (list->num - 1 == 0)
 		{
 			//printf("freeing empty list\n");
+			#ifdef DEBUGGING
 			assert(mem_free(list->items));
+			#else
+			free(list->items);
+			#endif
 			list->items = NULL;
 			list->num = 0;
 		}
 		else
 		{
-			list->items =
-				(void **)mem_realloc(list->items,
-									 (list->num - 1) * sizeof(void *));
+			#ifdef DEBUGGING
+			list->items =	(void **)mem_realloc(list->items, (list->num - 1) * sizeof(void *));
+			#else
+			list->items =	(void **)realloc(list->items, (list->num - 1) * sizeof(void *));
+			#endif
 			list->num--;
 		}
 		// printf("top:%d\n",list->num);
@@ -176,22 +199,26 @@ void *ptr_Remove(ptr_list * list, LIST_NUM_INT index)
 	return (NULL);
 }
 
-int ptr_Clear(ptr_list * list)
+void ptr_Clear(ptr_list * list)
 {
 	if (list->num)
 	{
+		#ifdef DEBUGGING
 		assert(mem_free(list->items));
+		#else
+		free(list->items);
+		#endif
 		list->items = NULL;
 	}
 	list->num = 0;
 }
 
-int ptr_GetNum(ptr_list * list)
+NUM ptr_GetNum(ptr_list * list)
 {
 	return (list->num);
 }
 
-void *ptr_Get(ptr_list * list, LIST_NUM_INT index)
+void *ptr_Get(ptr_list * list, INDEX index)
 {
 	if (index < list->num)
 		return (list->items[index]);
@@ -199,7 +226,7 @@ void *ptr_Get(ptr_list * list, LIST_NUM_INT index)
 		return (NULL);
 }
 
-void ptr_Set(ptr_list * list, LIST_NUM_INT index, void *ptr)
+void ptr_Set(ptr_list * list, INDEX index, void *ptr)
 {
 	if (index < list->num)
 		list->items[index] = ptr;
@@ -220,7 +247,7 @@ void *ptr_Dequeue(ptr_list * list)
 	return (tmp);
 }
 
-int ptr_Contains(ptr_list *list,void *ptr)
+BOOL ptr_Contains(ptr_list *list,void *ptr)
 {
 	for(int i=0;i<list->num;i++)
 	{	
@@ -230,7 +257,7 @@ int ptr_Contains(ptr_list *list,void *ptr)
 	return(0);
 }
 
-int ptr_IsEmpty(ptr_list * list)
+BOOL ptr_IsEmpty(ptr_list * list)
 {
 	return (!list->num);
 }

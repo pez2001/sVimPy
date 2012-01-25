@@ -24,6 +24,7 @@
 #ifndef GARBAGE_H
 #define GARBAGE_H
 
+#include "types.h"
 #include "lists.h"
 #include "object.h"
 #include "debug.h"

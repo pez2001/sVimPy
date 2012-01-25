@@ -30,6 +30,8 @@
 #include "debug.h"
 
 
+#ifdef DEBUGGING
+
 typedef struct
 {
 	void *ptr;
@@ -49,5 +51,6 @@ void *mem_malloc(size_t size, char *description);
 void *mem_realloc(void *ptr, size_t size);
 
 int mem_free(void *ptr);
+#endif
 
 #endif

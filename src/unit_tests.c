@@ -20,9 +20,10 @@
  *
  */
 
-#define DEBUG
 #include "unit_tests.h"
 
+
+#ifdef DEBUGGING
 int debug_level = 0;
 
 void ptr_tests()
@@ -91,6 +92,7 @@ void ptr_tests()
 	ptr_CloseList(p);
 	printf("ptr tests thru\n");
 }
+#endif
 
 void OpenPYC(char *filename, vm *vm)
 {
@@ -104,7 +106,9 @@ void OpenPYC(char *filename, vm *vm)
 	f = fopen(filename, "rb");
 	if (f == NULL)
 		return;
+	#ifdef DEBUGGING
 	debug_printf(DEBUG_VERBOSE_TESTS,"executing object:%s\n", filename);
+	#endif
 	// int r = fread(bh,4,1,f);
 	// if(!memcmp(bh,(char*)&pyc_magic,4))
 	long magic = ReadLong(f);
@@ -128,29 +132,37 @@ void OpenPYC(char *filename, vm *vm)
 	// printf("max objects : %d\n",objects_max);
 	// printf("objects headers total size : %d\n",objects_header_total);
 	vm_SetGlobal(vm, obj);
+	#ifdef DEBUGGING
 	if((debug_level & DEBUG_DUMP_OBJECT) > 0)
 		DumpObject(obj, 0);
+	#endif
 	object *ret = NULL;
+	#ifdef DEBUGGING
 	if((debug_level & DEBUG_INTERACTIVE) > 0)
 		ret = vm_InteractiveRunObject(vm, obj, NULL, 0);	// ,obj
 	else
 		ret = vm_RunObject(vm, obj, NULL, 0);	// ,obj
-    //object *ret = NULL;
+	#else
+	ret = vm_RunObject(vm, obj, NULL, 0);	// ,obj
+	#endif
+	#ifdef DEBUGGING
 	debug_printf(DEBUG_ALL,"\n");
+	#endif
 	if (ret != NULL)
 	{
+		#ifdef DEBUGGING
 		if((debug_level & DEBUG_DUMP_OBJECT) > 0)
 			DumpObject(ret, 0);
+		#endif
 		FreeObject(ret);
 	}
+	#ifdef DEBUGGING
 	debug_printf(DEBUG_VERBOSE_TESTS,"object executed:%s\n", filename);
-
 	if((debug_level & DEBUG_DUMP_OBJECT) > 0)
 		DumpObject(obj,0);
-
 	debug_printf(DEBUG_VERBOSE_TESTS,"cleaning up object\n");
+	#endif
 	FreeObject(obj);
-	// printf("objects headers total size : %d\n",objects_header_total);
 	fclose(f);
 	// mem_free(b);
 	// mem_free(bh);
@@ -177,7 +189,7 @@ void AddInternalFunctions(vm *vm)
 
 int main(int argc, char *argv[])
 {
-
+	#ifdef DEBUGGING
 	debug_level |= DEBUG_INTERACTIVE;
 	debug_level |= DEBUG_MEMORY;
 	debug_level |= DEBUG_SHOW_OPCODES;
@@ -197,8 +209,8 @@ int main(int argc, char *argv[])
 	//debug_level |= DEBUG_PTR_LISTS;
 	//debug_level |= DEBUG_INTERNAL_FUNCTIONS;
 	//debug_level |= DEBUG_COUNT_OBJECTS;
-
 	mem_Init();
+	#endif
 
 	//debug_printf(DEBUG_ALL,"hi:%s\n","hi");
 
@@ -215,12 +227,16 @@ int main(int argc, char *argv[])
 
 
 	//append ops + generators
-	OpenPYC("tests/test53.pyc", vm);
+	//OpenPYC("tests/test53.pyc", vm);
+	
+	
 	//OpenPYC("tests/test52.pyc", vm);
 
 	//generators
-	OpenPYC("tests/test24.pyc", vm);
-	OpenPYC("tests/test25.pyc", vm);
+	//OpenPYC("tests/test24.pyc", vm);
+	//OpenPYC("tests/test25.pyc", vm);
+	
+	
 	//OpenPYC("tests/test26.pyc", vm);
 	//OpenPYC("tests/test20.pyc", vm);
 	
@@ -233,12 +249,8 @@ int main(int argc, char *argv[])
 	//iters
 	//OpenPYC("tests/test61.pyc", vm);
 	//OpenPYC("tests/test60.pyc", vm);
-	//OpenPYC("tests/e_small.pyc", vm);
-	//OpenPYC("tests/e_med.pyc", vm);
-	//OpenPYC("tests/e_bigger.pyc", vm);
-	//OpenPYC("tests/e_max.pyc", vm);
 
-	/*
+	
 	//function parameters
 	OpenPYC("tests/test50.pyc", vm);//with keywords unordered
 	OpenPYC("tests/test49b.pyc", vm);//kw unordered
@@ -318,8 +330,6 @@ int main(int argc, char *argv[])
 	OpenPYC("tests/test28.pyc", vm);
 	OpenPYC("tests/test23.pyc", vm);
 	OpenPYC("tests/test56.pyc", vm);
-	OpenPYC("tests/e_small.pyc", vm);
-	OpenPYC("tests/e20.pyc", vm);
 	
 	
 	//while loop + break + continue
@@ -343,23 +353,31 @@ int main(int argc, char *argv[])
 	//dictionaries
 	OpenPYC("tests/test30.pyc", vm);
 	OpenPYC("tests/test31.pyc", vm);
-	*/
+	
 	
 	//brute prime (classless it takes longer because of range
-	//OpenPYC("tests/e_med.pyc", vm);
-	//OpenPYC("tests/e_bigger.pyc", vm);
+	OpenPYC("tests/e20.pyc", vm);
+	OpenPYC("tests/e_small.pyc", vm);
+	OpenPYC("tests/e_med.pyc", vm);
+	OpenPYC("tests/e_bigger.pyc", vm);
+	OpenPYC("tests/e_max.pyc", vm);
 
 	//OpenPYC("tests/test.pyc", vm);
 	//OpenPYC("tests/test10.pyc", vm);
 	//OpenPYC("tests/e.pyc", vm);
 	
+	#ifdef DEBUGGING
 	debug_printf(DEBUG_VERBOSE_TESTS,"closing vm\n");
+	#endif
 	vm_Close(vm);
 	// printf("objects headers total size : %d\n",objects_header_total);
+	#ifdef DEBUGGING
 	if((debug_level & DEBUG_DUMP_UNSUPPORTED) > 0)
 		DumpUnsupportedOpCodes();
 	mem_Close();
 	if((debug_level & DEBUG_MEMORY)>0)
 		printf("%d memory chunks leaked\n", mem_chunks_num);
+	#endif
+	
 	return (0);
 }

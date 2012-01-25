@@ -27,12 +27,25 @@
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
-#include "memory.h"
+
+#include "types.h"
 #include "lists.h"
-#include "assert.h"
 
 #include "debug.h"
+#ifdef DEBUGGING
+#include "assert.h"
+#include "memory.h"
+#endif
 
+#define MAGIC (3180 | ((long)'\r'<<16) | ((long)'\n'<<24))
+#define TAG "cpython-32"
+#define CACHEDIR "__pycache__"
+/* Current magic word and string tag as globals. */
+static long pyc_magic = MAGIC;
+
+static const char *pyc_tag = TAG;
+
+static short pyc_magic_short = 3180;
 
 
 #define TYPE_NULL               '0'
@@ -107,74 +120,73 @@
 
 typedef struct
 {
-	char type;
-	unsigned char flags;
-	unsigned short ref_count;
-	void *value;
-	//void *value_ptr;			// TODO remove this member --> TO DECREASE
-								// MEMORY USAGE
+	OBJECT_TYPE type;
+	OBJECT_FLAGS flags;
+	OBJECT_REF_COUNT ref_count;
 } object;
 
 typedef struct
 {
-	char type;
-	unsigned char flags;
-	unsigned short  ref_count;
+	OBJECT_TYPE type;
+	OBJECT_FLAGS flags;
+	OBJECT_REF_COUNT ref_count;
 	object *ref;
 } ref_object;
 
 
 typedef struct
 {
-	char type;
-	unsigned char flags;
-	unsigned short  ref_count;
-	long value;
+	OBJECT_TYPE type;
+	OBJECT_FLAGS flags;
+	OBJECT_REF_COUNT ref_count;
+	INT value;
 } int_object;
 
 typedef struct
 {
-	char type;
-	unsigned char flags;
-	unsigned short  ref_count;
-	float value;
+	OBJECT_TYPE type;
+	OBJECT_FLAGS flags;
+	OBJECT_REF_COUNT ref_count;
+	FLOAT value;
 } float_object;
 
 typedef struct
 {
-	char type;
-	unsigned char flags;
-	unsigned short  ref_count;
+	OBJECT_TYPE type;
+	OBJECT_FLAGS flags;
+	OBJECT_REF_COUNT ref_count;
 	char *value;
 }unicode_object;
 
 
 typedef struct
 {
-	char type;
-	unsigned char flags;
-	unsigned short  ref_count;
+	OBJECT_TYPE type;
+	OBJECT_FLAGS flags;
+	OBJECT_REF_COUNT ref_count;
 	void *value;
 	void *key;
-} kv_object;				// TO OPTIMIZE MEMORY USAGE -> only used in
-								// tuples 
+} kv_object;				// TO OPTIMIZE MEMORY USAGE -> only used in tuples 
 
+/*								
 typedef struct
 {
 	char type;
 	unsigned char flags;
 	unsigned short  ref_count;
 } empty_object;					// TO OPTIMIZE MEMORY USAGE
+*/
 
 typedef struct
 {
-	char type;
-	unsigned char flags;
-	unsigned short  ref_count;
-	long argcount;
-	long kwonlyargcount;
-	long nlocals;
-	long stacksize;
+	OBJECT_TYPE type;
+	OBJECT_FLAGS flags;
+	OBJECT_REF_COUNT ref_count;
+	char *name;
+	NUM argcount;
+	NUM kwonlyargcount;
+	NUM nlocals;
+	NUM stacksize;
 	long co_flags;
 	object *code;
 	object *consts;
@@ -184,28 +196,27 @@ typedef struct
 	object *cellvars;
 	// object *filename;
 	// object *name;
-	char *name;
-	// long codesize;
-	long firstlineno;
 	// object *lnotab;
+	// long codesize;
+	// long firstlineno;
 } code_object;
 
 typedef struct
 {
-	char type;
-	unsigned char flags;
-	unsigned short  ref_count;
+	OBJECT_TYPE type;
+	OBJECT_FLAGS flags;
+	OBJECT_REF_COUNT ref_count;
 	char *content;
-	long len;
+	NUM len;
 } string_object;
 
 
 typedef struct
 {
-	char type;
-	unsigned char flags;
-	unsigned short  ref_count;
-	ptr_list *list
+	OBJECT_TYPE type;
+	OBJECT_FLAGS flags;
+	OBJECT_REF_COUNT ref_count;
+	ptr_list *list;
 } tuple_object;
 
 
@@ -214,9 +225,9 @@ struct _stack;
 
 typedef struct
 {
-	char type;
-	unsigned char flags;
-	unsigned short  ref_count;
+	OBJECT_TYPE type;
+	OBJECT_FLAGS flags;
+	OBJECT_REF_COUNT ref_count;
 	tuple_object *defaults;//set to default values in MAKE_FUNCTION opcode
 	tuple_object *kw_defaults;//set to default keyword values in MAKE_FUNCTION opcode
 	//code_object *code;
@@ -234,29 +245,28 @@ typedef struct
 //TODO create struct for generator storage
 typedef struct _iter_object
 {
-	char type;
-	unsigned char flags;
-	unsigned short  ref_count;
+	OBJECT_TYPE type;
+	OBJECT_FLAGS flags;
+	OBJECT_REF_COUNT ref_count;
 	object *tag;//used for storage of iter options and actual ptr
 	object *(*iter_func)(struct _iter_object *iter);
 } iter_object;
 
 typedef struct
 {
-	char type;
-	unsigned char flags;
-	unsigned short  ref_count;
+	OBJECT_TYPE type;
+	OBJECT_FLAGS flags;
+	OBJECT_REF_COUNT ref_count;
 	code_object *code;
-	long start;
-	long len;
+	INDEX start;
+	NUM len;
 	iter_object *iter;  //TODO rename to tag ,and use it for yielding too
-	long ip;
+	INDEX ip;
 	char initiated_locals;//TODO REMOVE NOT NEEDED
 	struct _stack *stack;
 } block_object;
 
 #pragma pack(pop)				/* restore original alignment from stack */
-
 
 block_object *AllocBlockObject();
 
@@ -276,7 +286,7 @@ kv_object *ConvertToKVObjectValued(object *key,object *value);
 
 object *AllocObject();
 
-object *AllocEmptyObject();
+//object *AllocEmptyObject();
 
 object *AllocKVObject();
 
@@ -298,7 +308,7 @@ float_object *AllocFloatObject();
 
 function_object *AllocFunctionObject();
 
-object *AsObject(void *ptr);
+/*object *AsObject(void *ptr);
 
 string_object *AsStringObject(object * obj);
 
@@ -333,6 +343,7 @@ int IsTupleObject(object * obj);
 int IsRefObject(object * obj);
 
 int IsIterObject(object * obj);
+*/
 
 long ReadLong(FILE * f);
 
@@ -358,7 +369,7 @@ string_object *CreateStringObject(char *bytes,int len,int flags);
 
 kv_object *CreateKVObject(object *key,object *value,int flags);
 
-empty_object *CreateEmptyObject(char type,int flags);
+object *CreateEmptyObject(char type,int flags);
 
 function_object *CreateFunctionObject_MAKE_FUNCTION(code_object *function_code,tuple_object *defaults,tuple_object *kw_defaults,int flags);
 
@@ -376,9 +387,11 @@ void FreeObject(object * obj);
 
 void PrintObject(object * obj);
 
+#ifdef DEBUGGING
 void DumpObject(object * obj, int level);
 
 char *DumpObjectXml(object * obj, int level);
+#endif
 
 object *GetNextItem(object * tuple);
 

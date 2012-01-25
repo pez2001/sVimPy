@@ -32,22 +32,29 @@ char *str_Cat(char *a, char *b)
 	else
 		if(a == NULL && b == NULL)
 			return(NULL);
+	#ifdef DEBUGGING
 	char *tmp = (char *)mem_malloc(strlen(a) + strlen(b) + 1, "str_Cat() return");
+	#else
+	char *tmp = (char *)malloc(strlen(a) + strlen(b) + 1);
+	#endif
 	memset(tmp, 0, strlen(a) + strlen(b) + 1);
 	memcpy(tmp, a, strlen(a));
 	memcpy(tmp + strlen(a), b, strlen(b));
 	return (tmp);
 }
 
-char *str_Substring(char *a,int start,int len)
+char *str_Substring(char *a,INDEX start,NUM len)
 {
-	int e = start + len;
+	NUM e = start + len;
 	if(e> strlen(a))
 		e = strlen(a) - start;
 	else
 		e = len;
+	#ifdef DEBUGGING
 	char *tmp = (char *)mem_malloc(e + 1, "str_Copy() return");
-
+	#else
+	char *tmp = (char *)malloc(e + 1);
+	#endif
 	memset(tmp, 0, e + 1);
 	memcpy(tmp, *(a+start), e);
 	return (tmp);
@@ -55,7 +62,11 @@ char *str_Substring(char *a,int start,int len)
 
 char *str_Copy(char *a)
 {
+	#ifdef DEBUGGING
 	char *tmp = (char *)mem_malloc(strlen(a) + 1, "str_Copy() return");
+	#else
+	char *tmp = (char *)malloc(strlen(a) + 1);
+	#endif
 
 	memset(tmp, 0, strlen(a) + 1);
 	memcpy(tmp, a, strlen(a));
@@ -64,8 +75,12 @@ char *str_Copy(char *a)
 
 char *str_FromChar(char c)
 {
+	#ifdef DEBUGGING
 	char *tmp = (char *)mem_malloc(2, "str_FromChar() return");
-
+	#else
+	char *tmp = (char *)malloc(2);
+	#endif
+	
 	memset(tmp, 0, 2);
 	memset(tmp, c, 1);
 	return (tmp);
@@ -76,7 +91,7 @@ char *str_Printf(char *format, ...)
 	va_list va;
 	va_start(va,format);
 	//printf("getting len\n");
-	int n = str_PrintfVaLen(format,va);
+	NUM n = str_PrintfVaLen(format,va);
 	va_end(va);
 	//printf("n:%d\n",n);
 	va_start(va,format);
@@ -87,10 +102,11 @@ char *str_Printf(char *format, ...)
 
 int str_PrintfVaLen(char *format,va_list va)
 {
-	int n = vsnprintf(NULL,0,format,va) + 1;
+	NUM n = vsnprintf(NULL,0,format,va) + 1;
 	return(n);
 }
-char *str_PrintfVa(char *format,int len,va_list va)
+
+char *str_PrintfVa(char *format,NUM len,va_list va)
 {
 	char *output = NULL;
 	//va_start(va,format);
@@ -99,7 +115,11 @@ char *str_PrintfVa(char *format,int len,va_list va)
 	//va_end(va);
 	//printf("len:%d\n",len);
 	//printf("format:%s\n",format);
+	#ifdef DEBUGGING
 	output = (char*) mem_malloc(len,"str_PrintfVA() - return");
+	#else
+	output = (char*) malloc(len);
+	#endif
 	//va_start(va,format);
 	//printf("alloced\n");
 	vsnprintf(output,len,format,va) + 1;
@@ -107,3 +127,5 @@ char *str_PrintfVa(char *format,int len,va_list va)
 	//printf("output:%s\n",output);
 	return(output);
 }
+
+

@@ -27,6 +27,10 @@
 #include "stdio.h"
 #include "stdarg.h"
 
+//#define DEBUGGING
+
+#ifdef DEBUGGING
+
 #define DEBUG_ALL 0
 #define DEBUG_MEMORY 1
 #define DEBUG_SHOW_OPCODES 2
@@ -52,5 +56,14 @@ void debug_printf(int msg_debug_level,char* format, ...);
 
 extern int debug_level;
 
+#define DEBUG if(1)
+#define DEBUG_BLOCK if(1) {
+#define DEBUG_BLOCK_END }
+#else
+#define DEBUG if(0)
+#define DEBUG_BLOCK if(0) {
+#define DEBUG_BLOCK_END }
+#endif
 
 #endif
+

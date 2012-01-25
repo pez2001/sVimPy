@@ -24,6 +24,7 @@
 #ifndef ITERATORS_H
 #define ITERATORS_H
 
+#include "types.h"
 #include "object.h"
 #include "vm.h"
 
@@ -35,7 +36,7 @@ iter_object *iter_CreateIter(object *iteration);
 
 object *iter_Sequence(iter_object *iter);
 
-void iter_InitSequence(iter_object *iter,int start,int end,int step);
+void iter_InitSequence(iter_object *iter,INDEX start,NUM end,NUM step);
 
 object *iter_Generator(iter_object *iter);
 

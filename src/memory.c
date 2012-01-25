@@ -1,5 +1,7 @@
 #include "memory.h"
 
+#ifdef DEBUGGING
+
 long mem_chunks_num = 0;
 long mem_chunks_max_size = 0;
 long mem_chunks_actual_size = 0;
@@ -159,3 +161,7 @@ int mem_free(void *ptr)
 	}
 	return (1);
 }
+
+#endif
+
+

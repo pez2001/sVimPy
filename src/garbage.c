@@ -25,25 +25,31 @@
 
 void gc_Clear(ptr_list *gc_collection)
 {
-for(int i=0;i<gc_collection->num;i++)
-	if(HasNoRefs(gc_collection->items[i]))
+	for(NUM i=0;i<gc_collection->num;i++)
 	{
-	if((debug_level & DEBUG_GC) > 0)
-	{
-		debug_printf(DEBUG_GC,"object has no refs\n");
-		DumpObject(gc_collection->items[i],0);
-	}
-	FreeObject(gc_collection->items[i]);
-	ptr_Remove(gc_collection,i);
-	}
-	else
-	{
-	if((debug_level & DEBUG_GC) > 0)
+		if(HasNoRefs(gc_collection->items[i]))
 		{
-			debug_printf(DEBUG_GC,"object has gained refs\n");
-			DumpObject(gc_collection->items[i],0);
+			#ifdef DEBUGGING
+			if((debug_level & DEBUG_GC) > 0)
+			{
+				debug_printf(DEBUG_GC,"object has no refs\n");
+				DumpObject(gc_collection->items[i],0);
+			}
+			#endif
+			FreeObject(gc_collection->items[i]);
+			ptr_Remove(gc_collection,i);
 		}
+		else
+		{
+			#ifdef DEBUGGING
+			if((debug_level & DEBUG_GC) > 0)
+			{
+				debug_printf(DEBUG_GC,"object has gained refs\n");
+				DumpObject(gc_collection->items[i],0);
+			}
+			#endif
 		ptr_Remove(gc_collection,i);
+		}
 	}
 }
 

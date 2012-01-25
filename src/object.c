@@ -23,83 +23,126 @@
 
 #include "object.h"
 
-
 block_object *AllocBlockObject()
-{
-	return ((block_object *)
-			mem_malloc(sizeof(block_object), "AllocBlockObject() return"));
+{	
+	#ifdef DEBUGGING
+	return((block_object *)mem_malloc(sizeof(block_object), "AllocBlockObject() return"));
+	#else
+	return((block_object *)malloc(sizeof(block_object)));
+	#endif
 }
 
+/*
 object *AllocEmptyObject()
 {
-	return ((object *)
-			mem_malloc(sizeof(empty_object), "AllocEmptyObject() return"));
+	#ifdef DEBUGGING
+	return((object *)mem_malloc(sizeof(empty_object), "AllocEmptyObject() return"));
+	#else
+	return((object *)malloc(sizeof(empty_object)));
+	#endif
 }
+*/
 
 object *AllocKVObject()
 {
-	return ((object *)
-			mem_malloc(sizeof(kv_object), "AllocKVObject() return"));
+	#ifdef DEBUGGING
+	return((object *) mem_malloc(sizeof(kv_object), "AllocKVObject() return"));
+	#else
+	return((object *) malloc(sizeof(kv_object)));
+	#endif
 }
 
 object *AllocObject()
 {
+	#ifdef DEBUGGING
 	return ((object *) mem_malloc(sizeof(object), "AllocObject() return"));
+	#else
+	return((object *) malloc(sizeof(object)));
+	#endif
 }
 
 code_object *AllocCodeObject()
 {
-	return ((code_object *)
-			mem_malloc(sizeof(code_object), "AllocCodeObject() return"));
+	#ifdef DEBUGGING
+	return((code_object *) mem_malloc(sizeof(code_object), "AllocCodeObject() return"));
+	#else
+	return((code_object *) malloc(sizeof(code_object)));
+	#endif
 }
 
 function_object *AllocFunctionObject()
 {
-	return ((function_object *)
-			mem_malloc(sizeof(function_object),
-					   "AllocFunctionObject() return"));
+	#ifdef DEBUGGING
+	return((function_object *) mem_malloc(sizeof(function_object),"AllocFunctionObject() return"));
+	#else
+	return((function_object *) malloc(sizeof(function_object)));
+	#endif
 }
 
 string_object *AllocStringObject()
 {
-	return ((string_object *)
-			mem_malloc(sizeof(string_object), "AllocStringObject() return"));
+	#ifdef DEBUGGING
+	return((string_object *) mem_malloc(sizeof(string_object), "AllocStringObject() return"));
+	#else
+	return((string_object *) malloc(sizeof(string_object)));
+	#endif
 }
 
 tuple_object *AllocTupleObject()
 {
-	return ((tuple_object *)
-			mem_malloc(sizeof(tuple_object), "AllocTupleObject() return"));
+	#ifdef DEBUGGING
+	return((tuple_object *) mem_malloc(sizeof(tuple_object), "AllocTupleObject() return"));
+	#else
+	return((tuple_object *) malloc(sizeof(tuple_object)));
+	#endif
 }
 
 unicode_object *AllocUnicodeObject() 
 {
-   return((unicode_object*)mem_malloc(sizeof(unicode_object), "AllocUnicodeObject() return")); 
+	#ifdef DEBUGGING
+    return((unicode_object*) mem_malloc(sizeof(unicode_object), "AllocUnicodeObject() return")); 
+	#else
+    return((unicode_object*) malloc(sizeof(unicode_object))); 
+	#endif
 }
 
 object *AllocRefObject()
 {
-   return((ref_object*)mem_malloc(sizeof(ref_object), "AllocRefObject() return")); 
+	#ifdef DEBUGGING
+    return((ref_object*) mem_malloc(sizeof(ref_object), "AllocRefObject() return")); 
+	#else
+    return((ref_object*) malloc(sizeof(ref_object))); 
+	#endif
 }
 
 int_object *AllocIntObject() 
 {
-   return((int_object*)mem_malloc(sizeof(int_object), "AllocIntObject() return")); 
+	#ifdef DEBUGGING
+    return((int_object*) mem_malloc(sizeof(int_object), "AllocIntObject() return")); 
+	#else
+    return((int_object*) malloc(sizeof(int_object))); 
+	#endif
 }
 
 float_object *AllocFloatObject() 
 {
-   return((float_object*)mem_malloc(sizeof(float_object), "AllocFloatObject() return")); 
+	#ifdef DEBUGGING
+    return((float_object*) mem_malloc(sizeof(float_object), "AllocFloatObject() return")); 
+	#else
+	return((float_object*) malloc(sizeof(float_object))); 
+	#endif
 }
 
 iter_object *AllocIterObject() 
 {
-	iter_object *it = (iter_object*)mem_malloc(sizeof(iter_object), "AllocIterObject() return");
-	//printf("alloced iter@%x\n",it);
-	return(it); 
+	#ifdef DEBUGGING
+	return((iter_object*) mem_malloc(sizeof(iter_object), "AllocIterObject() return"));
+	#else
+	return((iter_object*) malloc(sizeof(iter_object)));
+	#endif
 }
 
-int IsIntObject(object * obj)
+/*int IsIntObject(object * obj)
 {
 	return (obj->type == TYPE_INT);
 }
@@ -183,6 +226,7 @@ iter_object *AsIterObject(object *obj)
 {   
    return((iter_object*)obj); 
 }
+*/
 
 object *DissolveRef(object *obj)
 {
@@ -199,11 +243,13 @@ ref_object *CreateRefObject(object *ref_to,int flags)
 	r->ref_count = 0;
 	r->ref = ref_to;
 	IncRefCount(ref_to);
+	#ifdef DEBUGGING
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
 		debug_printf(DEBUG_CREATION,"created object\n");
 		DumpObject(r,0);
 	}
+	#endif
 	return(r);
 }
 
@@ -214,11 +260,13 @@ int_object *CreateIntObject(long value,int flags)
 	r->ref_count = 0;
 	r->flags = flags;
 	r->value = value;
+	#ifdef DEBUGGING
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
 		debug_printf(DEBUG_CREATION,"created object\n");
 		DumpObject(r,0);
 	}
+	#endif
 	return(r);
 }
 
@@ -229,11 +277,13 @@ float_object *CreateFloatObject(float value,int flags)
 	r->ref_count = 0;
 	r->flags = flags;
 	r->value = value;
+	#ifdef DEBUGGING
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
 		debug_printf(DEBUG_CREATION,"created object\n");
 		DumpObject(r,0);
 	}
+	#endif
 	return(r);
 }
 
@@ -244,11 +294,13 @@ unicode_object *CreateUnicodeObject(char *value,int flags)
 	r->flags = flags;
 	r->ref_count = 0;
 	r->value = value;
+	#ifdef DEBUGGING
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
 		debug_printf(DEBUG_CREATION,"created object\n");
 		DumpObject(r,0);
 	}
+	#endif
 	return(r);
 }
 
@@ -259,11 +311,13 @@ tuple_object *CreateTuple(int num,int flags)
 	r->flags = flags;
 	r->ref_count = 0;
 	r->list = ptr_CreateList(num,PTR_STATIC_LIST);
+	#ifdef DEBUGGING
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
 		debug_printf(DEBUG_CREATION,"created object\n");
 		DumpObject(r,0);
 	}
+	#endif
 	return(r);
 }
 
@@ -275,11 +329,13 @@ string_object *CreateStringObject(char *bytes,int len,int flags)
 	r->ref_count = 0;
 	r->content = bytes;
 	r->len = len;
+	#ifdef DEBUGGING
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
 		debug_printf(DEBUG_CREATION,"created object\n");
 		DumpObject(r,0);
 	}
+	#endif
 	return(r);
 }
 
@@ -294,25 +350,29 @@ kv_object *CreateKVObject(object *key,object *value,int flags)
 	r->value = value;
 	//DecRefCount(value);// ?? why did this not produce any memory leaks ?? strange
 	IncRefCount(value);
+	#ifdef DEBUGGING
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
 		debug_printf(DEBUG_CREATION,"created object\n");
 		DumpObject(r,0);
 	}
+	#endif
 	return(r);
 }
 
-empty_object *CreateEmptyObject(char type,int flags)
+object *CreateEmptyObject(char type,int flags)
 {
-	empty_object *r = AllocEmptyObject();
+	object *r = AllocObject();
 	r->type = type;
 	r->flags = flags;
 	r->ref_count = 0;
+	#ifdef DEBUGGING
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
 		debug_printf(DEBUG_CREATION,"created object\n");
 		DumpObject(r,0);
 	}
+	#endif
 	return(r);
 }
 
@@ -341,11 +401,13 @@ function_object *CreateFunctionObject_MAKE_FUNCTION(code_object *function_code,t
 	}
 	else
 		r->kw_defaults = NULL;
+	#ifdef DEBUGGING
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
 		debug_printf(DEBUG_CREATION,"created object\n");
 		DumpObject(r,0);
 	}
+	#endif
 	return(r);
 }
 
@@ -375,14 +437,15 @@ function_object *CreateFunctionObject_MAKE_CLOSURE(code_object *function_code,ob
 	}
 	else
 		r->kw_defaults = NULL;
+	#ifdef DEBUGGING
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
 		debug_printf(DEBUG_CREATION,"created object\n");
 		DumpObject(r,0);
 	}
+	#endif
 	return(r);
 }
-
 
 function_object *CreateFunctionObject(unsigned char func_type,int flags)
 {
@@ -393,15 +456,16 @@ function_object *CreateFunctionObject(unsigned char func_type,int flags)
 	r->func.code = NULL;
 	r->ref_count = 0;
 	r->func_type = func_type;
+	#ifdef DEBUGGING
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
 		debug_printf(DEBUG_CREATION,"created object\n");
 		//DumpObject(r,0);
 	}
+	#endif
 	return(r);
 }
 
-//iter_object *CreateIterObject(object *(*iter_func)(struct _iter_object *iter),object *tag,int flags)
 iter_object *CreateIterObject(int flags)
 {
 	iter_object *r = AllocIterObject();
@@ -410,17 +474,21 @@ iter_object *CreateIterObject(int flags)
 	//r->iter_func = iter_func;
 	//r->tag = tag;
 	r->ref_count = 0;
+	#ifdef DEBUGGING
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
 		debug_printf(DEBUG_CREATION,"created object\n");
 		DumpObject(r,0);
 	}
+	#endif
 	return(r);
 }
-   
+ 
+#ifdef DEBUGGING
 long objects_num = 0;
 long objects_max = 0;
 long objects_header_total = 0;
+#endif
 
 kv_object *ConvertToKVObject(object *obj)
 {
@@ -462,20 +530,24 @@ void FreeObject(object * obj)
 	//assert(obj != NULL);
 	if (obj == NULL)
 		return;
+	#ifdef DEBUGGING
 	if((debug_level & DEBUG_FREEING) > 0)
 	{
 		debug_printf(DEBUG_FREEING,"object to be freed\n");
 		DumpObject(obj,1);
 	}
+	#endif
 	
 	if(obj->ref_count > 1)
 	{
 		DecRefCount(obj);
+		#ifdef DEBUGGING
 		if((debug_level & DEBUG_GC) > 0)
 		{
 			debug_printf(DEBUG_GC,"decreased object ref_count\n");
 			DumpObject(obj,0);
 		}
+		#endif
 		return;
 	}
 	//DecRefCount(obj);
@@ -483,42 +555,63 @@ void FreeObject(object * obj)
 	switch (obj->type)
 	{
 	case TYPE_BLOCK:
+		#ifdef DEBUGGING
 		debug_printf(DEBUG_VERBOSE_FREEING,"Freeing block object %x\n",obj);
+		#endif
 		//objects_header_total -= sizeof(block_object);
 		FreeBlockObject(obj);
 		break;
 	case TYPE_REF:
+		#ifdef DEBUGGING
 		debug_printf(DEBUG_VERBOSE_FREEING,"Freeing Ref to %x\n",((ref_object*)obj)->ref);
 		objects_header_total -= sizeof(ref_object);
+		#endif
 		break;
 	case TYPE_ITER:
+		#ifdef DEBUGGING
 		debug_printf(DEBUG_VERBOSE_FREEING,"Freeing Iter %x\n",obj);
-		FreeObject(((iter_object*)obj)->tag);
 		objects_header_total -= sizeof(ref_object);
+		#endif
+		
+		FreeObject(((iter_object*)obj)->tag);
 		break;
 	case TYPE_NULL:
 		// printf("freeing NULL object @%x\n",obj);
-		objects_header_total -= sizeof(empty_object);
+		#ifdef DEBUGGING
+		objects_header_total -= sizeof(object);
+		#endif
 		break;
 	case TYPE_NONE:
 		// printf("freeing NONE object @%x\n",obj);
-		objects_header_total -= sizeof(empty_object);
+		#ifdef DEBUGGING
+		objects_header_total -= sizeof(object);
+		#endif
 		break;
 	case TYPE_INT:
 		// printf("freeing int object @%x\n",obj);
+		#ifdef DEBUGGING
 		objects_header_total -= sizeof(int_object);
+		#endif
 		break;
 	case TYPE_BINARY_FLOAT:
 		// printf("freeing float object @%x\n",obj);
+		#ifdef DEBUGGING
 		objects_header_total -= sizeof(float_object);
+		#endif
 		break;
 	case TYPE_KV:
+		#ifdef DEBUGGING
 		objects_header_total -= sizeof(kv_object);
+		#endif
+
 		FreeObject(((kv_object*) obj)->key);
 		FreeObject(((kv_object*) obj)->value);
 		break;
 	case TYPE_FUNCTION:
+		#ifdef DEBUGGING
 		objects_header_total -= sizeof(function_object);
+		#endif
+
 		if(((function_object*) obj)->func_type == FUNC_PYTHON)
 		{
 			FreeObject(((function_object*) obj)->func.code);
@@ -528,28 +621,48 @@ void FreeObject(object * obj)
 		}else 
 		if(((function_object*) obj)->func_type == FUNC_C || ((function_object*) obj)->func_type == FUNC_C_OBJ)
 		{
+			#ifdef DEBUGGING
 			assert(mem_free(((function_object*) obj)->name));
+			#else
+			free(((function_object*)obj)->name);
+			#endif
 		}
 		break;
 	case TYPE_UNICODE:
 		//if(obj->flags &OFLAG_ON_STACK)
 		//	printf("on stack\n");
+		#ifdef DEBUGGING
 		debug_printf(DEBUG_VERBOSE_FREEING,"freeing unicode object @%x\n",obj);
+		objects_header_total -= sizeof(unicode_object);
+		#endif
 		// printf("content:%s\n",((unicode_object*)obj)->value);
 		// if(((unicode_object*)obj->ptr)->content != NULL)
 		// if(obj->ptr != NULL)
 		// mem_free(obj->ptr);
-		objects_header_total -= sizeof(unicode_object);
+		#ifdef DEBUGGING
 		assert(mem_free(((unicode_object*) obj)->value));
+		#else
+		free(((unicode_object*) obj)->value);
+		#endif
 		break;
 	case TYPE_STRING:
 		// printf("freeing string object @%x\n",obj);
+		#ifdef DEBUGGING
 		objects_header_total -= sizeof(string_object);
+		#endif
+
+		#ifdef DEBUGGING
 		assert(mem_free(((string_object *) obj)->content));
+		#else
+		free(((string_object*) obj)->content);
+		#endif
 		break;
 	case TYPE_TUPLE:
 		 //printf("freeing tuple object @%x\n",obj);
+		#ifdef DEBUGGING
 		objects_header_total -= sizeof(tuple_object);
+		#endif
+
 		if (((tuple_object *)obj)->list != NULL)
 		{
 			if(((tuple_object *) obj)->list->num > 0)
@@ -574,9 +687,16 @@ void FreeObject(object * obj)
 		break;
 	case TYPE_CODE:
 		 //printf("freeing code object @%x\n",obj);
+		#ifdef DEBUGGING
 		objects_header_total -= sizeof(code_object);
 		objects_header_total -= strlen(((code_object *) obj)->name) + 1;
+		#endif
+
+		#ifdef DEBUGGING
 		assert(mem_free(((code_object *) obj)->name));
+		#else
+		free(((code_object*) obj)->name);
+		#endif
 		FreeObject(((code_object *) obj)->code);
 		FreeObject(((code_object *) obj)->consts);
 		FreeObject(((code_object *) obj)->names);
@@ -598,8 +718,12 @@ void FreeObject(object * obj)
 	// if(obj->value_ptr != NULL)
 	// FreeObject((object*)obj->value_ptr);
 	//printf("freed object(%c) @%x\n",obj->type,obj);
+	#ifdef DEBUGGING
 	assert(mem_free(obj));
 	objects_num--;
+	#else
+	free(obj);
+	#endif
 }
 
 void PrintObject(object * obj)
@@ -649,7 +773,7 @@ void PrintObject(object * obj)
 	}
 }
 
-/* void DumpObject(object *obj) { DumpObject(obj,0); } */
+#ifdef DEBUGGING	
 void DumpObject(object * obj, int level)
 {
 	if (obj == NULL)
@@ -838,7 +962,9 @@ void DumpObject(object * obj, int level)
 		debug_printf(DEBUG_ALL,"object type is unknown:%c\n", obj->type);
 	}
 }
+#endif
 
+#ifdef DEBUGGING
 char *DumpObjectXml(object * obj, int level)
 {
 	if (obj == NULL)
@@ -1027,12 +1153,15 @@ char *DumpObjectXml(object * obj, int level)
 		printf("object type is unknown:%c\n", obj->type);
 	}
 }
+#endif
 
 int object_compare(object *a,object *b)
 {
 	//return(CompareOp(a,b,2));
 	//printf("comparing objects\n");
+	#ifdef DEBUGGING
 	assert(a != NULL && b != NULL);
+	#endif
 	if (a == NULL && b == NULL)
 		return(0);
 	if(a== NULL || b == NULL)
@@ -1089,7 +1218,9 @@ return(-1);
 
 object *CopyObject(object *obj)
 {
+	#ifdef DEBUGGING
 	assert(obj != NULL);
+	#endif
 	if (obj == NULL)
 		return;
 
@@ -1099,7 +1230,7 @@ object *CopyObject(object *obj)
 	case TYPE_NULL:
 	case TYPE_NONE:
 		{	
-		empty_object *r = AllocEmptyObject();
+		object *r = AllocObject();
 		r->type = obj->type;
 		r->ref_count  = 0;
 		r->flags = obj->flags;
@@ -1197,11 +1328,13 @@ object *CopyObject(object *obj)
 void IncRefCount(object *obj)
 {
 	obj->ref_count++;
+	#ifdef DEBUGGING
 	if((debug_level & DEBUG_GC) > 0)
-		{
+	{
 		debug_printf(DEBUG_GC,"object has gained a ref \n");
 		DumpObject(obj,0);
-		}
+	}
+	#endif
 }
 
 void DecRefCountGC(object *obj,ptr_list *gc)
@@ -1211,11 +1344,13 @@ void DecRefCountGC(object *obj,ptr_list *gc)
 		obj->ref_count--;
 		if(!ptr_Contains(gc,obj))
 		{
+			#ifdef DEBUGGING
 			if((debug_level & DEBUG_GC) > 0)
 			{
 				debug_printf(DEBUG_GC,"object has no refs anymore -> put into gc\n");
 				DumpObject(obj,0);
 			}
+			#endif
 			//FreeObject(obj);
 			ptr_Queue(gc,obj);
 		}
@@ -1229,11 +1364,13 @@ void DecRefCount(object *obj)
 	if(obj->ref_count == 1)
 	{
 		//obj->ref_count--;
+		#ifdef DEBUGGING
 		if((debug_level & DEBUG_GC) > 0)
 		{
 			debug_printf(DEBUG_GC,"object has no refs anymore -> freeing\n");
 			DumpObject(obj,0);
 		}
+		#endif
 		FreeObject(obj);
 		//ptr_Queue(gc,obj);
 		return;
@@ -1260,6 +1397,7 @@ void AppendDictItem(object * tuple,object *key,object *value)
 	//object *di = CopyObject(key);//TODO needed??
 	//kv_object *kv = ConvertToKVObjectValued(di,value);
 	kv_object *kv = ConvertToKVObjectValued(key,value);
+	#ifdef DEBUGGING
 	if((debug_level & DEBUG_LISTS) > 0)
 	{
 	debug_printf(DEBUG_LISTS,"appended to \n");
@@ -1268,6 +1406,7 @@ void AppendDictItem(object * tuple,object *key,object *value)
 	//DumpObject(di,0);
 	DumpObject(key,0);
 	}
+	#endif
 	ptr_Push(((tuple_object *) tuple)->list,kv);
 	IncRefCount(kv);
 
@@ -1286,6 +1425,7 @@ void AppendItem(object *tuple,object *value)
 void SetDictItem(object *tuple,object *key,object *value)
 {
 	int index = GetDictItemIndex(tuple,key);
+	#ifdef DEBUGGING
 	if((debug_level & DEBUG_LISTS) > 0)
 	{
 		debug_printf(DEBUG_LISTS,"setting\n");
@@ -1295,6 +1435,8 @@ void SetDictItem(object *tuple,object *key,object *value)
 		debug_printf(DEBUG_LISTS,"value\n");
 		DumpObject(value,0);
 	}
+	#endif
+	
 	if(index != -1)
 		{
 			//printf("found index\n");
@@ -1302,14 +1444,14 @@ void SetDictItem(object *tuple,object *key,object *value)
 			object * k = GetItem(tuple,index);
 			if(k->type == TYPE_KV)
 			{
-				object *old = k->value;
+				object *old =((kv_object*) k)->value;
 				if(value != NULL)
 				{
-					k->value = value;
+					((kv_object*) k)->value = value;
 					IncRefCount(value);
 				}
 				else
-					k->value = NULL;
+					((kv_object*) k)->value = NULL;
 				if(old != NULL)
 					FreeObject(old);
 			}
@@ -1340,14 +1482,14 @@ void SetDictItemByIndex(object *tuple,int index,object *value)
 			object * k = GetItem(tuple,index);
 			if(k->type == TYPE_KV)
 			{
-				object *old = k->value;
+				object *old = ((kv_object*) k)->value;
 				if(value != NULL)
 				{
-					k->value = value;
+					((kv_object*) k)->value = value;
 					IncRefCount(value);
 				}
 				else
-					k->value = NULL;
+					((kv_object*) k)->value = NULL;
 				if(old != NULL)
 					FreeObject(old);
 			}
@@ -1626,6 +1768,7 @@ object *GetNextItem(object * tuple)
 
 long ReadLong(FILE * f)
 {
+
 	long r = 0;
 
 	// char *b = (char*)mem_malloc(4);
@@ -1635,6 +1778,7 @@ long ReadLong(FILE * f)
 	// free(b);
 	return (r);
 }
+
 /*
 #define CONV_PREC 4
 float ConvertDouble(double d)
@@ -1679,7 +1823,8 @@ r+= a;
 return(r);
 }
 */
-float ReadFloat(FILE * f)
+
+FLOAT ReadFloat(FILE * f)
 {
 	float r = 0;
 	double t = 0;
@@ -1688,7 +1833,7 @@ float ReadFloat(FILE * f)
 	//int read = fread(&t, 4, 1, f);
 	//read = fread(&r, 4, 1, f);
 	//r = ConvertDouble(t);
-	r = (float)t;
+	r = (FLOAT)t;
 	//printf("r:%f\n",r);
 	//printf("r:%f,t:%f\n",r,t);
 	return (r);
@@ -1705,14 +1850,17 @@ char ReadChar(FILE * f)
 
 object *ReadObject(FILE * f)
 {
+	#ifdef DEBUGGING
 	objects_num++;
 	// printf("increasing objects num to %d\n",objects_num);
 	if (objects_num > objects_max)
 		objects_max = objects_num;
-	char type = ReadChar(f);
+	#endif
+	OBJECT_TYPE type = ReadChar(f);
 
-		
+	#ifdef DEBUGGING
 	debug_printf(DEBUG_CREATION,"reading object with type:%c\n",type);
+	#endif
 	// long magic = ReadLong(f);
 
 	switch (type)
@@ -1724,18 +1872,22 @@ object *ReadObject(FILE * f)
 		case TYPE_ELLIPSIS:
 		{
 		// printf("allocating empty object\n");
-		empty_object *obj = AllocEmptyObject();
+		object *obj = AllocObject();
 		obj->type = type;
 		obj->flags = 0;
 		obj->ref_count = 1;
 		// printf("allocated empty object @%x\n",obj);
+		#ifdef DEBUGGING
 		objects_header_total += sizeof(empty_object);
+		#endif
 		return (obj);
 		}
 	case TYPE_CODE:
        {	
 		// printf("reading code chunk\n");
+		#ifdef DEBUGGING
 		objects_header_total += sizeof(code_object);
+		#endif
 		// printf("allocated object @%x\n",obj);
 		code_object *co = AllocCodeObject();
 		co->flags = 0;
@@ -1743,10 +1895,10 @@ object *ReadObject(FILE * f)
 		co->ref_count = 1;
 
 		// printf("co_ptr=%x\n",(unsigned long)co);
-		co->argcount = ReadLong(f);
-		co->kwonlyargcount = ReadLong(f);
-		co->nlocals = ReadLong(f);
-		co->stacksize = ReadLong(f);
+		co->argcount = (NUM)ReadLong(f);
+		co->kwonlyargcount = (NUM)ReadLong(f);
+		co->nlocals = (NUM)ReadLong(f);
+		co->stacksize = (NUM)ReadLong(f);
 		co->co_flags = ReadLong(f);
 		// printf("argcount:%d,kwonlyargcount:%d,nlocals:%d,stacksize:%d,flags:%d\n",co->argcount,co->kwonlyargcount,co->nlocals,co->stacksize,co->flags);
 		co->code = ReadObject(f);
@@ -1769,9 +1921,13 @@ object *ReadObject(FILE * f)
 		// if(IsUnicodeObject(tmp_name))
 		// printf("name:%s\n",(char*)tmp_name->ptr);
 		co->name = str_Copy(((unicode_object *)tmp_name)->value);
+		#ifdef DEBUGGING
 		objects_header_total += strlen(co->name) + 1;
+		#endif
 		FreeObject(tmp_name);
-		co->firstlineno = ReadLong(f);
+		
+		long firstlineno = ReadLong(f);
+		//co->firstlineno = ReadLong(f);
 		// co->lnotab = ReadObject(f);
 		object *tmp_lnotab = ReadObject(f);
 
@@ -1795,17 +1951,23 @@ object *ReadObject(FILE * f)
 	case TYPE_STRING:
 		{
 		string_object *obj = AllocStringObject();
+		#ifdef DEBUGGING
 		objects_header_total += sizeof(string_object);
+		#endif
 		// printf("allocated object @%x\n",obj);
 		obj->flags = 0;
 		obj->ref_count = 1;
 
-		long n;
+		NUM n;
 		// printf("reading string chunk\n");
-		n = ReadLong(f);
+		n = (NUM)ReadLong(f);
 		if (n > 0)
 		{
+			#ifdef DEBUGGING
 			char *string = (char *)mem_malloc(n, "ReadObject() string");
+			#else
+			char *string = (char *)malloc(n);
+			#endif
 
 			// printf("str_ptr=%x\n",(unsigned long)string);
 			int read = fread(string, n, 1, f);
@@ -1870,9 +2032,13 @@ object *ReadObject(FILE * f)
 		unicode_object *obj = AllocUnicodeObject();
 		obj->ref_count = 1;
 
-		long n = ReadLong(f);
+		NUM n = (NUM)ReadLong(f);
 		// printf("len:%d\n",n);
+		#ifdef DEBUGGING
 		char *unicode_string = (char *)mem_malloc(n + 1, "ReadObject() unicode_string");
+		#else
+		char *unicode_string = (char *)malloc(n + 1);
+		#endif
 		memset(unicode_string, 0, n + 1);
 		int uread = fread(unicode_string, n, 1, f);
 		//printf("read unicode string:%s\n",unicode_string);
@@ -1886,7 +2052,7 @@ object *ReadObject(FILE * f)
 	case TYPE_BINARY_FLOAT:
 		{
 		float_object *obj = AllocFloatObject();
-		float n = ReadFloat(f);
+		FLOAT n = (FLOAT)ReadFloat(f);
 		obj->ref_count = 1;
 		obj->flags = 0;
 		obj->value = n;
@@ -1899,7 +2065,7 @@ object *ReadObject(FILE * f)
 		{
 		// printf("reading int\n");
 		int_object *obj = AllocIntObject();
-		long n = ReadLong(f);
+		INT n = (INT)ReadLong(f);
 		obj->ref_count = 1;
 		obj->flags = 0;
 		obj->value = n;
@@ -1909,10 +2075,12 @@ object *ReadObject(FILE * f)
 		break;
 	default:
 		{
-		empty_object *obj = AllocEmptyObject();
+		object *obj = AllocObject();
 		obj->ref_count = 1;
 		obj->type = TYPE_UNKNOWN;
+		#ifdef DEBUGGING
 		debug_printf(DEBUG_ALL,"unknown chunk type:%c\n", type);
+		#endif
 		return(obj);
 		}
 	}

@@ -29,7 +29,7 @@ import
 from
 nonlocal
 as
-yield
+yield			supported
 assert
 lambda		not tested
 elif			not tested
@@ -64,7 +64,7 @@ except
 
 */
 
-#define DEBUG
+#include "types.h"
 #include "object.h"
 #include "opcodes.h"
 #include "stack.h"
@@ -75,30 +75,27 @@ except
 #include "iterators.h"
 
 #include "debug.h"
-#include "assert.h"
 
+#ifdef DEBUGGING
+#include "assert.h"
 extern const opcode opcodes[];
+#endif 
 
 #pragma pack(push)				/* push current alignment to stack */
 #pragma pack(1)					/* set alignment to 1 byte boundary */
 
 typedef struct _vm
 {
-	//stack *recycle;
 	stack *blocks;
 	ptr_list *functions;
 	ptr_list *garbage;
 	code_object *global;
-	// code_object *co;//global code object //Bottom of blocks stack is the
-	// global module
-	// int ip;//instruction pointer moved to block object
 	object *(*interrupt_handler) (struct _vm *vm,stack *stack);
-	unsigned char interrupt_vm;
-	unsigned char running;
+	BOOL interrupt_vm;
+	BOOL running;
 } vm;
 
 #pragma pack(pop)				/* restore original alignment from stack */
-
 
 function_object *CreateCFunction(object *(*func) (vm *vm,stack *stack), char *name);
 
@@ -136,16 +133,20 @@ void vm_Stop(vm *vm); //pause vm execution
 
 object *vm_CallFunction(vm *vm,char *name,stack *locals);//call a python function from C
 
-object *vm_RunObject(vm *vm, object *obj, stack *locals, int argc);//run a python code object
+object *vm_RunObject(vm *vm, object *obj, stack *locals, NUM argc);//run a python code object
 
-block_object *vm_StartObject(vm *vm,object *obj,stack *locals,int argc);//run a python code object
+object *vm_InteractiveRunObject(vm *vm, object *obj, stack *locals, NUM argc);
 
-object *vm_StartFunctionObject(vm *vm,function_object *fo,stack *locals,stack *kw_locals,int argc,int kw_argc);//run a python function object
+block_object *vm_StartObject(vm *vm,object *obj,stack *locals,NUM argc);//run a python code object
+
+object *vm_StartFunctionObject(vm *vm,function_object *fo,stack *locals,stack *kw_locals,NUM argc,NUM kw_argc);//run a python function object
 
 function_object *vm_ResolveFunction(vm *vm,object *to_resolve);//input can be function_objects ,code_objects, unicode_objects -> returns a function_object if any
 
 object *vm_StepObject(vm *vm);//single step vm
 
-void vm_DumpCode(vm *vm,int dump_descriptions,int from_start);//dump human readable code of the vm's actual running block 
+#ifdef DEBUGGING
+void vm_DumpCode(vm *vm,int dump_descriptions,BOOL from_start);//dump human readable code of the vm's actual running block 
+#endif
 
 #endif

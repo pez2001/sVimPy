@@ -22,6 +22,7 @@
 
 #include "debug.h"
 
+#ifdef DEBUGGING
 void debug_printf(int msg_debug_level,char* format, ...)
 {
 	if(msg_debug_level != 0 && (debug_level & msg_debug_level) == 0)
@@ -39,3 +40,6 @@ void debug_printf(int msg_debug_level,char* format, ...)
 	printf(output);
 	mem_free(output);
 }
+
+#endif
+

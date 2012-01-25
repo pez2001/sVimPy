@@ -23,20 +23,25 @@
 #ifndef STROPS_H
 #define STROPS_H
 
-
+#include "types.h"
+#include "debug.h"
 #include "memory.h"
 #include "stdarg.h"
 #include "stdio.h"
+
 
 char *str_Cat(char *a, char *b);
 
 char *str_Copy(char *a);
 
+char *str_Substring(char *a,INDEX start,NUM len);
+
 char *str_FromChar(char c);
 
 char *str_Printf(char *format, ...);
 
-char *str_PrintfVa(char *format,int len,va_list va);
+char *str_PrintfVa(char *format,NUM len,va_list va);
+
 int str_PrintfVaLen(char *format,va_list va);
 
 #endif
