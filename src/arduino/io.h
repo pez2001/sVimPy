@@ -21,32 +21,27 @@
  */
 
 
-#ifndef ITERATORS_H
-#define ITERATORS_H
+#ifndef ARDUINO_IO_H
+#define ARDUINO_IO_H
 
-#include "types.h"
-#include "object.h"
-#include "vm.h"
-#include "stack.h"
 
-void iter_Expand(iter_object *iter,struct _vm *vm,stack *stack);
 
-object *iter_NextNow(iter_object *iter,struct _vm *vm);
+#define INPUT = 0
+#define OUTPUT = 1
+#define LOW = 0
+#define HIGH = 1
 
-object *iter_Next(iter_object *iter,struct _vm *vm);
+void a_pinMode(pin,mode);
+BOOL a_digitalRead(pin);
+def a_digitalWrite(pin,value);
+def a_analogRead(pin,);
+def a_analogWrite(pin,value);
+def a_delay(ms);
+def a_serialPrintln(message);
+def a_serialBegin(baudrate);
 
-iter_object *iter_CreateIter(object *iteration);//struct _vm *vm
 
-object *iter_Sequence(iter_object *iter);
 
-void iter_InitSequence(iter_object *iter,INDEX start,NUM end,NUM step);
 
-object *iter_Generator(iter_object *iter);
-
-void iter_InitGenerator(iter_object *iter,block_object *bo);
-
-object *iter_Iteration(iter_object *iter);
-
-void iter_InitIteration(iter_object *iter,tuple_object *to);
 
 #endif

@@ -234,7 +234,7 @@ void vm_Continue(vm *vm)
 	vm->interrupt_vm = 0;
 }
 
-void vm_Exit(vm *vm)//just a placeholder for things i didnt considered right now
+void vm_Exit(vm *vm)//just a placeholder for things i didnt consider right now
 {
 	vm_Close(vm);
 }
@@ -253,12 +253,12 @@ block_object *vm_StartObject(vm *vm,object *obj,stack *locals,NUM argc)
 		bo->type = TYPE_BLOCK;
 		bo->code = co;
 		bo->ip = 0;
-		bo->iter = NULL;
+		//bo->iter = NULL;
 		bo->start = 0;
 		bo->len = bytecodes->len;
 		bo->ref_count = 0;
 		bo->stack = stack_Init();		// co->stacksize
-		bo->initiated_locals = 1;
+		//bo->initiated_locals = 1;
 		stack_Push(vm->blocks, bo);
 		if (argc > 0 && locals != NULL)
 		{
@@ -293,16 +293,23 @@ object *vm_StartFunctionObject(vm *vm,function_object *fo,stack *locals,stack *k
 			object *tmp = vm_ExecuteCFunction(vm, fo->name,locals);
 			return(tmp);
 		}
+		if(fo->func_type == FUNC_PYTHON)
+		{
+			#ifdef DEBUGGING
+			debug_printf(DEBUG_VERBOSE_STEP,"executing python function: %s\n",  fo->name);
+			#endif
+		}
+	
 		//code_object *co = (code_object*)fo->code;
 		//tuple_object *defaults = fo->defaults;
 		block_object *bo = AllocBlockObject();
 		bo->type = TYPE_BLOCK;
 		bo->ip = 0;
-		bo->iter = NULL;
+		//bo->iter = NULL;
 		bo->start = 0;
 		bo->ref_count = 0;
 		bo->stack = stack_Init();		// co->stacksize
-		bo->initiated_locals = 1;
+		//bo->initiated_locals = 1;
 		if(fo->func_type == FUNC_PYTHON)
 		{
 			//printf("preparing python function\n");
@@ -315,7 +322,7 @@ object *vm_StartFunctionObject(vm *vm,function_object *fo,stack *locals,stack *k
 				//int locals_num = ((tuple_object*)fo->func.code->varnames)->list->num;
 				if(fo->defaults!=NULL)
 				{
-					int locals_num = fo->defaults->list->num;
+					NUM locals_num = fo->defaults->list->num;
 					//printf("locals num:%d\n",locals_num);
 					//printf("loading default values\n");
 					for(NUM i = 0;i < fo->defaults->list->num; i++) //load default values
@@ -346,6 +353,7 @@ object *vm_StartFunctionObject(vm *vm,function_object *fo,stack *locals,stack *k
 				NUM oarg = argc;
 				if(oarg > fo->func.code->argcount)
 					oarg = fo->func.code->argcount;
+				//printf("oarg:%d,locals:%d\n",oarg,stack_Pointer(locals));
 				for (NUM i = 0; i < oarg; i++)
 				{
 					object *local = stack_Pop(locals,vm->garbage);
@@ -358,7 +366,8 @@ object *vm_StartFunctionObject(vm *vm,function_object *fo,stack *locals,stack *k
 						SetDictItemByIndex(fo->func.code->varnames,i,local);
 					}
 				}
-				
+			
+				//printf("loading arguments 2\n");
 				if(argc > fo->func.code->argcount)
 				{
 					NUM narg = argc - fo->func.code->argcount;
@@ -404,8 +413,6 @@ object *vm_StartFunctionObject(vm *vm,function_object *fo,stack *locals,stack *k
 					}
 				}
 			}
-			
-
 		}
 		if(fo->func_type == FUNC_PYTHON && ((fo->func.code->co_flags & CO_NESTED)>0 || (fo->func.code->co_flags & CO_GENERATOR)>0) )
 		{
@@ -448,7 +455,7 @@ function_object *vm_ResolveFunction(vm *vm,object *to_resolve)
 		else
 		{
 			object *caller_func = NULL;
-			int index = GetItemIndexByName(vm->global->names,((unicode_object*)to_resolve)->value);
+			INDEX index = GetItemIndexByName(vm->global->names,((unicode_object*)to_resolve)->value);
 			if(index != -1)
 				caller_func = GetItem(vm->global->names,index);
 			if (caller_func != NULL && ((object *) caller_func)->type == TYPE_CODE)
@@ -468,7 +475,7 @@ function_object *vm_ResolveFunction(vm *vm,object *to_resolve)
 }
 
 #ifdef DEBUGGING
-void vm_DumpCode(vm *vm,int dump_descriptions, BOOL from_start)
+void vm_DumpCode(vm *vm,BOOL dump_descriptions, BOOL from_start)
 {
 				block_object *bo = (block_object *) stack_Top(vm->blocks);
 				object *obj = bo->code;
@@ -602,7 +609,7 @@ object *vm_InteractiveRunObject(vm *vm, object *obj, stack *locals, NUM argc)
 					printf("block has no stack\n");
 				printf("cleared\n");
 			}else 
-			if(strlen(cmd)>= 2 && cmd[0] == 'd' && cmd[1] == 'i')
+			/*if(strlen(cmd)>= 2 && cmd[0] == 'd' && cmd[1] == 'i')
 			{
 				printf("dumping iter\n");
 				block_object *b = (block_object*)stack_Top(vm->blocks);
@@ -611,7 +618,7 @@ object *vm_InteractiveRunObject(vm *vm, object *obj, stack *locals, NUM argc)
 				else
 					printf("block has no iter\n");
 				printf("dumped\n");
-			}else 
+			}else*/ 
 			if(strlen(cmd)>= 2 && cmd[0] == 'd' && cmd[1] == 'r')
 			{
 				printf("dumping actual block code\n");
@@ -752,15 +759,15 @@ object *vm_StepObject(vm *vm)
 		char *string = bytecodes->content;
 		code_object *global = vm->global;
 
-		int has_extended_arg = 0;
+		BOOL has_extended_arg = 0;
 		short extended_arg = 0;
 
 		if(bo->ip < bo->len)
 		{
 			unsigned char op = (unsigned char)string[bo->ip++];	// get op and increment code pointer
 
-			long arg = 0;		// holds the argument if present
-			int op_thru = 0;	// used to skip unneccessary switches
+			INT arg = 0;		// holds the argument if present
+			BOOL op_thru = 0;	// used to skip unneccessary switches
 
 			object *tos = NULL; //top of the stack objects
 			object *tos1 = NULL;
@@ -814,16 +821,32 @@ object *vm_StepObject(vm *vm)
 			switch (op)
 			{
 			case OPCODE_NOP:
+				{
 				op_thru = 1;
+				}
 				break;
+				
 			case OPCODE_IMPORT_STAR:
+				{
 				op_thru = 1;
+				}
 				break;
+				
 			case OPCODE_YIELD_VALUE:
+				{
+					bo->ip++;
+					object *ret = stack_Pop(bo->stack,vm->garbage);
+					IncRefCount(ret);
+					//printf("yielding\n");
+					gc_Clear(vm->garbage);
+					
+					return(ret);
+				}
+				break;
 			case OPCODE_RETURN_VALUE:
 				{
 					object *ret = stack_Pop(bo->stack,vm->garbage);
-					//IncRefCount(ret);
+					/*IncRefCount(ret);
 					//ret->flags |= OFLAG_LEFT_NAMESPACE;
 					//ret = DissolveRef(ret);
 					//	if(ret->type == TYPE_KV)
@@ -833,57 +856,53 @@ object *vm_StepObject(vm *vm)
 					//	}
 					//assert(ret != NULL);
 					//ret = stack_Pop(bo->stack,vm->garbage);
-					//object *t = stack_Pop(bo->stack);
+					//object *t = stack_Pop(bo->stack);*/
 
 					#ifdef DEBUGGING
 					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 					{
-					debug_printf(DEBUG_VERBOSE_STEP,"ret object @:%x\n",ret);
-					DumpObject(ret,0);
+						debug_printf(DEBUG_VERBOSE_STEP,"ret object @:%x\n",ret);
+						DumpObject(ret,0);
 					}
 					#endif
-					//ret = CopyObject(ret);
-					//ret = CreateRefObject(ret,0);
 					object *pbo = stack_Pop(vm->blocks,vm->garbage);
+					/*ret = CopyObject(ret);
+					//ret = CreateRefObject(ret,0);
 					//printf("popped block:%x\n",pbo);
+					//DumpObject(pbo,0);
+					//stack_Dump(bo->stack);
 					//if(!stack_IsEmpty(vm->blocks))
 					//{
 					//if(debug_level > 5)
-					//	printf("pushing ret\n");
+					//	printf("pushing ret\n");*/
 
 					if(!stack_IsEmpty(vm->blocks))
 					{
-					block_object *parent = (block_object*)stack_Top(vm->blocks);
-					#ifdef DEBUGGING
-					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
-					{
-						DumpObject(parent,0);
-						//printf("parent shown\n");
-						//if(parent
-						stack_Dump(parent->stack);
-						//printf("stack shown\n");
-					}
-					#endif
-					stack_Push(parent->stack,ret);
-					#ifdef DEBUGGING
-					debug_printf(DEBUG_VERBOSE_STEP,"still blocks on the stack\n");
-					#endif
-					gc_Clear(vm->garbage);
+						block_object *parent = (block_object*)stack_Top(vm->blocks);
+						#ifdef DEBUGGING
+						if((debug_level & DEBUG_VERBOSE_STEP) > 0)
+						{
+							DumpObject(parent,0);
+							stack_Dump(parent->stack);
+						}
+						#endif
+						stack_Push(parent->stack,ret);
+						#ifdef DEBUGGING
+						debug_printf(DEBUG_VERBOSE_STEP,"still blocks on the stack\n");
+						#endif
+						gc_Clear(vm->garbage);
 					}
 					else 
 					{
-					gc_Clear(vm->garbage);
-					//object *tmp = CreateEmptyObject(TYPE_NONE,0);
-					//IncRefCount(tmp);
-					IncRefCount(ret);
-					//printf("no return object on stack , returning NONE object\n");
-					//return (tmp);
-					//return (NULL);
-					return(ret);
+						IncRefCount(ret);
+						gc_Clear(vm->garbage);
+						/*object *tmp = CreateEmptyObject(TYPE_NONE,0);
+						//IncRefCount(tmp);
+						//printf("no return object on stack , returning NONE object\n");
+						//return (tmp);
+						//return (NULL);*/
+						return(ret);
 					}					
-					//assert(mem_free(bo));
-					//}
-					//stack_Close(bo->stack, 0);
 					gc_Clear(vm->garbage);
 					return (NULL);
 				}
@@ -983,22 +1002,22 @@ object *vm_StepObject(vm *vm)
 					//DumpObject(stack_Top(vm->blocks),0);
 					}
 					#endif
-					block_object *abo = (block_object *) stack_Top(vm->blocks);
+					//block_object *abo = (block_object *) stack_Top(vm->blocks);
 					//abo->iter = iter;
 					//IncRefCount(iter);
 					//ResetIteration(iter);
 					//stack_Push(bo->stack,iter);
-					if(abo->iter != NULL)
+					/*if(abo->iter != NULL)
 					{
 						#ifdef DEBUGGING
 						debug_printf(DEBUG_ALL,"block iter already used\n");
 						#endif
 						DecRefCountGC(abo->iter,vm->garbage);
-					}
-					iter_object *it = iter_CreateIter(iter);
+					}*/
+					iter_object *it = iter_CreateIter(iter);//,vm);
 					stack_Push(bo->stack,it);
-					abo->iter = it;
-					IncRefCount(it);	
+					//abo->iter = it;
+					//IncRefCount(it);	
 					op_thru = 1;
 				}
 				break;
@@ -1063,10 +1082,7 @@ object *vm_StepObject(vm *vm)
 				{
 					if (has_extended_arg)
 					{
-						arg =
-							num_long((extended_arg >> 8) & 0xFF,
-									 extended_arg & 0xFF, string[bo->ip],
-									 string[bo->ip + 1]);
+						arg = num_long((extended_arg >> 8) & 0xFF, extended_arg & 0xFF, string[bo->ip], string[bo->ip + 1]);
 						has_extended_arg = 0;
 						extended_arg = 0;
 					}
@@ -1190,18 +1206,25 @@ object *vm_StepObject(vm *vm)
 			{
 			case OPCODE_FOR_ITER:
 				{
-					block_object *fabo = (block_object *) stack_Top(vm->blocks);
+					//block_object *fabo = (block_object *) stack_Top(vm->blocks);
 					//object *next = iter_Next(fabo->iter);
+					//DumpObject(fabo,0);
+					//printf("iter:\n");
+					//DumpObject(fabo->iter,0);
+					//printf("stack\n");
+					//stack_Dump(bo->stack);
 					object *next =  NULL;
-					if(fabo->iter != NULL)
-						next = iter_Next(fabo->iter);
-					else if(stack_Top(bo->stack)->type == TYPE_ITER)
-						next = iter_Next(stack_Top(bo->stack));
-					if(next != NULL && next->type == TYPE_BLOCK)
+					//if(fabo->iter != NULL)
+					//	next = iter_Next(fabo->iter);
+					//else 
+					if(stack_Top(bo->stack)->type == TYPE_ITER)
+						next = iter_NextNow(stack_Top(bo->stack),vm);
+					/*if(next != NULL && next->type == TYPE_BLOCK)
 					{
 						stack_Push(vm->blocks, next);
 					}
-					else if (next != NULL && next->type != TYPE_NONE)
+					else*/
+					if (next != NULL && next->type != TYPE_NONE)
 					{
 						stack_Push(bo->stack, next);
 					}
@@ -1210,41 +1233,47 @@ object *vm_StepObject(vm *vm)
 						if(next != NULL)
 							DecRefCountGC(next,vm->garbage);
 							//FreeObject(next);
-						stack_Pop(bo->stack,vm->garbage);
-						if(fabo->iter != NULL)
-							DecRefCountGC(fabo->iter,vm->garbage);
-						fabo->iter = NULL;
+						//stack_Pop(bo->stack,vm->garbage);
+						//if(fabo->iter != NULL)
+						//	DecRefCountGC(fabo->iter,vm->garbage);
+						//fabo->iter = NULL;
 						bo->ip = bo->ip + arg;
 					}
+					//printf("stack after\n");
+					//stack_Dump(bo->stack);
 				}
 				break;
+				
 			case OPCODE_IMPORT_NAME:
 				{
 				
 				}
 				break;
+				
 			case OPCODE_IMPORT_FROM:
 				{
 				
 				}
 				break;
+				
 			case OPCODE_IMPORT_STAR:
 				{
 				
 				}
 				break;
+				
 			case OPCODE_MAKE_FUNCTION:
 				{
-					int narg = arg & 255;
-					int nkey = (arg >> 8) & 255;
-					int n = narg + (nkey*2);
+					NUM narg = (NUM) (arg & 255);
+					NUM nkey = (NUM) ((arg >> 8) & 255);
+					NUM n = (NUM) (narg + (nkey*2));
 					tuple_object *defaults = NULL;
 					tuple_object *kw_defaults = NULL;
 					
 					if(narg > 0)
 					{
 						defaults = CreateTuple(narg,0); //creating defaults tuple
-						for (int i = 0; i < narg; i++)
+						for (NUM i = 0; i < narg; i++)
 						{
 							object *t = stack_Pop(bo->stack,vm->garbage);
 							t = DissolveRef(t);
@@ -1256,7 +1285,7 @@ object *vm_StepObject(vm *vm)
 					if(nkey >0)
 					{
 						kw_defaults = CreateTuple(0,0); //creating kw defaults tuple
-						for (int i = 0; i < nkey; i++)//keyword arguments
+						for (NUM i = 0; i < nkey; i++)//keyword arguments
 						{
 							object *value = stack_Pop(bo->stack,vm->garbage);
 							object *key = stack_Pop(bo->stack,vm->garbage);
@@ -1267,11 +1296,12 @@ object *vm_StepObject(vm *vm)
 					stack_Push(bo->stack,fo);
 				}
 				break;
+				
 			case OPCODE_MAKE_CLOSURE:
 				{
-					int narg = arg & 255;
-					int nkey = (arg >> 8) & 255;
-					int n = narg + (nkey*2);
+					NUM narg = (NUM) (arg & 255);
+					NUM nkey = (NUM) ((arg >> 8) & 255);
+					NUM n = (NUM) (narg + (nkey*2));
 					tuple_object *defaults = NULL;
 					tuple_object *kw_defaults = NULL;
 					tos1 = stack_Pop(bo->stack,vm->garbage);
@@ -1279,7 +1309,7 @@ object *vm_StepObject(vm *vm)
 					if(narg > 0)
 					{
 						defaults = CreateTuple(narg,0); //creating defaults tuple
-						for (int i = 0; i < narg; i++)
+						for (NUM i = 0; i < narg; i++)
 						{
 							object *t = stack_Pop(bo->stack,vm->garbage);
 							t = DissolveRef(t);
@@ -1291,7 +1321,7 @@ object *vm_StepObject(vm *vm)
 					if(nkey >0)
 					{
 						kw_defaults = CreateTuple(0,0); //creating kw defaults tuple
-						for (int i = 0; i < nkey; i++)//keyword arguments
+						for (NUM i = 0; i < nkey; i++)//keyword arguments
 						{
 							object *value = stack_Pop(bo->stack,vm->garbage);
 							object *key = stack_Pop(bo->stack,vm->garbage);
@@ -1303,6 +1333,7 @@ object *vm_StepObject(vm *vm)
 					stack_Push(bo->stack,fo);
 				}
 				break;
+				
 			case OPCODE_POP_JUMP_IF_FALSE:
 				{
 					if (tos->type == TYPE_FALSE)
@@ -1311,6 +1342,7 @@ object *vm_StepObject(vm *vm)
 					}
 				}
 				break;
+				
 			case OPCODE_POP_JUMP_IF_TRUE:
 				{
 					if (tos->type == TYPE_TRUE)
@@ -1319,16 +1351,19 @@ object *vm_StepObject(vm *vm)
 					}
 				}
 				break;
+				
 			case OPCODE_JUMP_FORWARD:
 				{
 					bo->ip = bo->ip + arg;
 				}
 				break;
+				
 			case OPCODE_JUMP_ABSOLUTE:
 				{
 					bo->ip = arg;
 				}
 				break;
+				
 			case OPCODE_JUMP_IF_FALSE:
 				{
 					if (tos->type == TYPE_FALSE)
@@ -1337,6 +1372,7 @@ object *vm_StepObject(vm *vm)
 					}
 				}
 				break;
+				
 			case OPCODE_JUMP_IF_TRUE:
 				{
 					if (tos->type == TYPE_TRUE)
@@ -1345,6 +1381,7 @@ object *vm_StepObject(vm *vm)
 					}
 				}
 				break;
+				
 			case OPCODE_SETUP_LOOP:
 				{
 					block_object *block = AllocBlockObject();
@@ -1354,8 +1391,6 @@ object *vm_StepObject(vm *vm)
 					block->len = bo->ip + arg;
 					block->ref_count = 0;
 					block->type = TYPE_BLOCK;
-					block->iter = NULL;
-					//block->stack = bo->stack;
 					block->stack = stack_Init();
 					//printf("block - start: %d, len: %d\n",block->start,block->len);
 					#ifdef DEBUGGING
@@ -1366,18 +1401,21 @@ object *vm_StepObject(vm *vm)
 					bo->ip = block->len;
 				}
 				break;
+				
 			case OPCODE_BUILD_SET:
 				{
 					tuple_object *to =CreateTuple(0,0);
 					stack_Push(bo->stack,to);
 				}
 				break;
+				
 			case OPCODE_BUILD_MAP:
 				{
 					tuple_object *to =CreateTuple(0, OFLAG_IS_DICT);
 					stack_Push(bo->stack,to);
 				}
 				break;
+				
 			case OPCODE_BUILD_TUPLE:
 			case OPCODE_BUILD_LIST:
 				{
@@ -1385,12 +1423,11 @@ object *vm_StepObject(vm *vm)
 					stack *blcall = NULL;
 					blcall = stack_Init();	// arg
 					tos = NULL;
-					for (int i = 0; i < arg; i++)
+					for (NUM i = 0; i < arg; i++)
 					{
 						stack_Push(blcall, stack_Pop(bo->stack,vm->garbage));
 					}
-					object *tmp =
-						vm_ExecuteCFunction(vm, "list", blcall);
+					object *tmp = vm_ExecuteCFunction(vm, "list", blcall);
 					if (tmp != NULL)
 					{
 						stack_Push(bo->stack, tmp);
@@ -1399,6 +1436,7 @@ object *vm_StepObject(vm *vm)
 					stack_Close(blcall, 0);
 				}
 				break;
+				
 			case OPCODE_LOAD_GLOBAL:
 				{
 					tuple_object *co_names = (tuple_object *) co->names;
@@ -1410,7 +1448,7 @@ object *vm_StepObject(vm *vm)
 					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"searching for:%s\n", name);
 					#endif
-					int index = GetItemIndexByName(global->names,name);
+					INDEX index = GetItemIndexByName(global->names,name);
 					object *lgo = NULL;
 					if(index != -1)
 					{
@@ -1457,7 +1495,7 @@ object *vm_StepObject(vm *vm)
 					}
 					#endif
 					
-					int index = GetItemIndexByName(global->names,name);
+					INDEX index = GetItemIndexByName(global->names,name);
 					if(index != -1)
 					{
 					if(((object*)((tuple_object*)global->names)->list->items[index])->type != TYPE_KV)
@@ -1509,7 +1547,7 @@ object *vm_StepObject(vm *vm)
 					else
 						name = ((unicode_object*)co_names->list->items[arg])->value;
 
-					int index = GetItemIndexByName(global->names,name);
+					INDEX index = GetItemIndexByName(global->names,name);
 					if(index != -1)
 					{
 						SetDictItemByIndex(global->names,index,NULL);
@@ -1758,11 +1796,11 @@ object *vm_StepObject(vm *vm)
 
 			case OPCODE_DELETE_SUBSCR:
 				{
-					long dsa = 0;
+					NUM dsa = 0;
 
 					if (tos->type == TYPE_INT)
 					{
-						dsa = ((int_object*)tos)->value;
+						dsa = (NUM) ((int_object*)tos)->value;
 					}
 					if (tos1->type == TYPE_TUPLE)
 					{
@@ -1776,7 +1814,7 @@ object *vm_StepObject(vm *vm)
 
 			case OPCODE_STORE_SUBSCR:
 				{
-					long ssa = 0;
+					NUM ssa = 0;
 					//tos2 = CopyObject(tos2);
 					//IncRefCount(tos2);
 					#ifdef DEBUGGING
@@ -1786,7 +1824,7 @@ object *vm_StepObject(vm *vm)
 					 
 					if (tos->type == TYPE_INT)
 					{
-						ssa = ((int_object*)tos)->value;
+						ssa = (NUM) ((int_object*)tos)->value;
 					}
 					if (tos1->type == TYPE_TUPLE)
 					{
@@ -1809,12 +1847,12 @@ object *vm_StepObject(vm *vm)
 
 			case OPCODE_BINARY_SUBSCR:
 				{
-					long bsa = 0;
+					NUM bsa = 0;
 
 					// printf("binary subscribe");
 					if (tos->type == TYPE_INT)
 					{
-						bsa = ((int_object*)tos)->value;
+						bsa = (NUM) ((int_object*)tos)->value;
 					}
 				
 					if (tos1->type == TYPE_TUPLE)
@@ -1843,7 +1881,7 @@ object *vm_StepObject(vm *vm)
 
 			case OPCODE_UNPACK_SEQUENCE:
 				{
-					for (int i = arg-1; i >= 0; i--)
+					for (NUM i = arg-1; i >= 0; i--)
 					{
 						switch (tos->type)
 						{
@@ -1968,9 +2006,9 @@ object *vm_StepObject(vm *vm)
 				{
 					stack *call = NULL;
 					stack *kw_call = NULL;
-					int narg = arg & 255;
-					int nkey = (arg >> 8) & 255;
-					int n = narg + (nkey*2);
+					NUM narg = (NUM) (arg & 255);
+					NUM nkey = (NUM) ((arg >> 8) & 255);
+					NUM n = (NUM) (narg + (nkey*2));
 					//fetch function object from tos and Resolve to function object
 					object *function = stack_Get(bo->stack,stack_Pointer(bo->stack) - n);
 					//printf("calling function:\n");
@@ -1986,8 +2024,9 @@ object *vm_StepObject(vm *vm)
 					if(kw_list != NULL) //variable keyword arguments
 					{
 						//printf("var keywords found:%d\n",kw_list->list->num);
-						for (int i = kw_list->list->num-1; i >= 0 ;i--)
+						for (NUM i = kw_list->list->num-1; i >= 0 ;i--)
 						{
+							//printf("i:%d\n",i);
 							object *v = GetItem(kw_list,i);
 							//stack_Push(call, v);
 							//DumpObject(v,0);
@@ -1998,19 +2037,24 @@ object *vm_StepObject(vm *vm)
 							}
 						}	
 					}
+					
+					//printf("kwlist prepared\n");
 					if(var_list != NULL) //variable list arguments
 					{
 						//printf("var list found:%d\n",var_list->list->num);
-						for (int i = var_list->list->num-1; i >= 0 ;i--)
+						for (NUM i = var_list->list->num; i >= 0 ;--i)
 						{
 							object *v = GetItem(var_list,i);
 							stack_Push(call, v);
 							//DumpObject(v,0);
+							//printf("i:%d\n");
 						}	
 					}
+					//if(call != NULL)
+					//	stack_Dump(call);
+					//printf("var list prepared\n");
 					
-					
-					for (int i = 0; i < nkey; i++)//keyword arguments
+					for (NUM i = 0; i < nkey; i++)//keyword arguments
 					{
 						object *value = stack_Pop(bo->stack,vm->garbage);
 						object *key = stack_Pop(bo->stack,vm->garbage);
@@ -2030,7 +2074,7 @@ object *vm_StepObject(vm *vm)
 					}
 					//stack_Dump(kw_call);
 					//printf("narg:%d\n",narg);
-					for (int i = 0; i < narg; i++)//positional arguments
+					for (NUM i = 0; i < narg; i++)//positional arguments
 					{
 						stack_Push(call, stack_Pop(bo->stack,vm->garbage));
 					}
@@ -2040,7 +2084,7 @@ object *vm_StepObject(vm *vm)
 					//pop function object
 					//object *function_name = stack_Pop(bo->stack,vm->garbage);
 					stack_Pop(bo->stack,vm->garbage);
-					
+					//printf("pushing function block on block stack\n");
 					object *pret = vm_StartFunctionObject(vm,fo, call,kw_call,narg,nkey);
 					if (pret != NULL)
 					{

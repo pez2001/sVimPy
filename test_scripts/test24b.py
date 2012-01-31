@@ -1,0 +1,6 @@
+def f():
+	a = sum(i*i for i in (1,2,3,4,5))
+	print("a:",a)
+	return a
+r = f()
+print("r:",r)

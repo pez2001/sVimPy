@@ -39,7 +39,7 @@ typedef struct _stack
 } stack;
 
 
-stack *stack_Init();
+stack *stack_Init(); //TODO rename to Create
 
 object *stack_Pop(stack *stack,ptr_list *gc);
 
@@ -49,11 +49,9 @@ void stack_Close(stack *stack, BOOL free_objects);
 
 void stack_Clear(stack *stack, BOOL free_objects);
 
-int stack_Contains(stack *stack, object * x);
-
 object *stack_Get(stack *stack,INDEX index);
 
-int stack_Pointer(stack *stack);
+NUM stack_Pointer(stack *stack);
 
 object *stack_Top(stack *stack);
 
@@ -77,6 +75,8 @@ void stack_Adjust(stack *stack, REL_NUM by);
 void stack_Dump(stack *stack);
 #endif
 
-int stack_IsEmpty(stack *stack);
+BOOL stack_IsEmpty(stack *stack);
+
+BOOL stack_Contains(stack *stack, object * x);
 
 #endif

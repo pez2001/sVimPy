@@ -36,7 +36,8 @@
 // used in INDEXING situations
 #define INDEX short 
 //used in enum over array and total numbers
-#define NUM unsigned short
+//#define NUM unsigned short
+#define NUM short
 //used in relative calcs
 #define REL_NUM short
 

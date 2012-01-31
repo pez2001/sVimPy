@@ -27,7 +27,7 @@
 #include "stdio.h"
 #include "stdarg.h"
 
-//#define DEBUGGING
+#define DEBUGGING
 
 #ifdef DEBUGGING
 

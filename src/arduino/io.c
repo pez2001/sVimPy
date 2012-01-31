@@ -20,33 +20,4 @@
  *
  */
 
-
-#ifndef ITERATORS_H
-#define ITERATORS_H
-
-#include "types.h"
-#include "object.h"
-#include "vm.h"
-#include "stack.h"
-
-void iter_Expand(iter_object *iter,struct _vm *vm,stack *stack);
-
-object *iter_NextNow(iter_object *iter,struct _vm *vm);
-
-object *iter_Next(iter_object *iter,struct _vm *vm);
-
-iter_object *iter_CreateIter(object *iteration);//struct _vm *vm
-
-object *iter_Sequence(iter_object *iter);
-
-void iter_InitSequence(iter_object *iter,INDEX start,NUM end,NUM step);
-
-object *iter_Generator(iter_object *iter);
-
-void iter_InitGenerator(iter_object *iter,block_object *bo);
-
-object *iter_Iteration(iter_object *iter);
-
-void iter_InitIteration(iter_object *iter,tuple_object *to);
-
-#endif
+#include "io.h"

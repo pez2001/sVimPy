@@ -250,9 +250,10 @@ typedef struct _iter_object
 	OBJECT_REF_COUNT ref_count;
 	object *tag;//used for storage of iter options and actual ptr
 	object *(*iter_func)(struct _iter_object *iter);
+	struct _stack *block_stack;//iters will save blocks on stack when yielding
 } iter_object;
-
-typedef struct
+/*
+typedef struct _loop_block_object
 {
 	OBJECT_TYPE type;
 	OBJECT_FLAGS flags;
@@ -260,15 +261,28 @@ typedef struct
 	code_object *code;
 	INDEX start;
 	NUM len;
-	iter_object *iter;  //TODO rename to tag ,and use it for yielding too
 	INDEX ip;
-	char initiated_locals;//TODO REMOVE NOT NEEDED
+	//struct _stack *stack;
+} loop_block_object;
+*/
+typedef struct _block_object
+{
+	OBJECT_TYPE type;
+	OBJECT_FLAGS flags;
+	OBJECT_REF_COUNT ref_count;
+	code_object *code;
+	INDEX start;
+	//INDEX start;
+	//NUM len;
+	//iter_object *iter;  //TODO rename to tag ,and use it for yielding too
+	//struct _block_object *parent; //used for chaining
+	INDEX ip;
+	NUM len;
+	//char initiated_locals;//TODO REMOVE NOT NEEDED
 	struct _stack *stack;
 } block_object;
 
 #pragma pack(pop)				/* restore original alignment from stack */
-
-block_object *AllocBlockObject();
 
 void IncRefCount(object *obj);
 
@@ -276,9 +290,9 @@ void DecRefCountGC(object *obj,ptr_list *gc);
 
 void DecRefCount(object *obj);
 
-int HasNoRefs(object *obj);
+BOOL HasNoRefs(object *obj);
 
-int HasRefs(object *obj);
+BOOL HasRefs(object *obj);
 
 kv_object *ConvertToKVObject(object *key);
 
@@ -286,11 +300,13 @@ kv_object *ConvertToKVObjectValued(object *key,object *value);
 
 object *AllocObject();
 
-//object *AllocEmptyObject();
+block_object *AllocBlockObject();
 
-object *AllocKVObject();
+//loop_block_object *AllocLoopBlockObject();
 
-object *AllocRefObject();
+kv_object *AllocKVObject();
+
+ref_object *AllocRefObject();
 
 string_object *AllocStringObject();
 
@@ -347,7 +363,7 @@ int IsIterObject(object * obj);
 
 long ReadLong(FILE * f);
 
-float ReadFloat(FILE * f);
+FLOAT ReadFloat(FILE * f);
 
 char ReadChar(FILE * f);
 
@@ -355,31 +371,31 @@ object *ReadObject(FILE * f);
 
 object *DissolveRef(object *obj);
 
-ref_object *CreateRefObject(object *ref_to,int flags);
+ref_object *CreateRefObject(object *ref_to,OBJECT_FLAGS flags);
 
-int_object *CreateIntObject(long value,int flags);
+int_object *CreateIntObject(INT value,OBJECT_FLAGS flags);
 
-float_object *CreateFloatObject(float value,int flags);
+float_object *CreateFloatObject(FLOAT value,OBJECT_FLAGS flags);
 
-unicode_object *CreateUnicodeObject(char *value,int flags);
+unicode_object *CreateUnicodeObject(char *value,OBJECT_FLAGS flags);
 
-tuple_object *CreateTuple(int num,int flags);
+tuple_object *CreateTuple(NUM num,OBJECT_FLAGS flags);
 
-string_object *CreateStringObject(char *bytes,int len,int flags);
+string_object *CreateStringObject(char *bytes,NUM len,OBJECT_FLAGS flags);
 
-kv_object *CreateKVObject(object *key,object *value,int flags);
+kv_object *CreateKVObject(object *key,object *value,OBJECT_FLAGS flags);
 
-object *CreateEmptyObject(char type,int flags);
+object *CreateEmptyObject(char type,OBJECT_FLAGS flags);
 
-function_object *CreateFunctionObject_MAKE_FUNCTION(code_object *function_code,tuple_object *defaults,tuple_object *kw_defaults,int flags);
+function_object *CreateFunctionObject_MAKE_FUNCTION(code_object *function_code,tuple_object *defaults,tuple_object *kw_defaults,OBJECT_FLAGS flags);
 
-function_object *CreateFunctionObject_MAKE_CLOSURE(code_object *function_code,object *closure,tuple_object *defaults,tuple_object *kw_defaults,int flags);
+function_object *CreateFunctionObject_MAKE_CLOSURE(code_object *function_code,object *closure,tuple_object *defaults,tuple_object *kw_defaults,OBJECT_FLAGS flags);
 
-function_object *CreateFunctionObject(unsigned char func_type,int flags);
+function_object *CreateFunctionObject(unsigned char func_type,OBJECT_FLAGS flags);
 
 //iter_object *CreateIterObject(object *(*iter_func)(struct _iter_object *iter),object *tag,int flags);
 
-iter_object *CreateIterObject(int flags);
+iter_object *CreateIterObject(OBJECT_FLAGS flags);
 
 void FreeBlockObject(object *obj);
 
@@ -388,38 +404,38 @@ void FreeObject(object * obj);
 void PrintObject(object * obj);
 
 #ifdef DEBUGGING
-void DumpObject(object * obj, int level);
+void DumpObject(object * obj, char level);
 
-char *DumpObjectXml(object * obj, int level);
+char *DumpObjectXml(object * obj, char level);
 #endif
 
 object *GetNextItem(object * tuple);
 
 void ResetIteration(object * tuple);
 
-void SetItem(object * tuple, int index, object * obj);
+void SetItem(object * tuple, INDEX index, object * obj);
 
-object *GetItem(object * tuple, int index);
+object *GetItem(object * tuple, INDEX index);
 
-int GetItemIndexByName(object * tuple, char *name);
+INDEX GetItemIndexByName(object * tuple, char *name);
 
 void SetDictItem(object *tuple,object *key,object *value);
 
-void SetDictItemByIndex(object *tuple,int index,object *value);
+void SetDictItemByIndex(object *tuple,INDEX index,object *value);
 
 object *GetDictItem(object *tuple,object *key);
 
-object *GetDictItemByIndex(object *tuple,int index);
+object *GetDictItemByIndex(object *tuple,INDEX index);
 
-int GetTupleLen(object *tuple);
+NUM GetTupleLen(object *tuple);
 
-int GetDictItemIndex(object *tuple,object *key);
+INDEX GetDictItemIndex(object *tuple,object *key);
 
-int GetItemIndex(object *tuple,object *obj);
+INDEX GetItemIndex(object *tuple,object *obj);
 
 object *CopyObject(object *obj);
 
-int object_compare(object *a,object *b);
+BOOL object_compare(object *a,object *b);
 
 void AppendDictItem(object * tuple,object *key,object *value);
 

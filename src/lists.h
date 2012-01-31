@@ -42,6 +42,7 @@ typedef struct
 	unsigned char flags;
 } ptr_list;
 
+/*
 typedef struct
 {
 	void **items;
@@ -49,15 +50,15 @@ typedef struct
 	unsigned char flags;
 	void *tag;
 } ptr_list_with_tag;
-
+*/
 #pragma pack(pop)				/* restore original alignment from stack */
 
 #define PTR_STATIC_LIST 1		// TODO add support for static lists , so indices wont change
 #define PTR_LIST_HAS_TAG 2
 
-ptr_list *ptr_CreateList(NUM num, int flags);
+ptr_list *ptr_CreateList(NUM num, unsigned char flags);
 
-ptr_list_with_tag *ptr_CreateTaggedList(NUM num, int flags);
+//ptr_list_with_tag *ptr_CreateTaggedList(NUM num, int flags);
 
 void ptr_CloseList(ptr_list * list);
 
@@ -65,7 +66,7 @@ void ptr_Push(ptr_list * list, void *ptr);
 
 void *ptr_Pop(ptr_list * list);
 
-int ptr_Insert(ptr_list * list, INDEX index, void *ptr);
+BOOL ptr_Insert(ptr_list * list, INDEX index, void *ptr);
 
 void *ptr_Remove(ptr_list * list, INDEX index);
 

@@ -42,6 +42,6 @@ char *str_Printf(char *format, ...);
 
 char *str_PrintfVa(char *format,NUM len,va_list va);
 
-int str_PrintfVaLen(char *format,va_list va);
+NUM str_PrintfVaLen(char *format,va_list va);
 
 #endif

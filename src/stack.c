@@ -55,7 +55,7 @@ void stack_Clear(stack *stack, BOOL free_objects)
 		{
 			NUM num = stack->list->num;
 			//printf("before stack list num:%d\n",stack->list->num);
-			for (int i = 0; i < num; i++)
+			for (NUM i = 0; i < num; i++)
 			{
 					FreeObject(ptr_Pop(stack->list));
 					//printf("freed %d object\n",i);
@@ -69,7 +69,7 @@ void stack_Clear(stack *stack, BOOL free_objects)
 	}
 }
 
-int stack_IsEmpty(stack *stack)
+BOOL stack_IsEmpty(stack *stack)
 {
 	return(ptr_IsEmpty(stack->list));
 }
@@ -112,7 +112,7 @@ object *stack_Get(stack *stack,INDEX index)
 	return(r);
 }
 
-int stack_Pointer(stack *stack)
+NUM stack_Pointer(stack *stack)
 {
 	return(stack->list->num-1);
 }
@@ -212,10 +212,10 @@ void stack_SetThird(stack *stack, object * x)
 void stack_Adjust(stack *stack, REL_NUM by)
 {
 	if(by>0)
-	for (int i = 0; i < by; i++)
+	for (NUM i = 0; i < by; i++)
 		ptr_Push(stack->list, NULL);
 	if(by<0)
-	for (int i = 0; i < -by; i++)
+	for (NUM i = 0; i < -by; i++)
 		ptr_Pop(stack->list);
 }
 
@@ -228,7 +228,7 @@ void stack_Dump(stack *stack)
 		return;
 	}
 	debug_printf(DEBUG_ALL,"Dumping %d stack items\n", stack->list->num);
-	for (int i = 0; i < stack->list->num; i++)
+	for (NUM i = 0; i < stack->list->num; i++)
 	{
 		debug_printf(DEBUG_ALL,"item: %d\n", i);
 		DumpObject(stack->list->items[i], 1);
@@ -251,9 +251,9 @@ object *stack_Pop(stack *stack,ptr_list *gc)
 	return (r);
 }
 
-int stack_Contains(stack *stack, object * x)
+BOOL stack_Contains(stack *stack, object * x)
 {
-	for (int i = 0; i < stack->list->num; i++)
+	for (NUM i = 0; i < stack->list->num; i++)
 		if (stack->list->items[i] == x)
 			return (1);
 	return (0);

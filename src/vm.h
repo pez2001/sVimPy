@@ -143,10 +143,10 @@ object *vm_StartFunctionObject(vm *vm,function_object *fo,stack *locals,stack *k
 
 function_object *vm_ResolveFunction(vm *vm,object *to_resolve);//input can be function_objects ,code_objects, unicode_objects -> returns a function_object if any
 
-object *vm_StepObject(vm *vm);//single step vm
+object *vm_StepObject(vm *vm);//single step vm //TODO rename to vm_Step
 
 #ifdef DEBUGGING
-void vm_DumpCode(vm *vm,int dump_descriptions,BOOL from_start);//dump human readable code of the vm's actual running block 
+void vm_DumpCode(vm *vm,BOOL dump_descriptions,BOOL from_start);//dump human readable code of the vm's actual running block 
 #endif
 
 #endif

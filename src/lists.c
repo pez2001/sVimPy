@@ -23,7 +23,7 @@
 #include "lists.h"
 
 
-ptr_list *ptr_CreateList(NUM num, int flags)
+ptr_list *ptr_CreateList(NUM num, unsigned char flags)
 {
 	#ifdef DEBUGGING
 	ptr_list *tmp = (ptr_list *) mem_malloc(sizeof(ptr_list), "ptr_CreateList() return");
@@ -46,10 +46,12 @@ ptr_list *ptr_CreateList(NUM num, int flags)
 	return (tmp);
 }
 
+/*
 ptr_list_with_tag *ptr_CreateTaggedList(NUM num, int flags)
 {
 	return (NULL);
 }
+*/
 
 void ptr_CloseList(ptr_list * list)
 {
@@ -103,7 +105,7 @@ void *ptr_Pop(ptr_list * list)
 	return (NULL);
 }
 
-int ptr_Insert(ptr_list * list, INDEX index, void *ptr)
+BOOL ptr_Insert(ptr_list * list, INDEX index, void *ptr)
 {
 	if (index == 0 && !list->num)
 	{

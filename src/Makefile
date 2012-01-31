@@ -4,12 +4,12 @@
 
 CFLAGS=-W -w -O2 -std=c99 
 CC=gcc
-VERSION = 0.4a
+VERSION = 0.3a
 AR=ar
 LD=ld
 
 #arduino environment
-ARDUINO_AVR_DIR = /C/Users/pez2001/Documents/Arduino-1.0
+ARDUINO_AVR_DIR = /C/Users/asus/Documents/Arduino-1.0
 
 ARDUINO_MCU = atmega328p
 ARDUINO_PORT = com3
@@ -44,8 +44,8 @@ ARDUINO_AR  = $(ARDUINO_AVR_TOOLS_PATH)/avr-ar
 ARDUINO_SIZE = $(ARDUINO_AVR_TOOLS_PATH)/avr-size
 ARDUINO_NM = $(ARDUINO_AVR_TOOLS_PATH)/avr-nm
 ARDUINO_AVRDUDE = $(ARDUINO_AVR_TOOLS_PATH)/avrdude
-ARDUINO_FLAGS = -Os -Wl,--gc-sections -g -fno-exceptions -ffunction-sections -fdata-sections -DF_CPU=16000000L -DARDUINO=100 -mmcu=$(ARDUINO_MCU)
-
+ARDUINO_FLAGS = -fno-tree-scev-cprop -ffreestanding -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums -fno-move-loop-invariants -fno-tree-loop-optimize -mcall-prologues -fno-inline-small-functions -Os -Wl,--gc-sections,--relax -g -fno-exceptions -ffunction-sections -fdata-sections -DF_CPU=16000000L -DARDUINO=100 -mmcu=$(ARDUINO_MCU)
+#-fno-inline-small-functions  -finline-limit=6 -fno-jump-tables
 ARDUINO_CINCS = -I$(ARDUINO_INCLUDES) -I$(ARDUINO_STANDARD_INCLUDES)
 ARDUINO_CFLAGS = $(ARDUINO_FLAGS) $(ARDUINO_CINCS) $(ARDUINO_CWARN) $(ARDUINO_CSTANDARD) $(ARDUINO_CTUNING)
 ARDUINO_CXXFLAGS =  $(ARDUINO_FLAGS) $(ARDUINO_CINCS)

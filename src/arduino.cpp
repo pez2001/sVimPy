@@ -133,7 +133,7 @@ void loop (void) {
  */
  Serial.print("loop\n");
 }
-int main(void) {
+int __attribute__((OS_main)) main(void)  {
 	init();
 
 	setup();

@@ -100,7 +100,7 @@ char *str_Printf(char *format, ...)
 	return(output);
 }
 
-int str_PrintfVaLen(char *format,va_list va)
+NUM str_PrintfVaLen(char *format,va_list va)
 {
 	NUM n = vsnprintf(NULL,0,format,va) + 1;
 	return(n);

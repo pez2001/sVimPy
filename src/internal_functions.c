@@ -531,32 +531,31 @@ object *custom_code(vm *vm,stack * stack)
 
 object *if_list(vm *vm,stack * stack)
 {
-	NUM num = stack->list->num;
-	//printf("num:%d\n",num);
-	tuple_object *r = CreateTuple(num,0);
-	//IncRefCount(r);
-	for (NUM i = 0; i < num; i++)
+	tuple_object *r = CreateTuple(0,0);
+	//printf("listing\n");
+	//stack_Dump(stack);
+	do
 	{
-		//object *t = stack_Top(stack);
-		//IncRefCount(t);
 		object *t = stack_Pop(stack,vm->garbage);
-		SetItem(r,i,t);
-	}
-	//DumpObject(r,0);
+		if(t->type == TYPE_ITER)
+			iter_Expand(t,vm,stack);
+		else
+			AppendItem(r,t);
+	}while(stack->list->num);
 	return (r);
 }
 
 object *if_next(vm *vm,stack * stack)
 {
 	object *iter = stack_Pop(stack,vm->garbage);
-	object *next = iter_Next(iter);
-	if(next != NULL && next->type == TYPE_BLOCK)
-	{
-		stack_Push(vm->blocks, next);
-		return(NULL);
-	}
-	else
-		return(next);
+	object *next = iter_NextNow(iter,vm);
+	//if(next != NULL && next->type == TYPE_BLOCK)
+	//{
+	//	stack_Push(vm->blocks, next);
+	//	return(NULL);
+	//}
+	//else
+	return(next);
 }
 
 object *if_range(vm *vm,stack * stack)
@@ -594,86 +593,6 @@ object *if_range(vm *vm,stack * stack)
 	return (iter);
 }
 
-/*
-object *if_range(vm *vm,stack * stack)
-{
-	// TODO dirty hack in a classless world
-	// stack_Dump(stack);
-	// printf("range called:%d\n",stack->top);
-	if (stack->list->num < 1)
-	{
-		object *tmp = CreateEmptyObject(TYPE_NONE,0);
-		//IncRefCount(tmp);
-		debug_printf(DEBUG_ALL,"not enough args for range\n");
-		return (tmp);
-	}
-	object *s = stack_Pop(stack,vm->garbage);
-
-	object *e =  NULL;
-	if (stack->list->num > 0)
-		e = stack_Pop(stack,vm->garbage);
-	object *st = NULL;
-	if (stack->list->num > 0)
-		st = stack_Pop(stack,vm->garbage);
-
-	if (st == NULL && e == NULL && s->type == TYPE_INT)
-	{
-		// printf("range called with 2 args\n");
-		tuple_object *r = CreateTuple( ((int_object*)s)->value,0);
-		//IncRefCount(r);
-
-		for (int i = 0; i < r->list->num; i++)
-		{
-			r->list->items[i] = CreateIntObject(i,0);
-			IncRefCount(r->list->items[i]);
-		}
-		// DumpObject(r,0);
-		return (r);
-	}
-	else if (st == NULL && s->type == TYPE_INT && e->type == TYPE_INT)
-	{
-		// printf("range called with 2 args\n");
-		tuple_object *r = CreateTuple( ((int_object*)e)->value - ((int_object*)s)->value, 0);
-		//IncRefCount(r);
-		//printf("range(%d,%d) tuple will contain %d items\n", s->ptr, e->ptr, n);
-
-		//((tuple_object *) r->ptr)->items =
-		//	(object **) mem_malloc(n * sizeof(object *), "if_range() items");
-		for (int i = 0; i < r->list->num; i++)
-		{
-			r->list->items[i] = CreateIntObject( ((int_object*)s)->value + i,0);
-			IncRefCount(r->list->items[i]);
-		}
-		// DumpObject(r,0);
-		return (r);
-	}
-	else if (st != NULL && s->type == TYPE_INT && e->type == TYPE_INT
-			 && st->type == TYPE_INT)
-	{
-		tuple_object *r = CreateTuple(((((int_object*)e)->value - ((int_object*)s)->value) / ((int_object*)st)->value) + 1,0);
-		//IncRefCount(r);
-
-		// printf("range(%d,%d,%d) step tuple will contain %d
-		// items\n",s->ptr,e->ptr,st->ptr,n);
-		//((tuple_object *) r->ptr)->items =
-		//	(object **) mem_malloc(n * sizeof(object *), "if_range() items");
-		// printf("filling tuple\n");
-		for (int i = 0; i < r->list->num; i++)
-		{
-			 r->list->items[i] = CreateIntObject( ((int_object*)s)->value + (i * ((int_object*)st)->value),0);
-			IncRefCount(r->list->items[i]);
-		}
-		// DumpObject(r,0);
-		return (r);
-
-
-	}
-	object *tmp = CreateEmptyObject( TYPE_NONE,0);
-	//IncRefCount(tmp);
-	return (tmp);
-}
-*/
-
 object *if_print(vm *vm,stack * stack)
 {
 	// printf("print called\n");
@@ -704,11 +623,8 @@ object *if_print(vm *vm,stack * stack)
 
 object *if_sum(vm *vm,stack * stack)
 {
-	// printf("print called\n");
-	NUM num = stack->list->num;
-
 	INT sum = 0;
-	for (NUM i = 0; i < num; i++)
+	do
 	{
 		object *tos = stack_Pop(stack,vm->garbage);
 
@@ -718,25 +634,11 @@ object *if_sum(vm *vm,stack * stack)
 			case TYPE_INT:
 				sum += ((int_object*)tos)->value;
 				break;
-			case TYPE_UNICODE:
-				break;
 			case TYPE_ITER:
-				{
-					object *n = iter_NextNow(tos,vm);//TODO wont work right now cause it executes all block atm
-					do
-					{
-						if(n!= NULL)
-						{
-							//printf("in iter:%c\n",n->type);
-							if(n->type == TYPE_INT)
-								sum += ((int_object*)n)->value;
-							n = iter_NextNow(tos,vm);
-						}
-					}while(n != NULL && n->type != TYPE_NONE);
-				}
+				iter_Expand(tos,vm,stack);
 				break;
 			}
-	}
+	}while(stack->list->num);
 	int_object *tmp = CreateIntObject(sum,0);
 	#ifdef DEBUGGING
 	debug_printf(DEBUG_VERBOSE_STEP,"returning sum:%d\n",sum);

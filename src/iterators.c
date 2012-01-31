@@ -21,7 +21,7 @@
  */
 
 #include "iterators.h"
-iter_object *iter_CreateIter(object *iteration)
+iter_object *iter_CreateIter(object *iteration)//,struct _vm *vm
 {
 	if(iteration->type == TYPE_TUPLE)
 	{
@@ -47,25 +47,110 @@ iter_object *iter_CreateIter(object *iteration)
 	}
 }
 
-object *iter_Next(iter_object *iter)
+void iter_RestoreBlockStack(iter_object *iter,struct _vm *vm)
+{
+	stack_Push(vm->blocks,iter->tag);
+	while(iter->block_stack->list->num)
+	{
+		block_object *bo = stack_Pop(iter->block_stack,vm->garbage);
+		stack_Push(vm->blocks,bo);//reverserd order
+		//printf("restoring bo:%x\n",bo);
+		//DumpObject(bo,0);
+	}
+}
+
+void iter_SaveBlockStack(iter_object *iter,struct _vm *vm)
+{
+	block_object *bo = NULL;
+	while((bo = stack_Pop(vm->blocks,vm->garbage)) != iter->tag)
+	{
+		//printf("saving bo:%x\n",bo);
+		//DumpObject(bo,0);
+		stack_Push(iter->block_stack,bo);//reverserd order
+	}//while(bo != iter);
+}
+
+object *iter_Next(iter_object *iter,vm *vm)
 {
 	object *next = iter->iter_func(iter);
 	return(next);
 }
 
+void iter_Expand(iter_object *iter,struct _vm *vm,stack *stack)
+{
+	IncRefCount(iter);
+	object *n = NULL;
+	//printf("expanding iter\n");
+	struct _stack *tmp = stack_Init();
+	do
+	{
+		n = iter_NextNow(iter,vm);
+		//if(n!= NULL)
+		//	printf("n:%c\n",n->type);
+		//else 
+		//	printf("n: NULL\n");
+		stack_Push(tmp,n);
+	}while(n != NULL && n->type != TYPE_NONE);
+	//printf("pushing expanded items\n");
+	while(tmp->list->num)
+	{
+		object *s = stack_Pop(tmp,vm->garbage);
+		if(s->type != TYPE_NONE)
+			stack_Push(stack,s);
+	}
+	stack_Close(tmp,0);
+	DecRefCountGC(iter,vm->garbage);
+	//printf("expanded iter\n");
+}
+
 object *iter_NextNow(iter_object *iter,vm *vm)
 {
+	//printf("nextNow()\n");
 	object *next = iter->iter_func(iter);
-	if(next->type == TYPE_BLOCK)
+	//printf("iter executed:%x\n",iter);
+	if(next->type == TYPE_BLOCK) //used only to differentiate between an object to return and a generator not finished
 	{
 		object *ret = NULL;
 		block_object *bo = (block_object*)iter->tag;
 		//code_object *co = bo->code;
-		stack_Push(vm->blocks, bo);
+		
+		//stack *saved_blocks = vm->blocks
+		//vm->blocks = stack_Init();
+		//stack_Push(vm->blocks, bo);
+		//vm_DumpCode(vm,0,0);
+		iter_RestoreBlockStack(iter,vm);
+		//printf("restored block stack for iter\n");
+		//printf("top:%x, bo:%x\n",stack_Top(vm->blocks),bo);
+		
 		while(ret == NULL)//TODO doesnt stop after one block
+		{
+			//printf("in next now loop\n");
 			ret = vm_StepObject(vm);
+			//block_object *n = (block_object*)stack_Top(vm->blocks);
+			if(!stack_Contains(vm->blocks,bo)) //via normal return
+			{
+				//printf("block executed\n");
+				//stack_Dump(n->stack);
+				block_object *n = (block_object*)stack_Top(vm->blocks);
+				if(vm->blocks->list->num)
+					ret = stack_Pop(n->stack,vm->garbage);
+					
+				break;
+			}
+			else if(ret != NULL) //via yield 
+			{
+				//printf("saving block stack of iter\n");
+				iter_SaveBlockStack(iter,vm);
+				DecRefCountGC(ret,vm->garbage);
+				//printf("decremented iter\n");
+			}
+		}
+		//printf("ret object\n");
+		//DumpObject(ret,0);
 		return(ret);
 	}
+	//printf("iter thru next:\n");
+	//DumpObject(next,0);
 	return(next);
 }
 
@@ -106,11 +191,14 @@ void iter_InitSequence(iter_object *iter,INDEX start,NUM end,NUM step)
 
 object *iter_Generator(iter_object *iter)
 {
+	//printf("iter->ref_count:%d\n",iter->ref_count);
 	block_object *bo = (block_object*)iter->tag;
 	//code_object *co = bo->code;
 	//stack_Push(vm->blocks, bo);
+	//printf("checking if block has finished\n");
 	if(bo->ip < bo->len)
 		return(bo);
+	//printf("finished returning empty object\n");	
 	object *r = CreateEmptyObject( TYPE_NONE,0);
 	IncRefCount(r);
 	return(r);
@@ -120,13 +208,22 @@ void iter_InitGenerator(iter_object *iter,block_object *bo)
 {
 	iter->tag = bo;
 	IncRefCount(bo);
+	iter->block_stack = stack_Init();
 	iter->iter_func = &iter_Generator;
 }
 
 object *iter_Iteration(iter_object *iter)
 {
 	tuple_object *it = (tuple_object*)iter->tag;
-	return(GetNextItem(it));
+	object *next = GetNextItem(it);
+	if(next == NULL || next->type == TYPE_NONE)
+	{
+		//printf("tuple iterated thru\n");
+		object *r = CreateEmptyObject( TYPE_NONE,0);
+		IncRefCount(r);
+		return(r);
+	}
+	return(next);
 }
 
 void iter_InitIteration(iter_object *iter,tuple_object *to)

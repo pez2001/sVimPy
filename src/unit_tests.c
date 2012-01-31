@@ -192,8 +192,8 @@ int main(int argc, char *argv[])
 	#ifdef DEBUGGING
 	debug_level |= DEBUG_INTERACTIVE;
 	debug_level |= DEBUG_MEMORY;
-	debug_level |= DEBUG_SHOW_OPCODES;
-	debug_level |= DEBUG_FULL_DUMP;
+	//debug_level |= DEBUG_SHOW_OPCODES;
+	//debug_level |= DEBUG_FULL_DUMP;
 	//debug_level |= DEBUG_STACK;
 	//debug_level |= DEBUG_LISTS;
 	//debug_level |= DEBUG_GC;
@@ -233,24 +233,29 @@ int main(int argc, char *argv[])
 	//OpenPYC("tests/test52.pyc", vm);
 
 	//generators
-	//OpenPYC("tests/test24.pyc", vm);
-	//OpenPYC("tests/test25.pyc", vm);
+	OpenPYC("tests/test25.pyc", vm);
+	OpenPYC("tests/test24b.pyc", vm);
+	OpenPYC("tests/test24.pyc", vm);
 	
 	
-	//OpenPYC("tests/test26.pyc", vm);
-	//OpenPYC("tests/test20.pyc", vm);
+	OpenPYC("tests/test26.pyc", vm);
+	OpenPYC("tests/test20.pyc", vm);
 	
 	//simple generator with yield
-	//OpenPYC("tests/test59.pyc", vm);
-
-	//crashing or leaking memory
+	OpenPYC("tests/test59.pyc", vm);
 
 	
 	//iters
-	//OpenPYC("tests/test61.pyc", vm);
-	//OpenPYC("tests/test60.pyc", vm);
+	OpenPYC("tests/test61.pyc", vm);
+	OpenPYC("tests/test60.pyc", vm);
 
-	
+	//print + recursion
+	OpenPYC("tests/test17.pyc", vm);
+	OpenPYC("tests/test8.pyc", vm);
+	OpenPYC("tests/test9.pyc", vm);
+	OpenPYC("tests/test12.pyc", vm);
+	OpenPYC("tests/test11.pyc", vm);
+	/*
 	//function parameters
 	OpenPYC("tests/test50.pyc", vm);//with keywords unordered
 	OpenPYC("tests/test49b.pyc", vm);//kw unordered
@@ -288,13 +293,6 @@ int main(int argc, char *argv[])
 	OpenPYC("tests/test35.pyc", vm);
 	OpenPYC("tests/test34.pyc", vm);
 	OpenPYC("tests/test33.pyc", vm);
-
-	//print + recursion
-	OpenPYC("tests/test8.pyc", vm);
-	OpenPYC("tests/test9.pyc", vm);
-	OpenPYC("tests/test17.pyc", vm);
-	OpenPYC("tests/test12.pyc", vm);
-	OpenPYC("tests/test11.pyc", vm);
 
 	//nested tuple printing
 	OpenPYC("tests/test51.pyc", vm);
@@ -358,9 +356,10 @@ int main(int argc, char *argv[])
 	//brute prime (classless it takes longer because of range
 	OpenPYC("tests/e20.pyc", vm);
 	OpenPYC("tests/e_small.pyc", vm);
-	OpenPYC("tests/e_med.pyc", vm);
-	OpenPYC("tests/e_bigger.pyc", vm);
-	OpenPYC("tests/e_max.pyc", vm);
+	*/
+	//OpenPYC("tests/e_med.pyc", vm);
+	//OpenPYC("tests/e_bigger.pyc", vm);
+	//OpenPYC("tests/e_max.pyc", vm);
 
 	//OpenPYC("tests/test.pyc", vm);
 	//OpenPYC("tests/test10.pyc", vm);
