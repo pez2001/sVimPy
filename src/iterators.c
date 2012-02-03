@@ -26,13 +26,13 @@ iter_object *iter_CreateIter(object *iteration)//,struct _vm *vm
 	if(iteration->type == TYPE_TUPLE)
 	{
 		iter_object *iter = CreateIterObject(0);
-		iter_InitIteration(iter,iteration);
+		iter_InitIteration(iter,(tuple_object*)iteration);
 		return(iter);
 	}
 	else	if(iteration->type == TYPE_FUNCTION && ((function_object *)iteration)->func_type == FUNC_PYTHON && ( ((((function_object *)iteration)->func.code->co_flags & CO_GENERATOR)>0) || ((((function_object *)iteration)->func.code->co_flags & CO_NESTED)>0) ) )
 	{
 		iter_object *iter = CreateIterObject(0);
-		iter_InitGenerator(iter,iteration);	
+		iter_InitGenerator(iter,(function_object*)iteration);	
 		return(iter);
 	}
 	else if(iteration->type == TYPE_ITER)
@@ -52,8 +52,8 @@ void iter_RestoreBlockStack(iter_object *iter,struct _vm *vm)
 	stack_Push(vm->blocks,iter->tag);
 	while(iter->block_stack->list->num)
 	{
-		block_object *bo = stack_Pop(iter->block_stack,vm->garbage);
-		stack_Push(vm->blocks,bo);//reverserd order
+		block_object *bo = (block_object*)stack_Pop(iter->block_stack,vm->garbage);
+		stack_Push(vm->blocks,(object*)bo);//reverserd order
 		//printf("restoring bo:%x\n",bo);
 		//DumpObject(bo,0);
 	}
@@ -62,11 +62,11 @@ void iter_RestoreBlockStack(iter_object *iter,struct _vm *vm)
 void iter_SaveBlockStack(iter_object *iter,struct _vm *vm)
 {
 	block_object *bo = NULL;
-	while((bo = stack_Pop(vm->blocks,vm->garbage)) != iter->tag)
+	while((object*)(bo = (block_object*)stack_Pop(vm->blocks,vm->garbage)) != iter->tag)
 	{
 		//printf("saving bo:%x\n",bo);
 		//DumpObject(bo,0);
-		stack_Push(iter->block_stack,bo);//reverserd order
+		stack_Push(iter->block_stack,(object*)bo);//reverserd order
 	}//while(bo != iter);
 }
 
@@ -78,7 +78,7 @@ object *iter_Next(iter_object *iter,vm *vm)
 
 void iter_Expand(iter_object *iter,struct _vm *vm,stack *stack)
 {
-	IncRefCount(iter);
+	IncRefCount((object*)iter);
 	object *n = NULL;
 	//printf("expanding iter\n");
 	struct _stack *tmp = stack_Init();
@@ -96,10 +96,16 @@ void iter_Expand(iter_object *iter,struct _vm *vm,stack *stack)
 	{
 		object *s = stack_Pop(tmp,vm->garbage);
 		if(s->type != TYPE_NONE)
+		{
 			stack_Push(stack,s);
+		}
+		else
+		{
+			FreeObject(s);
+		}
 	}
 	stack_Close(tmp,0);
-	DecRefCountGC(iter,vm->garbage);
+	DecRefCountGC((object*)iter,vm->garbage);
 	//printf("expanded iter\n");
 }
 
@@ -127,14 +133,16 @@ object *iter_NextNow(iter_object *iter,vm *vm)
 			//printf("in next now loop\n");
 			ret = vm_StepObject(vm);
 			//block_object *n = (block_object*)stack_Top(vm->blocks);
-			if(!stack_Contains(vm->blocks,bo)) //via normal return
+			if(!stack_Contains(vm->blocks,(object*)bo)) //via normal return
 			{
 				//printf("block executed\n");
 				//stack_Dump(n->stack);
 				block_object *n = (block_object*)stack_Top(vm->blocks);
 				if(vm->blocks->list->num)
+				{
 					ret = stack_Pop(n->stack,vm->garbage);
-					
+					//DecRefCountGC(ret,vm->garbage);
+				}	
 				break;
 			}
 			else if(ret != NULL) //via yield 
@@ -151,21 +159,22 @@ object *iter_NextNow(iter_object *iter,vm *vm)
 	}
 	//printf("iter thru next:\n");
 	//DumpObject(next,0);
+	//DecRefCountGC(next,vm->garbage);
 	return(next);
 }
 
 object *iter_Sequence(iter_object *iter)
 {
 	tuple_object *seq = (tuple_object*)iter->tag;
-	int_object *pos = GetItem(seq,2);
-	int_object *step = GetItem(seq,1);
-	int_object *end = GetItem(seq,0);
+	int_object *pos = (int_object*)GetItem((object*)seq,2);
+	int_object *step = (int_object*)GetItem((object*)seq,1);
+	int_object *end = (int_object*)GetItem((object*)seq,0);
 
 	if(pos->value < end->value)
 	{
 		int_object *r = CreateIntObject(pos->value,0);
 		pos->value+=step->value;
-		return(r);
+		return((object*)r);
 	}
 	else
 	{
@@ -179,13 +188,13 @@ void iter_InitSequence(iter_object *iter,INDEX start,NUM end,NUM step)
 {
 	tuple_object *seq = CreateTuple(3,0);
 	int_object *iend = CreateIntObject(end,0);
-	SetItem(seq,0,iend);
+	SetItem((object*)seq,0,(object*)iend);
 	int_object *istep = CreateIntObject(step,0);
-	SetItem(seq,1,istep);
+	SetItem((object*)seq,1,(object*)istep);
 	int_object *ipos = CreateIntObject(start,0);
-	SetItem(seq,2,ipos);
-	iter->tag = seq;
-	IncRefCount(seq);
+	SetItem((object*)seq,2,(object*)ipos);
+	iter->tag = (object*)seq;
+	IncRefCount((object*)seq);
 	iter->iter_func = &iter_Sequence;
 }
 
@@ -206,8 +215,8 @@ object *iter_Generator(iter_object *iter)
 
 void iter_InitGenerator(iter_object *iter,block_object *bo)
 {
-	iter->tag = bo;
-	IncRefCount(bo);
+	iter->tag = (object*)bo;
+	IncRefCount((object*)bo);
 	iter->block_stack = stack_Init();
 	iter->iter_func = &iter_Generator;
 }
@@ -215,7 +224,7 @@ void iter_InitGenerator(iter_object *iter,block_object *bo)
 object *iter_Iteration(iter_object *iter)
 {
 	tuple_object *it = (tuple_object*)iter->tag;
-	object *next = GetNextItem(it);
+	object *next = GetNextItem((object*)it);
 	if(next == NULL || next->type == TYPE_NONE)
 	{
 		//printf("tuple iterated thru\n");
@@ -228,9 +237,9 @@ object *iter_Iteration(iter_object *iter)
 
 void iter_InitIteration(iter_object *iter,tuple_object *to)
 {
-	ResetIteration(to);
-	iter->tag = to;
-	IncRefCount(to);
+	ResetIteration((object*)to);
+	iter->tag = (object*)to;
+	IncRefCount((object*)to);
 	iter->iter_func = &iter_Iteration;
 }
 

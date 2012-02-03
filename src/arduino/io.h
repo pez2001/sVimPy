@@ -24,24 +24,37 @@
 #ifndef ARDUINO_IO_H
 #define ARDUINO_IO_H
 
+#ifdef USE_ARDUINO_FUNCTIONS
+
+extern "C" {
+#include "../types.h"
+#include "../object.h"
+#include "../stack.h"
+#include "../vm.h"
+#include "../debug.h"
+}
 
 
-#define INPUT = 0
-#define OUTPUT = 1
-#define LOW = 0
-#define HIGH = 1
+#include "libarduino/arduino.h"
 
-void a_pinMode(pin,mode);
-BOOL a_digitalRead(pin);
-def a_digitalWrite(pin,value);
-def a_analogRead(pin,);
-def a_analogWrite(pin,value);
-def a_delay(ms);
-def a_serialPrintln(message);
-def a_serialBegin(baudrate);
+//#define INPUT 0
+//#define OUTPUT 1
+//#define LOW 0
+//#define HIGH 1
 
+object *a_pinMode(vm *vm,stack * stack); //(pin,mode);
+object *a_digitalRead(vm *vm,stack * stack); //(pin);
+object *a_digitalWrite(vm *vm,stack * stack); //(pin,value);
+object *a_analogRead(vm *vm,stack * stack); //(pin,);
+object *a_analogWrite(vm *vm,stack * stack); //(pin,value);
+object *a_delay(vm *vm,stack * stack); //(ms);
+object *a_serialprint(vm *vm,stack * stack); //(message);
+object *a_serialBegin(vm *vm,stack * stack); //(baudrate);
 
+void AddArduinoFunctions(vm *vm);
+void AddArduinoGlobals(vm *vm);
 
+#endif
 
 
 #endif

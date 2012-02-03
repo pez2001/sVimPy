@@ -8,7 +8,7 @@ long mem_chunks_actual_size = 0;
 mem_chunk **mem_chunk_items;
 long mem_chunks_top = 0;
 
-void mem_Init()
+void mem_Init(void)
 {
 	if((debug_level & DEBUG_MEMORY) > 0)
 	{
@@ -17,7 +17,7 @@ void mem_Init()
 	}
 }
 
-void mem_Close()
+void mem_Close(void)
 {
 	if((debug_level & DEBUG_MEMORY) > 0)
 	{

@@ -23,9 +23,13 @@
 
 #ifndef LISTS_H
 #define LISTS_H
+#include "features.h"
 
 #include "types.h"
 #include "debug.h"
+
+#include "stdio.h"
+#include "stdarg.h"
 
 #ifdef DEBUGGING
 #include "memory.h"
@@ -70,6 +74,10 @@ BOOL ptr_Insert(ptr_list * list, INDEX index, void *ptr);
 
 void *ptr_Remove(ptr_list * list, INDEX index);
 
+void ptr_RemoveItem(ptr_list * list, void *ptr);
+
+INDEX ptr_GetIndex(ptr_list *list, void *ptr);
+
 void ptr_Clear(ptr_list * list);
 
 NUM ptr_GetNum(ptr_list * list);
@@ -85,5 +93,9 @@ void *ptr_Dequeue(ptr_list * list);
 BOOL ptr_IsEmpty(ptr_list * list);
 
 BOOL ptr_Contains(ptr_list *list,void *ptr);
+
+void ptr_MoveUp(ptr_list * list, INDEX index);
+
+void ptr_MoveDown(ptr_list * list, INDEX index);
 
 #endif

@@ -28,24 +28,31 @@
 #include "stack.h"
 #include "vm.h"
 #include "debug.h"
+#include "math.h"
 
 // object *pow(object *base,object *exp);
+struct _vm;
 
-object *if_range(vm *vm,stack * stack);
+object *if_range(struct _vm *vm,stack * stack);
 
-object *if_print(vm *vm,stack * stack);
+object *if_print(struct _vm *vm,stack * stack);
 
-object *if_sum(vm *vm,stack * stack);
+object *if_sum(struct _vm *vm,stack * stack);
 
-object *if_list(vm *vm,stack * stack);
+object *if_list(struct _vm *vm,stack * stack);
 
-object *if_next(vm *vm,stack * stack);
+object *if_next(struct _vm *vm,stack * stack);
 
 object *BinaryOp(object *tos,object *tos1,unsigned char op);
 
 object *CompareOp(object *tos,object *tos1,unsigned char cmp_op);
 
-object *custom_code(vm *vm,stack * stack);
+object *custom_code(struct _vm *vm,stack * stack);
 
+void AddInternalFunctions(struct _vm *vm);
+
+object *BinaryOp(object *tos,object *tos1,unsigned char op);
+
+object *CompareOp(object *tos,object *tos1,unsigned char cmp_op);
 
 #endif

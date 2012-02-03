@@ -22,7 +22,7 @@
 
 #include "stack.h"
 
-stack *stack_Init()
+stack *stack_Init(void)
 {
 	#ifdef DEBUGGING
 	stack *tmp = (stack *)mem_malloc(sizeof(stack), "stack_Init() return");
@@ -57,7 +57,7 @@ void stack_Clear(stack *stack, BOOL free_objects)
 			//printf("before stack list num:%d\n",stack->list->num);
 			for (NUM i = 0; i < num; i++)
 			{
-					FreeObject(ptr_Pop(stack->list));
+					FreeObject((object*)ptr_Pop(stack->list));
 					//printf("freed %d object\n",i);
 			}
 			//printf("stack list num:%d\n",stack->list->num);
@@ -74,7 +74,7 @@ BOOL stack_IsEmpty(stack *stack)
 	return(ptr_IsEmpty(stack->list));
 }
 
-void stack_Push(stack *stack, object * x)
+void stack_Push(stack *stack, struct _object * x)
 {
 	if (x == NULL)
 		return;
@@ -82,7 +82,7 @@ void stack_Push(stack *stack, object * x)
 	ptr_Push(stack->list, x);
 }
 
-object *stack_Bottom(stack *stack)
+struct _object *stack_Bottom(stack *stack)
 {
 	if (stack->list->num < 1)
 	{
@@ -96,7 +96,7 @@ object *stack_Bottom(stack *stack)
 	return (r);
 }
 
-object *stack_Get(stack *stack,INDEX index)
+struct _object *stack_Get(stack *stack,INDEX index)
 {
 	if(index < 0)
 		index = stack->list->num- (-index);
@@ -117,7 +117,7 @@ NUM stack_Pointer(stack *stack)
 	return(stack->list->num-1);
 }
 
-object *stack_Top(stack *stack)
+struct _object *stack_Top(stack *stack)
 {
 	if (stack->list->num < 1)
 	{
@@ -130,7 +130,7 @@ object *stack_Top(stack *stack)
 	return (r);
 }
 
-object *stack_Second(stack *stack)
+struct _object *stack_Second(stack *stack)
 {
 	if (stack->list->num < 2)
 	{
@@ -143,7 +143,7 @@ object *stack_Second(stack *stack)
 	return (r);
 }
 
-object *stack_Third(stack *stack)
+struct _object *stack_Third(stack *stack)
 {
 	if (stack->list->num < 3)
 	{
@@ -157,14 +157,14 @@ object *stack_Third(stack *stack)
 	return (r);
 }
 
-void stack_SetBottom(stack *stack, object * x)
+void stack_SetBottom(stack *stack, struct _object * x)
 {
 	if (stack->list->num < 1)
 	{
 		#ifdef DEBUGGING
 		debug_printf(DEBUG_STACK,"stack_SetBottom() - stack underflow - no top\n");
 		#endif
-		return (NULL);
+		return;
 	}
 	stack->list->items[0] = x;
 	//IncRefCount(x);
@@ -177,33 +177,33 @@ void stack_SetTop(stack *stack, object * x)
 		#ifdef DEBUGGING
 		debug_printf(DEBUG_STACK,"stack_SetTop() - stack underflow - no top\n");
 		#endif
-		return (NULL);
+		return;
 	}
 	stack->list->items[stack->list->num - 1] = x;
 	//IncRefCount(x);
 }
 
-void stack_SetSecond(stack *stack, object * x)
+void stack_SetSecond(stack *stack, struct _object * x)
 {
 	if (stack->list->num < 2)
 	{
 		#ifdef DEBUGGING
 		debug_printf(DEBUG_STACK,"stack_SetSecond() - stack underflow - no top\n");
 		#endif
-		return (NULL);
+		return;
 	}
 	stack->list->items[stack->list->num - 2] = x;
 	//IncRefCount(x);
 }
 
-void stack_SetThird(stack *stack, object * x)
+void stack_SetThird(stack *stack, struct _object * x)
 {
 	if (stack->list->num < 3)
 	{
 		#ifdef DEBUGGING
 		debug_printf(DEBUG_STACK,"stack_SetThird() - stack underflow - no top\n");
 		#endif
-		return (NULL);
+		return;
 	}
 	stack->list->items[stack->list->num - 3] = x;
 	//IncRefCount(x);
@@ -237,7 +237,7 @@ void stack_Dump(stack *stack)
 }
 #endif
 
-object *stack_Pop(stack *stack,ptr_list *gc)
+struct _object *stack_Pop(stack *stack,ptr_list *gc)
 {
 	if (stack->list->num < 1)
 	{
@@ -251,7 +251,7 @@ object *stack_Pop(stack *stack,ptr_list *gc)
 	return (r);
 }
 
-BOOL stack_Contains(stack *stack, object * x)
+BOOL stack_Contains(stack *stack, struct _object * x)
 {
 	for (NUM i = 0; i < stack->list->num; i++)
 		if (stack->list->items[i] == x)

@@ -30,7 +30,7 @@ object *StringAdd(object *a,object *b)
 	bs = ((unicode_object *)b)->value;
 	char *tmp = str_Cat(as,bs);
 	unicode_object *r = CreateUnicodeObject(tmp,0);
-	return(r);
+	return((object*)r);
 }
 
 object *StringCompare(object *a,object *b)
@@ -65,13 +65,13 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 		tuple_object *mtr = CreateTuple(a,0);
 		for (NUM i = 0; i < a; i++)
 		{
-			SetItem(mtr,i,tos1);
+			SetItem((object*)mtr,i,tos1);
 		}
 		#ifdef DEBUGGING
 		if((debug_level & DEBUG_VERBOSE_STEP) > 0)
-			DumpObject(mtr,0);
+			DumpObject((object*)mtr,0);
 		#endif
-		return(mtr);
+		return((object*)mtr);
 	}
 	if(tos->type == TYPE_BINARY_FLOAT || tos1->type == TYPE_BINARY_FLOAT) //mixed op -> returns float
 	{
@@ -95,7 +95,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 		{
 			bf = ((float_object*)tos1)->value;
 		}	
-		new_tos =CreateFloatObject(0,0);
+		new_tos = (object*)CreateFloatObject(0,0);
 		switch(op)
 		{
 			case OPCODE_INPLACE_MULTIPLY:
@@ -214,7 +214,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 		INT b = 0;
 		a = ((int_object*)tos)->value;
 		b = ((int_object*)tos1)->value;
-		new_tos = CreateIntObject(0,0);
+		new_tos = (object*)CreateIntObject(0,0);
 		switch(op)
 		{
 			case OPCODE_INPLACE_MULTIPLY:
@@ -514,41 +514,33 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 	return(new_tos);
 }
 
-object *custom_code(vm *vm,stack * stack)
+object *custom_code(struct _vm *vm,stack * stack)
 {
 	object *a = stack_Pop(stack,vm->garbage);
 	object *b = stack_Pop(stack,vm->garbage);
-	//if(a->type == TYPE_INT && b->type == TYPE_INT)
-	//{
-	//	int_object *r = CreateIntObject(((int_object*)a)->value+((int_object*)b)->value,0);
-	//return (r);
-	//}
-	//object *tmp = CreateEmptyObject(TYPE_NONE,0);
-	//printf("wrong args for custom_code\n");
 	return(BinaryOp(a,b,OPCODE_BINARY_ADD));
-	//return (tmp);
 }
 
-object *if_list(vm *vm,stack * stack)
+object *if_list(struct _vm *vm,stack * stack)
 {
 	tuple_object *r = CreateTuple(0,0);
 	//printf("listing\n");
 	//stack_Dump(stack);
-	do
+	while(stack->list->num)
 	{
 		object *t = stack_Pop(stack,vm->garbage);
 		if(t->type == TYPE_ITER)
-			iter_Expand(t,vm,stack);
+			iter_Expand((iter_object*)t,vm,stack);
 		else
-			AppendItem(r,t);
-	}while(stack->list->num);
-	return (r);
+			AppendItem((object*)r,t);
+	}
+	return ((object*)r);
 }
 
-object *if_next(vm *vm,stack * stack)
+object *if_next(struct _vm *vm,stack * stack)
 {
 	object *iter = stack_Pop(stack,vm->garbage);
-	object *next = iter_NextNow(iter,vm);
+	object *next = iter_NextNow((iter_object*)iter,vm);
 	//if(next != NULL && next->type == TYPE_BLOCK)
 	//{
 	//	stack_Push(vm->blocks, next);
@@ -558,7 +550,7 @@ object *if_next(vm *vm,stack * stack)
 	return(next);
 }
 
-object *if_range(vm *vm,stack * stack)
+object *if_range(struct _vm *vm,stack * stack)
 {
 	if (stack->list->num < 1)
 	{
@@ -590,27 +582,26 @@ object *if_range(vm *vm,stack * stack)
 	{
 		iter_InitSequence(iter,((int_object*)s)->value,((int_object*)e)->value,((int_object*)st)->value);
 	}
-	return (iter);
+	return ((object*)iter);
 }
 
-object *if_print(vm *vm,stack * stack)
+object *if_print(struct _vm *vm,stack * stack)
 {
-	// printf("print called\n");
-	NUM num = stack->list->num;
 	BOOL printed_something = 0;
-	for (NUM i = 0; i < num; i++)
+	while(stack->list->num)
 	{
 		object *tos = stack_Pop(stack,vm->garbage);
 
-		// if(tos != NULL && tos->type == TYPE_UNICODE)
-		// printf("arg[%d]:%s\n",i,((unicode_object*)tos->ptr)->content );
-		// else 
+		if(tos->type == TYPE_ITER)
+		{
+			iter_Expand((iter_object*)tos,vm,stack);
+			continue;
+		}
 		if(tos->type == TYPE_NONE)
 			continue;
-		if (i)
+		if (printed_something)
 			printf(" ");
 		if (tos != NULL)
-			// printf("tos type:%c\n",tos->type);
 			PrintObject(tos);
 		printed_something = 1;
 	}
@@ -621,10 +612,10 @@ object *if_print(vm *vm,stack * stack)
 	return (tmp);
 }
 
-object *if_sum(vm *vm,stack * stack)
+object *if_sum(struct _vm *vm,stack * stack)
 {
 	INT sum = 0;
-	do
+	while(stack->list->num)
 	{
 		object *tos = stack_Pop(stack,vm->garbage);
 
@@ -635,15 +626,33 @@ object *if_sum(vm *vm,stack * stack)
 				sum += ((int_object*)tos)->value;
 				break;
 			case TYPE_ITER:
-				iter_Expand(tos,vm,stack);
+				iter_Expand((iter_object*)tos,vm,stack);
 				break;
 			}
-	}while(stack->list->num);
+	}
 	int_object *tmp = CreateIntObject(sum,0);
 	#ifdef DEBUGGING
 	debug_printf(DEBUG_VERBOSE_STEP,"returning sum:%d\n",sum);
 	#endif
 	//IncRefCount(tmp);
-	return (tmp);
+	return ((object*)tmp);
+}
+
+void AddInternalFunctions(struct _vm *vm)
+{
+	function_object *list = CreateCFunction(&if_list, "list");
+	function_object *range = CreateCFunction(&if_range, "range");
+	function_object *print = CreateCFunction(&if_print, "print");
+	function_object *sum = CreateCFunction(&if_sum, "sum");
+	function_object *next = CreateCFunction(&if_next, "next");
+	vm_AddFunctionObject(vm, list);
+	vm_AddFunctionObject(vm, range);
+	vm_AddFunctionObject(vm, print);
+	vm_AddFunctionObject(vm, sum);
+	vm_AddFunctionObject(vm, next);
+
+	function_object *cc = CreateCFunction(&custom_code, "custom_code");
+	vm_AddFunctionObject(vm, cc);
+
 }
 

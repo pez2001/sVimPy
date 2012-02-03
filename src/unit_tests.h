@@ -32,6 +32,10 @@
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
+#include "arduino/test_pyc.h"
+#include "arduino/blink.h"
+#include "arduino/io.h"
+
 
 #ifdef DEBUGGING
 extern long mem_chunks_num;

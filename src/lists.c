@@ -259,6 +259,23 @@ BOOL ptr_Contains(ptr_list *list,void *ptr)
 	return(0);
 }
 
+INDEX ptr_GetIndex(ptr_list *list, void *ptr)
+{
+	for(int i=0;i<list->num;i++)
+	{	
+		if(list->items[i] == ptr)
+			return(i);
+	}
+	return(-1);
+}
+
+void ptr_RemoveItem(ptr_list * list, void *ptr)
+{
+	INDEX index = ptr_GetIndex(list,ptr);
+	if(index != -1)
+		ptr_Remove(list,index);
+}
+
 BOOL ptr_IsEmpty(ptr_list * list)
 {
 	return (!list->num);

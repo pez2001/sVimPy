@@ -30,6 +30,8 @@
 
 #include "types.h"
 #include "lists.h"
+#include "stream.h"
+#include "stack.h"
 
 #include "debug.h"
 #ifdef DEBUGGING
@@ -37,15 +39,13 @@
 #include "memory.h"
 #endif
 
-#define MAGIC (3180 | ((long)'\r'<<16) | ((long)'\n'<<24))
-#define TAG "cpython-32"
-#define CACHEDIR "__pycache__"
+//#define TAG "cpython-32"
+//#define CACHEDIR "__pycache__"
 /* Current magic word and string tag as globals. */
-static long pyc_magic = MAGIC;
 
-static const char *pyc_tag = TAG;
+//static const char *pyc_tag = TAG;
 
-static short pyc_magic_short = 3180;
+//static short pyc_magic_short = 3180;
 
 
 #define TYPE_NULL               '0'
@@ -118,7 +118,7 @@ static short pyc_magic_short = 3180;
 #pragma pack(push)				/* push current alignment to stack */
 #pragma pack(1)					/* set alignment to 1 byte boundary */
 
-typedef struct
+typedef struct _object
 {
 	OBJECT_TYPE type;
 	OBJECT_FLAGS flags;
@@ -223,7 +223,7 @@ typedef struct
 struct _vm;
 struct _stack;
 
-typedef struct
+typedef struct _function_object
 {
 	OBJECT_TYPE type;
 	OBJECT_FLAGS flags;
@@ -298,31 +298,31 @@ kv_object *ConvertToKVObject(object *key);
 
 kv_object *ConvertToKVObjectValued(object *key,object *value);
 
-object *AllocObject();
+object *AllocObject(void);
 
-block_object *AllocBlockObject();
+block_object *AllocBlockObject(void);
 
 //loop_block_object *AllocLoopBlockObject();
 
-kv_object *AllocKVObject();
+kv_object *AllocKVObject(void);
 
-ref_object *AllocRefObject();
+ref_object *AllocRefObject(void);
 
-string_object *AllocStringObject();
+string_object *AllocStringObject(void);
 
-tuple_object *AllocTupleObject();
+tuple_object *AllocTupleObject(void);
 
-unicode_object *AllocUnicodeObject();
+unicode_object *AllocUnicodeObject(void);
 
-code_object *AllocCodeObject();
+code_object *AllocCodeObject(void);
 
-iter_object *AllocIterObject();
+iter_object *AllocIterObject(void);
 
-int_object *AllocIntObject();
+int_object *AllocIntObject(void);
 
-float_object *AllocFloatObject();
+float_object *AllocFloatObject(void);
 
-function_object *AllocFunctionObject();
+function_object *AllocFunctionObject(void);
 
 /*object *AsObject(void *ptr);
 
@@ -361,13 +361,13 @@ int IsRefObject(object * obj);
 int IsIterObject(object * obj);
 */
 
-long ReadLong(FILE * f);
+long ReadLong(stream *f);
 
-FLOAT ReadFloat(FILE * f);
+FLOAT ReadFloat(stream *f);
 
-char ReadChar(FILE * f);
+char ReadChar(stream *f);
 
-object *ReadObject(FILE * f);
+object *ReadObject(stream *f);
 
 object *DissolveRef(object *obj);
 
@@ -389,7 +389,7 @@ object *CreateEmptyObject(char type,OBJECT_FLAGS flags);
 
 function_object *CreateFunctionObject_MAKE_FUNCTION(code_object *function_code,tuple_object *defaults,tuple_object *kw_defaults,OBJECT_FLAGS flags);
 
-function_object *CreateFunctionObject_MAKE_CLOSURE(code_object *function_code,object *closure,tuple_object *defaults,tuple_object *kw_defaults,OBJECT_FLAGS flags);
+function_object *CreateFunctionObject_MAKE_CLOSURE(code_object *function_code,tuple_object *closure,tuple_object *defaults,tuple_object *kw_defaults,OBJECT_FLAGS flags);
 
 function_object *CreateFunctionObject(unsigned char func_type,OBJECT_FLAGS flags);
 
@@ -427,6 +427,8 @@ object *GetDictItem(object *tuple,object *key);
 
 object *GetDictItemByIndex(object *tuple,INDEX index);
 
+object *GetDictItemByName(object *tuple,char *name);
+
 NUM GetTupleLen(object *tuple);
 
 INDEX GetDictItemIndex(object *tuple,object *key);
@@ -442,5 +444,7 @@ void AppendDictItem(object * tuple,object *key,object *value);
 void AppendItem(object *tuple,object *value);
 
 void ClearDictValues(object *tuple);
+
+void DeleteItem(object * tuple, INDEX index);
 
 #endif

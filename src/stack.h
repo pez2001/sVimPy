@@ -38,36 +38,37 @@ typedef struct _stack
 	ptr_list *list;
 } stack;
 
+struct _object;
 
-stack *stack_Init(); //TODO rename to Create
+stack *stack_Init(void); //TODO rename to Create
 
-object *stack_Pop(stack *stack,ptr_list *gc);
+struct _object *stack_Pop(stack *stack,ptr_list *gc);
 
-void stack_Push(stack *stack, object * x);
+void stack_Push(stack *stack, struct _object * x);
 
 void stack_Close(stack *stack, BOOL free_objects);
 
 void stack_Clear(stack *stack, BOOL free_objects);
 
-object *stack_Get(stack *stack,INDEX index);
+struct _object *stack_Get(stack *stack,INDEX index);
 
 NUM stack_Pointer(stack *stack);
 
-object *stack_Top(stack *stack);
+struct _object *stack_Top(stack *stack);
 
-object *stack_Bottom(stack *stack);
+struct _object *stack_Bottom(stack *stack);
 
-void stack_SetBottom(stack *stack, object * x);
+void stack_SetBottom(stack *stack, struct _object * x);
 
-void stack_SetTop(stack *stack, object * x);
+void stack_SetTop(stack *stack, struct _object * x);
 
-object *stack_Second(stack *stack);
+struct _object *stack_Second(stack *stack);
 
-void stack_SetSecond(stack *stack, object * x);
+void stack_SetSecond(stack *stack, struct _object * x);
 
-object *stack_Third(stack *stack);
+struct _object *stack_Third(stack *stack);
 
-void stack_SetThird(stack *stack, object * x);
+void stack_SetThird(stack *stack, struct _object * x);
 
 void stack_Adjust(stack *stack, REL_NUM by);
 
@@ -77,6 +78,6 @@ void stack_Dump(stack *stack);
 
 BOOL stack_IsEmpty(stack *stack);
 
-BOOL stack_Contains(stack *stack, object * x);
+BOOL stack_Contains(stack *stack, struct _object * x);
 
 #endif

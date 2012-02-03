@@ -56,8 +56,8 @@ char *str_Substring(char *a,INDEX start,NUM len)
 	char *tmp = (char *)malloc(e + 1);
 	#endif
 	memset(tmp, 0, e + 1);
-	memcpy(tmp, *(a+start), e);
-	return (tmp);
+	memcpy(tmp, a+start, e);
+	return(tmp);
 }
 
 char *str_Copy(char *a)
@@ -70,7 +70,7 @@ char *str_Copy(char *a)
 
 	memset(tmp, 0, strlen(a) + 1);
 	memcpy(tmp, a, strlen(a));
-	return (tmp);
+	return(tmp);
 }
 
 char *str_FromChar(char c)
@@ -83,7 +83,7 @@ char *str_FromChar(char c)
 	
 	memset(tmp, 0, 2);
 	memset(tmp, c, 1);
-	return (tmp);
+	return(tmp);
 }
 
 char *str_Printf(char *format, ...)
@@ -102,7 +102,7 @@ char *str_Printf(char *format, ...)
 
 NUM str_PrintfVaLen(char *format,va_list va)
 {
-	NUM n = vsnprintf(NULL,0,format,va) + 1;
+	NUM n = vsnprintf(NULL,0,format,va);
 	return(n);
 }
 
@@ -116,13 +116,14 @@ char *str_PrintfVa(char *format,NUM len,va_list va)
 	//printf("len:%d\n",len);
 	//printf("format:%s\n",format);
 	#ifdef DEBUGGING
-	output = (char*) mem_malloc(len,"str_PrintfVA() - return");
+	output = (char*) mem_malloc((len),"str_PrintfVA() - return");
 	#else
-	output = (char*) malloc(len);
+	output = (char*) malloc((len));
 	#endif
+	memset(output,0,(len));
 	//va_start(va,format);
 	//printf("alloced\n");
-	vsnprintf(output,len,format,va) + 1;
+	vsnprintf(output,(len),format,va);
 	//va_end(va);
 	//printf("output:%s\n",output);
 	return(output);

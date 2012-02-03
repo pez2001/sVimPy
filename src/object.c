@@ -23,7 +23,7 @@
 
 #include "object.h"
 
-block_object *AllocBlockObject()
+block_object *AllocBlockObject(void)
 {	
 	#ifdef DEBUGGING
 	return((block_object *)mem_malloc(sizeof(block_object), "AllocBlockObject() return"));
@@ -41,7 +41,7 @@ loop_block_object *AllocLoopBlockObject()
 	#endif
 }*/
 
-kv_object *AllocKVObject()
+kv_object *AllocKVObject(void)
 {
 	#ifdef DEBUGGING
 	return((kv_object *) mem_malloc(sizeof(kv_object), "AllocKVObject() return"));
@@ -50,7 +50,7 @@ kv_object *AllocKVObject()
 	#endif
 }
 
-object *AllocObject()
+object *AllocObject(void)
 {
 	#ifdef DEBUGGING
 	return ((object *) mem_malloc(sizeof(object), "AllocObject() return"));
@@ -59,7 +59,7 @@ object *AllocObject()
 	#endif
 }
 
-code_object *AllocCodeObject()
+code_object *AllocCodeObject(void)
 {
 	#ifdef DEBUGGING
 	return((code_object *) mem_malloc(sizeof(code_object), "AllocCodeObject() return"));
@@ -68,7 +68,7 @@ code_object *AllocCodeObject()
 	#endif
 }
 
-function_object *AllocFunctionObject()
+function_object *AllocFunctionObject(void)
 {
 	#ifdef DEBUGGING
 	return((function_object *) mem_malloc(sizeof(function_object),"AllocFunctionObject() return"));
@@ -77,7 +77,7 @@ function_object *AllocFunctionObject()
 	#endif
 }
 
-string_object *AllocStringObject()
+string_object *AllocStringObject(void)
 {
 	#ifdef DEBUGGING
 	return((string_object *) mem_malloc(sizeof(string_object), "AllocStringObject() return"));
@@ -86,7 +86,7 @@ string_object *AllocStringObject()
 	#endif
 }
 
-tuple_object *AllocTupleObject()
+tuple_object *AllocTupleObject(void)
 {
 	#ifdef DEBUGGING
 	return((tuple_object *) mem_malloc(sizeof(tuple_object), "AllocTupleObject() return"));
@@ -95,7 +95,7 @@ tuple_object *AllocTupleObject()
 	#endif
 }
 
-unicode_object *AllocUnicodeObject() 
+unicode_object *AllocUnicodeObject(void) 
 {
 	#ifdef DEBUGGING
     return((unicode_object*) mem_malloc(sizeof(unicode_object), "AllocUnicodeObject() return")); 
@@ -104,7 +104,7 @@ unicode_object *AllocUnicodeObject()
 	#endif
 }
 
-ref_object *AllocRefObject()
+ref_object *AllocRefObject(void)
 {
 	#ifdef DEBUGGING
     return((ref_object*) mem_malloc(sizeof(ref_object), "AllocRefObject() return")); 
@@ -113,7 +113,7 @@ ref_object *AllocRefObject()
 	#endif
 }
 
-int_object *AllocIntObject() 
+int_object *AllocIntObject(void) 
 {
 	#ifdef DEBUGGING
     return((int_object*) mem_malloc(sizeof(int_object), "AllocIntObject() return")); 
@@ -122,7 +122,7 @@ int_object *AllocIntObject()
 	#endif
 }
 
-float_object *AllocFloatObject() 
+float_object *AllocFloatObject(void) 
 {
 	#ifdef DEBUGGING
     return((float_object*) mem_malloc(sizeof(float_object), "AllocFloatObject() return")); 
@@ -131,7 +131,7 @@ float_object *AllocFloatObject()
 	#endif
 }
 
-iter_object *AllocIterObject() 
+iter_object *AllocIterObject(void) 
 {
 	#ifdef DEBUGGING
 	return((iter_object*) mem_malloc(sizeof(iter_object), "AllocIterObject() return"));
@@ -245,7 +245,7 @@ ref_object *CreateRefObject(object *ref_to,OBJECT_FLAGS flags)
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
 		debug_printf(DEBUG_CREATION,"created object\n");
-		DumpObject(r,0);
+		DumpObject((object*)r,0);
 	}
 	#endif
 	return(r);
@@ -262,7 +262,7 @@ int_object *CreateIntObject(long value,OBJECT_FLAGS flags)
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
 		debug_printf(DEBUG_CREATION,"created object\n");
-		DumpObject(r,0);
+		DumpObject((object*)r,0);
 	}
 	#endif
 	return(r);
@@ -279,7 +279,7 @@ float_object *CreateFloatObject(float value,OBJECT_FLAGS flags)
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
 		debug_printf(DEBUG_CREATION,"created object\n");
-		DumpObject(r,0);
+		DumpObject((object*)r,0);
 	}
 	#endif
 	return(r);
@@ -296,7 +296,7 @@ unicode_object *CreateUnicodeObject(char *value,OBJECT_FLAGS flags)
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
 		debug_printf(DEBUG_CREATION,"created object\n");
-		DumpObject(r,0);
+		DumpObject((object*)r,0);
 	}
 	#endif
 	return(r);
@@ -313,7 +313,7 @@ tuple_object *CreateTuple(NUM num,OBJECT_FLAGS flags)
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
 		debug_printf(DEBUG_CREATION,"created object\n");
-		DumpObject(r,0);
+		DumpObject((object*)r,0);
 	}
 	#endif
 	return(r);
@@ -331,7 +331,7 @@ string_object *CreateStringObject(char *bytes,NUM len,OBJECT_FLAGS flags)
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
 		debug_printf(DEBUG_CREATION,"created object\n");
-		DumpObject(r,0);
+		DumpObject((object*)r,0);
 	}
 	#endif
 	return(r);
@@ -352,7 +352,7 @@ kv_object *CreateKVObject(object *key,object *value,OBJECT_FLAGS flags)
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
 		debug_printf(DEBUG_CREATION,"created object\n");
-		DumpObject(r,0);
+		DumpObject((object*)r,0);
 	}
 	#endif
 	return(r);
@@ -368,7 +368,7 @@ object *CreateEmptyObject(char type,OBJECT_FLAGS flags)
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
 		debug_printf(DEBUG_CREATION,"created object\n");
-		DumpObject(r,0);
+		DumpObject((object*)r,0);
 	}
 	#endif
 	return(r);
@@ -384,18 +384,18 @@ function_object *CreateFunctionObject_MAKE_FUNCTION(code_object *function_code,t
 	r->func_type = FUNC_PYTHON;
 	r->closure = NULL;
 	r->name = function_code->name;
-	IncRefCount(function_code);
+	IncRefCount((object*)function_code);
 	if(defaults != NULL)
 	{
 		r->defaults = defaults;
-		IncRefCount(defaults);
+		IncRefCount((object*)defaults);
 	}
 	else
 		r->defaults = NULL;
 	if(kw_defaults != NULL)
 	{
 		r->kw_defaults = kw_defaults;
-		IncRefCount(kw_defaults);
+		IncRefCount((object*)kw_defaults);
 	}
 	else
 		r->kw_defaults = NULL;
@@ -403,13 +403,13 @@ function_object *CreateFunctionObject_MAKE_FUNCTION(code_object *function_code,t
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
 		debug_printf(DEBUG_CREATION,"created object\n");
-		DumpObject(r,0);
+		DumpObject((object*)r,0);
 	}
 	#endif
 	return(r);
 }
 
-function_object *CreateFunctionObject_MAKE_CLOSURE(code_object *function_code,object *closure,tuple_object *defaults,tuple_object *kw_defaults,OBJECT_FLAGS flags)
+function_object *CreateFunctionObject_MAKE_CLOSURE(code_object *function_code,tuple_object *closure,tuple_object *defaults,tuple_object *kw_defaults,OBJECT_FLAGS flags)
 {
 	function_object *r = AllocFunctionObject();
 	r->type = TYPE_FUNCTION;
@@ -417,21 +417,21 @@ function_object *CreateFunctionObject_MAKE_CLOSURE(code_object *function_code,ob
 	r->ref_count = 0;
 	r->func.code = function_code;
 	r->closure = closure;
-	IncRefCount(closure);
+	IncRefCount((object*)closure);
 	r->func_type = FUNC_PYTHON;
 	r->name = function_code->name;
-	IncRefCount(function_code);
+	IncRefCount((object*)function_code);
 	if(defaults != NULL)
 	{
 		r->defaults = defaults;
-		IncRefCount(defaults);
+		IncRefCount((object*)defaults);
 	}
 	else
 		r->defaults = NULL;
 	if(kw_defaults != NULL)
 	{
 		r->kw_defaults = kw_defaults;
-		IncRefCount(kw_defaults);
+		IncRefCount((object*)kw_defaults);
 	}
 	else
 		r->kw_defaults = NULL;
@@ -439,7 +439,7 @@ function_object *CreateFunctionObject_MAKE_CLOSURE(code_object *function_code,ob
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
 		debug_printf(DEBUG_CREATION,"created object\n");
-		DumpObject(r,0);
+		DumpObject((object*)r,0);
 	}
 	#endif
 	return(r);
@@ -450,8 +450,11 @@ function_object *CreateFunctionObject(unsigned char func_type,OBJECT_FLAGS flags
 	function_object *r = AllocFunctionObject();
 	r->type = TYPE_FUNCTION;
 	r->flags = flags;
+	r->defaults = NULL;
+	r->kw_defaults = NULL;
 	r->closure = NULL;
-	r->func.code = NULL;
+	r->func.func = NULL;
+	r->name = NULL;
 	r->ref_count = 0;
 	r->func_type = func_type;
 	#ifdef DEBUGGING
@@ -476,7 +479,7 @@ iter_object *CreateIterObject(OBJECT_FLAGS flags)
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
 		debug_printf(DEBUG_CREATION,"created object\n");
-		DumpObject(r,0);
+		DumpObject((object*)r,0);
 	}
 	#endif
 	return(r);
@@ -519,7 +522,7 @@ void FreeBlockObject(object *obj)
 		//	FreeObject(((block_object*)obj)->iter);
 		//printf("closing block stack\n");
 		if(((block_object*)obj)->stack != NULL)
-			stack_Close(((block_object*)obj)->stack);
+			stack_Close(((block_object*)obj)->stack,0);
 		//printf("closed block\n");
 }
 
@@ -575,7 +578,7 @@ void FreeObject(object * obj)
 			//printf("closing iter stack\n");
 			stack_Close(((iter_object*)obj)->block_stack,0);
 		}
-		FreeObject(((iter_object*)obj)->tag);
+		FreeObject((object*)((iter_object*)obj)->tag);
 		break;
 	case TYPE_NULL:
 		// printf("freeing NULL object @%x\n",obj);
@@ -606,8 +609,8 @@ void FreeObject(object * obj)
 		objects_header_total -= sizeof(kv_object);
 		#endif
 
-		FreeObject(((kv_object*) obj)->key);
-		FreeObject(((kv_object*) obj)->value);
+		FreeObject((object*)((kv_object*) obj)->key);
+		FreeObject((object*)((kv_object*) obj)->value);
 		break;
 	case TYPE_FUNCTION:
 		#ifdef DEBUGGING
@@ -616,10 +619,10 @@ void FreeObject(object * obj)
 
 		if(((function_object*) obj)->func_type == FUNC_PYTHON)
 		{
-			FreeObject(((function_object*) obj)->func.code);
-			FreeObject(((function_object*) obj)->defaults);
-			FreeObject(((function_object*) obj)->kw_defaults);
-			FreeObject(((function_object*) obj)->closure);
+			FreeObject((object*)((function_object*) obj)->func.code);
+			FreeObject((object*)((function_object*) obj)->defaults);
+			FreeObject((object*)((function_object*) obj)->kw_defaults);
+			FreeObject((object*)((function_object*) obj)->closure);
 		}else 
 		if(((function_object*) obj)->func_type == FUNC_C || ((function_object*) obj)->func_type == FUNC_C_OBJ)
 		{
@@ -675,7 +678,7 @@ void FreeObject(object * obj)
 					//if ((((tuple_object *) obj)->list->items[i]) != NULL && !(((object*)((tuple_object *) obj)->list->items[i])->flags & OFLAG_ON_STACK))
 					//{
 						//printf("freeing sub:%c\n",((object*)((tuple_object *) obj)->list->items[i])->type);
-						FreeObject(((tuple_object *) obj)->list->items[i]);
+						FreeObject((object*)((tuple_object *) obj)->list->items[i]);
 						//if(((object*)((tuple_object *) obj->ptr)->list->items[i])->value_ptr != NULL && !(((object*)((tuple_object *) obj->ptr)->list->items[i])->flags & OFLAG_ON_STACK))
 						//	FreeObject(((object*)((tuple_object *) obj->ptr)->list->items[i])->value_ptr);
 					//}
@@ -699,12 +702,12 @@ void FreeObject(object * obj)
 		#else
 		free(((code_object*) obj)->name);
 		#endif
-		FreeObject(((code_object *) obj)->code);
-		FreeObject(((code_object *) obj)->consts);
-		FreeObject(((code_object *) obj)->names);
-		FreeObject(((code_object *) obj)->varnames);
-		FreeObject(((code_object *) obj)->freevars);
-		FreeObject(((code_object *) obj)->cellvars);
+		FreeObject((object*)((code_object *) obj)->code);
+		FreeObject((object*)((code_object *) obj)->consts);
+		FreeObject((object*)((code_object *) obj)->names);
+		FreeObject((object*)((code_object *) obj)->varnames);
+		FreeObject((object*)((code_object *) obj)->freevars);
+		FreeObject((object*)((code_object *) obj)->cellvars);
 		// FreeObject(((code_object*)obj->ptr)->filename); //TO DECREASE
 		// MEMORY USAGE
 		// FreeObject(((code_object*)obj->ptr)->lnotab);//TO DECREASE MEMORY
@@ -840,19 +843,19 @@ void DumpObject(object * obj, char level)
 			for (char i = 0; i < level; i++)
 				debug_printf(DEBUG_ALL,"\t");
 			debug_printf(DEBUG_ALL,"code:\n");
-			DumpObject(((function_object*)obj)->func.code,level + 1);
+			DumpObject((object*)((function_object*)obj)->func.code,level + 1);
 			for (char i = 0; i < level; i++)
 				debug_printf(DEBUG_ALL,"\t");
 			debug_printf(DEBUG_ALL,"defaults:\n");
-			DumpObject(((function_object*)obj)->defaults,level + 1);
+			DumpObject((object*)((function_object*)obj)->defaults,level + 1);
 			for (char i = 0; i < level; i++)
 				debug_printf(DEBUG_ALL,"\t");
 			debug_printf(DEBUG_ALL,"kw_defaults:\n");
-			DumpObject(((function_object*)obj)->kw_defaults,level + 1);
+			DumpObject((object*)((function_object*)obj)->kw_defaults,level + 1);
 			for (char i = 0; i < level; i++)
 				debug_printf(DEBUG_ALL,"\t");
 			debug_printf(DEBUG_ALL,"closure:\n");
-			DumpObject(((function_object*)obj)->closure,level + 1);
+			DumpObject((object*)((function_object*)obj)->closure,level + 1);
 		}else
 		if(((function_object*)obj)->func_type == FUNC_C)
 		{
@@ -883,14 +886,14 @@ void DumpObject(object * obj, char level)
 			debug_printf(DEBUG_ALL," contains %d items\n", ((tuple_object *) obj)->list->num);
 			for (NUM i = 0; i < ((tuple_object *) obj)->list->num; i++)
 			{
-				if (((tuple_object *) obj)->list->items[i] != NULL)
+				if (((tuple_object*) obj)->list->items[i] != NULL)
 				{
 
-					if ((((object*)((tuple_object *) obj)->list->items[i])->flags & OFLAG_TUPLE_PTR) > 0)
+					if ((((object*)((tuple_object*) obj)->list->items[i])->flags & OFLAG_TUPLE_PTR) > 0)
 						debug_printf(DEBUG_ALL,"%d->",i);
 					else
 						debug_printf(DEBUG_ALL,"%d  ",i);
-					DumpObject(((tuple_object *) obj)->list->items[i], level + 1);
+					DumpObject((object*)((tuple_object*) obj)->list->items[i], level + 1);
 				}
 			}
 		}
@@ -967,7 +970,7 @@ void DumpObject(object * obj, char level)
 char *DumpObjectXml(object * obj, char level)
 {
 	if (obj == NULL)
-		return;
+		return(NULL);
 	// printf("level:%d\n",level);
 	for (char i = 0; i < level; i++)
 		printf("\t");
@@ -1028,19 +1031,19 @@ char *DumpObjectXml(object * obj, char level)
 			for (char i = 0; i < level; i++)
 				printf("\t");
 			printf("code:\n");
-			DumpObject(((function_object*)obj)->func.code,level + 1);
+			DumpObject((object*)((function_object*)obj)->func.code,level + 1);
 			for (char i = 0; i < level; i++)
 				printf("\t");
 			printf("defaults:\n");
-			DumpObject(((function_object*)obj)->defaults,level + 1);
+			DumpObject((object*)((function_object*)obj)->defaults,level + 1);
 			for (char i = 0; i < level; i++)
 				printf("\t");
 			printf("kw_defaults:\n");
-			DumpObject(((function_object*)obj)->kw_defaults,level + 1);
+			DumpObject((object*)((function_object*)obj)->kw_defaults,level + 1);
 			for (char i = 0; i < level; i++)
 				printf("\t");
 			printf("closure:\n");
-			DumpObject(((function_object*)obj)->closure,level + 1);
+			DumpObject((object*)((function_object*)obj)->closure,level + 1);
 		}else
 		if(((function_object*)obj)->func_type == FUNC_C)
 		{
@@ -1067,19 +1070,19 @@ char *DumpObjectXml(object * obj, char level)
 		break;
 	case TYPE_TUPLE:
 		printf("tuple object");
-		if (((tuple_object *) obj)->list != NULL && ((tuple_object *) obj)->list->num > 0)
+		if (((tuple_object*) obj)->list != NULL && ((tuple_object *) obj)->list->num > 0)
 		{
 			printf(" contains %d items\n", ((tuple_object *) obj)->list->num);
 			for (NUM i = 0; i < ((tuple_object *) obj)->list->num; i++)
 			{
-				if (((tuple_object *) obj)->list->items[i] != NULL)
+				if (((tuple_object*) obj)->list->items[i] != NULL)
 				{
 
-					if ((((object*)((tuple_object *) obj)->list->items[i])->flags & OFLAG_TUPLE_PTR) > 0)
+					if ((((object*)((tuple_object*) obj)->list->items[i])->flags & OFLAG_TUPLE_PTR) > 0)
 						printf("%d->",i);
 					else
 						printf("%d  ",i);
-					DumpObject(((tuple_object *) obj)->list->items[i], level + 1);
+					DumpObject((object*)((tuple_object*) obj)->list->items[i], level + 1);
 				}
 			}
 		}
@@ -1149,6 +1152,7 @@ char *DumpObjectXml(object * obj, char level)
 	default:
 		printf("object type is unknown:%c\n", obj->type);
 	}
+	return(NULL);
 }
 #endif
 
@@ -1219,7 +1223,7 @@ object *CopyObject(object *obj)
 	assert(obj != NULL);
 	#endif
 	if (obj == NULL)
-		return;
+		return(NULL);
 
 	
 	switch (obj->type)
@@ -1241,7 +1245,7 @@ object *CopyObject(object *obj)
 		r->ref_count  = 0;
 		r->flags = obj->flags;
 		r->value = ((int_object*)obj)->value;
-		return(r);
+		return((object*)r);
 		}
 		break;
 	case TYPE_BINARY_FLOAT:
@@ -1251,7 +1255,7 @@ object *CopyObject(object *obj)
 		r->ref_count  = 0;
 		r->flags = obj->flags;
 		r->value = ((float_object*)obj)->value;
-		return(r);
+		return((object*)r);
 		}
 		break;
 	case TYPE_UNICODE:
@@ -1261,7 +1265,7 @@ object *CopyObject(object *obj)
 		r->ref_count  = 0;
 		r->flags = obj->flags;
 		r->value = str_Copy(((unicode_object*)obj)->value);
-		return(r);
+		return((object*)r);
 		}
 		break;
 	case TYPE_STRING:
@@ -1293,7 +1297,7 @@ object *CopyObject(object *obj)
 	//c-> = str_Copy(((code_object*)obj)->name);
 	//add reference object to decrease memory usage for code objects
 	//reference objects refs need no freeing
-	return(CreateRefObject(obj,obj->flags));
+	return((object*)CreateRefObject(obj,obj->flags));
 
 	case TYPE_FUNCTION:
 	//code_object *c = AllocCodeObject();
@@ -1301,7 +1305,7 @@ object *CopyObject(object *obj)
 	//c-> = str_Copy(((code_object*)obj)->name);
 	//add reference object to decrease memory usage for code objects
 	//reference objects refs need no freeing
-	return(CreateRefObject(obj,obj->flags));
+	return((object*)CreateRefObject(obj,obj->flags));
 
 	//return(c);	
 	/*
@@ -1404,8 +1408,8 @@ void AppendDictItem(object * tuple,object *key,object *value)
 	DumpObject(key,0);
 	}
 	#endif
-	ptr_Push(((tuple_object *) tuple)->list,kv);
-	IncRefCount(kv);
+	ptr_Push(((tuple_object*) tuple)->list,kv);
+	IncRefCount((object*)kv);
 
 }
 
@@ -1456,7 +1460,7 @@ void SetDictItem(object *tuple,object *key,object *value)
 			{
 					kv_object *kv = ConvertToKVObjectValued(k,value);
 					//FreeObject(k);
-					SetItem(tuple,index,kv);
+					SetItem(tuple,index,(object*)kv);
 					//IncRefCount(kv);
 			}
 		}
@@ -1494,7 +1498,7 @@ void SetDictItemByIndex(object *tuple,INDEX index,object *value)
 			{
 					kv_object *kv = ConvertToKVObjectValued(k,value);
 					//FreeObject(k);
-					SetItem(tuple,index,kv);
+					SetItem(tuple,index,(object*)kv);
 					//IncRefCount(kv);
 			}
 		}
@@ -1516,7 +1520,7 @@ void ClearDictValues(object *tuple)
 			kv_object *kv = (kv_object*)((tuple_object *) tuple)->list->items[i];
 			((tuple_object *) tuple)->list->items[i] = kv->key;
 			IncRefCount(kv->key);
-			FreeObject(kv);
+			FreeObject((object*)kv);
 		}
 	}
 	//printf("cleared dict values\n");
@@ -1647,6 +1651,29 @@ INDEX GetItemIndexByName(object * tuple, char *name)
 	return (-1);
 }
 
+object *GetDictItemByName(object *tuple,char *name)
+{
+	if (tuple == NULL || tuple->type != TYPE_TUPLE || ((tuple_object *) tuple)->list == NULL)
+		return (NULL);
+	for (NUM i = 0; i < ((tuple_object *) tuple)->list->num; i++)
+	{		
+		if (((tuple_object *) tuple)->list->items[i] == NULL)
+			continue;
+		object *item = (object*)((tuple_object *) tuple)->list->items[i];
+		if(item->type == TYPE_KV)
+		{
+			object *key = (object*)((kv_object*)item)->key;
+			object *value = (object*)((kv_object*)item)->value;
+
+			if (key->type == TYPE_UNICODE	&& !strcmp(((unicode_object*)key)->value, name)) 
+			{
+				return (value);
+			}
+		}
+	}
+	return (NULL);
+}
+
 void ResetIteration(object * tuple)
 {
 	if (tuple == NULL || tuple->type != TYPE_TUPLE)
@@ -1763,16 +1790,17 @@ object *GetNextItem(object * tuple)
 	return (NULL);
 }
 
-long ReadLong(FILE * f)
+long ReadLong(stream *f)
 {
 
 	long r = 0;
 
 	// char *b = (char*)mem_malloc(4);
-	fread(&r, 4, 1, f);
-
+	stream_Read(f,&r, 4);
+	//r = (long) *stream_Read(f, 4);
+	//printf("stream read:%
 	// r = *(long*)b;
-	// free(b);
+	//free(b);
 	return (r);
 }
 
@@ -1821,12 +1849,12 @@ return(r);
 }
 */
 
-FLOAT ReadFloat(FILE * f)
+FLOAT ReadFloat(stream *f)
 {
 	float r = 0;
 	double t = 0;
-	int g = 0;
-	fread(&t, 8, 1, f);
+	//int g = 0;
+	stream_Read(f, &t,8);
 	//int read = fread(&t, 4, 1, f);
 	//read = fread(&r, 4, 1, f);
 	//r = ConvertDouble(t);
@@ -1836,14 +1864,14 @@ FLOAT ReadFloat(FILE * f)
 	return (r);
 }
 
-char ReadChar(FILE * f)
+char ReadChar(stream *f)
 {
 	char r = 0;
-	fread(&r, 1, 1, f);
+	stream_Read(f,&r,1);
 	return (r);
 }
 
-object *ReadObject(FILE * f)
+object *ReadObject(stream *f)
 {
 	#ifdef DEBUGGING
 	objects_num++;
@@ -1921,7 +1949,8 @@ object *ReadObject(FILE * f)
 		#endif
 		FreeObject(tmp_name);
 		
-		long firstlineno = ReadLong(f);
+		//long firstlineno = ReadLong(f);
+		ReadLong(f);//firstlineno
 		//co->firstlineno = ReadLong(f);
 		// co->lnotab = ReadObject(f);
 		object *tmp_lnotab = ReadObject(f);
@@ -1940,7 +1969,7 @@ object *ReadObject(FILE * f)
 		// printf("filename:%s\n",((string_object*)co->filename->ptr)->content);
 		// printf("firstlineno:%d\n",co->firstlineno);
 		// ReadChunk(f);
-		return(co);
+		return((object*)co);
 		}
 		break;
 	case TYPE_STRING:
@@ -1965,7 +1994,7 @@ object *ReadObject(FILE * f)
 			#endif
 
 			// printf("str_ptr=%x\n",(unsigned long)string);
-			NUM read = fread(string, n, 1, f);
+			stream_Read(f,string, n);
 
 			// printf("str_so_ptr=%x\n",(unsigned long)so);
 			obj->len = n;
@@ -1983,7 +2012,7 @@ object *ReadObject(FILE * f)
 			obj->type = TYPE_NULL;
 			obj->len = 0;
 		}
-		return(obj);
+		return((object*)obj);
 		}
 		break;
 	case TYPE_TUPLE:
@@ -2018,7 +2047,7 @@ object *ReadObject(FILE * f)
 		//to->num = n;
 		to->flags = 0;
 		to->type = TYPE_TUPLE;
-		return(to);
+		return((object*)to);
 		}
 		break;
 	case TYPE_UNICODE:
@@ -2035,13 +2064,13 @@ object *ReadObject(FILE * f)
 		char *unicode_string = (char *)malloc(n + 1);
 		#endif
 		memset(unicode_string, 0, n + 1);
-		NUM uread = fread(unicode_string, n, 1, f);
+		stream_Read(f,unicode_string, n);
 		//printf("read unicode string:%s\n",unicode_string);
 		// uo->len = n;
 		obj->flags = 0;
 		obj->value = unicode_string;
 		obj->type = TYPE_UNICODE;
-		return(obj);
+		return((object*)obj);
 		}
 		break;
 	case TYPE_BINARY_FLOAT:
@@ -2053,7 +2082,7 @@ object *ReadObject(FILE * f)
 		obj->value = n;
 		//printf("read float:%7g\n",obj->value);
 		obj->type = TYPE_BINARY_FLOAT;
-		return(obj);
+		return((object*)obj);
 		}
 		break;
 	case TYPE_INT:
@@ -2065,7 +2094,7 @@ object *ReadObject(FILE * f)
 		obj->flags = 0;
 		obj->value = n;
 		obj->type = TYPE_INT;
-		return(obj);
+		return((object*)obj);
 		}
 		break;
 	default:
@@ -2082,4 +2111,6 @@ object *ReadObject(FILE * f)
 	// printf("read object\n"); 
 	return (NULL);
 }
+
+
 

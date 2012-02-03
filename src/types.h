@@ -28,6 +28,10 @@
 #define OBJECT_FLAGS unsigned char
 #define OBJECT_REF_COUNT unsigned short
 
+//stream 
+#define STREAM_NUM long 
+#define STREAM_TYPE_ID char
+
 //standard int size
 #define INT long
 //standard floating number size

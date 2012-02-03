@@ -63,7 +63,7 @@ finally
 except
 
 */
-
+#include "features.h"
 #include "types.h"
 #include "object.h"
 #include "opcodes.h"
@@ -73,13 +73,21 @@ except
 #include "stream.h"
 #include "garbage.h"
 #include "iterators.h"
+#include "internal_functions.h"
 
 #include "debug.h"
 
-#ifdef DEBUGGING
+#ifdef USE_DEBUGGING
 #include "assert.h"
+#endif
+
+#if defined(USE_DEBUGGING) || defined(USE_ARDUINO_DEBUGGING)
 extern const opcode opcodes[];
 #endif 
+
+#define MAGIC (3180 | ((long)'\r'<<16) | ((long)'\n'<<24))
+
+
 
 #pragma pack(push)				/* push current alignment to stack */
 #pragma pack(1)					/* set alignment to 1 byte boundary */
@@ -89,7 +97,8 @@ typedef struct _vm
 	stack *blocks;
 	ptr_list *functions;
 	ptr_list *garbage;
-	code_object *global;
+	//code_object *global;
+	ptr_list *globals;
 	object *(*interrupt_handler) (struct _vm *vm,stack *stack);
 	BOOL interrupt_vm;
 	BOOL running;
@@ -119,7 +128,11 @@ vm *vm_Init(code_object *co);//init vm and set global object if given
 
 void vm_Close(vm *vm);//close vm and free all of its used memory
 
-void vm_SetGlobal(vm *vm, code_object * co);//set global code object
+void vm_FreeGlobals(vm *vm);
+
+void vm_AddGlobal(vm *vm, code_object * co);//add a global code object
+
+void vm_RemoveGlobal(vm *vm, code_object *co);//remove a global
 
 void vm_SetInterrupt(vm*vm,object *(*interrupt_func) (struct _vm *vm,stack *stack)); //set interrupt handler function
 
@@ -131,7 +144,9 @@ void vm_Exit(vm *vm); //exit vm
 
 void vm_Stop(vm *vm); //pause vm execution
 
-object *vm_CallFunction(vm *vm,char *name,stack *locals);//call a python function from C
+object *vm_CallFunction(vm *vm,char *name,stack *locals,NUM argc);//call a python function from C
+
+object *vm_RunPYC(vm *vm,stream *f,BOOL free_object);
 
 object *vm_RunObject(vm *vm, object *obj, stack *locals, NUM argc);//run a python code object
 
@@ -139,7 +154,7 @@ object *vm_InteractiveRunObject(vm *vm, object *obj, stack *locals, NUM argc);
 
 block_object *vm_StartObject(vm *vm,object *obj,stack *locals,NUM argc);//run a python code object
 
-object *vm_StartFunctionObject(vm *vm,function_object *fo,stack *locals,stack *kw_locals,NUM argc,NUM kw_argc);//run a python function object
+object *vm_StartFunctionObject(vm *vm,function_object *fo,stack *locals,stack *kw_locals,NUM argc,NUM kw_argc);//run a python function object //TODO check if argc can be omitted
 
 function_object *vm_ResolveFunction(vm *vm,object *to_resolve);//input can be function_objects ,code_objects, unicode_objects -> returns a function_object if any
 

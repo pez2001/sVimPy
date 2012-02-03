@@ -1,6 +1,8 @@
-/* 
+"""
  * sVimPy - small Virtual interpreting machine for Python
  * (c) 2012 by Tim Theede aka Pez2001 <pez2001@voyagerproject.de> / vp
+ *
+ * python arduino api wrapper
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,27 +20,18 @@
  *
  * THIS SOFTWARE IS SUPPLIED AS IT IS WITHOUT ANY WARRANTY!
  *
- */
+"""
 
-#include "debug.h"
+INPUT = 0
+OUTPUT = 1
+LOW = 0
+HIGH = 1
 
-#ifdef DEBUGGING
-#ifndef USE_ARDUINO_DEBUGGING
-void debug_printf(int msg_debug_level,char* format, ...)
-{
-	if(msg_debug_level != 0 && (debug_level & msg_debug_level) == 0)
-	return;
-	va_list va;
-	va_start(va,format);
-	NUM n = str_PrintfVaLen(format,va);
-	va_end(va);
-	va_start(va,format);
-	char *output = str_PrintfVa(format,n,va);
-	va_end(va);
-	printf(output);
-	assert(mem_free(output));
-	
-}
-#endif
-#endif
-
+def pinMode(pin,mode):pass
+def digitalRead(pin):pass
+def digitalWrite(pin,value):pass
+def analogRead(pin,):pass
+def analogWrite(pin,value):pass
+def delay(ms):pass
+def serialPrintln(message):pass
+def serialBegin(baudrate):pass

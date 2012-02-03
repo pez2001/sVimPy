@@ -42,9 +42,9 @@ typedef struct
 
 #define MAX_MEM_CHUNKS 20000000
 
-void mem_Init();
+void mem_Init(void);
 
-void mem_Close();
+void mem_Close(void);
 
 void *mem_malloc(size_t size, char *description);
 

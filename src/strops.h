@@ -23,11 +23,15 @@
 #ifndef STROPS_H
 #define STROPS_H
 
+#include "features.h"
 #include "types.h"
 #include "debug.h"
 #include "memory.h"
 #include "stdarg.h"
 #include "stdio.h"
+#include "stdlib.h"
+#include "string.h"
+
 
 
 char *str_Cat(char *a, char *b);

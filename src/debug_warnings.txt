@@ -1,0 +1,7 @@
+iterators.c: In Funktion »iter_CreateIter«:
+iterators.c:35:3: Warnung: Übergabe des Arguments 2 von »iter_InitGenerator« von inkompatiblem Zeigertyp [standardmäßig aktiviert]
+iterators.h:46:6: Anmerkung: »struct block_object *« erwartet, aber Argument hat Typ »struct function_object *«
+iterators.c:41:3: Warnung: return von inkompatiblem Zeigertyp [standardmäßig aktiviert]
+iterators.c: In Funktion »iter_Generator«:
+iterators.c:209:3: Warnung: return von inkompatiblem Zeigertyp [standardmäßig aktiviert]
+C:\MinGW\bin\ar.exe: creating vm.a

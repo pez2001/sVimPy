@@ -1,6 +1,6 @@
 #include "arduino.h"
 
-//#include "arduino/test_pyc.h"
+
 
 extern "C" void __cxa_pure_virtual() { while (1); }
 
@@ -77,31 +77,27 @@ void initUSART (void)
 
 int debug_level = 0;
 
-void AddInternalFunctions(vm *vm)
+extern void *__bss_end;
+extern void *__brkval;
+
+int get_free_memory(void)
 {
-	function_object *list = CreateCFunction(&if_list, "list");
-	function_object *range = CreateCFunction(&if_range, "range");
-	function_object *print = CreateCFunction(&if_print, "print");
-	function_object *sum = CreateCFunction(&if_sum, "sum");
-	function_object *next = CreateCFunction(&if_next, "next");
-	vm_AddFunctionObject(vm, list);
-	vm_AddFunctionObject(vm, range);
-	vm_AddFunctionObject(vm, print);
-	vm_AddFunctionObject(vm, sum);
-	vm_AddFunctionObject(vm, next);
+  int free_memory;
 
-	function_object *cc = CreateCFunction(&custom_code, "custom_code");
-	vm_AddFunctionObject(vm, cc);
+  if((int)__brkval == 0)
+    free_memory = ((int)&free_memory) - ((int)&__bss_end);
+  else
+    free_memory = ((int)&free_memory) - ((int)__brkval);
 
+  return free_memory;
 }
 
-
-
-inline void setup (void) {
+inline void setup (vm *vm) 
+{
   
- Serial.begin(115200);
+	Serial.begin(115200);
+	debug_printf(DEBUG_ALL,"setup\n");
 //  delay(250);
- Serial.print("hi");
 //initUSART();
 //  pinMode(13, OUTPUT);     
 //  digitalWrite(13, HIGH);
@@ -115,31 +111,50 @@ inline void setup (void) {
 //for(int i = 0;i<TEST_PYC_LEN;i++)
 //	Serial.print(test_pyc[i]);
 //	put_char((unsigned char)test_pyc[i]);
-
-
+	debug_level = 0;
+	debug_level |= DEBUG_VERBOSE_TESTS;	
+	debug_level |= DEBUG_SHOW_OPCODES;
+	debug_printf(DEBUG_ALL,"setup:%d\n",get_free_memory());
 	//ptr_tests();
-	vm *vm = vm_Init(NULL);
-	AddInternalFunctions(vm);
-	vm_Close(vm);
-
- Serial.print("done");
+	//Serial.print("hi");
+	//AddInternalFunctions(vm);
+	//AddArduinoFunctions(vm);
+	//AddArduinoGlobals(vm);
+	//stream *m = stream_CreateFromBytes(((char*)&blink),BLINK_LEN);
+	debug_printf(DEBUG_ALL,"created stream:%d\n",get_free_memory());
+	//Serial.print("run");
+	//vm_RunPYC(vm,m,0);
+	//Serial.print("thru");
+	//vm_CallFunction(vm,"setup",NULL,0);
+	//vm_Close(vm);
+	//Serial.print("done");
 
 }
-void loop (void) {
+void loop (vm *vm) 
+{
 /*  digitalWrite(13, HIGH);   // set the LED on
   delay(100);              // wait for a second
   digitalWrite(13, LOW);    // set the LED off
   delay(100);              // wait for a second
  */
- Serial.print("loop\n");
+ //Serial.print("loop\n");	
+ //debug_printf(DEBUG_ALL,"loop\n");
+	//vm_CallFunction(vm,"loop",NULL,0);
 }
-int __attribute__((OS_main)) main(void)  {
+int __attribute__((OS_main)) main(void)  
+{
 	init();
 
-	setup();
+	#if defined(USBCON)
+	USB.attach();
+	#endif
+	
+	vm *vm = vm_Init(NULL);
+
+	setup(vm);
     
 	for (;;)
-		loop();
+		loop(vm);
         
 	return 0;
 }

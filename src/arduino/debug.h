@@ -21,24 +21,36 @@
  */
 
 
-#ifndef DEBUG_H
-#define DEBUG_H
+#ifndef ARDUINO_DEBUG_H
+#define ARDUINO_DEBUG_H
 
-#include "features.h"
+#include "../features.h"
+
+
+
+
+#ifdef USE_ARDUINO_FUNCTIONS
 
 #ifdef USE_ARDUINO_DEBUGGING
-#include "arduino/debug.h"
+ #ifdef __cplusplus
+extern "C" {
 #endif
-
-#ifdef DEBUGGING
-#ifndef USE_ARDUINO_DEBUGGING
-
-#include "assert.h"
-#include "types.h"
-
-#include "strops.h"
+#include "../types.h"
+#include "../strops.h"
 #include "stdio.h"
 #include "stdarg.h"
+ #ifdef __cplusplus
+ }
+#endif
+
+#include "libarduino/arduino.h"
+
+
+
+
+
+
+//#include "assert.h"
 
 #define DEBUG_ALL 0
 #define DEBUG_MEMORY 1
@@ -61,6 +73,9 @@
 #define DEBUG_PTR_LISTS 131072
 #define DEBUG_VERBOSE_TESTS 262144
 
+#ifdef __cplusplus
+extern "C" 
+#endif
 void debug_printf(int msg_debug_level,char* format, ...);
 
 extern int debug_level;

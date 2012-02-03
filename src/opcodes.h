@@ -22,6 +22,7 @@
 
 #ifndef OPCODES_H
 #define OPCODES_H
+#include "features.h"
 
 #include "types.h"
 #include "debug.h"
@@ -129,32 +130,37 @@
 #define OPCODE_SET_ADD								0x91
 #define OPCODE_MAP_ADD								0x92
 
-#ifdef DEBUGGING
+#if defined(USE_DEBUGGING) || defined(USE_ARDUINO_DEBUGGING)
 
 typedef struct
 {
 	unsigned char cm_op;		// cmp op in bytecode representation
-#ifdef DEBUG
+//#ifdef DEBUG
 	char *name;					// string version
-#endif
+//#endif
 } cmp_op;
 
 
 typedef struct
 {
 	unsigned char opcode;		// opcode in bytecode representation
-#ifdef DEBUG
+//#ifdef DEBUG
 	char *name;					// string version
+	#ifndef USE_ARDUINO_DEBUGGING
 	char *description;			// a short description
+	#endif
 	// unsigned int num_parameters; //number of parameters
 	NUM argcount;
+	#ifndef USE_ARDUINO_DEBUGGING
 	BOOL supported;
-#endif
+	#endif
 } opcode;
 
-void DumpUnsupportedOpCodes();
+#ifndef USE_ARDUINO_DEBUGGING
+void DumpUnsupportedOpCodes(void);
+NUM GetSupportedOpcodesNum(void);
+#endif
 
-NUM GetSupportedOpcodesNum();
 
 INDEX GetOpcodeIndex(unsigned char opcode);
 
