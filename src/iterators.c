@@ -28,21 +28,22 @@ iter_object *iter_CreateIter(object *iteration)//,struct _vm *vm
 		iter_object *iter = CreateIterObject(0);
 		iter_InitIteration(iter,(tuple_object*)iteration);
 		return(iter);
-	}
+	}/*
 	else	if(iteration->type == TYPE_FUNCTION && ((function_object *)iteration)->func_type == FUNC_PYTHON && ( ((((function_object *)iteration)->func.code->co_flags & CO_GENERATOR)>0) || ((((function_object *)iteration)->func.code->co_flags & CO_NESTED)>0) ) )
 	{
 		iter_object *iter = CreateIterObject(0);
 		iter_InitGenerator(iter,(function_object*)iteration);	
 		return(iter);
-	}
+	}*/
 	else if(iteration->type == TYPE_ITER)
 	{
 		//printf("iteration already created\n");
-		return(iteration);
+		//if(((iter_object*)iteration)->
+		return((iter_object*)iteration);
 	}
 	else
 	{
-		printf("no appropriate iter found for obj @%x\n",iteration);
+		debug_printf(DEBUG_ALL,"no appropriate iter found for obj @%x\n",iteration);
 		return(NULL);
 	}
 }
@@ -178,6 +179,8 @@ object *iter_Sequence(iter_object *iter)
 	}
 	else
 	{
+		int_object *start = (int_object*)GetItem((object*)seq,3);
+		pos->value = start->value;
 		object *r = CreateEmptyObject( TYPE_NONE,0);
 		IncRefCount(r);
 		return(r);
@@ -186,13 +189,15 @@ object *iter_Sequence(iter_object *iter)
 
 void iter_InitSequence(iter_object *iter,INDEX start,NUM end,NUM step)
 {
-	tuple_object *seq = CreateTuple(3,0);
+	tuple_object *seq = CreateTuple(4,0);
 	int_object *iend = CreateIntObject(end,0);
 	SetItem((object*)seq,0,(object*)iend);
 	int_object *istep = CreateIntObject(step,0);
 	SetItem((object*)seq,1,(object*)istep);
 	int_object *ipos = CreateIntObject(start,0);
 	SetItem((object*)seq,2,(object*)ipos);
+	int_object *istart = CreateIntObject(start,0);
+	SetItem((object*)seq,3,(object*)istart);
 	iter->tag = (object*)seq;
 	IncRefCount((object*)seq);
 	iter->iter_func = &iter_Sequence;
@@ -206,8 +211,9 @@ object *iter_Generator(iter_object *iter)
 	//stack_Push(vm->blocks, bo);
 	//printf("checking if block has finished\n");
 	if(bo->ip < bo->len)
-		return(bo);
-	//printf("finished returning empty object\n");	
+		return((object*)bo);
+	//printf("finished returning empty object\n");
+	bo->ip = bo->start;//reset iterator for further uses
 	object *r = CreateEmptyObject( TYPE_NONE,0);
 	IncRefCount(r);
 	return(r);
@@ -217,6 +223,7 @@ void iter_InitGenerator(iter_object *iter,block_object *bo)
 {
 	iter->tag = (object*)bo;
 	IncRefCount((object*)bo);
+	bo->ip = bo->start;
 	iter->block_stack = stack_Init();
 	iter->iter_func = &iter_Generator;
 }
@@ -228,6 +235,7 @@ object *iter_Iteration(iter_object *iter)
 	if(next == NULL || next->type == TYPE_NONE)
 	{
 		//printf("tuple iterated thru\n");
+		ResetIteration((object*)it);
 		object *r = CreateEmptyObject( TYPE_NONE,0);
 		IncRefCount(r);
 		return(r);

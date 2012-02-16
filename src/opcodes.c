@@ -46,6 +46,7 @@ const NUM opcodecount = 101;
 
 #ifndef USE_ARDUINO_DEBUGGING
 
+
 const opcode opcodes[] = {
 {OPCODE_STOP_CODE, "STOP_CODE", "Indicates end-of-code to the compiler, not used by the interpreter.", 0, 1},	// SUPPORTED
 {OPCODE_POP_TOP, "POP_TOP", "Removes the top-of-stack (TOS) item.", 0, 1},	// SUPPORTED
@@ -216,9 +217,27 @@ NUM GetSupportedOpcodesNum(void)
 	return (r);
 }
 
+INDEX GetOpcodeIndex(unsigned char opcode)
+{
+	int r = -1;
+
+	// int i = 0;
+	for (NUM i = 0; i < opcodecount; i++)
+	{
+		if (opcode == opcodes[i].opcode)
+		{
+			r = i;
+			break;
+		}
+	}
+	return (r);
+}
+
 #else
 
-const opcode opcodes[] = {
+#include "avr/pgmspace.h"
+
+const opcode opcodes[] PROGMEM = {
 {OPCODE_STOP_CODE, "STOP_CODE", 0},	// SUPPORTED
 {OPCODE_POP_TOP, "POP_TOP", 0},	// SUPPORTED
 {OPCODE_ROT_TWO, "ROT_TWO",  0},	// SUPPORTED
@@ -320,8 +339,6 @@ const opcode opcodes[] = {
 {OPCODE_UNPACK_EX, "UNPACK_EX",1}
 };
 
-#endif
-
 INDEX GetOpcodeIndex(unsigned char opcode)
 {
 	int r = -1;
@@ -329,7 +346,8 @@ INDEX GetOpcodeIndex(unsigned char opcode)
 	// int i = 0;
 	for (NUM i = 0; i < opcodecount; i++)
 	{
-		if (opcode == opcodes[i].opcode)
+		unsigned char op = pgm_read_byte(&opcodes[i]);
+		if (opcode == op)
 		{
 			r = i;
 			break;
@@ -337,5 +355,8 @@ INDEX GetOpcodeIndex(unsigned char opcode)
 	}
 	return (r);
 }
+
+#endif
+
 
 #endif

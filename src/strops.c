@@ -103,7 +103,7 @@ char *str_Printf(char *format, ...)
 NUM str_PrintfVaLen(char *format,va_list va)
 {
 	NUM n = vsnprintf(NULL,0,format,va);
-	return(n);
+	return(n+1);
 }
 
 char *str_PrintfVa(char *format,NUM len,va_list va)

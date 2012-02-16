@@ -57,7 +57,9 @@ void stack_Clear(stack *stack, BOOL free_objects)
 			//printf("before stack list num:%d\n",stack->list->num);
 			for (NUM i = 0; i < num; i++)
 			{
-					FreeObject((object*)ptr_Pop(stack->list));
+					//FreeObject((object**)&((object*)(ptr_Pop(stack->list))));
+					object *fo = (object*)ptr_Pop(stack->list);
+					FreeObject(fo);
 					//printf("freed %d object\n",i);
 			}
 			//printf("stack list num:%d\n",stack->list->num);

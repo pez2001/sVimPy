@@ -87,8 +87,22 @@ void streams_Init(void)
 	ftype->stream_seek = &stream_file_seek;
 	ptr_Push(stream_types,ftype);
 	
+	#ifdef USE_ARDUINO_FUNCTIONS
+	//arduino flash memory stream
+	stream_type *fmtype = AllocStreamType();
+	fmtype->type = STREAM_TYPE_FLASH_MEMORY;
+	fmtype->stream_open = &stream_flash_memory_open;
+	fmtype->stream_close = &stream_flash_memory_close;
+	fmtype->stream_free = &stream_flash_memory_free;
+	fmtype->stream_read = &stream_flash_memory_read;
+	fmtype->stream_write = &stream_flash_memory_write;
+	fmtype->stream_seek = &stream_flash_memory_seek;
+	ptr_Push(stream_types,fmtype);
+
+
 	//arduino serial stream
 
+	#endif
 	//standard io
 
 }
@@ -102,7 +116,7 @@ stream_type* streams_GetStreamType(STREAM_TYPE_ID id)
 			return(stream_types->items[i]);
 		i++;
 	}while(i < stream_types->num);
-	printf("stream type not defined:%c\n",id);
+	//printf("stream type not defined:%c\n",id);
 	return(NULL);
 }
 
@@ -152,6 +166,23 @@ stream *stream_CreateFromBytes(char *bytes ,STREAM_NUM len)
 	str->tags = mopt;
 	return(str);
 }
+
+#ifdef USE_ARDUINO_FUNCTIONS
+stream *stream_CreateFromFlashBytes(char *bytes ,STREAM_NUM len)
+{
+	stream *str = AllocStream();
+	ptr_list *mopt = ptr_CreateList(0,0);
+	ptr_Push(mopt,bytes);
+	ptr_Push(mopt,(void*)len);
+	ptr_Push(mopt,0);
+	//printf("getting stream type\n");
+	str->type = streams_GetStreamType(STREAM_TYPE_FLASH_MEMORY);
+	//printf("got stream type\n");
+	//printf("open:%x\n",str->type->stream_open);
+	str->tags = mopt;
+	return(str);
+}
+#endif
 
 stream *stream_CreateStandardOutput(void)
 {
@@ -220,6 +251,10 @@ BOOL stream_file_open(struct _stream *stream)
 	FILE *f;
 	//printf("opening file stream\n");
 	char *filename = (char*)ptr_Get(stream->tags,0);
+	#if defined(USE_DEBUGGING)
+	debug_printf(DEBUG_VERBOSE_TESTS,"opened file:%s\n",filename);
+	#endif
+	
 	//printf("filename:%s\n",filename);
 	f = fopen(filename, "rb");
 	if (f == NULL)
@@ -339,7 +374,54 @@ BOOL stream_memory_seek(struct _stream *stream,STREAM_NUM offset)
 	return(0);
 }
 
+#ifdef USE_ARDUINO_FUNCTIONS
 
+BOOL stream_flash_memory_open(struct _stream *stream)
+{
+	//printf("memory opened\n");
+	return(1);
+}
+
+BOOL stream_flash_memory_close(struct _stream *stream)
+{
+	return(1);
+}
+
+BOOL stream_flash_memory_free(struct _stream *stream)
+{
+	ptr_CloseList(stream->tags);
+	#ifdef DEBUGGING
+	assert(mem_free(stream));
+	#else
+	free(stream);
+	#endif		
+	return(1);
+}
+
+BOOL stream_flash_memory_read(struct _stream *stream,void *ptr,STREAM_NUM len)
+{
+	char *bytes = (char*)ptr_Get(stream->tags,0);
+	//STREAM_NUM blen = (STREAM_NUM)ptr_Get(stream->tags,1);
+	#if define(USE_DEBUGGING)
+	debug_printf(DEBUG_ALL," reading stream\r\n");
+ 	#endif
+	STREAM_NUM offset = (STREAM_NUM)ptr_Get(stream->tags,2);
+	memcpy_P(ptr,bytes+offset,len);
+	ptr_Set(stream->tags,2,(void*)(offset+len));
+	return(1);
+}
+
+BOOL stream_flash_memory_write(struct _stream *stream,char *bytes ,STREAM_NUM len)
+{
+	return(0);
+}
+
+BOOL stream_flash_memory_seek(struct _stream *stream,STREAM_NUM offset)
+{ 
+	return(0);
+}
+
+#endif
 
 
 

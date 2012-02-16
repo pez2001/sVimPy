@@ -774,9 +774,8 @@ object *vm_CallFunction(vm *vm,char *name,stack *locals,NUM argc)
 	//printf("found func\n");
 	if(f->type == TYPE_FUNCTION)
 	{
-		vm_StartFunctionObject(vm,(function_object*)f,locals,NULL,argc,0);
+		object *ret = vm_StartFunctionObject(vm,(function_object*)f,locals,NULL,argc,0);
 		//printf("pushed func\n");
-		object *ret = NULL;
 			while(ret == NULL)
 				ret = vm_StepObject(vm);
 		return(ret);
@@ -790,19 +789,29 @@ object *vm_RunPYC(vm *vm,stream *f ,BOOL free_object)
 
 	if (!stream_Open(f))
 		return(NULL);//TODO maybe return an empty object for simplification
-
+	#if defined(USE_DEBUGGING)
+	debug_printf(DEBUG_ALL,"running pyc\n");
+	#endif
 	long magic = ReadLong(f);
 	if (magic != pyc_magic)
 		return(NULL);
 	//long time = ReadLong(f);
 	ReadLong(f);//read time
+	#if defined(USE_DEBUGGING)
 	debug_printf(DEBUG_ALL,"read header\n");
+	#endif
 	object *obj = ReadObject(f);
+	#if defined(USE_DEBUGGING)
 	debug_printf(DEBUG_ALL,"read object\n");
+	#endif
 	vm_AddGlobal(vm, (code_object*)obj);
+	#if defined(USE_DEBUGGING)
 	debug_printf(DEBUG_ALL,"added global\n");
+	#endif
 	object *ret = vm_RunObject(vm, obj, NULL, 0);
+	#if defined(USE_DEBUGGING)
 	debug_printf(DEBUG_ALL,"ran object\n");
+	#endif
 	if (ret != NULL)
 	{
 		FreeObject(ret);
@@ -817,7 +826,6 @@ object *vm_RunPYC(vm *vm,stream *f ,BOOL free_object)
 	stream_Free(f);
 	return(obj);
 }
-
 
 object *vm_RunObject(vm *vm, object *obj, stack *locals, NUM argc)
 {
@@ -857,10 +865,9 @@ object *vm_StepObject(vm *vm)
 			tuple_object *var_list = NULL;//used for simpler function calling
 			tuple_object *kw_list = NULL;//used for simpler function calling
 			
-			#if defined(USE_DEBUGGING) || defined(USE_ARDUINO_DEBUGGING)// FOR DEBUGGING
+			#ifdef USE_DEBUGGING// FOR DEBUGGING
 			if((debug_level & DEBUG_SHOW_OPCODES) > 0)
 			{
-				//INDEX old_i = bo->ip;
 				INDEX index = GetOpcodeIndex(op);
 				if (index >= 0)
 				{
@@ -874,6 +881,29 @@ object *vm_StepObject(vm *vm)
 					debug_printf(DEBUG_ALL,"unknown opcode:%x at %d\n", (char)string[bo->ip - 1],bo->ip - 1);
 				}
 			}
+			#ifdef USE_ARDUINO_DEBUGGING
+			INDEX index = GetOpcodeIndex(op);
+			if (index >= 0)
+			{
+				opcode *op = malloc(sizeof(opcode));
+				memcpy_P(op,&opcodes[index],sizeof(opcode));
+				char *op_name = malloc(strlen_P(&op->name)+1);
+				memset(op_name,0,strlen_P(&op->name)+1);
+				memcpy_P(op_name,&op->name,strlen_P(&op->name)):
+				
+				if (op->argcount != 0)
+					debug_printf(DEBUG_ALL,"[%03d,%02xh] [ %s ] (%d)\n", bo->ip-1,op->opcode, op_name ,num_short(string[bo->ip], string[bo->ip + 1]));
+				else
+					debug_printf(DEBUG_ALL,"[%03d,%02xh] [ %s ]\n", bo->ip-1,op->opcode, op_name);
+				
+				free(op_name);
+				free(op);
+				}
+			else
+			{
+				debug_printf(DEBUG_ALL,"unknown opcode:%x at %d\n", (char)string[bo->ip - 1],bo->ip - 1);
+			}
+			#endif
 
 			switch (op)
 			{
@@ -926,6 +956,8 @@ object *vm_StepObject(vm *vm)
 				break;
 			case OPCODE_RETURN_VALUE:
 				{
+					//printf("return\n");
+					//stack_Dump(bo->stack);
 					object *ret = stack_Pop(bo->stack,vm->garbage);
 					/*IncRefCount(ret);
 					//ret->flags |= OFLAG_LEFT_NAMESPACE;
@@ -1011,10 +1043,13 @@ object *vm_StepObject(vm *vm)
 
 			case OPCODE_BREAK_LOOP:
 				{
-					block_object *bbo = (block_object *) stack_Pop(vm->blocks,vm->garbage);
+					//block_object *bbo = (block_object *) 
 					//bo->ip = bbo->start + bbo->len - 1;
 					#ifdef DEBUGGING
+					block_object *bbo = (block_object *) stack_Pop(vm->blocks,vm->garbage);
 					debug_printf(DEBUG_VERBOSE_STEP,"break to: %d ,start: %d ,len:%d\n",bo->ip,bbo->start,bbo->len);
+					#else
+					stack_Pop(vm->blocks,vm->garbage);
 					#endif
 					op_thru = 1;
 				}
@@ -1305,10 +1340,10 @@ object *vm_StepObject(vm *vm)
 					}
 					else
 					{
-						if(next != NULL)
-							DecRefCountGC(next,vm->garbage);
+						//if(next != NULL)
+						//	DecRefCountGC(next,vm->garbage);
 							//FreeObject(next);
-						//stack_Pop(bo->stack,vm->garbage);
+						stack_Pop(bo->stack,vm->garbage);
 						//if(fabo->iter != NULL)
 						//	DecRefCountGC(fabo->iter,vm->garbage);
 						//fabo->iter = NULL;

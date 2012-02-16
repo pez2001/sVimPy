@@ -526,9 +526,10 @@ void FreeBlockObject(object *obj)
 		//printf("closed block\n");
 }
 
-void FreeObject(object * obj)
+void FreeObject(object *obj)
 {
 	//assert(obj != NULL);
+	debug_printf(DEBUG_ALL,"freeing an object\n");
 	if (obj == NULL)
 		return;
 	#ifdef DEBUGGING
@@ -537,7 +538,11 @@ void FreeObject(object * obj)
 		debug_printf(DEBUG_FREEING,"object to be freed\n");
 		DumpObject(obj,1);
 	}
+	if(obj->ref_count < 0)
+		debug_printf(DEBUG_ALL,"ref skew detected:%x\n",obj);
 	#endif
+	
+	
 	
 	if(obj->ref_count > 1)
 	{
@@ -549,11 +554,12 @@ void FreeObject(object * obj)
 			DumpObject(obj,0);
 		}
 		#endif
+		//obj = NULL;
 		return;
 	}
 	//DecRefCount(obj);
 	
-	switch (obj->type)
+	switch(obj->type)
 	{
 	case TYPE_BLOCK:
 		#ifdef DEBUGGING
@@ -571,14 +577,19 @@ void FreeObject(object * obj)
 	case TYPE_ITER:
 		#ifdef DEBUGGING
 		debug_printf(DEBUG_VERBOSE_FREEING,"Freeing Iter %x\n",obj);
-		objects_header_total -= sizeof(ref_object);
+		objects_header_total -= sizeof(iter_object);
 		#endif
 		if(((iter_object*)obj)->block_stack != NULL)
 		{	
 			//printf("closing iter stack\n");
 			stack_Close(((iter_object*)obj)->block_stack,0);
 		}
-		FreeObject((object*)((iter_object*)obj)->tag);
+		#ifdef DEBUGGING
+		debug_printf(DEBUG_VERBOSE_FREEING,"Freeing Iter tag %x\n",((iter_object*)obj)->tag);
+		DumpObject((object*)((iter_object*)obj)->tag,0);
+		#endif
+		FreeObject(((iter_object*)obj)->tag);
+		((iter_object*)obj)->tag = NULL;
 		break;
 	case TYPE_NULL:
 		// printf("freeing NULL object @%x\n",obj);
@@ -609,8 +620,8 @@ void FreeObject(object * obj)
 		objects_header_total -= sizeof(kv_object);
 		#endif
 
-		FreeObject((object*)((kv_object*) obj)->key);
-		FreeObject((object*)((kv_object*) obj)->value);
+		FreeObject(((kv_object*)obj)->key);
+		FreeObject(((kv_object*)obj)->value);
 		break;
 	case TYPE_FUNCTION:
 		#ifdef DEBUGGING
@@ -619,35 +630,29 @@ void FreeObject(object * obj)
 
 		if(((function_object*) obj)->func_type == FUNC_PYTHON)
 		{
-			FreeObject((object*)((function_object*) obj)->func.code);
-			FreeObject((object*)((function_object*) obj)->defaults);
-			FreeObject((object*)((function_object*) obj)->kw_defaults);
-			FreeObject((object*)((function_object*) obj)->closure);
+			FreeObject((object*)((function_object*)obj)->func.code);
+			FreeObject((object*)((function_object*)obj)->defaults);
+			FreeObject((object*)((function_object*)obj)->kw_defaults);
+			FreeObject((object*)((function_object*)obj)->closure);
 		}else 
-		if(((function_object*) obj)->func_type == FUNC_C || ((function_object*) obj)->func_type == FUNC_C_OBJ)
+		if(((function_object*)obj)->func_type == FUNC_C || ((function_object*)obj)->func_type == FUNC_C_OBJ)
 		{
 			#ifdef DEBUGGING
-			assert(mem_free(((function_object*) obj)->name));
+			assert(mem_free(((function_object*)obj)->name));
 			#else
 			free(((function_object*)obj)->name);
 			#endif
 		}
 		break;
 	case TYPE_UNICODE:
-		//if(obj->flags &OFLAG_ON_STACK)
-		//	printf("on stack\n");
 		#ifdef DEBUGGING
 		debug_printf(DEBUG_VERBOSE_FREEING,"freeing unicode object @%x\n",obj);
 		objects_header_total -= sizeof(unicode_object);
 		#endif
-		// printf("content:%s\n",((unicode_object*)obj)->value);
-		// if(((unicode_object*)obj->ptr)->content != NULL)
-		// if(obj->ptr != NULL)
-		// mem_free(obj->ptr);
 		#ifdef DEBUGGING
-		assert(mem_free(((unicode_object*) obj)->value));
+		assert(mem_free(((unicode_object*)obj)->value));
 		#else
-		free(((unicode_object*) obj)->value);
+		free(((unicode_object*)obj)->value);
 		#endif
 		break;
 	case TYPE_STRING:
@@ -657,9 +662,9 @@ void FreeObject(object * obj)
 		#endif
 
 		#ifdef DEBUGGING
-		assert(mem_free(((string_object *) obj)->content));
+		assert(mem_free(((string_object *)obj)->content));
 		#else
-		free(((string_object*) obj)->content);
+		free(((string_object*)obj)->content);
 		#endif
 		break;
 	case TYPE_TUPLE:
@@ -668,70 +673,56 @@ void FreeObject(object * obj)
 		objects_header_total -= sizeof(tuple_object);
 		#endif
 
-		if (((tuple_object *)obj)->list != NULL)
+		if (((tuple_object*)obj)->list != NULL)
 		{
-			if(((tuple_object *) obj)->list->num > 0)
+			if(((tuple_object*)obj)->list->num > 0)
 			{
-				for (NUM i = 0; i < ((tuple_object *) obj)->list->num; i++)
+				for (NUM i = 0; i < ((tuple_object*)obj)->list->num; i++)
 				{
-					//printf("checking sub:%c\n",((object*)((tuple_object *) obj)->list->items[i])->type);
-					//if ((((tuple_object *) obj)->list->items[i]) != NULL && !(((object*)((tuple_object *) obj)->list->items[i])->flags & OFLAG_ON_STACK))
-					//{
-						//printf("freeing sub:%c\n",((object*)((tuple_object *) obj)->list->items[i])->type);
-						FreeObject((object*)((tuple_object *) obj)->list->items[i]);
-						//if(((object*)((tuple_object *) obj->ptr)->list->items[i])->value_ptr != NULL && !(((object*)((tuple_object *) obj->ptr)->list->items[i])->flags & OFLAG_ON_STACK))
-						//	FreeObject(((object*)((tuple_object *) obj->ptr)->list->items[i])->value_ptr);
-					//}
-					((tuple_object *) obj)->list->items[i] = NULL;
+					FreeObject((object*)((tuple_object*)obj)->list->items[i]);
+					((tuple_object*)obj)->list->items[i] = NULL;
 				}
 			}
-			ptr_CloseList(((tuple_object *) obj)->list);
+			ptr_CloseList(((tuple_object*)obj)->list);
 		}
 			//assert(mem_free(((tuple_object *) obj->ptr)->list->items));
-		((tuple_object *) obj)->list = NULL;
+		((tuple_object*)obj)->list = NULL;
 		break;
 	case TYPE_CODE:
 		 //printf("freeing code object @%x\n",obj);
 		#ifdef DEBUGGING
 		objects_header_total -= sizeof(code_object);
-		objects_header_total -= strlen(((code_object *) obj)->name) + 1;
+		objects_header_total -= strlen(((code_object*)obj)->name) + 1;
 		#endif
 
 		#ifdef DEBUGGING
-		assert(mem_free(((code_object *) obj)->name));
+		assert(mem_free(((code_object*)obj)->name));
 		#else
-		free(((code_object*) obj)->name);
+		free(((code_object*)obj)->name);
 		#endif
-		FreeObject((object*)((code_object *) obj)->code);
-		FreeObject((object*)((code_object *) obj)->consts);
-		FreeObject((object*)((code_object *) obj)->names);
-		FreeObject((object*)((code_object *) obj)->varnames);
-		FreeObject((object*)((code_object *) obj)->freevars);
-		FreeObject((object*)((code_object *) obj)->cellvars);
+		FreeObject(((code_object*)obj)->code);
+		FreeObject(((code_object*)obj)->consts);
+		FreeObject(((code_object*)obj)->names);
+		FreeObject(((code_object*)obj)->varnames);
+		FreeObject(((code_object*)obj)->freevars);
+		FreeObject(((code_object*)obj)->cellvars);
 		// FreeObject(((code_object*)obj->ptr)->filename); //TO DECREASE
 		// MEMORY USAGE
 		// FreeObject(((code_object*)obj->ptr)->lnotab);//TO DECREASE MEMORY
 		// USAGE
 		break;
 	}
-	// recycle_Remove(obj);
 
-//	if (obj->type != TYPE_INT && obj->type != TYPE_NONE
-//		&& obj->type != TYPE_NULL && obj->type != TYPE_TRUE
-//		&& obj->type != TYPE_FALSE && obj->ptr != NULL)
-//		assert(mem_free(obj->ptr));
-	// if(obj->value_ptr != NULL)
-	// FreeObject((object*)obj->value_ptr);
-	//printf("freed object(%c) @%x\n",obj->type,obj);
 	#ifdef DEBUGGING
 	assert(mem_free(obj));
 	objects_num--;
 	#else
 	free(obj);
 	#endif
+	//debug_printf(DEBUG_ALL,"freed object\n");
 }
 
-void PrintObject(object * obj)
+void PrintObject(object *obj)
 {
 	if (obj != NULL)
 	{
@@ -801,6 +792,7 @@ void DumpObject(object * obj, char level)
 		break;
 	case TYPE_ITER:
 			debug_printf(DEBUG_ALL,"iter object\n");
+			DumpObject((object*)((iter_object*)obj)->tag,level + 1);
 			break;
 	case TYPE_REF:
 		debug_printf(DEBUG_ALL,"ref object\n");
@@ -1272,54 +1264,17 @@ object *CopyObject(object *obj)
 		//ret->ptr = mem_malloc(
 		break;
 	case TYPE_TUPLE:
-		/*if (((tuple_object *) obj->ptr)->list != NULL  && ((tuple_object *) obj->ptr)->list->num > 0)
-		{
-		ret->
-			for (int i = 0; i < ((tuple_object *) obj->ptr)->list->num; i++)
-			{
-				if ((((tuple_object *) obj->ptr)->list->items[i]) != NULL
-					&& !(((object*)((tuple_object *) obj->ptr)->list->items[i])->
-						 flags & OFLAG_ON_STACK))
-				{
-					FreeObject(((tuple_object *) obj->ptr)->list->items[i]);
-				}
-				((tuple_object *) obj->ptr)->list->items[i] = NULL;
-			}
-			ptr_CloseList(((tuple_object *) obj->ptr)->list);
-			
-			//assert(mem_free(((tuple_object *) obj->ptr)->list->items));
-			((tuple_object *) obj->ptr)->list = NULL;
-		}*/
 		break;
 	case TYPE_CODE:
-	//code_object *c = AllocCodeObject();
-	//c->name = str_Copy(((code_object*)obj)->name);
-	//c-> = str_Copy(((code_object*)obj)->name);
-	//add reference object to decrease memory usage for code objects
-	//reference objects refs need no freeing
-	return((object*)CreateRefObject(obj,obj->flags));
+		//add reference object to decrease memory usage for code objects
+		//reference objects refs need no freeing
+		return((object*)CreateRefObject(obj,obj->flags));
+		break;
 
 	case TYPE_FUNCTION:
-	//code_object *c = AllocCodeObject();
-	//c->name = str_Copy(((code_object*)obj)->name);
-	//c-> = str_Copy(((code_object*)obj)->name);
-	//add reference object to decrease memory usage for code objects
-	//reference objects refs need no freeing
-	return((object*)CreateRefObject(obj,obj->flags));
-
-	//return(c);	
-	/*
-		// printf("freeing code object @%x\n",obj);
-		objects_header_total -= sizeof(object);
-		objects_header_total -= strlen(((code_object *) obj->ptr)->name) + 1;
-		assert(mem_free(((code_object *) obj->ptr)->name));
-		FreeObject(((code_object *) obj->ptr)->code);
-		FreeObject(((code_object *) obj->ptr)->consts);
-		FreeObject(((code_object *) obj->ptr)->names);
-		FreeObject(((code_object *) obj->ptr)->varnames);
-		FreeObject(((code_object *) obj->ptr)->freevars);
-		FreeObject(((code_object *) obj->ptr)->cellvars);
-		*/
+		//add reference object to decrease memory usage for code objects
+		//reference objects refs need no freeing
+		return((object*)CreateRefObject(obj,obj->flags));
 		break;
 
 	}
@@ -1620,7 +1575,7 @@ void ConvertToDict(object *tuple)
 	}
 }
 
-INDEX GetItemIndexByName(object * tuple, char *name)
+INDEX GetItemIndexByName(object *tuple, char *name)
 {
 	//printf("checking for correct type\n");
 	if (tuple == NULL || tuple->type != TYPE_TUPLE || ((tuple_object *) tuple)->list == NULL)
@@ -1674,7 +1629,7 @@ object *GetDictItemByName(object *tuple,char *name)
 	return (NULL);
 }
 
-void ResetIteration(object * tuple)
+void ResetIteration(object *tuple)
 {
 	if (tuple == NULL || tuple->type != TYPE_TUPLE)
 		return;
@@ -1704,21 +1659,21 @@ void ResetIteration(object * tuple)
 
 }
 
-void SetItem(object * tuple, INDEX index, object * obj)
+void SetItem(object *tuple, INDEX index, object * obj)
 {
 	if (tuple == NULL || tuple->type != TYPE_TUPLE)
 		return;
-	if (index >= ((tuple_object *) tuple)->list->num || index < 0)
+	if (index >= ((tuple_object*) tuple)->list->num || index < 0)
 		return;
-	object *old = ((tuple_object *) tuple)->list->items[index];	
+	object *old = ((tuple_object*) tuple)->list->items[index];	
 	if(obj!=NULL)
 	{
-		((tuple_object *) tuple)->list->items[index] = obj;
+		((tuple_object*) tuple)->list->items[index] = obj;
 		IncRefCount(obj);
 	// obj->flags ^= OFLAG_ON_STACK;
 	}
 	else
-		((tuple_object *) tuple)->list->items[index] = NULL;
+		((tuple_object*) tuple)->list->items[index] = NULL;
 
 	if(old != NULL)
 	{
@@ -1726,20 +1681,20 @@ void SetItem(object * tuple, INDEX index, object * obj)
 	}		
 }
 
-void DeleteItem(object * tuple, INDEX index)
+void DeleteItem(object *tuple, INDEX index)
 {
 	if (tuple == NULL || tuple->type != TYPE_TUPLE)
 		return;
-	if (index >= ((tuple_object *) tuple)->list->num || index < 0)
+	if (index >= ((tuple_object*) tuple)->list->num || index < 0)
 		return;
-	if (((tuple_object *) tuple)->list->items[index] == NULL)
+	if (((tuple_object*) tuple)->list->items[index] == NULL)
 		return;
 	//if (!(((object*)((tuple_object *) tuple)->list->items[index])->type & OFLAG_ON_STACK))
-		FreeObject(((tuple_object *) tuple)->list->items[index]);
-	((tuple_object *) tuple)->list->items[index] = NULL;
+		FreeObject((object*)(((tuple_object*) tuple)->list->items[index]));
+	((tuple_object*) tuple)->list->items[index] = NULL;
 }
 
-object *GetItem(object * tuple, INDEX index)
+object *GetItem(object *tuple, INDEX index)
 {
 	if (tuple == NULL || tuple->type != TYPE_TUPLE)
 		return (NULL);

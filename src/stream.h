@@ -30,6 +30,7 @@
 
 #define STREAM_TYPE_FILE 'f'
 #define STREAM_TYPE_MEMORY 'm'
+#define STREAM_TYPE_FLASH_MEMORY 'F'
 #define STREAM_TYPE_DEBUG_OUTPUT 'd'
 #define STREAM_TYPE_STANDARD_INPUT 'i'
 #define STREAM_TYPE_STANDARD_OUTPUT 'o'
@@ -69,6 +70,9 @@ void streams_Close(void);
 
 stream *stream_CreateFromFile(char *filename); //will create a copy of filename
 stream *stream_CreateFromBytes(char *bytes ,STREAM_NUM len); //will use bytes directly - remember to free bytes after stream closing
+#ifdef USE_ARDUINO_FUNCTIONS
+stream *stream_CreateFromFlashBytes(char *bytes ,STREAM_NUM len);
+#endif
 stream *stream_CreateStandardOutput(void);
 stream *stream_CreateStandardInput(void);
 stream *stream_CreateDebugOutput(void);
@@ -91,6 +95,8 @@ BOOL stream_file_read(struct _stream *stream,void *ptr,STREAM_NUM len);
 BOOL stream_file_write(struct _stream *stream,char *bytes ,STREAM_NUM len);
 BOOL stream_file_seek(struct _stream *stream,STREAM_NUM offset);
 
+//memory stream functions
+
 BOOL stream_memory_open(struct _stream *stream);
 BOOL stream_memory_close(struct _stream *stream);
 BOOL stream_memory_free(struct _stream *stream);
@@ -98,9 +104,20 @@ BOOL stream_memory_read(struct _stream *stream,void *ptr,STREAM_NUM len);
 BOOL stream_memory_write(struct _stream *stream,char *bytes ,STREAM_NUM len);
 BOOL stream_memory_seek(struct _stream *stream,STREAM_NUM offset);
 
+#ifdef USE_ARDUINO_FUNCTIONS
 
+#include "avr/pgmspace.h"
 
+//flash memory stream functions
 
+BOOL stream_flash_memory_open(struct _stream *stream);
+BOOL stream_flash_memory_close(struct _stream *stream);
+BOOL stream_flash_memory_free(struct _stream *stream);
+BOOL stream_flash_memory_read(struct _stream *stream,void *ptr,STREAM_NUM len);
+BOOL stream_flash_memory_write(struct _stream *stream,char *bytes ,STREAM_NUM len);
+BOOL stream_flash_memory_seek(struct _stream *stream,STREAM_NUM offset);
+
+#endif
 
 
 

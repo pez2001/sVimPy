@@ -26,7 +26,8 @@
 
 #define OBJECT_TYPE char
 #define OBJECT_FLAGS unsigned char
-#define OBJECT_REF_COUNT unsigned short
+//#define OBJECT_REF_COUNT unsigned short
+#define OBJECT_REF_COUNT short
 
 //stream 
 #define STREAM_NUM long 

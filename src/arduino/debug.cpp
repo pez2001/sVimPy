@@ -32,7 +32,7 @@ extern "C"  void debug_printf(int msg_debug_level,char* format, ...)
 	va_start(va,format);
 	va_copy(va2, va);
 	//NUM n = str_PrintfVaLen(format,va);
-	NUM n = vsnprintf(NULL,0,format,va);
+	NUM n = vsnprintf(NULL,0,format,va) + 1;
 	va_end(va);
 	//va_start(va,format);
 	//char *output = str_PrintfVa(format,n,va);

@@ -21,29 +21,29 @@ void mem_Close(void)
 {
 	if((debug_level & DEBUG_MEMORY) > 0)
 	{
+	printf("%d memory allocs recorded\n",mem_chunks_top);
 	for (int i = 0; i < mem_chunks_top; i++)
 	{
+		//debug_printf(DEBUG_MEMORY,"chunk:%d\n",i);
 		if (!mem_chunk_items[i]->is_freed)
 		{
-			debug_printf(DEBUG_MEMORY,"leaked chunk: %s (%d) @%x : ",
-				   mem_chunk_items[i]->description, mem_chunk_items[i]->size,
-				   mem_chunk_items[i]->ptr);
+			printf("found leaked chunk\n");
+			printf("leaked chunk: %s (%d) @%x : ", mem_chunk_items[i]->description, mem_chunk_items[i]->size, mem_chunk_items[i]->ptr);
 			for (int ix = 0; ix < mem_chunk_items[i]->size; ix++)
 			{
-				printf("%x ",
-					   *((unsigned char *)(mem_chunk_items[i]->ptr + ix)));
+				printf("%x ", *((unsigned char *)(mem_chunk_items[i]->ptr + ix)));
 			}
 			printf("  ");
 			for (int ix = 0; ix < mem_chunk_items[i]->size; ix++)
 			{
-				printf("%c  ",
-					   *((unsigned char *)(mem_chunk_items[i]->ptr + ix)));
+				printf("%c  ",*((unsigned char *)(mem_chunk_items[i]->ptr + ix)));
 			}
 			printf("\n");
 
 		}
 		free(mem_chunk_items[i]);
 	}
+	debug_printf(DEBUG_MEMORY,"leaked chunks test done\n");
 	free(mem_chunk_items);
 
 	printf("not freed heap bytes num:%d\n", mem_chunks_actual_size);
@@ -81,7 +81,6 @@ void *mem_realloc(void *ptr, size_t size)
 	{
 		if (mem_chunk_items[i]->ptr == ptr && !mem_chunk_items[i]->is_freed)
 		{
-
 			mem_chunk_items[i]->ptr = realloc(ptr, size);
 			mem_chunks_actual_size += size - mem_chunk_items[i]->size;
 			if (mem_chunks_actual_size > mem_chunks_max_size)
@@ -133,6 +132,7 @@ int mem_free(void *ptr)
 		{
 			f = 1;
 			mem_chunk_items[i]->is_freed = 1;
+			break;
 		}
 	}
 	// assert(f);

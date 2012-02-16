@@ -13,15 +13,15 @@ LD=ld
 ARDUINO_AVR_DIR = /C/Users/asus/Documents/Arduino-1.0
 
 ARDUINO_TERM = /C/Program\ Files\ \(x86\)/Putty/putty -load arduino_uno
-# ARDUINO_MCU = atmega328p
-# ARDUINO_PORT = com3
-# ARDUINO_UPLOAD_RATE = 115200
-# ARDUINO_AVRDUDE_PROGRAMMER = arduino
-ARDUINO_TERM = /C/Program\ Files\ \(x86\)/Putty/putty -load arduino_mega
-ARDUINO_MCU = atmega2560
-ARDUINO_PORT = com5
+ARDUINO_MCU = atmega328p
+ARDUINO_PORT = com3
 ARDUINO_UPLOAD_RATE = 115200
-ARDUINO_AVRDUDE_PROGRAMMER = stk500v2
+ARDUINO_AVRDUDE_PROGRAMMER = arduino
+#ARDUINO_TERM = /C/Program\ Files\ \(x86\)/Putty/putty -load arduino_mega
+#ARDUINO_MCU = atmega2560
+#ARDUINO_PORT = com5
+#ARDUINO_UPLOAD_RATE = 115200
+#ARDUINO_AVRDUDE_PROGRAMMER = stk500v2
 
 ARDUINO_AVRDUDE_PORT = $(ARDUINO_PORT)
 ARDUINO_AVRDUDE_WRITE_FLASH = -U flash:w:arduino.hex:i
@@ -75,15 +75,15 @@ ARDUINO_OBJ = arduino.aopp arduino/io.aopp arduino/debug.aopp
 ARDUINO_LIBS = core.a
 
 test: clean all
-	unit_test.exe
+	unit_tests.exe
 
-all: unit_test 
+all: unit_tests
 
-unit_test: vm_static $(UT_OBJ) 
-	$(CC) $(UT_OBJ) vm.a  -o unit_test 
+unit_tests: vm_static $(UT_OBJ) 
+	$(CC) $(UT_OBJ) vm.a  -o unit_tests 
 
 unit_test_o: $(VM_OBJ) $(UT_OBJ)
-	$(CC) $(VM_OBJ) $(UT_OBJ)  -o unit_test 
+	$(CC) $(VM_OBJ) $(UT_OBJ)  -o unit_tests 
 
 vm_static: $(VM_OBJ)
 	$(AR) -rs vm.a $(VM_OBJ)
@@ -118,7 +118,7 @@ uploadview: upload
 	$(ARDUINO_TERM)
 	
 clean:
-	rm -f unit_test.exe *.ao *.aopp *.hex *.o *.a *.so arduino/*.ao arduino/aopp arduino/libarduino/*.aopp arduino/libarduino/*.ao svimpy.src.tar.gz
+	rm -f unit_tests.exe *.ao *.aopp *.hex *.o *.a *.so arduino/*.ao arduino/aopp arduino/libarduino/*.aopp arduino/libarduino/*.ao svimpy.src.tar.gz
 	
 srcdist:	
 	mkdir svimpy-$(VERSION)

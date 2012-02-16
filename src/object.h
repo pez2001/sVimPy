@@ -399,25 +399,25 @@ iter_object *CreateIterObject(OBJECT_FLAGS flags);
 
 void FreeBlockObject(object *obj);
 
-void FreeObject(object * obj);
+void FreeObject(object *obj);
 
-void PrintObject(object * obj);
+void PrintObject(object *obj);
 
 #ifdef DEBUGGING
-void DumpObject(object * obj, char level);
+void DumpObject(object *obj, char level);
 
-char *DumpObjectXml(object * obj, char level);
+char *DumpObjectXml(object *obj, char level);
 #endif
 
-object *GetNextItem(object * tuple);
+object *GetNextItem(object *tuple);
 
-void ResetIteration(object * tuple);
+void ResetIteration(object *tuple);
 
-void SetItem(object * tuple, INDEX index, object * obj);
+void SetItem(object *tuple, INDEX index, object *obj);
 
-object *GetItem(object * tuple, INDEX index);
+object *GetItem(object *tuple, INDEX index);
 
-INDEX GetItemIndexByName(object * tuple, char *name);
+INDEX GetItemIndexByName(object *tuple, char *name);
 
 void SetDictItem(object *tuple,object *key,object *value);
 
@@ -439,12 +439,12 @@ object *CopyObject(object *obj);
 
 BOOL object_compare(object *a,object *b);
 
-void AppendDictItem(object * tuple,object *key,object *value);
+void AppendDictItem(object *tuple,object *key,object *value);
 
 void AppendItem(object *tuple,object *value);
 
 void ClearDictValues(object *tuple);
 
-void DeleteItem(object * tuple, INDEX index);
+void DeleteItem(object *tuple, INDEX index);
 
 #endif

@@ -47,7 +47,7 @@ void gc_Clear(ptr_list *gc_collection)
 			#ifdef DEBUGGING
 			if((debug_level & DEBUG_GC) > 0)
 			{
-				debug_printf(DEBUG_GC,"object has gained refs\n");
+				debug_printf(DEBUG_GC,"object has gained refs:%d\n",g->ref_count);
 				DumpObject(g,0);
 			}
 			#endif

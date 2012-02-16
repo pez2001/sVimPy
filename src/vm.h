@@ -85,6 +85,11 @@ except
 extern const opcode opcodes[];
 #endif 
 
+#ifdef USE_ARDUINO_DEBUGGING
+#include "avr/pgmspace.h"
+#endif
+
+
 #define MAGIC (3180 | ((long)'\r'<<16) | ((long)'\n'<<24))
 
 
