@@ -55,7 +55,7 @@ ptr_list_with_tag *ptr_CreateTaggedList(NUM num, int flags)
 
 void ptr_CloseList(ptr_list * list)
 {
-	if (list->num > 0)
+	if (list->num > 0 )//|| list->num != NULL)
 	{
 		#ifdef DEBUGGING
 		assert(mem_free(list->items));
@@ -76,18 +76,18 @@ void ptr_Push(ptr_list * list, void *ptr)
 	{
 		list->num = 1;
 		#ifdef DEBUGGING
-		list->items = (void **)mem_malloc(list->num * sizeof(void *),"ptr_Push() items");
+		list->items = (void**)mem_malloc(list->num * sizeof(void*),"ptr_Push() items");
 		#else
-		list->items = (void **)malloc(list->num * sizeof(void *));
+		list->items = (void**)malloc(list->num * sizeof(void*));
 		#endif
 		list->items[0] = ptr;
 	}
 	else
 	{
 		#ifdef DEBUGGING
-		list->items = (void **)mem_realloc(list->items,(list->num + 1) * sizeof(void *));
+		list->items = (void**)mem_realloc(list->items,(list->num + 1) * sizeof(void*));
 		#else
-		list->items = (void **)realloc(list->items,(list->num + 1) * sizeof(void *));
+		list->items = (void**)realloc(list->items,(list->num + 1) * sizeof(void*));
 		#endif
 		list->items[list->num] = ptr;
 		list->num++;
@@ -189,9 +189,9 @@ void *ptr_Remove(ptr_list * list, INDEX index)
 		else
 		{
 			#ifdef DEBUGGING
-			list->items =	(void **)mem_realloc(list->items, (list->num - 1) * sizeof(void *));
+			list->items =	(void**)mem_realloc(list->items, (list->num - 1) * sizeof(void *));
 			#else
-			list->items =	(void **)realloc(list->items, (list->num - 1) * sizeof(void *));
+			list->items =	(void**)realloc(list->items, (list->num - 1) * sizeof(void *));
 			#endif
 			list->num--;
 		}

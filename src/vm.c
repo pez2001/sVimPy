@@ -1510,7 +1510,9 @@ object *vm_StepObject(vm *vm)
 						for (NUM i = 0; i < nkey; i++)//keyword arguments
 						{
 							object *value = stack_Pop(bo->stack,vm->garbage);
+							value = DissolveRef(value);
 							object *key = stack_Pop(bo->stack,vm->garbage);
+							key = DissolveRef(key);
 							SetDictItem((object*)kw_defaults,key,value);
 						}
 					}
