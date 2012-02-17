@@ -460,7 +460,7 @@ void AtomicOpenPYC(char *filename)
 	//debug_level |= DEBUG_STACK;
 	//debug_level |= DEBUG_LISTS;
 	debug_level |= DEBUG_GC;
-	//debug_level |= DEBUG_VERBOSE_STEP;
+	debug_level |= DEBUG_VERBOSE_STEP;
 	//debug_level |= DEBUG_VM;
 	//debug_level |= DEBUG_FREEING;
 	//debug_level |= DEBUG_ALLOCS;
@@ -585,13 +585,21 @@ void atomic_test(void)
 	//AtomicOpenPYC("tests/test53.pyc", vm);
 	
 	
-	AtomicOpenPYC("tests/test52.pyc");
+	//simple print 
+	//AtomicOpenPYC("tests/test_print.pyc");
+	//AtomicOpenPYC("tests/test_list.pyc");
+	AtomicOpenPYC("tests/test_return.pyc");
+	return;
+	//while loop + break + continue
+	AtomicOpenPYC("tests/test_while.pyc");
 	
 	//generators
 	AtomicOpenPYC("tests/test25.pyc");
 	AtomicOpenPYC("tests/test24b.pyc");
 	AtomicOpenPYC("tests/test24.pyc");
 	
+	AtomicOpenPYC("tests/test52.pyc");
+
 	
 	AtomicOpenPYC("tests/test26.pyc");
 	AtomicOpenPYC("tests/test20.pyc");
@@ -685,9 +693,6 @@ void atomic_test(void)
 	AtomicOpenPYC("tests/test56.pyc");
 	
 	
-	//while loop + break + continue
-	AtomicOpenPYC("tests/test_while.pyc");
-
 	//ellipsis object
 	AtomicOpenPYC("tests/test43.pyc");
 	AtomicOpenPYC("tests/test40.pyc");

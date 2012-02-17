@@ -529,7 +529,7 @@ void FreeBlockObject(object *obj)
 void FreeObject(object *obj)
 {
 	//assert(obj != NULL);
-	debug_printf(DEBUG_ALL,"freeing an object\n");
+	//debug_printf(DEBUG_ALL,"freeing an object\n");
 	if (obj == NULL)
 		return;
 	#ifdef DEBUGGING
@@ -546,14 +546,15 @@ void FreeObject(object *obj)
 	
 	if(obj->ref_count > 1)
 	{
-		DecRefCount(obj);
 		#ifdef DEBUGGING
 		if((debug_level & DEBUG_GC) > 0)
 		{
-			debug_printf(DEBUG_GC,"decreased object ref_count\n");
-			DumpObject(obj,0);
+			debug_printf(DEBUG_GC,"%x : %d (decreasing due FreeObject)\n",obj,obj->ref_count);
+			//debug_printf(DEBUG_GC,"decreased object ref_count\n");
+			//DumpObject(obj,0);
 		}
 		#endif
+		DecRefCount(obj);
 		//obj = NULL;
 		return;
 	}
@@ -589,7 +590,7 @@ void FreeObject(object *obj)
 		DumpObject((object*)((iter_object*)obj)->tag,0);
 		#endif
 		FreeObject(((iter_object*)obj)->tag);
-		((iter_object*)obj)->tag = NULL;
+		//((iter_object*)obj)->tag = NULL;
 		break;
 	case TYPE_NULL:
 		// printf("freeing NULL object @%x\n",obj);
@@ -628,12 +629,12 @@ void FreeObject(object *obj)
 		objects_header_total -= sizeof(function_object);
 		#endif
 
+		FreeObject((object*)((function_object*)obj)->defaults);
+		FreeObject((object*)((function_object*)obj)->kw_defaults);
+		FreeObject((object*)((function_object*)obj)->closure);
 		if(((function_object*) obj)->func_type == FUNC_PYTHON)
 		{
 			FreeObject((object*)((function_object*)obj)->func.code);
-			FreeObject((object*)((function_object*)obj)->defaults);
-			FreeObject((object*)((function_object*)obj)->kw_defaults);
-			FreeObject((object*)((function_object*)obj)->closure);
 		}else 
 		if(((function_object*)obj)->func_type == FUNC_C || ((function_object*)obj)->func_type == FUNC_C_OBJ)
 		{
@@ -1287,8 +1288,9 @@ void IncRefCount(object *obj)
 	#ifdef DEBUGGING
 	if((debug_level & DEBUG_GC) > 0)
 	{
-		debug_printf(DEBUG_GC,"object has gained a ref \n");
-		DumpObject(obj,0);
+		//debug_printf(DEBUG_GC,"object has gained a ref \n");
+		//DumpObject(obj,0);
+		debug_printf(DEBUG_GC,"%x : %d refs (incremented:%c)\n",obj,obj->ref_count,obj->type);
 	}
 	#endif
 }
@@ -1303,8 +1305,9 @@ void DecRefCountGC(object *obj,ptr_list *gc)
 			#ifdef DEBUGGING
 			if((debug_level & DEBUG_GC) > 0)
 			{
-				debug_printf(DEBUG_GC,"object has no refs anymore -> put into gc\n");
-				DumpObject(obj,0);
+				//debug_printf(DEBUG_GC,"object has no refs anymore -> put into gc\n");
+				debug_printf(DEBUG_GC,"%x : 0 refs (GC:%c)\n",obj,obj->type);
+				//DumpObject(obj,0);
 			}
 			#endif
 			//FreeObject(obj);
@@ -1313,6 +1316,9 @@ void DecRefCountGC(object *obj,ptr_list *gc)
 		return;
 	 }
 	obj->ref_count--;
+	#ifdef DEBUGGING
+	debug_printf(DEBUG_GC,"%x : %d refs (decremented[GC]:%c)\n",obj,obj->ref_count,obj->type);
+	#endif
 }
 
 void DecRefCount(object *obj)
@@ -1323,8 +1329,9 @@ void DecRefCount(object *obj)
 		#ifdef DEBUGGING
 		if((debug_level & DEBUG_GC) > 0)
 		{
-			debug_printf(DEBUG_GC,"object has no refs anymore -> freeing\n");
-			DumpObject(obj,0);
+			//debug_printf(DEBUG_GC,"object has no refs anymore -> freeing\n");
+			debug_printf(DEBUG_GC,"%x : 0 refs (F:%c)\n",obj,obj->type);
+			//DumpObject(obj,0);
 		}
 		#endif
 		FreeObject(obj);
@@ -1332,6 +1339,9 @@ void DecRefCount(object *obj)
 		return;
 	 }
 	obj->ref_count--;
+	#ifdef DEBUGGING
+	debug_printf(DEBUG_GC,"%x : %d refs (decremented[F]:%c)\n",obj,obj->ref_count,obj->type);
+	#endif
 }
 
 BOOL HasNoRefs(object *obj)
@@ -1372,9 +1382,9 @@ void AppendItem(object *tuple,object *value)
 {
 	if (tuple == NULL || tuple->type != TYPE_TUPLE)
 		return;
-	if(((tuple_object *) tuple)->list == NULL)
-		((tuple_object *) tuple)->list = ptr_CreateList(0,0);
-	ptr_Push(((tuple_object *) tuple)->list,value);
+	if(((tuple_object*)tuple)->list == NULL)
+		((tuple_object*)tuple)->list = ptr_CreateList(0,0);
+	ptr_Push(((tuple_object*)tuple)->list,value);
 	IncRefCount(value);
 }
 
@@ -1441,11 +1451,11 @@ void SetDictItemByIndex(object *tuple,INDEX index,object *value)
 				object *old = ((kv_object*) k)->value;
 				if(value != NULL)
 				{
-					((kv_object*) k)->value = value;
+					((kv_object*)k)->value = value;
 					IncRefCount(value);
 				}
 				else
-					((kv_object*) k)->value = NULL;
+					((kv_object*)k)->value = NULL;
 				if(old != NULL)
 					FreeObject(old);
 			}

@@ -142,7 +142,7 @@ object *iter_NextNow(iter_object *iter,vm *vm)
 				if(vm->blocks->list->num)
 				{
 					ret = stack_Pop(n->stack,vm->garbage);
-					//DecRefCountGC(ret,vm->garbage);
+					DecRefCountGC(ret,vm->garbage);
 				}	
 				break;
 			}
@@ -160,7 +160,7 @@ object *iter_NextNow(iter_object *iter,vm *vm)
 	}
 	//printf("iter thru next:\n");
 	//DumpObject(next,0);
-	//DecRefCountGC(next,vm->garbage);
+	DecRefCountGC(next,vm->garbage);
 	return(next);
 }
 

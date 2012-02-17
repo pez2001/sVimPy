@@ -111,6 +111,8 @@ typedef struct _vm
 
 #pragma pack(pop)				/* restore original alignment from stack */
 
+BOOL vm_ObjectExists(vm *vm, object  *obj);
+
 function_object *CreateCFunction(object *(*func) (vm *vm,stack *stack), char *name);
 
 function_object *CreateCObjFunction(object *(*func) (vm *vm,object *obj),	char *name);

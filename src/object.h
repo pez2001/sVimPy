@@ -114,6 +114,18 @@
 #define FUNC_C 2
 #define FUNC_C_OBJ 4
 
+struct _vm;
+struct _stack;
+struct _object;
+struct _code_object;
+
+typedef	union _object_func
+{
+	struct _object* (*func) (struct _vm *vm,struct _stack *stack);
+	struct _object* (*func_obj) (struct _vm *vm,struct _object *object);
+	struct _code_object *code;
+} object_func;
+
 
 #pragma pack(push)				/* push current alignment to stack */
 #pragma pack(1)					/* set alignment to 1 byte boundary */
@@ -125,7 +137,7 @@ typedef struct _object
 	OBJECT_REF_COUNT ref_count;
 } object;
 
-typedef struct
+typedef struct _ref_object
 {
 	OBJECT_TYPE type;
 	OBJECT_FLAGS flags;
@@ -134,7 +146,7 @@ typedef struct
 } ref_object;
 
 
-typedef struct
+typedef struct _int_object
 {
 	OBJECT_TYPE type;
 	OBJECT_FLAGS flags;
@@ -142,7 +154,7 @@ typedef struct
 	INT value;
 } int_object;
 
-typedef struct
+typedef struct _float_object
 {
 	OBJECT_TYPE type;
 	OBJECT_FLAGS flags;
@@ -150,7 +162,7 @@ typedef struct
 	FLOAT value;
 } float_object;
 
-typedef struct
+typedef struct _unicode_object
 {
 	OBJECT_TYPE type;
 	OBJECT_FLAGS flags;
@@ -159,7 +171,7 @@ typedef struct
 }unicode_object;
 
 
-typedef struct
+typedef struct _kv_object
 {
 	OBJECT_TYPE type;
 	OBJECT_FLAGS flags;
@@ -177,7 +189,7 @@ typedef struct
 } empty_object;					// TO OPTIMIZE MEMORY USAGE
 */
 
-typedef struct
+typedef struct _code_object
 {
 	OBJECT_TYPE type;
 	OBJECT_FLAGS flags;
@@ -201,7 +213,7 @@ typedef struct
 	// long firstlineno;
 } code_object;
 
-typedef struct
+typedef struct _string_object
 {
 	OBJECT_TYPE type;
 	OBJECT_FLAGS flags;
@@ -211,7 +223,7 @@ typedef struct
 } string_object;
 
 
-typedef struct
+typedef struct _tuple_object
 {
 	OBJECT_TYPE type;
 	OBJECT_FLAGS flags;
@@ -220,26 +232,21 @@ typedef struct
 } tuple_object;
 
 
-struct _vm;
-struct _stack;
+//struct _vm;
+//struct _stack;
 
 typedef struct _function_object
 {
 	OBJECT_TYPE type;
 	OBJECT_FLAGS flags;
 	OBJECT_REF_COUNT ref_count;
+	char *name;//used quickly find functions by name
 	tuple_object *defaults;//set to default values in MAKE_FUNCTION opcode
 	tuple_object *kw_defaults;//set to default keyword values in MAKE_FUNCTION opcode
-	//code_object *code;
-	char *name;//used quickly find functions by name
-	unsigned char func_type;
 	tuple_object *closure;
-	union func_def
-	{
-		object *(*func) (struct _vm *vm,struct _stack *stack);
-		object *(*func_obj) (struct _vm *vm,object *object);
-		code_object *code;
-	} func;
+	//code_object *code;
+	unsigned char func_type;
+	union _object_func func;
 } function_object;
 
 //TODO create struct for generator storage

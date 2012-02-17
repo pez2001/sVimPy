@@ -29,7 +29,10 @@
 #include "object.h"
 #include "debug.h"
 
-void gc_Clear(ptr_list *gc_collection);
+#include "vm.h"
+
+//void gc_Clear(ptr_list *gc_collection);
+void gc_Clear(ptr_list *gc_collection,struct _vm* vm);
 
 
 #endif

@@ -23,7 +23,8 @@
 #include "garbage.h"
 
 
-void gc_Clear(ptr_list *gc_collection)
+//void gc_Clear(ptr_list *gc_collection)
+void gc_Clear(ptr_list *gc_collection,struct _vm *vm)
 {
 	//printf("gc_Clear()\n");
 	while(gc_collection->num)
@@ -35,8 +36,13 @@ void gc_Clear(ptr_list *gc_collection)
 			#ifdef DEBUGGING
 			if((debug_level & DEBUG_GC) > 0)
 			{
-				debug_printf(DEBUG_GC,"object has no refs\n");
-				DumpObject(g,0);
+				//debug_printf(DEBUG_GC,"object has no refs\n");
+				debug_printf(DEBUG_GC,"%x : %d (killed:%c)\n",g,g->ref_count,g->type);
+				//DumpObject(g,0);
+				if(vm_ObjectExists(vm,g))
+				{
+					debug_printf(DEBUG_GC,"%x : %d (Warning still in use and just got killed)\n",g,g->ref_count);
+				}				
 			}
 			#endif
 			FreeObject(g);
@@ -47,8 +53,13 @@ void gc_Clear(ptr_list *gc_collection)
 			#ifdef DEBUGGING
 			if((debug_level & DEBUG_GC) > 0)
 			{
-				debug_printf(DEBUG_GC,"object has gained refs:%d\n",g->ref_count);
-				DumpObject(g,0);
+				//debug_printf(DEBUG_GC,"object has gained refs:%d\n",g->ref_count);
+				//DumpObject(g,0);
+				debug_printf(DEBUG_GC,"%x : %d (survived:%c)\n",g,g->ref_count,g->type);
+				if(!vm_ObjectExists(vm,g))
+				{
+					debug_printf(DEBUG_GC,"%x : %d (Warning no reference in object tree was found)\n",g,g->ref_count);
+				}				
 			}
 			#endif
 		//ptr_Remove(gc_collection,i);

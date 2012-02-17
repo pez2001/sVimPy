@@ -53,7 +53,7 @@ void mem_Close(void)
 
 void mem_Push(void *x, long size, char *description)
 {
-	mem_chunk_items[mem_chunks_top] = (mem_chunk *) malloc(sizeof(mem_chunk));
+	mem_chunk_items[mem_chunks_top] = (mem_chunk*)malloc(sizeof(mem_chunk));
 	mem_chunk_items[mem_chunks_top]->ptr = x;
 	mem_chunk_items[mem_chunks_top]->size = size;
 	mem_chunk_items[mem_chunks_top]->description = description;
@@ -77,20 +77,23 @@ void *mem_realloc(void *ptr, size_t size)
 {
 	if((debug_level & DEBUG_MEMORY) > 0)
 	{
-	for (int i = 0; i < mem_chunks_top; i++)
-	{
-		if (mem_chunk_items[i]->ptr == ptr && !mem_chunk_items[i]->is_freed)
+		//printf("reallocated memory\n");
+		if(size == 0)
+			printf("reallocated zero bytes\n");
+		for (int i = 0; i < mem_chunks_top; i++)
 		{
-			mem_chunk_items[i]->ptr = realloc(ptr, size);
-			mem_chunks_actual_size += size - mem_chunk_items[i]->size;
-			if (mem_chunks_actual_size > mem_chunks_max_size)
-				mem_chunks_max_size = mem_chunks_actual_size;
-			mem_chunk_items[i]->size = size;
-			return (mem_chunk_items[i]->ptr);
+			if (mem_chunk_items[i]->ptr == ptr && !mem_chunk_items[i]->is_freed)
+			{
+				mem_chunk_items[i]->ptr = realloc(ptr, size);
+				mem_chunks_actual_size += size - mem_chunk_items[i]->size;
+				if (mem_chunks_actual_size > mem_chunks_max_size)
+					mem_chunks_max_size = mem_chunks_actual_size;
+				mem_chunk_items[i]->size = size;
+				return (mem_chunk_items[i]->ptr);
+			}
 		}
-	}
-	printf("realloc chunk not found @%x\n", ptr);
-	return (NULL);
+		printf("realloc chunk not found @%x\n", ptr);
+		return (NULL);
 	}
 	else
 	{

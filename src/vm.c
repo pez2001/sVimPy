@@ -76,6 +76,118 @@ r :\n\
 
 #endif
 
+BOOL vm_SearchObject(object *obj,object *needle)
+{
+	if (obj != NULL)
+	{
+		debug_printf(DEBUG_ALL,"checking obj(%c):%x against %x\n",obj->type,obj,needle);
+		//DumpObject(obj,0);
+		if(obj == needle)
+			return(1);
+
+		switch (obj->type)
+		{
+		case TYPE_BLOCK:
+			if(((block_object*)obj)->stack != NULL && ((block_object*)obj)->stack->list != NULL && ((block_object*)obj)->stack->list->num)
+			{
+				for(NUM i = 0;i<((block_object*)obj)->stack->list->num;i++)
+				{
+					if(vm_SearchObject(((block_object*)obj)->stack->list->items[i],needle))
+						return(1);
+				}
+			}				
+			return(vm_SearchObject((object*)((block_object*)obj)->code,needle));
+			break;
+		case TYPE_ITER:
+			if(vm_SearchObject(((iter_object*)obj)->tag,needle))
+				return(1);
+			if(((iter_object*)obj)->block_stack != NULL && ((iter_object*)obj)->block_stack->list != NULL && ((iter_object*)obj)->block_stack->list->num)
+			{
+				for(NUM i = 0;i<((iter_object*)obj)->block_stack->list->num;i++)
+				{
+					if(vm_SearchObject(((iter_object*)obj)->block_stack->list->items[i],needle))
+						return(1);
+				}
+			}			
+			break;
+		case TYPE_FUNCTION:
+			if(((function_object*)obj)->func_type == FUNC_PYTHON)
+			{
+				debug_printf(DEBUG_ALL,"checking function defaults\n");
+				if(vm_SearchObject((object*)((function_object*)obj)->defaults,needle))
+					return(1);
+				debug_printf(DEBUG_ALL,"checking function kw_defaults\n");
+				if(vm_SearchObject((object*)((function_object*)obj)->kw_defaults,needle))
+					return(1);
+				debug_printf(DEBUG_ALL,"checking function closure\n");
+				if(vm_SearchObject((object*)((function_object*)obj)->closure,needle))
+				 	return(1);
+				debug_printf(DEBUG_ALL,"checking code\n");
+				if(vm_SearchObject((object*)((function_object*)obj)->func.code,needle))
+					return(1);
+				debug_printf(DEBUG_ALL,"checked function\n",obj->type,obj,needle);
+			}
+			break;
+		case TYPE_REF:
+			return(vm_SearchObject(((ref_object*)obj)->ref,needle));
+			break;
+		case TYPE_CODE:
+			if(vm_SearchObject(((code_object *)obj)->code,needle))
+				return(1);
+			if(vm_SearchObject(((code_object *)obj)->consts,needle))
+				return(1);
+			if(vm_SearchObject(((code_object *)obj)->names,needle))
+				return(1);
+			if(vm_SearchObject(((code_object *)obj)->varnames,needle))
+				return(1);
+			if(vm_SearchObject(((code_object *)obj)->freevars,needle))
+				return(1);
+			return(vm_SearchObject(((code_object*)obj)->cellvars,needle));
+		case TYPE_KV:
+			if(vm_SearchObject(((kv_object*)obj)->key,needle))
+				return(1);
+			return(vm_SearchObject(((kv_object*)obj)->value,needle));
+			break;
+		case TYPE_TUPLE:
+			{
+				tuple_object *to = (tuple_object*)obj;
+				//DumpObject(to,0);
+				if(to->list != NULL && to->list->num)
+				{
+					for(NUM i = 0;i<to->list->num;i++)
+					{
+						//debug_printf(DEBUG_ALL,"checking entry:%d\n",i);
+						object *ti = to->list->items[i];
+						if(ti != NULL)
+							if(vm_SearchObject(ti,needle))
+								return(1);
+						//debug_printf(DEBUG_ALL,"checked entry:%d\n",i);
+					}
+				}
+			}
+			break;
+		}
+	}
+	debug_printf(DEBUG_ALL,"checked obj(%c):%x against %x\n",obj->type,obj,needle);
+	return(0);
+}
+
+BOOL vm_ObjectExists(vm *vm, object  *obj)
+{
+	debug_printf(DEBUG_ALL,"checking blocks\n");
+	for(NUM i = 0;i<vm->blocks->list->num;i++)
+	{
+		if(vm_SearchObject(vm->blocks->list->items[i],obj))
+			return(1);
+	}	
+	debug_printf(DEBUG_ALL,"checking globals\n");
+	for(NUM i = 0;i<vm->globals->num;i++)
+	{
+		if(vm_SearchObject(vm->globals->items[i],obj))
+			return(1);
+	}	
+	return(0);
+}
 
 function_object *CreateCFunction(object *(*func) (vm *vm,stack *stack), char *name)
 {
@@ -88,7 +200,7 @@ function_object *CreateCFunction(object *(*func) (vm *vm,stack *stack), char *na
 function_object *CreateCObjFunction(object *(*func) (vm *vm,object *obj),	char *name)
 {
 	function_object *fo = CreateFunctionObject(FUNC_C_OBJ,0);
-	fo->func.func_obj = (*func);
+	fo->func.func_obj = func;
 	fo->name = str_Copy(name);
 	return (fo);
 }
@@ -199,7 +311,7 @@ void vm_Close(vm *vm)
 			FreeObject((object*)vm->functions->items[i]);
 	}
 	ptr_CloseList(vm->functions);
-	gc_Clear(vm->garbage);
+	gc_Clear(vm->garbage,vm);
 	ptr_CloseList(vm->garbage);
 	for(NUM i = 0;i<vm->blocks->list->num;i++)
 			FreeObject((object*)vm->blocks->list->items[i]);
@@ -918,7 +1030,7 @@ object *vm_StepObject(vm *vm)
 			}
 			if (op_thru)
 			{
-				gc_Clear(vm->garbage);
+				gc_Clear(vm->garbage,vm);
 				return(NULL);
 			}
 			#endif // -- FOR DEBUGGING
@@ -949,7 +1061,7 @@ object *vm_StepObject(vm *vm)
 					object *ret = stack_Pop(bo->stack,vm->garbage);
 					IncRefCount(ret);
 					//printf("yielding\n");
-					gc_Clear(vm->garbage);
+					gc_Clear(vm->garbage,vm);
 					
 					return(ret);
 				}
@@ -1003,12 +1115,12 @@ object *vm_StepObject(vm *vm)
 						#ifdef DEBUGGING
 						debug_printf(DEBUG_VERBOSE_STEP,"still blocks on the stack\n");
 						#endif
-						gc_Clear(vm->garbage);
+						gc_Clear(vm->garbage,vm);
 					}
 					else 
 					{
 						IncRefCount(ret);
-						gc_Clear(vm->garbage);
+						gc_Clear(vm->garbage,vm);
 						/*object *tmp = CreateEmptyObject(TYPE_NONE,0);
 						//IncRefCount(tmp);
 						//printf("no return object on stack , returning NONE object\n");
@@ -1016,7 +1128,7 @@ object *vm_StepObject(vm *vm)
 						//return (NULL);*/
 						return(ret);
 					}					
-					gc_Clear(vm->garbage);
+					gc_Clear(vm->garbage,vm);
 					return (NULL);
 				}
 
@@ -1205,7 +1317,7 @@ object *vm_StepObject(vm *vm)
 
 			if (op_thru)
 			{
-				gc_Clear(vm->garbage);
+				gc_Clear(vm->garbage,vm);
 				return(NULL);
 			}
 
@@ -2213,15 +2325,17 @@ object *vm_StepObject(vm *vm)
 					//object *function_name = stack_Pop(bo->stack,vm->garbage);
 					stack_Pop(bo->stack,vm->garbage);
 					//printf("pushing function block on block stack\n");
+					IncRefCount(fo);
 					object *pret = vm_StartFunctionObject(vm,fo, call,kw_call,narg,nkey);
+					DecRefCountGC(fo,vm->garbage);
 					if (pret != NULL)
 					{
 							stack_Push(bo->stack, pret);
 					}
 					if (narg > 0 || var_list != NULL)
-						stack_Close(call, 0);
+						stack_Close(call, 1);
 					if (nkey > 0)
-						stack_Close(kw_call, 0);
+						stack_Close(kw_call, 1);
 				}
 				break;
 
@@ -2238,7 +2352,7 @@ object *vm_StepObject(vm *vm)
 			}
 
 			// printf("step\n");
-			gc_Clear(vm->garbage);
+			gc_Clear(vm->garbage,vm);
 			return(NULL);
 		} //END OF STEP
 		#ifdef DEBUGGING
