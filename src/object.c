@@ -516,16 +516,19 @@ kv_object *ConvertToKVObjectValued(object *key,object *value)
 	return(kv);
 }
 
-void FreeBlockObject(object *obj)
+/*void FreeBlockObject(object *obj)
 {
 		//if(((block_object*)obj)->iter != NULL)
 		//	FreeObject(((block_object*)obj)->iter);
 		//printf("closing block stack\n");
+		debug_printf(DEBUG_ALL,"block object to be freed:%x\n",obj);
+		debug_printf(DEBUG_ALL,"block object code to be freed:%x\n",((block_object*)obj)->code);
+		FreeObject((object*)((block_object*)obj)->code);
 		if(((block_object*)obj)->stack != NULL)
 			stack_Close(((block_object*)obj)->stack,0);
 		//printf("closed block\n");
 }
-
+*/
 void FreeObject(object *obj)
 {
 	//assert(obj != NULL);
@@ -567,7 +570,17 @@ void FreeObject(object *obj)
 		debug_printf(DEBUG_VERBOSE_FREEING,"Freeing block object %x\n",obj);
 		#endif
 		//objects_header_total -= sizeof(block_object);
-		FreeBlockObject(obj);
+		//FreeBlockObject(obj);
+				//if(((block_object*)obj)->iter != NULL)
+		//	FreeObject(((block_object*)obj)->iter);
+		//printf("closing block stack\n");
+		//debug_printf(DEBUG_ALL,"block object to be freed:%x\n",obj);
+		//debug_printf(DEBUG_ALL,"block object code to be freed:%x\n",((block_object*)obj)->code);
+		FreeObject((object*)((block_object*)obj)->code);
+		if(((block_object*)obj)->stack != NULL)
+			stack_Close(((block_object*)obj)->stack,1);
+		//printf("closed block\n");
+
 		break;
 	case TYPE_REF:
 		#ifdef DEBUGGING
@@ -583,11 +596,11 @@ void FreeObject(object *obj)
 		if(((iter_object*)obj)->block_stack != NULL)
 		{	
 			//printf("closing iter stack\n");
-			stack_Close(((iter_object*)obj)->block_stack,0);
+			stack_Close(((iter_object*)obj)->block_stack,1);
 		}
 		#ifdef DEBUGGING
 		debug_printf(DEBUG_VERBOSE_FREEING,"Freeing Iter tag %x\n",((iter_object*)obj)->tag);
-		DumpObject((object*)((iter_object*)obj)->tag,0);
+		//DumpObject((object*)((iter_object*)obj)->tag,0);
 		#endif
 		FreeObject(((iter_object*)obj)->tag);
 		//((iter_object*)obj)->tag = NULL;
@@ -636,7 +649,7 @@ void FreeObject(object *obj)
 		{
 			FreeObject((object*)((function_object*)obj)->func.code);
 		}else 
-		if(((function_object*)obj)->func_type == FUNC_C || ((function_object*)obj)->func_type == FUNC_C_OBJ)
+		if((((function_object*)obj)->func_type == FUNC_C) || (((function_object*)obj)->func_type == FUNC_C_OBJ))
 		{
 			#ifdef DEBUGGING
 			assert(mem_free(((function_object*)obj)->name));
@@ -695,7 +708,7 @@ void FreeObject(object *obj)
 		objects_header_total -= sizeof(code_object);
 		objects_header_total -= strlen(((code_object*)obj)->name) + 1;
 		#endif
-
+		//DumpObject(obj,3);
 		#ifdef DEBUGGING
 		assert(mem_free(((code_object*)obj)->name));
 		#else
@@ -781,6 +794,7 @@ void DumpObject(object * obj, char level)
 	case TYPE_BLOCK:
 		debug_printf(DEBUG_ALL,"block object\n");
 		debug_printf(DEBUG_ALL,"stack @%x\n",((block_object*)obj)->stack);
+		debug_printf(DEBUG_ALL,"code @%x\n",((block_object*)obj)->code);
 		//debug_printf(DEBUG_ALL,"iter @%x\n",((block_object*)obj)->iter);
 		debug_printf(DEBUG_ALL,"start: %d\n",((block_object*)obj)->start);
 		debug_printf(DEBUG_ALL,"len: %d\n",((block_object*)obj)->len);
@@ -793,7 +807,10 @@ void DumpObject(object * obj, char level)
 		break;
 	case TYPE_ITER:
 			debug_printf(DEBUG_ALL,"iter object\n");
+			debug_printf(DEBUG_ALL,"iter tag:\n");
 			DumpObject((object*)((iter_object*)obj)->tag,level + 1);
+			debug_printf(DEBUG_ALL,"iter block stack:\n");
+			stack_Dump(((iter_object*)obj)->block_stack);
 			break;
 	case TYPE_REF:
 		debug_printf(DEBUG_ALL,"ref object\n");

@@ -259,19 +259,7 @@ typedef struct _iter_object
 	object *(*iter_func)(struct _iter_object *iter);
 	struct _stack *block_stack;//iters will save blocks on stack when yielding
 } iter_object;
-/*
-typedef struct _loop_block_object
-{
-	OBJECT_TYPE type;
-	OBJECT_FLAGS flags;
-	OBJECT_REF_COUNT ref_count;
-	code_object *code;
-	INDEX start;
-	NUM len;
-	INDEX ip;
-	//struct _stack *stack;
-} loop_block_object;
-*/
+
 typedef struct _block_object
 {
 	OBJECT_TYPE type;
@@ -279,13 +267,8 @@ typedef struct _block_object
 	OBJECT_REF_COUNT ref_count;
 	code_object *code;
 	INDEX start;
-	//INDEX start;
-	//NUM len;
-	//iter_object *iter;  //TODO rename to tag ,and use it for yielding too
-	//struct _block_object *parent; //used for chaining
 	INDEX ip;
 	NUM len;
-	//char initiated_locals;//TODO REMOVE NOT NEEDED
 	struct _stack *stack;
 } block_object;
 
@@ -404,7 +387,7 @@ function_object *CreateFunctionObject(unsigned char func_type,OBJECT_FLAGS flags
 
 iter_object *CreateIterObject(OBJECT_FLAGS flags);
 
-void FreeBlockObject(object *obj);
+//void FreeBlockObject(object *obj);
 
 void FreeObject(object *obj);
 

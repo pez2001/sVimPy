@@ -12,7 +12,7 @@ void mem_Init(void)
 {
 	if((debug_level & DEBUG_MEMORY) > 0)
 	{
-	mem_chunk_items =	(mem_chunk **) malloc(MAX_MEM_CHUNKS * sizeof(mem_chunk *));
+	mem_chunk_items =	(mem_chunk**) malloc(MAX_MEM_CHUNKS * sizeof(mem_chunk*));
 	mem_chunks_top = 0;
 	}
 }
@@ -45,7 +45,7 @@ void mem_Close(void)
 	}
 	debug_printf(DEBUG_MEMORY,"leaked chunks test done\n");
 	free(mem_chunk_items);
-
+	mem_chunks_top = 0;
 	printf("not freed heap bytes num:%d\n", mem_chunks_actual_size);
 	printf("MAX HEAP USAGE:%d\n", mem_chunks_max_size);
 	}

@@ -78,6 +78,7 @@ void stack_Push(stack *stack, struct _object * x)
 {
 	if (x == NULL)
 		return;
+	//debug_printf(DEBUG_ALL,"incrementing ref_count in stack_Push() - x\n");
 	IncRefCount(x);
 	ptr_Push(stack->list, x);
 }
@@ -222,6 +223,12 @@ void stack_Adjust(stack *stack, REL_NUM by)
 #ifdef DEBUGGING
 void stack_Dump(stack *stack)
 {
+	if(stack == NULL)
+	{
+		debug_printf(DEBUG_ALL,"non existant stack\n");
+		return;
+	}
+	
 	if(stack->list == NULL)
 	{
 		debug_printf(DEBUG_ALL,"empty stack\n");
@@ -247,6 +254,7 @@ struct _object *stack_Pop(stack *stack,ptr_list *gc)
 		return (NULL);
 	}
 	object *r = ptr_Pop(stack->list);
+	//debug_printf(DEBUG_ALL,"decrementing ref_count in stack_Pop() - r\n");
 	DecRefCountGC(r,gc);
 	return (r);
 }

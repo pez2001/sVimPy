@@ -8,12 +8,12 @@
 //
 // arduino D10
 #define SS    2
-
+                
 // arduino D11
 #define MOSI  3
 
 // arduino D12
-#define MISO  4
+#define MISO  4	
 
 // arduino D13
 #define SCK    5

@@ -145,7 +145,7 @@ stream *stream_CreateFromFile(char *filename)
 {
 	stream *str = AllocStream();
 	ptr_list *fopt = ptr_CreateList(0,0);
-	char * fname = str_Copy(filename);
+	char *fname = str_Copy(filename);
 	ptr_Push(fopt,fname);
 	str->type = streams_GetStreamType(STREAM_TYPE_FILE);
 	str->tags = fopt;

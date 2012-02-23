@@ -60,13 +60,28 @@ void iter_RestoreBlockStack(iter_object *iter,struct _vm *vm)
 	}
 }
 
+void iter_ClearBlockStack(iter_object *iter,struct _vm *vm)
+{
+	stack_Push(vm->blocks,iter->tag);
+	while(iter->block_stack->list->num)
+	{
+		block_object *bo = (block_object*)stack_Pop(iter->block_stack,vm->garbage);
+		//stack_Push(vm->blocks,(object*)bo);//reverserd order
+		DecRefCountGC(bo,vm->garbage);
+		//printf("restoring bo:%x\n",bo);
+		//DumpObject(bo,0);
+	}
+}
 void iter_SaveBlockStack(iter_object *iter,struct _vm *vm)
 {
 	block_object *bo = NULL;
+	//DumpObject((object*)iter,0);
 	while((object*)(bo = (block_object*)stack_Pop(vm->blocks,vm->garbage)) != iter->tag)
 	{
-		//printf("saving bo:%x\n",bo);
+		//debug_printf(DEBUG_ALL,"saving bo:%x\n",bo);
 		//DumpObject(bo,0);
+		//debug_printf(DEBUG_ALL,"to:@%x\n",iter->block_stack);
+		//stack_Dump(iter->block_stack);
 		stack_Push(iter->block_stack,(object*)bo);//reverserd order
 	}//while(bo != iter);
 }
@@ -74,11 +89,13 @@ void iter_SaveBlockStack(iter_object *iter,struct _vm *vm)
 object *iter_Next(iter_object *iter,vm *vm)
 {
 	object *next = iter->iter_func(iter);
+	//IncRefCount(next);
 	return(next);
 }
 
 void iter_Expand(iter_object *iter,struct _vm *vm,stack *stack)
 {
+	//debug_printf(DEBUG_ALL,"incrementing ref_count in iter_Expand() - iter\n");
 	IncRefCount((object*)iter);
 	object *n = NULL;
 	//printf("expanding iter\n");
@@ -91,7 +108,9 @@ void iter_Expand(iter_object *iter,struct _vm *vm,stack *stack)
 		//else 
 		//	printf("n: NULL\n");
 		stack_Push(tmp,n);
-	}while(n != NULL && n->type != TYPE_NONE);
+		//debug_printf(DEBUG_ALL,"decrementing ref_count in iter_Expand() - n\n");
+		//DecRefCountGC(n,vm->garbage);
+	}while(n->type != TYPE_NONE);
 	//printf("pushing expanded items\n");
 	while(tmp->list->num)
 	{
@@ -102,10 +121,12 @@ void iter_Expand(iter_object *iter,struct _vm *vm,stack *stack)
 		}
 		else
 		{
-			FreeObject(s);
+			//FreeObject(s);
+			//DecRefCountGC(s,vm->garbage);
 		}
 	}
 	stack_Close(tmp,0);
+	//debug_printf(DEBUG_ALL,"decrementing ref_count in iter_Expand() - iter\n");
 	DecRefCountGC((object*)iter,vm->garbage);
 	//printf("expanded iter\n");
 }
@@ -128,39 +149,50 @@ object *iter_NextNow(iter_object *iter,vm *vm)
 		iter_RestoreBlockStack(iter,vm);
 		//printf("restored block stack for iter\n");
 		//printf("top:%x, bo:%x\n",stack_Top(vm->blocks),bo);
+		//debug_printf(DEBUG_ALL,"incrementing ref_count in iter_NextNow() - iter\n");
+		IncRefCount((object*)iter);
 		
 		while(ret == NULL)//TODO doesnt stop after one block
 		{
 			//printf("in next now loop\n");
 			ret = vm_StepObject(vm);
 			//block_object *n = (block_object*)stack_Top(vm->blocks);
+			//debug_printf(DEBUG_ALL,"iter_NextNow() - step thru\n");
 			if(!stack_Contains(vm->blocks,(object*)bo)) //via normal return
 			{
-				//printf("block executed\n");
+				//debug_printf(DEBUG_ALL,"block executed\n");
 				//stack_Dump(n->stack);
 				block_object *n = (block_object*)stack_Top(vm->blocks);
 				if(vm->blocks->list->num)
 				{
 					ret = stack_Pop(n->stack,vm->garbage);
-					DecRefCountGC(ret,vm->garbage);
+					//DecRefCountGC(ret,vm->garbage);
+					//IncRefCount(ret);
 				}	
+				iter_ClearBlockStack(iter,vm);
 				break;
 			}
 			else if(ret != NULL) //via yield 
 			{
 				//printf("saving block stack of iter\n");
 				iter_SaveBlockStack(iter,vm);
+				//debug_printf(DEBUG_ALL,"decrementing ref_count in iter_NextNow() - ret\n");
 				DecRefCountGC(ret,vm->garbage);
+				//IncRefCount(ret);
 				//printf("decremented iter\n");
 			}
 		}
+		//debug_printf(DEBUG_ALL,"decrementing ref_count in iter_NextNow() - iter\n");
+		DecRefCountGC((object*)iter,vm->garbage);
+
 		//printf("ret object\n");
 		//DumpObject(ret,0);
 		return(ret);
 	}
 	//printf("iter thru next:\n");
 	//DumpObject(next,0);
-	DecRefCountGC(next,vm->garbage);
+	//DecRefCountGC(next,vm->garbage);
+	//IncRefCount(next);
 	return(next);
 }
 
@@ -175,6 +207,7 @@ object *iter_Sequence(iter_object *iter)
 	{
 		int_object *r = CreateIntObject(pos->value,0);
 		pos->value+=step->value;
+		//IncRefCount((object*)r);
 		return((object*)r);
 	}
 	else
@@ -182,7 +215,7 @@ object *iter_Sequence(iter_object *iter)
 		int_object *start = (int_object*)GetItem((object*)seq,3);
 		pos->value = start->value;
 		object *r = CreateEmptyObject( TYPE_NONE,0);
-		IncRefCount(r);
+		//IncRefCount(r);
 		return(r);
 	}
 }
@@ -199,7 +232,9 @@ void iter_InitSequence(iter_object *iter,INDEX start,NUM end,NUM step)
 	int_object *istart = CreateIntObject(start,0);
 	SetItem((object*)seq,3,(object*)istart);
 	iter->tag = (object*)seq;
+	//debug_printf(DEBUG_ALL,"incrementing ref_count in iter_InitSequence() - seq\n");
 	IncRefCount((object*)seq);
+	iter->block_stack = NULL;
 	iter->iter_func = &iter_Sequence;
 }
 
@@ -215,13 +250,14 @@ object *iter_Generator(iter_object *iter)
 	//printf("finished returning empty object\n");
 	bo->ip = bo->start;//reset iterator for further uses
 	object *r = CreateEmptyObject( TYPE_NONE,0);
-	IncRefCount(r);
+	//IncRefCount(r);
 	return(r);
 }
 
 void iter_InitGenerator(iter_object *iter,block_object *bo)
 {
 	iter->tag = (object*)bo;
+	//debug_printf(DEBUG_ALL,"incrementing ref_count in iter_InitGenerator() - bo\n");
 	IncRefCount((object*)bo);
 	bo->ip = bo->start;
 	iter->block_stack = stack_Init();
@@ -237,9 +273,10 @@ object *iter_Iteration(iter_object *iter)
 		//printf("tuple iterated thru\n");
 		ResetIteration((object*)it);
 		object *r = CreateEmptyObject( TYPE_NONE,0);
-		IncRefCount(r);
+		//IncRefCount(r);
 		return(r);
 	}
+	//IncRefCount(next);
 	return(next);
 }
 
@@ -247,7 +284,9 @@ void iter_InitIteration(iter_object *iter,tuple_object *to)
 {
 	ResetIteration((object*)to);
 	iter->tag = (object*)to;
+	//debug_printf(DEBUG_ALL,"incrementing ref_count in iter_InitIteration() - to\n");
 	IncRefCount((object*)to);
+	iter->block_stack = NULL;
 	iter->iter_func = &iter_Iteration;
 }
 

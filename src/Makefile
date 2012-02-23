@@ -2,7 +2,7 @@
 
 #windows testing environment for vm
 
-CFLAGS= -Wall -Wstrict-prototypes -O2 -std=c99 
+CFLAGS= -Wall -Wstrict-prototypes -O2 -std=c99 -fbounds-check -Wuninitialized
 # CFLAGS= -W -w -O2 -std=c99 
 CC=gcc
 VERSION = 0.4a

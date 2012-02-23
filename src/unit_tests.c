@@ -455,12 +455,12 @@ void AtomicOpenPYC(char *filename)
 	debug_level = 0;
 	//debug_level |= DEBUG_INTERACTIVE;
 	debug_level |= DEBUG_MEMORY;
-	debug_level |= DEBUG_SHOW_OPCODES;
+	//debug_level |= DEBUG_SHOW_OPCODES;
 	//debug_level |= DEBUG_FULL_DUMP;
 	//debug_level |= DEBUG_STACK;
 	//debug_level |= DEBUG_LISTS;
-	debug_level |= DEBUG_GC;
-	debug_level |= DEBUG_VERBOSE_STEP;
+	//debug_level |= DEBUG_GC;
+	//debug_level |= DEBUG_VERBOSE_STEP;
 	//debug_level |= DEBUG_VM;
 	//debug_level |= DEBUG_FREEING;
 	//debug_level |= DEBUG_ALLOCS;
@@ -537,15 +537,22 @@ void AtomicOpenPYC(char *filename)
 	//debug_printf(DEBUG_VERBOSE_TESTS,"object executed:%s\n", filename);
 	if((debug_level & DEBUG_DUMP_OBJECT) > 0)
 		DumpObject(obj,0);
-	debug_printf(DEBUG_VERBOSE_TESTS,"cleaning up object\n");
+	debug_printf(DEBUG_VERBOSE_TESTS,"cleaning up object:%s\n",filename);
 	#endif
 	//DumpObject(obj,0);
-	FreeObject(obj);
 	#ifdef DEBUGGING
 	debug_printf(DEBUG_VERBOSE_TESTS,"removing object from globals\n");
 	#endif
 	vm_RemoveGlobal(vm,(code_object*)obj);
+
+	#ifdef DEBUGGING
+	debug_printf(DEBUG_VERBOSE_TESTS,"freeing object now\n");
+	#endif
+	FreeObject(obj);
 	//printf("freeing stream\n");
+	#ifdef DEBUGGING
+	debug_printf(DEBUG_VERBOSE_TESTS,"freeing stream\n");
+	#endif
 	stream_Free(f);
 	#ifdef DEBUGGING
 	debug_printf(DEBUG_VERBOSE_TESTS,"pyc executed\n");
@@ -584,17 +591,36 @@ void atomic_test(void)
 	//append ops + generators
 	//AtomicOpenPYC("tests/test53.pyc", vm);
 	
+	//simple generator with yield
+	AtomicOpenPYC("tests/test59.pyc");
+	//return;
 	
 	//simple print 
-	//AtomicOpenPYC("tests/test_print.pyc");
-	//AtomicOpenPYC("tests/test_list.pyc");
+	AtomicOpenPYC("tests/test_print.pyc");
+	//return;
+	
+	AtomicOpenPYC("tests/test_range.pyc");
+	AtomicOpenPYC("tests/test_yield.pyc");
+	AtomicOpenPYC("tests/test_next.pyc");
+	AtomicOpenPYC("tests/test_next2.pyc");
+	AtomicOpenPYC("tests/test_next3.pyc");
+	AtomicOpenPYC("tests/test_list.pyc");
 	AtomicOpenPYC("tests/test_return.pyc");
-	return;
 	//while loop + break + continue
 	AtomicOpenPYC("tests/test_while.pyc");
+	return;
+
+	//print + recursion
+	AtomicOpenPYC("tests/test17.pyc");
+	//return;
+	AtomicOpenPYC("tests/test8.pyc");
+	AtomicOpenPYC("tests/test9.pyc");
+	AtomicOpenPYC("tests/test12.pyc");
+	AtomicOpenPYC("tests/test11.pyc");
 	
 	//generators
 	AtomicOpenPYC("tests/test25.pyc");
+	//return;
 	AtomicOpenPYC("tests/test24b.pyc");
 	AtomicOpenPYC("tests/test24.pyc");
 	
@@ -604,20 +630,14 @@ void atomic_test(void)
 	AtomicOpenPYC("tests/test26.pyc");
 	AtomicOpenPYC("tests/test20.pyc");
 	
-	//simple generator with yield
-	AtomicOpenPYC("tests/test59.pyc");
+
 
 	
 	//iters
 	AtomicOpenPYC("tests/test61.pyc");
 	AtomicOpenPYC("tests/test60.pyc");
 
-	//print + recursion
-	AtomicOpenPYC("tests/test17.pyc");
-	AtomicOpenPYC("tests/test8.pyc");
-	AtomicOpenPYC("tests/test9.pyc");
-	AtomicOpenPYC("tests/test12.pyc");
-	AtomicOpenPYC("tests/test11.pyc");
+	
 	
 	//function parameters
 	AtomicOpenPYC("tests/test50.pyc");//with keywords unordered

@@ -269,7 +269,7 @@ INDEX ptr_GetIndex(ptr_list *list, void *ptr)
 	return(-1);
 }
 
-void ptr_RemoveItem(ptr_list * list, void *ptr)
+void ptr_RemoveItem(ptr_list *list, void *ptr)
 {
 	INDEX index = ptr_GetIndex(list,ptr);
 	if(index != -1)
