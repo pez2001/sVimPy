@@ -38,9 +38,10 @@
 #include "assert.h"
 #endif
 
+#ifndef USE_ARDUINO_FUNCTIONS
 #pragma pack(push)				/* push current alignment to stack */
 #pragma pack(1)					/* set alignment to 1 byte boundary */
-
+#endif
 typedef struct
 {
 	void **items;
@@ -57,7 +58,9 @@ typedef struct
 	void *tag;
 } ptr_list_with_tag;
 */
+#ifndef USE_ARDUINO_FUNCTIONS
 #pragma pack(pop)				/* restore original alignment from stack */
+#endif
 
 #define PTR_STATIC_LIST 1		// TODO add support for static lists , so indices wont change
 #define PTR_LIST_HAS_TAG 2

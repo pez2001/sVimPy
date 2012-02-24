@@ -77,6 +77,7 @@ void streams_Init(void)
 	mtype->stream_seek = &stream_memory_seek;
 	ptr_Push(stream_types,mtype);
 	//file stream
+	#ifndef USE_ARDUINO_FUNCTIONS
 	stream_type *ftype = AllocStreamType();
 	ftype->type = STREAM_TYPE_FILE;
 	ftype->stream_open = &stream_file_open;
@@ -86,6 +87,7 @@ void streams_Init(void)
 	ftype->stream_write = &stream_file_write;
 	ftype->stream_seek = &stream_file_seek;
 	ptr_Push(stream_types,ftype);
+	#endif
 	
 	#ifdef USE_ARDUINO_FUNCTIONS
 	//arduino flash memory stream
@@ -140,7 +142,7 @@ void streams_Close(void)
 	#endif		
 }
 
-
+#ifndef USE_ARDUINO_FUNCTIONS
 stream *stream_CreateFromFile(char *filename)
 {
 	stream *str = AllocStream();
@@ -151,6 +153,7 @@ stream *stream_CreateFromFile(char *filename)
 	str->tags = fopt;
 	return(str);
 }
+#endif
 
 stream *stream_CreateFromBytes(char *bytes ,STREAM_NUM len)
 {
@@ -158,9 +161,22 @@ stream *stream_CreateFromBytes(char *bytes ,STREAM_NUM len)
 	ptr_list *mopt = ptr_CreateList(0,0);
 	ptr_Push(mopt,bytes);
 	ptr_Push(mopt,(void*)len);
-	ptr_Push(mopt,0);
+	STREAM_NUM offset = 0;
+	ptr_Push(mopt,(void*)offset);
 	//printf("getting stream type\n");
-	str->type = streams_GetStreamType(STREAM_TYPE_MEMORY);
+	/*str->type = streams_GetStreamType(STREAM_TYPE_MEMORY);
+
+	tuple_object *b = CreateTuple(4,0);
+	string_object s* = CreateStringObject(bytes,len,0);
+	SetItem((object*)b,0,(object*)s);
+	int_object *ioffset = CreateIntObject(offset,0);
+	SetItem((object*)seq,1,(object*)istep);
+	int_object *ipos = CreateIntObject(start,0);
+	SetItem((object*)seq,2,(object*)ipos);
+	int_object *istart = CreateIntObject(start,0);
+	SetItem((object*)seq,3,(object*)istart);
+	iter->tag = (object*)seq;
+    */
 	//printf("got stream type\n");
 	//printf("open:%x\n",str->type->stream_open);
 	str->tags = mopt;
@@ -246,6 +262,7 @@ BOOL stream_Seek(struct _stream *stream,STREAM_NUM offset)
 
 //file stream functions
 
+#ifndef USE_ARDUINO_FUNCTIONS
 BOOL stream_file_open(struct _stream *stream)
 {
 	FILE *f;
@@ -319,6 +336,7 @@ BOOL stream_file_seek(struct _stream *stream,STREAM_NUM offset)
 	//FILE *f = (FILE*)ptr_Get(stream->tags,1);
 	return(0);
 }
+#endif
 
 BOOL stream_memory_open(struct _stream *stream)
 {
@@ -402,7 +420,7 @@ BOOL stream_flash_memory_read(struct _stream *stream,void *ptr,STREAM_NUM len)
 {
 	char *bytes = (char*)ptr_Get(stream->tags,0);
 	//STREAM_NUM blen = (STREAM_NUM)ptr_Get(stream->tags,1);
-	#if define(USE_DEBUGGING)
+	#if defined(USE_DEBUGGING)
 	debug_printf(DEBUG_ALL," reading stream\r\n");
  	#endif
 	STREAM_NUM offset = (STREAM_NUM)ptr_Get(stream->tags,2);

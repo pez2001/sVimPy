@@ -23,6 +23,7 @@
 
 #ifndef TYPES_H
 #define TYPES_H
+#include "features.h"
 
 #define OBJECT_TYPE char
 #define OBJECT_FLAGS unsigned char
@@ -30,7 +31,12 @@
 #define OBJECT_REF_COUNT short
 
 //stream 
+#ifdef USE_ARDUINO_FUNCTIONS
+#define STREAM_NUM unsigned short
+#else
 #define STREAM_NUM long 
+#endif
+
 #define STREAM_TYPE_ID char
 
 //standard int size

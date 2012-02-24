@@ -127,8 +127,10 @@ typedef	union _object_func
 } object_func;
 
 
+#ifndef USE_ARDUINO_FUNCTIONS
 #pragma pack(push)				/* push current alignment to stack */
 #pragma pack(1)					/* set alignment to 1 byte boundary */
+#endif
 
 typedef struct _object
 {
@@ -272,7 +274,9 @@ typedef struct _block_object
 	struct _stack *stack;
 } block_object;
 
+#ifndef USE_ARDUINO_FUNCTIONS
 #pragma pack(pop)				/* restore original alignment from stack */
+#endif
 
 void IncRefCount(object *obj);
 

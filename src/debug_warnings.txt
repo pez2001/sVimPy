@@ -1,7 +1,1071 @@
-iterators.c: In Funktion »iter_CreateIter«:
-iterators.c:35:3: Warnung: Übergabe des Arguments 2 von »iter_InitGenerator« von inkompatiblem Zeigertyp [standardmäßig aktiviert]
-iterators.h:46:6: Anmerkung: »struct block_object *« erwartet, aber Argument hat Typ »struct function_object *«
-iterators.c:41:3: Warnung: return von inkompatiblem Zeigertyp [standardmäßig aktiviert]
-iterators.c: In Funktion »iter_Generator«:
-iterators.c:209:3: Warnung: return von inkompatiblem Zeigertyp [standardmäßig aktiviert]
-C:\MinGW\bin\ar.exe: creating vm.a
+rm -f unit_tests.exe *.ao *.aopp *.hex *.o *.a *.so arduino/*.ao arduino/aopp arduino/libarduino/*.aopp arduino/libarduino/*.ao svimpy.src.tar.gz
+gcc -Wall -Wstrict-prototypes -O2 -std=c99 -fbounds-check -Wuninitialized -c -o vm.o vm.c
+gcc -Wall -Wstrict-prototypes -O2 -std=c99 -fbounds-check -Wuninitialized -c -o strops.o strops.c
+gcc -Wall -Wstrict-prototypes -O2 -std=c99 -fbounds-check -Wuninitialized -c -o numops.o numops.c
+gcc -Wall -Wstrict-prototypes -O2 -std=c99 -fbounds-check -Wuninitialized -c -o opcodes.o opcodes.c
+gcc -Wall -Wstrict-prototypes -O2 -std=c99 -fbounds-check -Wuninitialized -c -o object.o object.c
+gcc -Wall -Wstrict-prototypes -O2 -std=c99 -fbounds-check -Wuninitialized -c -o memory.o memory.c
+gcc -Wall -Wstrict-prototypes -O2 -std=c99 -fbounds-check -Wuninitialized -c -o stack.o stack.c
+gcc -Wall -Wstrict-prototypes -O2 -std=c99 -fbounds-check -Wuninitialized -c -o lists.o lists.c
+gcc -Wall -Wstrict-prototypes -O2 -std=c99 -fbounds-check -Wuninitialized -c -o internal_functions.o internal_functions.c
+gcc -Wall -Wstrict-prototypes -O2 -std=c99 -fbounds-check -Wuninitialized -c -o stream.o stream.c
+gcc -Wall -Wstrict-prototypes -O2 -std=c99 -fbounds-check -Wuninitialized -c -o garbage.o garbage.c
+gcc -Wall -Wstrict-prototypes -O2 -std=c99 -fbounds-check -Wuninitialized -c -o debug.o debug.c
+gcc -Wall -Wstrict-prototypes -O2 -std=c99 -fbounds-check -Wuninitialized -c -o iterators.o iterators.c
+gcc -Wall -Wstrict-prototypes -O2 -std=c99 -fbounds-check -Wuninitialized -c -o types.o types.c
+ar -rs vm.a vm.o strops.o numops.o opcodes.o object.o memory.o stack.o lists.o internal_functions.o stream.o garbage.o debug.o iterators.o types.o
+gcc -Wall -Wstrict-prototypes -O2 -std=c99 -fbounds-check -Wuninitialized -c -o unit_tests.o unit_tests.c
+gcc unit_tests.o arduino/io.o vm.a  -o unit_tests 
+unit_tests.exe
+1
+2
+thru
+
+128 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:1013
+0 memory chunks leaked
+hi
+
+65 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:1013
+0 memory chunks leaked
+1
+2
+
+100 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:1013
+0 memory chunks leaked
+1, 2
+
+153 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:1154
+0 memory chunks leaked
+1
+1
+1
+
+214 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:1154
+0 memory chunks leaked
+1
+2
+
+156 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:1161
+0 memory chunks leaked
+1
+2
+
+154 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:1164
+0 memory chunks leaked
+1, 2, 3
+
+81 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:1164
+0 memory chunks leaked
+1
+
+100 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:1164
+0 memory chunks leaked
+
+141 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:1164
+0 memory chunks leaked
+v: 1, 4
+y: 1, hi, 3, 4
+y[ 1 ]: hi
+y[ 2 ]: 3
+y[ 3 ]: 4
+b: 1
+b: hi
+b: 3
+b: 4
+f thru
+
+hi
+
+
+269 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:1672
+0 memory chunks leaked
+x: 14641 
+
+
+213 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:1672
+0 memory chunks leaked
+x: 14641 
+
+
+253 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:1672
+0 memory chunks leaked
+x: 390625 
+
+x: Hallo Welt 
+
+== string compare added
+
+== num compare added
+
+x: 1 
+
+x: 100 
+
+y: 15 
+
+or
+
+o: 100 
+
+
+394 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:2218
+0 memory chunks leaked
+x: 14641 
+
+== string compare added
+
+== num compare added
+
+
+281 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:2218
+0 memory chunks leaked
+a: 0, 1, 2, 3, 4
+
+178 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:2218
+0 memory chunks leaked
+
+183 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:2218
+0 memory chunks leaked
+
+219 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:2218
+0 memory chunks leaked
+
+122 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:2218
+0 memory chunks leaked
+y1
+
+y2
+
+
+130 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:2218
+0 memory chunks leaked
+f: hi 
+
+
+294 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:2218
+0 memory chunks leaked
+1 2 3 4 5 6 7 8 9
+1
+2
+3
+4
+5
+6
+7
+8
+9
+
+174 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:2218
+0 memory chunks leaked
+1
+2
+3
+0
+1
+2
+1
+3
+5
+
+209 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:2218
+0 memory chunks leaked
+1
+2
+
+125 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:2218
+0 memory chunks leaked
+a
+b
+
+133 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:2218
+0 memory chunks leaked
+a
+b
+
+133 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:2218
+0 memory chunks leaked
+1
+2
+
+130 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:2218
+0 memory chunks leaked
+a
+b
+c
+b
+
+152 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:2218
+0 memory chunks leaked
+hi
+
+162 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:2218
+0 memory chunks leaked
+f1
+1
+2
+hi
+a
+b
+c
+b
+a
+b
+3
+b
+c
+3
+4
+c
+d
+3
+b
+c
+
+796 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+
+108 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+
+114 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+
+129 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+
+103 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+a
+b
+args
+c
+d
+kwargs
+
+184 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+a
+b
+c, d
+3
+4
+kwargs
+a
+b
+args
+c
+d
+kwargs
+
+244 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+1
+2
+args
+3
+4
+kwargs
+e
+f
+args
+3
+4
+kwargs
+a
+b
+c, d
+3
+4
+kwargs
+a
+b
+args
+c
+d
+kwargs
+
+357 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+1
+2
+args
+3
+4
+kwargs
+a
+b
+c, d
+3
+4
+kwargs
+a
+b
+args
+c
+d
+kwargs
+
+297 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+
+104 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+f: hi 
+
+ji: h 
+
+ki:i
+
+m:new
+
+
+218 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+
+110 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+
+110 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+
+106 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+
+94 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+
+99 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+
+104 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+ji: h 
+
+ki:i
+
+
+135 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+f: hi 
+
+m:new
+
+
+134 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+1
+2
+
+136 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+
+325 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+
+289 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+1, 2, 3, a, b, c
+
+104 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+cmp0 works
+cmp1 works
+cmp2 works
+cmp3 works
+cmp4 works
+cmp5 works
+cmp6 works
+cmp7 works
+cmp8 works
+cmp9 works
+
+252 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+fa: 2
+m: 1
+fba: 1
+fba(after fbb): 2
+m: 2
+
+280 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+4
+
+175 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+2
+
+170 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+x: 6561 
+
+x: 1296 
+
+x: 6561 
+
+x: 1296 
+
+x: 6561 
+
+x: 1296 
+
+x: 6561 
+
+x: 1296 
+
+x: 6561 
+
+x: 1296 
+
+x: 6561 
+
+x: 1296 
+
+x: 6561 
+
+x: 1296 
+
+x: 6561 
+
+x: 1296 
+
+x: 6561 
+
+x: 1296 
+
+x: 6561 
+
+x: 1296 
+
+x: 6561 
+
+x: 1296 
+
+x: 6561 
+
+x: 1296 
+
+x: 6561 
+
+x: 1296 
+
+x: 6561 
+
+x: 1296 
+
+x: 6561 
+
+
+7688 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+Hallo
+
+65 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+x: 2
+
+75 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+x: 6
+
+83 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+x: 11 
+
+x: Hallo Welt 
+
+y: Gute Nacht 
+
+y:Gute Nacht Und bis morgen
+
+
+180 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+x: -11 
+
+x: -50 
+
+x: -50 
+
+x: 49 
+
+x: 240100 
+
+y: 15 
+
+func ret: 240100 
+
+
+212 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+a: 1 b: 1 
+
+a: 1 b: 2 
+
+a: 2 b: 1 
+
+a: 2 b: 2 
+
+a: 3 b: 1 
+
+a: 3 b: 2 
+
+thru
+
+
+208 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+a: 1 b: 2 
+
+a: 1 b: 3 
+
+a: 2 b: 2 
+
+a: 2 b: 3 
+
+a: 3 b: 2 
+
+a: 3 b: 3 
+
+thru
+
+100
+
+243 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+hi 
+
+a: 1
+a: 2
+a: 3
+hi
+
+
+134 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+hi 
+
+a: 1
+a: 2
+a: 3
+hi
+
+
+172 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+f executed
+
+
+142 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+x: 121 
+
+x: Hallo Welt 
+
+y: Gute Nacht 
+
+y:Gute Nacht Und bis morgen
+
+
+225 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+x: 6 
+
+x: Hallo Welt 
+
+y: Gute Nacht 
+
+y:Gute Nacht Und bis morgen
+
+
+137 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+x: 6 
+
+x: Hallo Welt 
+
+y: Gute Nacht 
+
+
+110 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+
+91 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+1
+0
+-1
+
+184 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+f executed
+
+x: 16 
+
+x: 4 
+
+x: 1 
+
+x: 16 
+
+
+199 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+1
+
+107 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+0
+1
+2
+3
+Ellipsis
+65535
+
+119 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+
+73 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+func ret: 3 
+
+a: 1 
+
+a: 2 
+
+a: 3 
+
+div: 3 
+
+
+209 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+func ret: 3 
+
+a: 1 
+
+a: 2 
+
+a: 3 
+
+div: 3 
+
+
+209 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+func ret:   64.31 
+
+a: 1 
+
+a: 2 
+
+a: 3 
+
+div:       4 
+
+
+193 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+func ret:   51.43 
+
+a: 1 
+
+a: 2 
+
+a: 3 
+
+div:       4 
+
+
+193 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+    213
+
+106 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+   21.3
+
+101 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+   21.2
+
+81 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+
+104 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+1 
+
+2 
+
+
+130 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+2 , 
+3 , 
+5 , 
+7 , 
+11 , 
+13 , 
+17 , 
+19 , 
+
+721 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked
+2 , 
+3 , 
+5 , 
+7 , 
+11 , 
+13 , 
+17 , 
+19 , 
+23 , 
+29 , 
+31 , 
+37 , 
+41 , 
+43 , 
+47 , 
+53 , 
+59 , 
+61 , 
+67 , 
+71 , 
+73 , 
+79 , 
+83 , 
+89 , 
+97 , 
+101 , 
+103 , 
+107 , 
+109 , 
+113 , 
+127 , 
+131 , 
+137 , 
+139 , 
+149 , 
+
+4068 memory allocs recorded
+leaked chunks test done
+not freed heap bytes num:0
+MAX HEAP USAGE:3973
+0 memory chunks leaked

@@ -80,7 +80,9 @@ BOOL vm_SearchObject(object *obj,object *needle)
 {
 	if (obj != NULL)
 	{
+		#ifdef USE_DEBUGGING
 		debug_printf(DEBUG_ALL,"checking obj(%c:%d):%x against %x\n",obj->type,obj->ref_count,obj,needle);
+		#endif
 		//DumpObject(obj,0);
 		if(obj == needle)
 			return(1);
@@ -113,19 +115,29 @@ BOOL vm_SearchObject(object *obj,object *needle)
 		case TYPE_FUNCTION:
 			if(((function_object*)obj)->func_type == FUNC_PYTHON)
 			{
+				#ifdef USE_DEBUGGING
 				debug_printf(DEBUG_ALL,"checking function defaults\n");
+				#endif
 				if(vm_SearchObject((object*)((function_object*)obj)->defaults,needle))
 					return(1);
+				#ifdef USE_DEBUGGING
 				debug_printf(DEBUG_ALL,"checking function kw_defaults\n");
+				#endif
 				if(vm_SearchObject((object*)((function_object*)obj)->kw_defaults,needle))
 					return(1);
+				#ifdef USE_DEBUGGING
 				debug_printf(DEBUG_ALL,"checking function closure\n");
+				#endif
 				if(vm_SearchObject((object*)((function_object*)obj)->closure,needle))
 				 	return(1);
+				#ifdef USE_DEBUGGING
 				debug_printf(DEBUG_ALL,"checking code\n");
+				#endif
 				if(vm_SearchObject((object*)((function_object*)obj)->func.code,needle))
 					return(1);
+				#ifdef USE_DEBUGGING
 				debug_printf(DEBUG_ALL,"checked function\n",obj->type,obj,needle);
+				#endif
 			}
 			break;
 		case TYPE_REF:
@@ -168,19 +180,25 @@ BOOL vm_SearchObject(object *obj,object *needle)
 			break;
 		}
 	}
-	debug_printf(DEBUG_ALL,"checked obj(%c):%x against %x\n",obj->type,obj,needle);
+	#ifdef USE_DEBUGGING
+	debug_printf(DEBUG_ALL,"checked obj(%c):%x against %x\n",obj->type,obj,needle);	
+	#endif
 	return(0);
 }
 
 BOOL vm_ObjectExists(vm *vm, object  *obj)
 {
+	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_ALL,"checking blocks\n");
+	#endif
 	for(NUM i = 0;i<vm->blocks->list->num;i++)
 	{
 		if(vm_SearchObject(vm->blocks->list->items[i],obj))
 			return(1);
 	}	
+	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_ALL,"checking globals\n");
+	#endif
 	for(NUM i = 0;i<vm->globals->num;i++)
 	{
 		if(vm_SearchObject(vm->globals->items[i],obj))
@@ -209,7 +227,7 @@ function_object *CreatePythonFunction(code_object *code)
 {
 	function_object *fo = CreateFunctionObject(FUNC_PYTHON,0);
 	fo->func.code = code;
-	IncRefCount(code);
+	IncRefCount((object*)code);
 	fo->name = code->name;
 	return (fo);
 }
@@ -381,7 +399,7 @@ block_object *vm_StartObject(vm *vm,object *obj,stack *locals,NUM argc)
 		block_object *bo = AllocBlockObject();
 		bo->type = TYPE_BLOCK;
 		bo->code = co;
-		IncRefCount(bo->code);
+		IncRefCount((object*)bo->code);
 		bo->ip = 0;
 		//bo->iter = NULL;
 		bo->start = 0;
@@ -443,7 +461,7 @@ object *vm_StartFunctionObject(vm *vm,function_object *fo,stack *locals,stack *k
 			//printf("preparing python function\n");
 			string_object *bytecodes = (string_object *) fo->func.code->code;
 			bo->code = fo->func.code;
-			IncRefCount(bo->code);
+			IncRefCount((object*)bo->code);
 			bo->len = bytecodes->len;
 			if(((tuple_object*)fo->func.code->varnames)->list != NULL)
 			{
@@ -1062,6 +1080,8 @@ object *vm_StepObject(vm *vm)
 				{
 					bo->ip++;
 					object *ret = stack_Pop(bo->stack,vm->garbage);
+					//debug_printf(DEBUG_ALL,"yielding :\n");
+					//DumpObject(ret,0);
 					//debug_printf(DEBUG_ALL,"incrementing ref_count in step-YIELD_VALUE - ret\n");
 					IncRefCount(ret);
 					//printf("yielding\n");
@@ -1073,6 +1093,7 @@ object *vm_StepObject(vm *vm)
 						DumpObject(ret,0);
 					}
 					#endif
+					
 					return(ret);
 				}
 				break;
@@ -1092,7 +1113,8 @@ object *vm_StepObject(vm *vm)
 					//assert(ret != NULL);
 					//ret = stack_Pop(bo->stack,vm->garbage);
 					//object *t = stack_Pop(bo->stack);*/
-						DumpObject(ret,0);
+					//debug_printf(DEBUG_ALL,"returning :\n");
+					//DumpObject(ret,0);
 
 					#ifdef DEBUGGING
 					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
@@ -1436,11 +1458,11 @@ object *vm_StepObject(vm *vm)
 					{
 						//FreeObject(next);
 						//DecRefCountGC(next,vm->garbage);
-						//stack_Push(bo->stack, next);
 						//debug_printf(DEBUG_ALL,"for iter thru\n");
-						DumpObject(next,0);
-
+						//debug_printf(DEBUG_ALL,"returning iter:\n");
+						//DumpObject(next,0);
 						stack_Pop(bo->stack,vm->garbage);
+						stack_Push(bo->stack, next);
 						bo->ip = bo->ip + arg;
 					}
 					else
@@ -1456,7 +1478,9 @@ object *vm_StepObject(vm *vm)
 						//if(next != NULL)
 						//	DecRefCountGC(next,vm->garbage);
 							//FreeObject(next);
+						#ifdef USE_DEBUGGING
 						debug_printf(DEBUG_ALL,"WARNING !!!! for iter thru\n");
+						#endif
 						stack_Pop(bo->stack,vm->garbage);
 						bo->ip = bo->ip + arg;
 					}
@@ -1610,7 +1634,7 @@ object *vm_StepObject(vm *vm)
 					block_object *block = AllocBlockObject();
 					block->start = bo->ip;
 					block->code = co;
-					IncRefCount(co);
+					IncRefCount((object*)co);
 					block->ip = bo->ip;
 					block->len = bo->ip + arg;
 					block->ref_count = 0;
@@ -2328,11 +2352,11 @@ object *vm_StepObject(vm *vm)
 					stack_Pop(bo->stack,vm->garbage);
 					//printf("pushing function block on block stack\n");
 					//debug_printf(DEBUG_ALL,"incrementing ref_count in step-CALL_FUNCTION - fo\n");
-					IncRefCount(fo);
+					IncRefCount((object*)fo);
 					
 					object *pret = vm_StartFunctionObject(vm,fo, call,kw_call,narg,nkey);
 					//debug_printf(DEBUG_ALL,"decrementing ref_count in step-CALL_FUNCTION - fo\n");
-					DecRefCountGC(fo,vm->garbage);
+					DecRefCountGC((object*)fo,vm->garbage);
 					if (pret != NULL)
 					{
 							stack_Push(bo->stack, pret);

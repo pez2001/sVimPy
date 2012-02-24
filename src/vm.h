@@ -93,9 +93,10 @@ extern const opcode opcodes[];
 #define MAGIC (3180 | ((long)'\r'<<16) | ((long)'\n'<<24))
 
 
-
+#ifndef USE_ARDUINO_FUNCTIONS
 #pragma pack(push)				/* push current alignment to stack */
 #pragma pack(1)					/* set alignment to 1 byte boundary */
+#endif
 
 typedef struct _vm
 {
@@ -109,7 +110,9 @@ typedef struct _vm
 	BOOL running;
 } vm;
 
+#ifndef USE_ARDUINO_FUNCTIONS
 #pragma pack(pop)				/* restore original alignment from stack */
+#endif
 
 BOOL vm_ObjectExists(vm *vm, object  *obj);
 

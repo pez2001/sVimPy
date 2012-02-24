@@ -96,7 +96,7 @@ inline void setup (vm *vm)
 {
   
 	Serial.begin(115200);
-	debug_printf(DEBUG_ALL,"\r\nsetup\r\n");
+	//debug_printf(DEBUG_ALL,"\r\nsetup\r\n");
 //  delay(250);
 //initUSART();
 //  pinMode(13, OUTPUT);     
@@ -116,17 +116,20 @@ inline void setup (vm *vm)
 	debug_level |= DEBUG_SHOW_OPCODES;
 	debug_printf(DEBUG_ALL,"setup:%d\r\n",get_free_memory());
 	//ptr_tests();
-	//Serial.print("hi");
-	//AddInternalFunctions(vm);
-	//AddArduinoFunctions(vm);
-	//AddArduinoGlobals(vm);
+	//Serial.print("setup");
+	AddInternalFunctions(vm);
+	AddArduinoFunctions(vm);
+	AddArduinoGlobals(vm);
+	//Serial.println(get_free_memory());
 	stream *m = stream_CreateFromFlashBytes(((char*)&blink),BLINK_LEN);
-	debug_printf(DEBUG_ALL,"created stream:%d\r\n",get_free_memory());
-	debug_printf(DEBUG_ALL,"run pyc\r\n");
+	//Serial.print("stream");
+	//Serial.println(get_free_memory());
+	//debug_printf(DEBUG_ALL,"created stream:%d\r\n",get_free_memory());
+	//debug_printf(DEBUG_ALL,"run pyc\r\n");
 	//Serial.print("run");
 	vm_RunPYC(vm,m,0);
-	debug_printf(DEBUG_ALL,"run thru\r\n");
-	//Serial.print("thru");
+	//debug_printf(DEBUG_ALL,"run thru\r\n");
+	//Serial.println("thru");
 	//vm_CallFunction(vm,"setup",NULL,0);
 	//vm_Close(vm);
 	//Serial.print("done");

@@ -610,7 +610,7 @@ object *if_print(struct _vm *vm,stack * stack)
 		printf("\n");
 	object *tmp =CreateEmptyObject(TYPE_NONE,0);
 	//IncRefCount(tmp);
-	DumpObject(tmp,0);
+	//DumpObject(tmp,0);
 
 	return (tmp);
 }

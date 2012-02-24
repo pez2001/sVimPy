@@ -1,4 +1,4 @@
-	sVimPy-0.4a
+	sVimPy-0.49a
 
 sVimPy is a very small Python virtual machine intended for use in microcontroller projects.
 
@@ -30,17 +30,17 @@ Features include:
  
 	Roadmap :
 	
-	0.2 correct interpretation of function parameters
-	0.3 implement closures and refs
-	0.4 better implementation of generators/iterators and implement yield opcode
-	0.5 implement streams for reading/writing/printing & add module import abilities
-	0.6 vm feature complete (except classes and exceptions)
-	0.7 memory optimizations
-	0.8 internal functions
-	0.9 arduino bootloader
-	1.0 stable release + real life applications
-	2.0 slices
-	2.1 classes
+	0.2   correct interpretation of function parameters
+	0.3   implement closures and refs
+	0.4   better implementation of generators/iterators and implement yield opcode
+	0.5   implement streams for reading/writing/printing & add module import abilities
+	0.6   vm feature complete (except classes and exceptions)
+	0.7   memory optimizations
+	0.8   internal functions
+	0.9   arduino bootloader
+	1.0   stable release + real life applications
+	2.0   slices
+	2.1   classes
 	
 	
 	

@@ -468,7 +468,7 @@ void AtomicOpenPYC(char *filename)
 	//debug_level |= DEBUG_DUMP_OBJECT;
 	//debug_level |= DEBUG_CREATION;
 	//debug_level |= DEBUG_VERBOSE_FREEING;
-	debug_level |= DEBUG_VERBOSE_TESTS;	
+	//debug_level |= DEBUG_VERBOSE_TESTS;	
 	//debug_level |= DEBUG_PTR_LISTS;
 	//debug_level |= DEBUG_INTERNAL_FUNCTIONS;
 	//debug_level |= DEBUG_COUNT_OBJECTS;
@@ -608,7 +608,7 @@ void atomic_test(void)
 	AtomicOpenPYC("tests/test_return.pyc");
 	//while loop + break + continue
 	AtomicOpenPYC("tests/test_while.pyc");
-	return;
+	//return;
 
 	//print + recursion
 	AtomicOpenPYC("tests/test17.pyc");

@@ -43,7 +43,9 @@ iter_object *iter_CreateIter(object *iteration)//,struct _vm *vm
 	}
 	else
 	{
+		#ifdef USE_DEBUGGING
 		debug_printf(DEBUG_ALL,"no appropriate iter found for obj @%x\n",iteration);
+		#endif
 		return(NULL);
 	}
 }
@@ -67,7 +69,7 @@ void iter_ClearBlockStack(iter_object *iter,struct _vm *vm)
 	{
 		block_object *bo = (block_object*)stack_Pop(iter->block_stack,vm->garbage);
 		//stack_Push(vm->blocks,(object*)bo);//reverserd order
-		DecRefCountGC(bo,vm->garbage);
+		DecRefCountGC((object*)bo,vm->garbage);
 		//printf("restoring bo:%x\n",bo);
 		//DumpObject(bo,0);
 	}
