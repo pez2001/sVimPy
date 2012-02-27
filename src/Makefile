@@ -2,28 +2,28 @@
 
 #windows testing environment for vm
 
-CFLAGS= -Wall -Wstrict-prototypes -O2 -std=c99 -fbounds-check -Wuninitialized
+CFLAGS= -Wall -pedantic -Wstrict-prototypes -O2 -std=c99 -fbounds-check -Wuninitialized
 # CFLAGS= -W -w -O2 -std=c99 
 CC=gcc
-VERSION = 0.4a
+VERSION = 0.49a
 AR=ar
 LD=ld
 
 #arduino environment
-ARDUINO_AVR_DIR = /C/Users/pez2001/Documents/Arduino-1.0
+ARDUINO_AVR_DIR = /C/Users/asus/Documents/Arduino-1.0
 
-#ARDUINO_TERM = /C/Program\ Files\ \(x86\)/Putty/putty -load arduino_uno
-#ARDUINO_MCU = atmega328p
-#ARDUINO_PORT = com4
-#ARDUINO_UPLOAD_RATE = 115200
-#ARDUINO_UPLOAD_RATE = 57600
-#ARDUINO_AVRDUDE_PROGRAMMER = arduino
-
-ARDUINO_TERM = /C/Program\ Files\ \(x86\)/Putty/putty -load arduino_mega
-ARDUINO_MCU = atmega2560
-ARDUINO_PORT = com5
+ARDUINO_TERM = /C/Program\ Files\ \(x86\)/Putty/putty -load arduino_uno
+ARDUINO_MCU = atmega328p
+ARDUINO_PORT = com3
 ARDUINO_UPLOAD_RATE = 115200
-ARDUINO_AVRDUDE_PROGRAMMER = stk500v2
+#ARDUINO_UPLOAD_RATE = 57600
+ARDUINO_AVRDUDE_PROGRAMMER = arduino
+
+#ARDUINO_TERM = /C/Program\ Files\ \(x86\)/Putty/putty -load arduino_mega
+#ARDUINO_MCU = atmega2560
+#ARDUINO_PORT = com5
+#ARDUINO_UPLOAD_RATE = 115200
+#ARDUINO_AVRDUDE_PROGRAMMER = stk500v2
 
 ARDUINO_AVRDUDE_PORT = $(ARDUINO_PORT)
 ARDUINO_AVRDUDE_WRITE_FLASH = -U flash:w:arduino.hex:i
@@ -36,7 +36,7 @@ ARDUINO_INCLUDES = $(ARDUINO_AVR_DIR)/hardware/cores/arduino
 ARDUINO_STANDARD_INCLUDES = $(ARDUINO_AVR_DIR)/hardware/arduino/variants/standard
 ARDUINO_AVR_TOOLS_PATH = $(ARDUINO_AVR_DIR)/hardware/tools/avr/bin
 ARDUINO_CSTANDARD = -std=c99
-ARDUINO_CWARN = -Wall -Wstrict-prototypes
+ARDUINO_CWARN = -Wall -pedantic -Wstrict-prototypes 
 # ARDUINO_CWARN = -W -w
 # ARDUINO_CTUNING = -O2 -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums -fno-jump-tables -mcall-prologues -finline-functions
 ARDUINO_CTUNING = -funsigned-char -funsigned-bitfields -fpack-struct 
@@ -49,7 +49,7 @@ ARDUINO_SIZE = $(ARDUINO_AVR_TOOLS_PATH)/avr-size
 ARDUINO_NM = $(ARDUINO_AVR_TOOLS_PATH)/avr-nm
 ARDUINO_AVRDUDE = $(ARDUINO_AVR_TOOLS_PATH)/avrdude
 ARDUINO_PYTHON_FEATURES = -DUSE_ARDUINO_FUNCTIONS
-ARDUINO_FLAGS = $(ARDUINO_PYTHON_FEATURES) -fno-tree-scev-cprop -ffreestanding -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums -fno-move-loop-invariants -fno-tree-loop-optimize -mcall-prologues -fno-inline-small-functions -Os -Wl,--gc-sections,--relax -g -fno-exceptions -ffunction-sections -fdata-sections -DF_CPU=16000000L -DARDUINO=100 -mmcu=$(ARDUINO_MCU)
+ARDUINO_FLAGS = $(ARDUINO_PYTHON_FEATURES)  -g -gdwarf-2 -fno-tree-scev-cprop -ffreestanding -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums -fno-move-loop-invariants -fno-tree-loop-optimize -mcall-prologues -fno-inline-small-functions -Os -Wl,--gc-sections,--relax -g -fno-exceptions -ffunction-sections -fdata-sections -DF_CPU=16000000L -DARDUINO=100 -mmcu=$(ARDUINO_MCU)
 #-fno-inline-small-functions  -finline-limit=6 -fno-jump-tables
 ARDUINO_CINCS = -I$(ARDUINO_INCLUDES) -I$(ARDUINO_STANDARD_INCLUDES)
 ARDUINO_CFLAGS = $(ARDUINO_FLAGS) $(ARDUINO_CINCS) $(ARDUINO_CWARN) $(ARDUINO_CSTANDARD) $(ARDUINO_CTUNING)

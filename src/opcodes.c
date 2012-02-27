@@ -23,7 +23,7 @@
 
 #include "opcodes.h"
 
-#if defined(USE_DEBUGGING) || defined(USE_ARDUINO_DEBUGGING)
+#if defined(USE_DEBUGGING) || defined(USE_ARDUINO_OPCODE_DEBUGGING)
 
 const NUM cmp_opscount = 12;
 
@@ -44,7 +44,7 @@ const cmp_op cmp_ops[] = {
 
 const NUM opcodecount = 101;
 
-#ifndef USE_ARDUINO_DEBUGGING
+#ifndef USE_ARDUINO_OPCODE_DEBUGGING
 
 
 const opcode opcodes[] = {

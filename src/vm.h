@@ -81,7 +81,7 @@ except
 #include "assert.h"
 #endif
 
-#if defined(USE_DEBUGGING) || defined(USE_ARDUINO_DEBUGGING)
+#if defined(USE_DEBUGGING) || defined(USE_ARDUINO_OPCODE_DEBUGGING)
 extern const opcode opcodes[];
 #endif 
 

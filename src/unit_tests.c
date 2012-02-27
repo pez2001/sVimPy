@@ -733,7 +733,7 @@ void atomic_test(void)
 	AtomicOpenPYC("tests/test31.pyc");
 	
 	
-	//brute prime (classless it takes longer because of range
+	//brute prime
 	AtomicOpenPYC("tests/e20.pyc");
 	AtomicOpenPYC("tests/e_small.pyc");
 	

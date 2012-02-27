@@ -28,6 +28,7 @@
 #include "debug.h"
 
 
+
 #define OPCODE_STOP_CODE	 						0x00
 #define OPCODE_POP_TOP								0x01
 #define OPCODE_ROT_TWO							 	0x02
@@ -130,7 +131,7 @@
 #define OPCODE_SET_ADD								0x91
 #define OPCODE_MAP_ADD								0x92
 
-#if defined(USE_DEBUGGING) || defined(USE_ARDUINO_DEBUGGING)
+#if defined(USE_DEBUGGING) || defined(USE_ARDUINO_OPCODE_DEBUGGING)
 
 typedef struct
 {
@@ -146,17 +147,17 @@ typedef struct
 	unsigned char opcode;		// opcode in bytecode representation
 //#ifdef DEBUG
 	char *name;					// string version
-	#ifndef USE_ARDUINO_DEBUGGING
+	#ifndef USE_ARDUINO_OPCODE_DEBUGGING
 	char *description;			// a short description
 	#endif
 	// unsigned int num_parameters; //number of parameters
 	NUM argcount;
-	#ifndef USE_ARDUINO_DEBUGGING
+	#ifndef USE_ARDUINO_OPCODE_DEBUGGING
 	BOOL supported;
 	#endif
 } opcode;
 
-#ifndef USE_ARDUINO_DEBUGGING
+#ifndef USE_ARDUINO_OPCODE_DEBUGGING
 void DumpUnsupportedOpCodes(void);
 NUM GetSupportedOpcodesNum(void);
 #endif

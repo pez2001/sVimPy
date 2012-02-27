@@ -919,11 +919,11 @@ object *vm_CallFunction(vm *vm,char *name,stack *locals,NUM argc)
 object *vm_RunPYC(vm *vm,stream *f ,BOOL free_object)
 {
 	long pyc_magic = MAGIC;
-
 	if (!stream_Open(f))
 		return(NULL);//TODO maybe return an empty object for simplification
+	debug_printf(DEBUG_ALL,"open\n");
 	#if defined(USE_DEBUGGING)
-	debug_printf(DEBUG_ALL,"running pyc\n");
+	//debug_printf(DEBUG_ALL,"running pyc\n");
 	#endif
 	long magic = ReadLong(f);
 	if (magic != pyc_magic)
@@ -931,15 +931,15 @@ object *vm_RunPYC(vm *vm,stream *f ,BOOL free_object)
 	//long time = ReadLong(f);
 	ReadLong(f);//read time
 	#if defined(USE_DEBUGGING)
-	debug_printf(DEBUG_ALL,"read header\n");
+	//debug_printf(DEBUG_ALL,"read header\n");
 	#endif
 	object *obj = ReadObject(f);
 	#if defined(USE_DEBUGGING)
-	debug_printf(DEBUG_ALL,"read object\n");
+	//debug_printf(DEBUG_ALL,"read object\n");
 	#endif
 	vm_AddGlobal(vm, (code_object*)obj);
 	#if defined(USE_DEBUGGING)
-	debug_printf(DEBUG_ALL,"added global\n");
+	//debug_printf(DEBUG_ALL,"added global\n");
 	#endif
 	object *ret = vm_RunObject(vm, obj, NULL, 0);
 	#if defined(USE_DEBUGGING)
@@ -1014,7 +1014,7 @@ object *vm_StepObject(vm *vm)
 					debug_printf(DEBUG_ALL,"unknown opcode:%x at %d\n", (char)string[bo->ip - 1],bo->ip - 1);
 				}
 			}
-			#ifdef USE_ARDUINO_DEBUGGING
+			#ifdef USE_ARDUINO_OPCODE_DEBUGGING
 			INDEX index = GetOpcodeIndex(op);
 			if (index >= 0)
 			{

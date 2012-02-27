@@ -164,9 +164,9 @@ stream *stream_CreateFromBytes(char *bytes ,STREAM_NUM len)
 	STREAM_NUM offset = 0;
 	ptr_Push(mopt,(void*)offset);
 	//printf("getting stream type\n");
-	/*str->type = streams_GetStreamType(STREAM_TYPE_MEMORY);
+	str->type = streams_GetStreamType(STREAM_TYPE_MEMORY);
 
-	tuple_object *b = CreateTuple(4,0);
+	/*tuple_object *b = CreateTuple(4,0);
 	string_object s* = CreateStringObject(bytes,len,0);
 	SetItem((object*)b,0,(object*)s);
 	int_object *ioffset = CreateIntObject(offset,0);
@@ -194,7 +194,7 @@ stream *stream_CreateFromFlashBytes(char *bytes ,STREAM_NUM len)
 	//printf("getting stream type\n");
 	str->type = streams_GetStreamType(STREAM_TYPE_FLASH_MEMORY);
 	//printf("got stream type\n");
-	//printf("open:%x\n",str->type->stream_open);
+	//debug_printf(DEBUG_ALL,"open:%x\n",str->type->stream_open);
 	str->tags = mopt;
 	return(str);
 }
@@ -418,11 +418,9 @@ BOOL stream_flash_memory_free(struct _stream *stream)
 
 BOOL stream_flash_memory_read(struct _stream *stream,void *ptr,STREAM_NUM len)
 {
+	debug_printf(DEBUG_ALL," reading stream\r\n");
 	char *bytes = (char*)ptr_Get(stream->tags,0);
 	//STREAM_NUM blen = (STREAM_NUM)ptr_Get(stream->tags,1);
-	#if defined(USE_DEBUGGING)
-	debug_printf(DEBUG_ALL," reading stream\r\n");
- 	#endif
 	STREAM_NUM offset = (STREAM_NUM)ptr_Get(stream->tags,2);
 	memcpy_P(ptr,bytes+offset,len);
 	ptr_Set(stream->tags,2,(void*)(offset+len));

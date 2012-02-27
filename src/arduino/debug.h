@@ -32,14 +32,16 @@
 #ifdef USE_ARDUINO_FUNCTIONS
 
 #ifdef USE_ARDUINO_DEBUGGING
- #ifdef __cplusplus
+#ifdef __cplusplus
 extern "C" {
 #endif
+
 #include "../types.h"
 #include "../strops.h"
 #include "stdio.h"
 #include "stdarg.h"
- #ifdef __cplusplus
+
+#ifdef __cplusplus
  }
 #endif
 
@@ -74,9 +76,12 @@ extern "C" {
 #define DEBUG_VERBOSE_TESTS 262144
 
 #ifdef __cplusplus
-extern "C" 
+extern "C"  {
 #endif
 void debug_printf(int msg_debug_level,char* format, ...);
+#ifdef __cplusplus
+} 
+#endif
 
 extern int debug_level;
 

@@ -112,27 +112,29 @@ inline void setup (vm *vm)
 //	Serial.print(test_pyc[i]);
 //	put_char((unsigned char)test_pyc[i]);
 	debug_level = 0;
-	debug_level |= DEBUG_VERBOSE_TESTS;	
-	debug_level |= DEBUG_SHOW_OPCODES;
-	debug_printf(DEBUG_ALL,"setup:%d\r\n",get_free_memory());
+	//debug_level |= DEBUG_VERBOSE_TESTS;	
+	//debug_level |= DEBUG_SHOW_OPCODES;
+	//debug_printf(DEBUG_ALL,"setup:%d\r\n",get_free_memory());
 	//ptr_tests();
-	//Serial.print("setup");
-	AddInternalFunctions(vm);
-	AddArduinoFunctions(vm);
-	AddArduinoGlobals(vm);
+	Serial.println("");
+	//Serial.println("setup");
+	//AddInternalFunctions(vm);
+	//AddArduinoFunctions(vm);
+	//AddArduinoGlobals(vm);
 	//Serial.println(get_free_memory());
 	stream *m = stream_CreateFromFlashBytes(((char*)&blink),BLINK_LEN);
-	//Serial.print("stream");
+	//stream *m = stream_CreateFromBytes(((char*)&blink),BLINK_LEN);
+	//Serial.println("stream");
 	//Serial.println(get_free_memory());
 	//debug_printf(DEBUG_ALL,"created stream:%d\r\n",get_free_memory());
 	//debug_printf(DEBUG_ALL,"run pyc\r\n");
 	//Serial.print("run");
 	vm_RunPYC(vm,m,0);
 	//debug_printf(DEBUG_ALL,"run thru\r\n");
-	//Serial.println("thru");
-	//vm_CallFunction(vm,"setup",NULL,0);
+	Serial.println("thru");
+	vm_CallFunction(vm,"setup",NULL,0);
 	//vm_Close(vm);
-	//Serial.print("done");
+	Serial.println("done");
 
 }
 void loop (vm *vm) 
@@ -142,9 +144,9 @@ void loop (vm *vm)
   digitalWrite(13, LOW);    // set the LED off
   delay(100);              // wait for a second
  */
- //Serial.print("loop\n");	
+ Serial.println("loop\n");	
  //debug_printf(DEBUG_ALL,"loop\n");
-	//vm_CallFunction(vm,"loop",NULL,0);
+	vm_CallFunction(vm,"loop",NULL,0);
 }
 int __attribute__((OS_main)) main(void)  
 {
