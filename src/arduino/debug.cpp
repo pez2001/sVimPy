@@ -44,7 +44,11 @@ extern "C"  void debug_printf(int msg_debug_level,char* format, ...)
 	Serial.print(output);
 	free(output);
 	*/
-	Serial.println(format);
+	va_list va;
+	va_start(va,format);
+	vprintf(format,va);
+	va_end(va);
+	//Serial.println(format);
 }
 
 #endif

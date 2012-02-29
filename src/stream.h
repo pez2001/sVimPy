@@ -50,21 +50,21 @@ typedef struct _stream_type
 
 typedef struct _stream
 {
-	stream_type *type;
+	struct _stream_type *type;
 	ptr_list *tags;
 }stream;
 
 typedef struct _streams
 {
-	stream *output;
-	stream *input;
-	stream *debug;
+	struct _stream *output;
+	struct _stream *input;
+	struct _stream *debug;
 }streams;
 
 
 void streams_Init(void);
 
-stream_type GetStreamType(STREAM_TYPE_ID id);
+struct _stream_type *GetStreamType(STREAM_TYPE_ID id);
 
 void streams_Close(void);
 

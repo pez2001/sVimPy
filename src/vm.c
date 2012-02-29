@@ -918,8 +918,11 @@ object *vm_CallFunction(vm *vm,char *name,stack *locals,NUM argc)
 
 object *vm_RunPYC(vm *vm,stream *f ,BOOL free_object)
 {
+	debug_printf(DEBUG_ALL,"running pyc\n");
 	long pyc_magic = MAGIC;
-	if (!stream_Open(f))
+	BOOL r = stream_Open(f);
+	printf("r:%d\n",r);
+	if (!r)
 		return(NULL);//TODO maybe return an empty object for simplification
 	debug_printf(DEBUG_ALL,"open\n");
 	#if defined(USE_DEBUGGING)

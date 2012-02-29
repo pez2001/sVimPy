@@ -10,20 +10,20 @@ AR=ar
 LD=ld
 
 #arduino environment
-ARDUINO_AVR_DIR = /C/Users/asus/Documents/Arduino-1.0
+ARDUINO_AVR_DIR = /C/Users/pez2001/Documents/Arduino-1.0
 
-ARDUINO_TERM = /C/Program\ Files\ \(x86\)/Putty/putty -load arduino_uno
-ARDUINO_MCU = atmega328p
-ARDUINO_PORT = com3
-ARDUINO_UPLOAD_RATE = 115200
-#ARDUINO_UPLOAD_RATE = 57600
-ARDUINO_AVRDUDE_PROGRAMMER = arduino
-
-#ARDUINO_TERM = /C/Program\ Files\ \(x86\)/Putty/putty -load arduino_mega
-#ARDUINO_MCU = atmega2560
-#ARDUINO_PORT = com5
+#ARDUINO_TERM = /C/Program\ Files\ \(x86\)/Putty/putty -load arduino_uno
+#ARDUINO_MCU = atmega328p
+#ARDUINO_PORT = com3
 #ARDUINO_UPLOAD_RATE = 115200
-#ARDUINO_AVRDUDE_PROGRAMMER = stk500v2
+#ARDUINO_UPLOAD_RATE = 57600
+#ARDUINO_AVRDUDE_PROGRAMMER = arduino
+
+ARDUINO_TERM = /C/Program\ Files\ \(x86\)/Putty/putty -load arduino_mega
+ARDUINO_MCU = atmega2560
+ARDUINO_PORT = com5
+ARDUINO_UPLOAD_RATE = 115200
+ARDUINO_AVRDUDE_PROGRAMMER = stk500v2
 
 ARDUINO_AVRDUDE_PORT = $(ARDUINO_PORT)
 ARDUINO_AVRDUDE_WRITE_FLASH = -U flash:w:arduino.hex:i

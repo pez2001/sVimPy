@@ -109,16 +109,16 @@ void streams_Init(void)
 
 }
 
-stream_type* streams_GetStreamType(STREAM_TYPE_ID id)
+struct _stream_type *streams_GetStreamType(STREAM_TYPE_ID id)
 {
 	INDEX i = 0;	
 	do
 	{
-		if(((stream_type*)stream_types->items[i])->type == id)
+		if(((struct _stream_type*)stream_types->items[i])->type == id)
 			return(stream_types->items[i]);
 		i++;
 	}while(i < stream_types->num);
-	//printf("stream type not defined:%c\n",id);
+	printf("stream type not defined:%c\n",id);
 	return(NULL);
 }
 
@@ -229,10 +229,10 @@ stream *stream_CreateDebugOutput(void)
 BOOL stream_Open(struct _stream *stream)
 {
 	//printf("stream opening:%x\n",stream->type->stream_open);
-	//BOOL b = stream->type->stream_open(stream);
-	//printf("stream opened\n");
-	//return(b);
-	return(stream->type->stream_open(stream));
+	BOOL b = stream->type->stream_open(stream);
+	printf("stream opened\n");
+	return(b);
+	//return(stream->type->stream_open(stream));
 }
 
 BOOL stream_Close(struct _stream *stream)
@@ -340,7 +340,7 @@ BOOL stream_file_seek(struct _stream *stream,STREAM_NUM offset)
 
 BOOL stream_memory_open(struct _stream *stream)
 {
-	//printf("memory opened\n");
+	printf("memory opened\n");
 	return(1);
 }
 
@@ -370,14 +370,14 @@ BOOL stream_memory_free(struct _stream *stream)
 
 BOOL stream_memory_read(struct _stream *stream,void *ptr,STREAM_NUM len)
 {
-	//printf("memory read\n");
+	printf("memory read\n");
 	char *bytes = (char*)ptr_Get(stream->tags,0);
 	//STREAM_NUM blen = (STREAM_NUM)ptr_Get(stream->tags,1);
 	STREAM_NUM offset = (STREAM_NUM)ptr_Get(stream->tags,2);
 	//printf("copying bytes :%d,%d\n",len,offset);
 	//printf("bytes@%x,b+o:%x\n",bytes,(bytes+offset));
-	memcpy(ptr,bytes+offset,len);
-	//printf("updating offset\n");
+	memcpy(ptr,*(&bytes+offset),len);
+	printf("updating offset\n");
 	ptr_Set(stream->tags,2,(void*)(offset+len));
 	return(1);
 }

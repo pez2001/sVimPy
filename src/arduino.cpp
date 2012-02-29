@@ -91,11 +91,20 @@ int get_free_memory(void)
 
   return free_memory;
 }
+static FILE uartout = {0} ;
+
+static int uart_putchar (char c, FILE *stream)
+{
+    Serial.write(c) ;
+    return 0 ;
+}
 
 inline void setup (vm *vm) 
 {
   
 	Serial.begin(115200);
+	fdev_setup_stream (&uartout, uart_putchar, NULL, _FDEV_SETUP_WRITE);
+	stdout = &uartout ;
 	//debug_printf(DEBUG_ALL,"\r\nsetup\r\n");
 //  delay(250);
 //initUSART();
@@ -114,27 +123,27 @@ inline void setup (vm *vm)
 	debug_level = 0;
 	//debug_level |= DEBUG_VERBOSE_TESTS;	
 	//debug_level |= DEBUG_SHOW_OPCODES;
-	//debug_printf(DEBUG_ALL,"setup:%d\r\n",get_free_memory());
+	debug_printf(DEBUG_ALL,"\nsetup:%d\r\n",get_free_memory());
 	//ptr_tests();
-	Serial.println("");
+	//Serial.println("");
 	//Serial.println("setup");
 	//AddInternalFunctions(vm);
 	//AddArduinoFunctions(vm);
 	//AddArduinoGlobals(vm);
 	//Serial.println(get_free_memory());
-	stream *m = stream_CreateFromFlashBytes(((char*)&blink),BLINK_LEN);
-	//stream *m = stream_CreateFromBytes(((char*)&blink),BLINK_LEN);
+	//stream *m = stream_CreateFromFlashBytes(((char*)&blink),BLINK_LEN);
+	stream *m = stream_CreateFromBytes(((char*)&blink),BLINK_LEN);
 	//Serial.println("stream");
 	//Serial.println(get_free_memory());
-	//debug_printf(DEBUG_ALL,"created stream:%d\r\n",get_free_memory());
+	debug_printf(DEBUG_ALL,"created stream:%d\r\n",get_free_memory());
 	//debug_printf(DEBUG_ALL,"run pyc\r\n");
 	//Serial.print("run");
 	vm_RunPYC(vm,m,0);
-	//debug_printf(DEBUG_ALL,"run thru\r\n");
-	Serial.println("thru");
+	debug_printf(DEBUG_ALL,"run thru\r\n");
+	//Serial.println("thru");
 	vm_CallFunction(vm,"setup",NULL,0);
 	//vm_Close(vm);
-	Serial.println("done");
+	//Serial.println("done");
 
 }
 void loop (vm *vm) 
@@ -144,8 +153,8 @@ void loop (vm *vm)
   digitalWrite(13, LOW);    // set the LED off
   delay(100);              // wait for a second
  */
- Serial.println("loop\n");	
- //debug_printf(DEBUG_ALL,"loop\n");
+ //Serial.println("loop\n");	
+	debug_printf(DEBUG_ALL,"loop\n");
 	vm_CallFunction(vm,"loop",NULL,0);
 }
 int __attribute__((OS_main)) main(void)  

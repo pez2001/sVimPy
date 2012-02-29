@@ -454,7 +454,7 @@ void AtomicOpenPYC(char *filename)
 	#ifdef DEBUGGING
 	debug_level = 0;
 	//debug_level |= DEBUG_INTERACTIVE;
-	debug_level |= DEBUG_MEMORY;
+	//debug_level |= DEBUG_MEMORY;
 	//debug_level |= DEBUG_SHOW_OPCODES;
 	//debug_level |= DEBUG_FULL_DUMP;
 	//debug_level |= DEBUG_STACK;
