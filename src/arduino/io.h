@@ -26,13 +26,13 @@
 
 #ifdef USE_ARDUINO_FUNCTIONS
 
-extern "C" {
+//#extern "C" {
 #include "../types.h"
 #include "../object.h"
 #include "../stack.h"
 #include "../vm.h"
 #include "../debug.h"
-}
+//}
 
 
 #include "libarduino/arduino.h"

@@ -178,6 +178,7 @@ stream *stream_CreateFromBytes(char *bytes ,STREAM_NUM len)
 	iter->tag = (object*)seq;
     */
 	//printf("got stream type\n");
+	//pri
 	//printf("open:%x\n",str->type->stream_open);
 	str->tags = mopt;
 	return(str);
@@ -230,7 +231,7 @@ BOOL stream_Open(struct _stream *stream)
 {
 	//printf("stream opening:%x\n",stream->type->stream_open);
 	BOOL b = stream->type->stream_open(stream);
-	printf("stream opened\n");
+	//printf("stream opened\n");
 	return(b);
 	//return(stream->type->stream_open(stream));
 }
@@ -340,7 +341,7 @@ BOOL stream_file_seek(struct _stream *stream,STREAM_NUM offset)
 
 BOOL stream_memory_open(struct _stream *stream)
 {
-	printf("memory opened\n");
+	//printf("memory opened\n");
 	return(1);
 }
 
@@ -370,14 +371,14 @@ BOOL stream_memory_free(struct _stream *stream)
 
 BOOL stream_memory_read(struct _stream *stream,void *ptr,STREAM_NUM len)
 {
-	printf("memory read\n");
+	//printf("memory read\n");
 	char *bytes = (char*)ptr_Get(stream->tags,0);
 	//STREAM_NUM blen = (STREAM_NUM)ptr_Get(stream->tags,1);
 	STREAM_NUM offset = (STREAM_NUM)ptr_Get(stream->tags,2);
 	//printf("copying bytes :%d,%d\n",len,offset);
 	//printf("bytes@%x,b+o:%x\n",bytes,(bytes+offset));
 	memcpy(ptr,*(&bytes+offset),len);
-	printf("updating offset\n");
+	//printf("updating offset\n");
 	ptr_Set(stream->tags,2,(void*)(offset+len));
 	return(1);
 }
@@ -418,11 +419,13 @@ BOOL stream_flash_memory_free(struct _stream *stream)
 
 BOOL stream_flash_memory_read(struct _stream *stream,void *ptr,STREAM_NUM len)
 {
-	debug_printf(DEBUG_ALL," reading stream\r\n");
+	//debug_printf(DEBUG_ALL," reading stream\r\n");
 	char *bytes = (char*)ptr_Get(stream->tags,0);
 	//STREAM_NUM blen = (STREAM_NUM)ptr_Get(stream->tags,1);
 	STREAM_NUM offset = (STREAM_NUM)ptr_Get(stream->tags,2);
-	memcpy_P(ptr,bytes+offset,len);
+	printf("reading\r\n");
+	memcpy_P(ptr,(bytes+offset),len);
+	printf("read\r\n");
 	ptr_Set(stream->tags,2,(void*)(offset+len));
 	return(1);
 }

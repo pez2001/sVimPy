@@ -123,22 +123,66 @@ inline void setup (vm *vm)
 	debug_level = 0;
 	//debug_level |= DEBUG_VERBOSE_TESTS;	
 	//debug_level |= DEBUG_SHOW_OPCODES;
-	debug_printf(DEBUG_ALL,"\nsetup:%d\r\n",get_free_memory());
+	//debug_printf(DEBUG_ALL,"\nsetup:%d\r\n",get_free_memory());
 	//ptr_tests();
 	//Serial.println("");
 	//Serial.println("setup");
+	streams_Init();
 	//AddInternalFunctions(vm);
 	//AddArduinoFunctions(vm);
 	//AddArduinoGlobals(vm);
 	//Serial.println(get_free_memory());
-	//stream *m = stream_CreateFromFlashBytes(((char*)&blink),BLINK_LEN);
-	stream *m = stream_CreateFromBytes(((char*)&blink),BLINK_LEN);
+	stream *m = stream_CreateFromFlashBytes(((char*)&blink),BLINK_LEN);
+	//stream *m = stream_CreateFromBytes(((char*)&blink),BLINK_LEN);
 	//Serial.println("stream");
 	//Serial.println(get_free_memory());
-	debug_printf(DEBUG_ALL,"created stream:%d\r\n",get_free_memory());
+	printf("created stream:%d\r\n",get_free_memory());
 	//debug_printf(DEBUG_ALL,"run pyc\r\n");
 	//Serial.print("run");
+	
 	vm_RunPYC(vm,m,0);
+	
+	
+	/*
+	//debug_printf(DEBUG_ALL,"running pyc\n");
+	long pyc_magic = MAGIC;
+	BOOL r = stream_Open(m);
+	//printf("r:%d\n",r);
+	if (!r)
+		return;//TODO maybe return an empty object for simplification
+	printf("open\r\n");
+	#if defined(USE_DEBUGGING)
+	//debug_printf(DEBUG_ALL,"running pyc\n");
+	#endif
+	long magic = ReadLong(m);
+	if (magic != pyc_magic)
+		return;
+	//long time = ReadLong(f);
+	ReadLong(m);//read time
+	#if defined(USE_DEBUGGING)
+	printf("read header\r\n");
+	#endif
+	object *obj = ReadObject(m);
+	#if defined(USE_DEBUGGING)
+	printf("read object\r\n");
+	#endif
+	vm_AddGlobal(vm, (code_object*)obj);
+	#if defined(USE_DEBUGGING)
+	//debug_printf(DEBUG_ALL,"added global\n");
+	#endif
+	object *ret = vm_RunObject(vm, obj, NULL, 0);
+	#if defined(USE_DEBUGGING)
+	printf("ran object\r\n");
+	#endif
+	if (ret != NULL)
+	{
+		FreeObject(ret);
+	}
+*/
+	
+	
+	
+	
 	debug_printf(DEBUG_ALL,"run thru\r\n");
 	//Serial.println("thru");
 	vm_CallFunction(vm,"setup",NULL,0);

@@ -1867,7 +1867,7 @@ object *ReadObject(stream *f)
 	debug_printf(DEBUG_CREATION,"reading object with type:%c\n",type);
 	#endif
 	// long magic = ReadLong(f);
-
+printf("reading object with type:%c\r\n",type);
 	switch (type)
 	{
 		case TYPE_NONE:
@@ -1983,8 +1983,8 @@ object *ReadObject(stream *f)
 			obj->content = string;
 			// free(string); 
 
-			// printf("read string:\"%s\"\n",so->content);
-			// printf("n:%d\n",so->len);
+			 //printf("read string:\"%s\"\r\n",obj->content);
+			//printf("n:%d\n",obj->len);
 			obj->type = TYPE_STRING;
 		}
 		else
@@ -2090,7 +2090,7 @@ object *ReadObject(stream *f)
 		return(obj);
 		}
 	}
-	// printf("read object\n"); 
+	 printf("read object\r\n"); 
 	return (NULL);
 }
 
