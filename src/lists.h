@@ -38,6 +38,11 @@
 #include "assert.h"
 #endif
 
+#ifdef __cplusplus
+extern "C"  {
+#endif
+
+
 #ifndef USE_ARDUINO_FUNCTIONS
 #pragma pack(push)				/* push current alignment to stack */
 #pragma pack(1)					/* set alignment to 1 byte boundary */
@@ -102,5 +107,11 @@ BOOL ptr_Contains(ptr_list *list,void *ptr);
 void ptr_MoveUp(ptr_list * list, INDEX index);
 
 void ptr_MoveDown(ptr_list * list, INDEX index);
+
+
+#ifdef __cplusplus
+} 
+#endif
+
 
 #endif

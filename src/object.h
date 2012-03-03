@@ -46,7 +46,9 @@
 //static const char *pyc_tag = TAG;
 
 //static short pyc_magic_short = 3180;
-
+#ifdef __cplusplus
+extern "C"  {
+#endif
 
 #define TYPE_NULL               '0'
 #define TYPE_NONE               'N'
@@ -441,4 +443,10 @@ void ClearDictValues(object *tuple);
 
 void DeleteItem(object *tuple, INDEX index);
 
+#ifdef __cplusplus
+} 
 #endif
+
+#endif
+
+

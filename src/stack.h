@@ -29,6 +29,11 @@
 
 #include "debug.h"
 
+#ifdef __cplusplus
+extern "C"  {
+#endif
+
+
 #define STACK_TYPE *object;
 
 // #define stack ptr_list
@@ -79,5 +84,10 @@ void stack_Dump(stack *stack);
 BOOL stack_IsEmpty(stack *stack);
 
 BOOL stack_Contains(stack *stack, struct _object * x);
+
+#ifdef __cplusplus
+} 
+#endif
+
 
 #endif

@@ -29,6 +29,11 @@
 #include "vm.h"
 #include "stack.h"
 
+#ifdef __cplusplus
+extern "C"  {
+#endif
+
+
 void iter_Expand(iter_object *iter,struct _vm *vm,stack *stack);
 
 object *iter_NextNow(iter_object *iter,struct _vm *vm);
@@ -48,5 +53,11 @@ void iter_InitGenerator(iter_object *iter,block_object *bo);
 object *iter_Iteration(iter_object *iter);
 
 void iter_InitIteration(iter_object *iter,tuple_object *to);
+
+
+#ifdef __cplusplus
+} 
+#endif
+
 
 #endif

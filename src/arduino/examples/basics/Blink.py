@@ -18,9 +18,9 @@ def loop():
 #set the LED on
 	digitalWrite(13, HIGH)
 #wait for a second
-	delay(1000)
+#	delay(1000)
 #set the LED off              
 	digitalWrite(13, LOW)
 #wait for a second
-	delay(1000)              
+#	delay(1000)              
 

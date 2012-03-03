@@ -30,6 +30,11 @@ object *a_pinMode(vm *vm,stack * stack)
 	object *pin = stack_Pop(stack,vm->garbage);
 	object *mode = stack_Pop(stack,vm->garbage);
 	//printf("pinMode\n");
+	//TODO only a temp solution
+	if(pin->type == TYPE_KV)
+		pin = (object*)((kv_object*)pin)->value;
+	if(mode->type == TYPE_KV)
+		mode = (object*)((kv_object*)mode)->value;
 	if(pin->type == TYPE_INT && mode->type == TYPE_INT)
 		pinMode(((int_object*)pin)->value,((int_object*)mode)->value);
 	
@@ -53,11 +58,19 @@ object *a_digitalRead(vm *vm,stack * stack)
 object *a_digitalWrite(vm *vm,stack * stack)
 {
  //pin,value
- 	//printf("digitalWrite\n");
 	object *pin = stack_Pop(stack,vm->garbage);
 	object *value = stack_Pop(stack,vm->garbage);
+    printf("pt:%c,vt:%c\r\n",pin->type,value->type);
+	//TODO only a temp solution
+	if(pin->type == TYPE_KV)
+		pin = (object*)((kv_object*)pin)->value;
+	if(value->type == TYPE_KV)
+		value = (object*)((kv_object*)value)->value;
 	if(pin->type == TYPE_INT && value->type == TYPE_INT)
+	{
+		printf("digitalWrite:%d,val:%d\r\n",((int_object*)pin)->value,((int_object*)value)->value);
 		digitalWrite(((int_object*)pin)->value,((int_object*)value)->value);
+	}
 	object *tmp =CreateEmptyObject(TYPE_NONE,0);
 	return (tmp);	
 }

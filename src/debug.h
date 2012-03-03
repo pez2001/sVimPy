@@ -39,6 +39,9 @@
 #include "strops.h"
 #include "stdio.h"
 #include "stdarg.h"
+#ifdef __cplusplus
+extern "C"  {
+#endif
 
 #define DEBUG_ALL 0
 #define DEBUG_MEMORY 1
@@ -72,6 +75,10 @@ extern int debug_level;
 #define DEBUG if(0)
 #define DEBUG_BLOCK if(0) {
 #define DEBUG_BLOCK_END }
+#endif
+
+#ifdef __cplusplus
+} 
 #endif
 
 #endif

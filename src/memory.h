@@ -32,6 +32,12 @@
 
 #ifdef DEBUGGING
 
+#ifdef __cplusplus
+extern "C"  {
+#endif
+
+
+
 typedef struct
 {
 	void *ptr;
@@ -51,6 +57,14 @@ void *mem_malloc(size_t size, char *description);
 void *mem_realloc(void *ptr, size_t size);
 
 int mem_free(void *ptr);
+
+
+#ifdef __cplusplus
+} 
+#endif
+
+
+
 #endif
 
 #endif

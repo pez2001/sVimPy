@@ -89,6 +89,9 @@ extern const opcode opcodes[];
 #include "avr/pgmspace.h"
 #endif
 
+#ifdef __cplusplus
+extern "C"  {
+#endif
 
 #define MAGIC (3180 | ((long)'\r'<<16) | ((long)'\n'<<24))
 
@@ -173,5 +176,10 @@ object *vm_StepObject(vm *vm);//single step vm //TODO rename to vm_Step
 #ifdef DEBUGGING
 void vm_DumpCode(vm *vm,BOOL dump_descriptions,BOOL from_start);//dump human readable code of the vm's actual running block 
 #endif
+
+#ifdef __cplusplus
+} 
+#endif
+
 
 #endif

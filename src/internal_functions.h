@@ -30,6 +30,10 @@
 #include "debug.h"
 #include "math.h"
 
+#ifdef __cplusplus
+extern "C"  {
+#endif
+
 // object *pow(object *base,object *exp);
 struct _vm;
 
@@ -54,5 +58,10 @@ void AddInternalFunctions(struct _vm *vm);
 object *BinaryOp(object *tos,object *tos1,unsigned char op);
 
 object *CompareOp(object *tos,object *tos1,unsigned char cmp_op);
+
+#ifdef __cplusplus
+} 
+#endif
+
 
 #endif

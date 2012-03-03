@@ -32,6 +32,9 @@
 #include "stdlib.h"
 #include "string.h"
 
+#ifdef __cplusplus
+extern "C"  {
+#endif
 
 
 char *str_Cat(char *a, char *b);
@@ -47,5 +50,11 @@ char *str_Printf(char *format, ...);
 char *str_PrintfVa(char *format,NUM len,va_list va);
 
 NUM str_PrintfVaLen(char *format,va_list va);
+
+
+#ifdef __cplusplus
+} 
+#endif
+
 
 #endif

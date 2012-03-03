@@ -28,6 +28,11 @@
 #include "lists.h"
 #include "strops.h"
 
+#ifdef __cplusplus
+extern "C"  {
+#endif
+
+
 #define STREAM_TYPE_FILE 'f'
 #define STREAM_TYPE_MEMORY 'm'
 #define STREAM_TYPE_FLASH_MEMORY 'F'
@@ -119,6 +124,11 @@ BOOL stream_flash_memory_seek(struct _stream *stream,STREAM_NUM offset);
 
 #endif
 
+
+
+#ifdef __cplusplus
+} 
+#endif
 
 
 #endif

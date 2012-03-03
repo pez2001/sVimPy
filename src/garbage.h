@@ -31,8 +31,18 @@
 
 #include "vm.h"
 
+#ifdef __cplusplus
+extern "C"  {
+#endif
+
+
 //void gc_Clear(ptr_list *gc_collection);
 void gc_Clear(ptr_list *gc_collection,struct _vm* vm);
+
+
+#ifdef __cplusplus
+} 
+#endif
 
 
 #endif
