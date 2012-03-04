@@ -60,7 +60,7 @@ object *a_digitalWrite(vm *vm,stack * stack)
  //pin,value
 	object *pin = stack_Pop(stack,vm->garbage);
 	object *value = stack_Pop(stack,vm->garbage);
-    printf("pt:%c,vt:%c\r\n",pin->type,value->type);
+    //printf("pt:%c,vt:%c\r\n",pin->type,value->type);
 	//TODO only a temp solution
 	if(pin->type == TYPE_KV)
 		pin = (object*)((kv_object*)pin)->value;
@@ -68,7 +68,7 @@ object *a_digitalWrite(vm *vm,stack * stack)
 		value = (object*)((kv_object*)value)->value;
 	if(pin->type == TYPE_INT && value->type == TYPE_INT)
 	{
-		printf("digitalWrite:%d,val:%d\r\n",((int_object*)pin)->value,((int_object*)value)->value);
+		//printf("digitalWrite:%d,val:%d\r\n",((int_object*)pin)->value,((int_object*)value)->value);
 		digitalWrite(((int_object*)pin)->value,((int_object*)value)->value);
 	}
 	object *tmp =CreateEmptyObject(TYPE_NONE,0);
@@ -104,8 +104,8 @@ object *a_delay(vm *vm,stack * stack)
  //ms
  	//printf("delay\n");
  	object *ms = stack_Pop(stack,vm->garbage);
-	if(ms->type == TYPE_INT)
-		delay(((int_object*)ms)->value);
+	//if(ms->type == TYPE_INT)
+	//	delay(((int_object*)ms)->value);
 	object *tmp =CreateEmptyObject(TYPE_NONE,0);
 	return (tmp);	
 }

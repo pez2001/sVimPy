@@ -158,9 +158,9 @@ void loop (vm *vm)
   delay(100);              // wait for a second
  */
  //Serial.println("loop\n");	
-	debug_printf(DEBUG_ALL,"loop\r\n");
+	//debug_printf(DEBUG_ALL,"loop\r\n");
 	vm_CallFunction(vm,"loop",NULL,0);
-    debug_printf(DEBUG_ALL,"loop thru\r\n");
+    //debug_printf(DEBUG_ALL,"loop thru\r\n");
 
 }
 	

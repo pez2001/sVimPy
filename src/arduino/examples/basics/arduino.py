@@ -30,7 +30,7 @@ HIGH = 1
 def pinMode(pin,mode):pass
 def digitalRead(pin):pass
 def digitalWrite(pin,value):pass
-def analogRead(pin,):pass
+def analogRead(pin):pass
 def analogWrite(pin,value):pass
 def delay(ms):pass
 def serialPrintln(message):pass
