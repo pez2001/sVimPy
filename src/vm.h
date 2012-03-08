@@ -95,6 +95,12 @@ extern "C"  {
 
 #define MAGIC (3180 | ((long)'\r'<<16) | ((long)'\n'<<24))
 
+//function types
+#define FUNC_PYTHON 'p'
+#define FUNC_C 'c'
+#define FUNC_C_OBJ 'o'
+#define FUNC_NOT_FOUND 'n'
+
 
 #ifndef USE_ARDUINO_FUNCTIONS
 #pragma pack(push)				/* push current alignment to stack */
@@ -105,37 +111,67 @@ typedef struct _vm
 {
 	stack *blocks;
 	ptr_list *functions;
-	ptr_list *garbage;
+	//ptr_list *garbage;
 	//code_object *global;
 	ptr_list *globals;
 	object *(*interrupt_handler) (struct _vm *vm,stack *stack);
 	BOOL interrupt_vm;
 	BOOL running;
+	object *(*step_handler) (struct _vm *vm);//TODO implement step handler to execute external work functions
 } vm;
+
+typedef struct _cfunction
+{
+	char *name;//used quickly find functions by name
+	struct _object* (*func) (struct _vm *vm,struct _tuple_object *locals,struct _tuple_object *kw_locals);
+} cfunction;
+
+
+typedef	union _resolve_function
+{
+	struct _function_object *fo;
+	struct _cfunction *cfo;
+} resolve_function;
+
+typedef struct _resolve_container
+{
+	OBJECT_TYPE func_type;
+	union _resolve_function func;
+} resolve_container;
 
 #ifndef USE_ARDUINO_FUNCTIONS
 #pragma pack(pop)				/* restore original alignment from stack */
 #endif
 
+resolve_container *AllocResolveContainer(void);
+
+void FreeResolveContainer(resolve_container *rc);
+
+cfunction *AllocCFunction(void);
+
+void FreeCFunction(cfunction *cf);
+
 BOOL vm_ObjectExists(vm *vm, object  *obj);
 
-function_object *CreateCFunction(object *(*func) (vm *vm,stack *stack), char *name);
+cfunction *CreateCFunction(object *(*func) (vm *vm,tuple_object *locals,tuple_object *kw_locals), char *name);//TODO add keyword parameters
 
-function_object *CreateCObjFunction(object *(*func) (vm *vm,object *obj),	char *name);
+//function_object *CreateCObjFunction(object *(*func) (vm *vm,object *obj),	char *name);
 
-function_object *CreatePythonFunction(code_object *code);
+//function_object *CreatePythonFunction(code_object *code);
 
-int vm_AddFunctionObject(vm *vm, function_object *fo);
+int vm_AddFunction(vm *vm, cfunction *fo);
 
-void vm_RemoveFunction(vm *vm, char *name);
+void vm_RemoveFunctionByName(vm *vm, char *name);
 
-void vm_RemoveFunctionObject(vm *vm, function_object *fo);
+void vm_RemoveFunction(vm *vm, cfunction *fo);
 
-object *vm_ExecuteCFunction(vm *vm, char *name, stack *stack);
+object *vm_ExecuteCFunctionByName(vm *vm, char *name, tuple_object *locals,tuple_object *kw_locals);
 
-object *vm_ExecuteCObjFunction(vm *vm, char *name, object *obj);
+object *vm_ExecuteCFunction(vm *vm, cfunction *cf, tuple_object *locals,tuple_object *kw_locals);
 
-function_object *vm_FindFunction(vm *vm, char *name);
+//object *vm_ExecuteCObjFunction(vm *vm, char *name, object *obj);
+
+cfunction *vm_FindFunction(vm *vm, char *name);
 
 vm *vm_Init(code_object *co);//init vm and set global object if given
 
@@ -165,13 +201,15 @@ object *vm_RunObject(vm *vm, object *obj, stack *locals, NUM argc);//run a pytho
 
 object *vm_InteractiveRunObject(vm *vm, object *obj, stack *locals, NUM argc);
 
-block_object *vm_StartObject(vm *vm,object *obj,stack *locals,NUM argc);//run a python code object
+block_object *vm_StartCodeObject(vm *vm,code_object *co,stack *locals,NUM argc);
 
 object *vm_StartFunctionObject(vm *vm,function_object *fo,stack *locals,stack *kw_locals,NUM argc,NUM kw_argc);//run a python function object //TODO check if argc can be omitted
 
-function_object *vm_ResolveFunction(vm *vm,object *to_resolve);//input can be function_objects ,code_objects, unicode_objects -> returns a function_object if any
+object *vm_StartCFunction(vm *vm,cfunction *cfo,stack *locals,stack *kw_locals,NUM argc,NUM kw_argc);
 
-object *vm_StepObject(vm *vm);//single step vm //TODO rename to vm_Step
+resolve_container *vm_ResolveFunction(vm *vm,object *to_resolve);//input can be function_objects ,code_objects, unicode_objects -> returns a function_object if any
+
+object *vm_Step(vm *vm);//single step vm //TODO rename to vm_Step
 
 #ifdef DEBUGGING
 void vm_DumpCode(vm *vm,BOOL dump_descriptions,BOOL from_start);//dump human readable code of the vm's actual running block 

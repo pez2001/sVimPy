@@ -23,6 +23,9 @@
 #ifndef INTERNAL_FUNCTIONS_H
 #define INTERNAL_FUNCTIONS_H
 
+#include "features.h"
+
+
 #include "types.h"
 #include "object.h"
 #include "stack.h"
@@ -37,21 +40,58 @@ extern "C"  {
 // object *pow(object *base,object *exp);
 struct _vm;
 
-object *if_range(struct _vm *vm,stack * stack);
+object *if_range(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
 
-object *if_print(struct _vm *vm,stack * stack);
+object *if_print(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
 
-object *if_sum(struct _vm *vm,stack * stack);
+object *if_sum(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
 
-object *if_list(struct _vm *vm,stack * stack);
+object *if_list(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
 
-object *if_next(struct _vm *vm,stack * stack);
+object *if_max(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+
+object *if_abs(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+
+object *if_len(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+
+object *if_pow(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+
+object *if_min(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+
+object *if_sorted(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+
+object *if_reversed(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+
+object *if_all(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+
+object *if_any(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+
+object *if_chr(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+
+object *if_ord(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+
+object *if_cmp(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+
+object *if_hex(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+
+object *if_int(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+
+object *if_float(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+
+object *if_iter(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+
+object *if_map(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+
+
+
+object *if_next(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+
 
 object *BinaryOp(object *tos,object *tos1,unsigned char op);
 
 object *CompareOp(object *tos,object *tos1,unsigned char cmp_op);
 
-object *custom_code(struct _vm *vm,stack * stack);
+object *custom_code(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
 
 void AddInternalFunctions(struct _vm *vm);
 

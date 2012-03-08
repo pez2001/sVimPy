@@ -26,6 +26,7 @@
 #include "types.h"
 #include "lists.h"
 #include "object.h"
+#include "garbage.h"
 
 #include "debug.h"
 
@@ -36,6 +37,7 @@ extern "C"  {
 
 #define STACK_TYPE *object;
 
+//TODO remove redundant stack struct
 // #define stack ptr_list
 
 typedef struct _stack
@@ -47,7 +49,7 @@ struct _object;
 
 stack *stack_Init(void); //TODO rename to Create
 
-struct _object *stack_Pop(stack *stack,ptr_list *gc);
+struct _object *stack_Pop(stack *stack);
 
 void stack_Push(stack *stack, struct _object * x);
 

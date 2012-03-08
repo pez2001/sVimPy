@@ -132,7 +132,9 @@
 #define OPCODE_MAP_ADD								0x92
 
 #if defined(USE_DEBUGGING) || defined(USE_ARDUINO_OPCODE_DEBUGGING)
-
+#ifdef __cplusplus
+extern "C"  {
+#endif
 typedef struct
 {
 	unsigned char cm_op;		// cmp op in bytecode representation
@@ -164,6 +166,10 @@ NUM GetSupportedOpcodesNum(void);
 
 
 INDEX GetOpcodeIndex(unsigned char opcode);
+
+#ifdef __cplusplus
+} 
+#endif
 
 #endif
 

@@ -22,40 +22,245 @@
 
 #include "garbage.h"
 
+ptr_list *garbage;
+
+void gc_Init(void)
+{
+	garbage = ptr_CreateList(0,0);
+}
+
+void gc_Close(void)
+{
+	gc_Clear();
+	ptr_CloseList(garbage);
+}
+	
+void gc_IncRefCount(object *obj)
+{
+	obj->ref_count++;
+	#ifdef DEBUGGING
+	if((debug_level & DEBUG_GC) > 0)
+	{
+		debug_printf(DEBUG_GC,"%x : %d refs (incremented:%c)\n",obj,obj->ref_count,obj->type);
+	}
+	#endif
+}
+
+void gc_DecRefCount(object *obj)
+{
+	if(obj == NULL)
+		return;
+	if(obj->ref_count == 1)
+	 {
+		obj->ref_count--;
+		if(!ptr_Contains(garbage,obj))
+		{
+			#ifdef DEBUGGING
+			if((debug_level & DEBUG_GC) > 0)
+			{
+				//debug_printf(DEBUG_GC,"object has no refs anymore -> put into gc\n");
+				debug_printf(DEBUG_GC,"%x : 0 refs (decremented[GC]:%c - pushed to GC)\n",obj,obj->type);
+				//DumpObject(obj,0);
+			}
+			#endif
+			//FreeObject(obj);
+			ptr_Queue(garbage,obj);
+		}
+		return;
+	 }
+	obj->ref_count--;
+	#ifdef DEBUGGING
+	debug_printf(DEBUG_GC,"%x : %d refs (decremented[GC]:%c)\n",obj,obj->ref_count,obj->type);
+	#endif
+}
+
+/*
+void gc_DecRefCount(object *obj)
+{
+	if(obj->ref_count == 1)
+	{
+		//obj->ref_count--;
+		#ifdef DEBUGGING
+		if((debug_level & DEBUG_GC) > 0)
+		{
+			//debug_printf(DEBUG_GC,"object has no refs anymore -> freeing\n");
+			debug_printf(DEBUG_GC,"%x : 0 refs (decremented[F]:%c) - freed from memory\n",obj,obj->type);
+			//DumpObject(obj,0);
+		}
+		#endif
+		FreeObject(obj);
+		//ptr_Queue(gc,obj);
+		return;
+	 }
+	obj->ref_count--;
+	#ifdef DEBUGGING
+	debug_printf(DEBUG_GC,"%x : %d refs (decremented[F]:%c)\n",obj,obj->ref_count,obj->type);
+	#endif
+}
+*/
+
+BOOL gc_HasNoRefs(object *obj)
+{
+return(!obj->ref_count);
+}
+
+BOOL gc_HasRefs(object *obj)
+{
+return(obj->ref_count);
+}
+
+void gc_FreeObject(object *obj)
+{
+	if (obj == NULL)
+		return;
+	#ifdef DEBUGGING
+	if((debug_level & DEBUG_FREEING) > 0)
+	{
+		debug_printf(DEBUG_FREEING,"object to be freed\n");
+		DumpObject(obj,1);
+	}
+	if(obj->ref_count < 0)
+		debug_printf(DEBUG_ALL,"ref skew detected:%x\n",obj);
+	#endif
+	
+	if(obj->ref_count > 1)
+	{
+		#ifdef DEBUGGING
+		if((debug_level & DEBUG_GC) > 0)
+		{
+			debug_printf(DEBUG_GC,"%x : %d (decreasing due FreeObject)\n",obj,obj->ref_count);
+		}
+		#endif
+		gc_DecRefCount(obj);
+		return;
+	}
+
+	switch(obj->type)
+	{
+	case TYPE_BLOCK:
+		#ifdef DEBUGGING
+		debug_printf(DEBUG_VERBOSE_FREEING,"Freeing block object %x\n",obj);
+		#endif
+		gc_DecRefCount((object*)((block_object*)obj)->code);
+		if(((block_object*)obj)->stack != NULL)
+			stack_Close(((block_object*)obj)->stack,1);
+		break;
+	case TYPE_REF:
+		#ifdef DEBUGGING
+		debug_printf(DEBUG_VERBOSE_FREEING,"Freeing Ref to %x\n",((ref_object*)obj)->ref);
+		#endif
+		break;
+	case TYPE_ITER:
+		#ifdef DEBUGGING
+		debug_printf(DEBUG_VERBOSE_FREEING,"Freeing Iter %x\n",obj);
+		#endif
+		if(((iter_object*)obj)->block_stack != NULL)
+		{	
+			stack_Close(((iter_object*)obj)->block_stack,1);
+		}
+		#ifdef DEBUGGING
+		debug_printf(DEBUG_VERBOSE_FREEING,"Freeing Iter tag %x\n",((iter_object*)obj)->tag);
+		#endif
+		gc_DecRefCount(((iter_object*)obj)->tag);
+		break;
+	case TYPE_NULL:
+		break;
+	case TYPE_NONE:
+		break;
+	case TYPE_INT:
+		break;
+	case TYPE_BINARY_FLOAT:
+		break;
+	case TYPE_KV:
+		gc_DecRefCount(((kv_object*)obj)->key);
+		gc_DecRefCount(((kv_object*)obj)->value);
+		break;
+	case TYPE_FUNCTION:
+		gc_DecRefCount((object*)((function_object*)obj)->defaults);
+		gc_DecRefCount((object*)((function_object*)obj)->kw_defaults);
+		gc_DecRefCount((object*)((function_object*)obj)->closure);
+		gc_DecRefCount((object*)((function_object*)obj)->func);
+		break;
+	case TYPE_UNICODE:
+		#ifdef DEBUGGING
+		debug_printf(DEBUG_VERBOSE_FREEING,"freeing unicode object @%x\n",obj);
+		assert(mem_free(((unicode_object*)obj)->value));
+		#else
+		free(((unicode_object*)obj)->value);
+		#endif
+		break;
+	case TYPE_STRING:
+		#ifdef DEBUGGING
+		assert(mem_free(((string_object *)obj)->content));
+		#else
+		free(((string_object*)obj)->content);
+		#endif
+		break;
+	case TYPE_TUPLE:
+		if (((tuple_object*)obj)->list != NULL)
+		{
+			if(((tuple_object*)obj)->list->num > 0)
+			{
+				for (NUM i = 0; i < ((tuple_object*)obj)->list->num; i++)
+				{
+					gc_DecRefCount((object*)((tuple_object*)obj)->list->items[i]);
+				}
+			}
+			ptr_CloseList(((tuple_object*)obj)->list);
+		}
+		break;
+	case TYPE_CODE:
+		#ifdef DEBUGGING
+		assert(mem_free(((code_object*)obj)->name));
+		#else
+		free(((code_object*)obj)->name);
+		#endif
+		gc_DecRefCount(((code_object*)obj)->code);
+		gc_DecRefCount(((code_object*)obj)->consts);
+		gc_DecRefCount(((code_object*)obj)->names);
+		gc_DecRefCount(((code_object*)obj)->varnames);
+		gc_DecRefCount(((code_object*)obj)->freevars);
+		gc_DecRefCount(((code_object*)obj)->cellvars);
+		break;
+	}
+
+	#ifdef DEBUGGING
+	assert(mem_free(obj));
+	debug_printf(DEBUG_FREEING,"freed object:%x\n",obj);
+	#else
+	free(obj);
+	#endif
+}
 
 //void gc_Clear(ptr_list *gc_collection)
-void gc_Clear(ptr_list *gc_collection,struct _vm *vm)
+void gc_Clear(void)
 {
-	//printf("gc_Clear()\n");
-	while(gc_collection->num)
+	#ifdef DEBUGGING
+	debug_printf(DEBUG_GC,"gc_Clear();\n");
+	#endif
+	while(garbage->num)
 	{
-		object *g = ptr_Pop(gc_collection);
-		
-		if(HasNoRefs(g))
+		object *g = ptr_Pop(garbage);
+		if(gc_HasNoRefs(g))
 		{
 			//FreeObject(g);
 			#ifdef DEBUGGING
 			if((debug_level & DEBUG_GC) > 0)
 			{
-				//debug_printf(DEBUG_GC,"object has no refs\n");
 				debug_printf(DEBUG_GC,"%x : %d (killed:%c)\n",g,g->ref_count,g->type);
-				//DumpObject(g,0);
-		
 				//if(vm_ObjectExists(vm,g))
 				//{
 				//	debug_printf(DEBUG_GC,"%x : %d (Warning still in use and just got killed)\n",g,g->ref_count);
 				//}				
 			}
 			#endif
-			FreeObject(g);
+			gc_FreeObject(g);
 		}
 		else
 		{
 			#ifdef DEBUGGING
 			if((debug_level & DEBUG_GC) > 0)
 			{
-				//debug_printf(DEBUG_GC,"object has gained refs:%d\n",g->ref_count);
-				//DumpObject(g,0);
 				debug_printf(DEBUG_GC,"%x : %d (survived:%c)\n",g,g->ref_count,g->type);
 				//if(!vm_ObjectExists(vm,g))
 				//{

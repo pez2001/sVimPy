@@ -29,7 +29,7 @@ object *StringAdd(object *a,object *b)
 	as = ((unicode_object *)a)->value;
 	bs = ((unicode_object *)b)->value;
 	char *tmp = str_Cat(as,bs);
-	unicode_object *r = CreateUnicodeObject(tmp,0);
+	unicode_object *r = CreateUnicodeObject(tmp);
 	return((object*)r);
 }
 
@@ -39,7 +39,7 @@ object *StringCompare(object *a,object *b)
 	char *bs;
 	as = ((unicode_object *)a)->value;
 	bs = ((unicode_object *)b)->value;
-	object *r = CreateEmptyObject(!strcmp(as,bs) ? TYPE_TRUE : TYPE_FALSE,0);
+	object *r = CreateEmptyObject(!strcmp(as,bs) ? TYPE_TRUE : TYPE_FALSE);
 	#ifdef DEBUGGING
 	debug_printf (DEBUG_VERBOSE_STEP,"%s == %s == %c\n", as, bs,r->type);
 	#endif
@@ -62,7 +62,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 		if (mnum == 1)
 			tos1 = ((tuple_object *) tos1)->list->items[0];
 
-		tuple_object *mtr = CreateTuple(a,0);
+		tuple_object *mtr = CreateTuple(a);
 		for (NUM i = 0; i < a; i++)
 		{
 			SetItem((object*)mtr,i,tos1);
@@ -95,7 +95,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 		{
 			bf = ((float_object*)tos1)->value;
 		}	
-		new_tos = (object*)CreateFloatObject(0,0);
+		new_tos = (object*)CreateFloatObject(0);
 		switch(op)
 		{
 			case OPCODE_INPLACE_MULTIPLY:
@@ -214,7 +214,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 		INT b = 0;
 		a = ((int_object*)tos)->value;
 		b = ((int_object*)tos1)->value;
-		new_tos = (object*)CreateIntObject(0,0);
+		new_tos = (object*)CreateIntObject(0);
 		switch(op)
 		{
 			case OPCODE_INPLACE_MULTIPLY:
@@ -339,7 +339,7 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 	}
 	if ((tos->type == TYPE_FALSE || tos->type == TYPE_TRUE) && (tos1->type == TYPE_FALSE || tos1->type == TYPE_TRUE)) //bool compare
 	{
-		new_tos = CreateEmptyObject(tos1->type == tos->type ? TYPE_TRUE : TYPE_FALSE,0);
+		new_tos = CreateEmptyObject(tos1->type == tos->type ? TYPE_TRUE : TYPE_FALSE);
 		#ifdef DEBUGGING
 		debug_printf (DEBUG_VERBOSE_STEP,"%c == %c == %c\n", tos1->type, tos->type, new_tos->type);
 		#endif
@@ -347,7 +347,7 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 	}
 	if(cmp_op == 8) // is (compare instances)
 	{
-		new_tos = CreateEmptyObject(tos == tos1 ? TYPE_TRUE : TYPE_FALSE,0);
+		new_tos = CreateEmptyObject(tos == tos1 ? TYPE_TRUE : TYPE_FALSE);
 		#ifdef DEBUGGING
 		debug_printf(DEBUG_VERBOSE_STEP,"%x is %x == %c\n",tos, tos1, new_tos->type);
 		#endif
@@ -355,7 +355,7 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 	}
 	if(cmp_op == 9) // is not (compare instances)
 	{
-		new_tos = CreateEmptyObject(tos != tos1 ? TYPE_TRUE : TYPE_FALSE,0);
+		new_tos = CreateEmptyObject(tos != tos1 ? TYPE_TRUE : TYPE_FALSE);
 		#ifdef DEBUGGING
 		debug_printf(DEBUG_VERBOSE_STEP,"%x is not %x == %c\n",tos, tos1, new_tos->type);
 		#endif
@@ -363,7 +363,7 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 		}
 	if(cmp_op == 6) // in (contained in tuple)
 	{
-		new_tos = CreateEmptyObject( GetItemIndex(tos, tos1) != -1 ? TYPE_TRUE : TYPE_FALSE,0);
+		new_tos = CreateEmptyObject( GetItemIndex(tos, tos1) != -1 ? TYPE_TRUE : TYPE_FALSE);
 		#ifdef DEBUGGING
 		debug_printf(DEBUG_VERBOSE_STEP,"%x in %x == %c\n",tos, tos1, new_tos->type);
 		#endif
@@ -374,7 +374,7 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 		#ifdef DEBUGGING
 		debug_printf(DEBUG_VERBOSE_STEP,"index:%d\n",GetItemIndex(tos, tos1));
 		#endif
-		new_tos = CreateEmptyObject( GetItemIndex(tos, tos1) == -1 ? TYPE_TRUE : TYPE_FALSE,0);
+		new_tos = CreateEmptyObject( GetItemIndex(tos, tos1) == -1 ? TYPE_TRUE : TYPE_FALSE);
 		#ifdef DEBUGGING
 		debug_printf(DEBUG_VERBOSE_STEP,"%x not in %x == %c\n",tos, tos1, new_tos->type);
 		#endif
@@ -405,7 +405,7 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 		{
 			case 0:	// <
 				{
-					new_tos = CreateEmptyObject(bf < af ? TYPE_TRUE : TYPE_FALSE,0);
+					new_tos = CreateEmptyObject(bf < af ? TYPE_TRUE : TYPE_FALSE);
 					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g < %7g == %c\n", bf, af, new_tos->type);
 					#endif
@@ -413,7 +413,7 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 				break;
 			case 1:	// <=
 				{
-					new_tos = CreateEmptyObject(bf <= af ? TYPE_TRUE : TYPE_FALSE,0);
+					new_tos = CreateEmptyObject(bf <= af ? TYPE_TRUE : TYPE_FALSE);
 					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g <= %7g == %c\n", bf, af, new_tos->type);
 					#endif
@@ -421,7 +421,7 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 				break;
 			case 2:	// ==
 				{
-					new_tos = CreateEmptyObject(bf == af ? TYPE_TRUE : TYPE_FALSE,0);
+					new_tos = CreateEmptyObject(bf == af ? TYPE_TRUE : TYPE_FALSE);
 					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g == %7g == %c\n", bf, af, new_tos->type);
 					#endif
@@ -429,7 +429,7 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 				break;
 			case 3:	// !=
 				{
-					new_tos = CreateEmptyObject(bf != af ? TYPE_TRUE : TYPE_FALSE,0);
+					new_tos = CreateEmptyObject(bf != af ? TYPE_TRUE : TYPE_FALSE);
 					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g != %7g == %c\n", bf, af, new_tos->type);
 					#endif
@@ -437,7 +437,7 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 				break;
 			case 4:	// >
 				{
-					new_tos = CreateEmptyObject( bf > af ? TYPE_TRUE : TYPE_FALSE,0);
+					new_tos = CreateEmptyObject( bf > af ? TYPE_TRUE : TYPE_FALSE);
 					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g < %7g == %c\n", bf, af, new_tos->type);
 					#endif
@@ -445,7 +445,7 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 				break;
 			case 5:	// >=
 				{
-					new_tos = CreateEmptyObject(bf >= af ? TYPE_TRUE : TYPE_FALSE,0);
+					new_tos = CreateEmptyObject(bf >= af ? TYPE_TRUE : TYPE_FALSE);
 					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g >= %7g == %c\n", bf, af, new_tos->type);
 					#endif
@@ -463,7 +463,7 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 		{
 			case 0:	// <
 				{
-					new_tos = CreateEmptyObject(b < a ? TYPE_TRUE : TYPE_FALSE,0);
+					new_tos = CreateEmptyObject(b < a ? TYPE_TRUE : TYPE_FALSE);
 					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d < %d == %c\n", b, a, new_tos->type);
 					#endif
@@ -471,7 +471,7 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 			break;
 			case 1:	// <=
 				{
-					new_tos = CreateEmptyObject(b <= a ? TYPE_TRUE : TYPE_FALSE,0);
+					new_tos = CreateEmptyObject(b <= a ? TYPE_TRUE : TYPE_FALSE);
 					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d <= %d == %c\n", b, a, new_tos->type);
 					#endif
@@ -479,7 +479,7 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 			break;
 			case 2:	// ==
 				{
-					new_tos = CreateEmptyObject(b == a ? TYPE_TRUE : TYPE_FALSE,0);
+					new_tos = CreateEmptyObject(b == a ? TYPE_TRUE : TYPE_FALSE);
 					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d == %d == %c\n", b, a, new_tos->type);
 					#endif
@@ -487,7 +487,7 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 				break;
 			case 3:	// !=
 				{
-					new_tos = CreateEmptyObject(b != a ? TYPE_TRUE : TYPE_FALSE,0);
+					new_tos = CreateEmptyObject(b != a ? TYPE_TRUE : TYPE_FALSE);
 					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d != %d == %c\n", b, a, new_tos->type);
 					#endif
@@ -495,7 +495,7 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 			break;
 			case 4:	// >
 				{
-					new_tos = CreateEmptyObject( b > a ? TYPE_TRUE : TYPE_FALSE,0);
+					new_tos = CreateEmptyObject( b > a ? TYPE_TRUE : TYPE_FALSE);
 					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d < %d == %c\n", b, a, new_tos->type);
 					#endif
@@ -503,7 +503,7 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 				break;
 			case 5:	// >=
 				{
-					new_tos = CreateEmptyObject(b >= a ? TYPE_TRUE : TYPE_FALSE,0);
+					new_tos = CreateEmptyObject(b >= a ? TYPE_TRUE : TYPE_FALSE);
 					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d >= %d == %c\n", b, a, new_tos->type);
 					#endif
@@ -514,60 +514,54 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 	return(new_tos);
 }
 
-object *custom_code(struct _vm *vm,stack * stack)
+object *custom_code(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
-	object *a = stack_Pop(stack,vm->garbage);
-	object *b = stack_Pop(stack,vm->garbage);
+	object *a = GetItem((object*)locals,0);
+	object *b = GetItem((object*)locals,1);
 	return(BinaryOp(a,b,OPCODE_BINARY_ADD));
 }
 
-object *if_list(struct _vm *vm,stack * stack)
+object *if_list(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
-	tuple_object *r = CreateTuple(0,0);
-	//printf("listing\n");
-	//stack_Dump(stack);
-	while(stack->list->num)
+	tuple_object *r = CreateTuple(0);
+	INDEX i = 0;
+	while(i < locals->list->num)
 	{
-		object *t = stack_Pop(stack,vm->garbage);
+		object *t = GetItem((object *)locals,i);
 		if(t->type == TYPE_ITER)
-			iter_Expand((iter_object*)t,vm,stack);
+			iter_ExpandTuple((iter_object*)t,vm,r);
 		else
 			AppendItem((object*)r,t);
+		i++;
 	}
 	return ((object*)r);
 }
 
-object *if_next(struct _vm *vm,stack * stack)
+object *if_next(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
-	object *iter = stack_Pop(stack,vm->garbage);
+	object *iter = GetItem((object*)locals,0);
 	object *next = iter_NextNow((iter_object*)iter,vm);
-	//if(next != NULL && next->type == TYPE_BLOCK)
-	//{
-	//	stack_Push(vm->blocks, next);
-	//	return(NULL);
-	//}
-	//else
 	return(next);
 }
 
-object *if_range(struct _vm *vm,stack * stack)
+object *if_range(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
-	if (stack->list->num < 1)
+	if (locals->list->num < 1)
 	{
-		object *tmp = CreateEmptyObject(TYPE_NONE,0);
+		object *tmp = CreateEmptyObject(TYPE_NONE);
 		#ifdef DEBUGGING
 		debug_printf(DEBUG_ALL,"not enough args for range\n");
 		#endif
 		return (tmp);
 	}
-	iter_object *iter = CreateIterObject(0);
-	object *s = stack_Pop(stack,vm->garbage);
+	iter_object *iter = CreateIterObject();
+	object *s = GetItem((object*)locals,0);
 	object *e =  NULL;
-	if (stack->list->num > 0)
-		e = stack_Pop(stack,vm->garbage);
+	if (locals->list->num > 0)
+		e = GetItem((object*)locals,1);
 	object *st = NULL;
-	if (stack->list->num > 0)
-		st = stack_Pop(stack,vm->garbage);
+	if (locals->list->num > 1)
+		st = GetItem((object*)locals,2);
 
 	if (st == NULL && e == NULL && s->type == TYPE_INT)
 	{
@@ -582,80 +576,215 @@ object *if_range(struct _vm *vm,stack * stack)
 	{
 		iter_InitSequence(iter,((int_object*)s)->value,((int_object*)e)->value,((int_object*)st)->value);
 	}
-	
 	return ((object*)iter);
 }
 
-object *if_print(struct _vm *vm,stack * stack)
+object *if_print(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
 	BOOL printed_something = 0;
-	while(stack->list->num)
+	INDEX i = 0; 
+	while(i < locals->list->num)
 	{
-		object *tos = stack_Pop(stack,vm->garbage);
-
-		if(tos->type == TYPE_ITER)
+		object *t = GetItem((object *)locals,i);//TODO maybe move this into PrintObject() as case ITER:	
+		if(t->type == TYPE_ITER)
 		{
-			iter_Expand((iter_object*)tos,vm,stack);
+			printf("TUPLE EXPAND in print\n");
+			tuple_object *to = iter_TupleExpand((iter_object*)t,vm);
+			gc_IncRefCount((object*)to);
+			PrintObject((object*)to);
+			gc_DecRefCount((object*)to);
+			i++;
 			continue;
 		}
-		if(tos->type == TYPE_NONE)
+		if(t->type == TYPE_NONE)
+		{
+			i++;
 			continue;
+		}
 		if (printed_something)
 			printf(" ");
-		if (tos != NULL)
-			PrintObject(tos);
+		if (t != NULL)
+			PrintObject(t);
 		printed_something = 1;
+		i++;
 	}
 	if(printed_something)
 		printf("\n");
-	object *tmp =CreateEmptyObject(TYPE_NONE,0);
-	//IncRefCount(tmp);
-	//DumpObject(tmp,0);
-
+	object *tmp =CreateEmptyObject(TYPE_NONE);
 	return (tmp);
 }
 
-object *if_sum(struct _vm *vm,stack * stack)
+object *if_sum(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
 	INT sum = 0;
-	while(stack->list->num)
+	INDEX i = 0;
+	while(i < locals->list->num)
 	{
-		object *tos = stack_Pop(stack,vm->garbage);
-
-		if (tos != NULL)
-			switch (tos->type)
+		object *t = GetItem((object *)locals,i);//TODO maybe move this into PrintObject() as case ITER:	
+		if(t->type == TYPE_ITER)
+		{
+			tuple_object *to = iter_TupleExpand((iter_object*)t,vm);
+			gc_IncRefCount((object*)to);
+			object *r = if_sum(vm,to,NULL);
+			switch (r->type)
 			{
-			case TYPE_INT:
-				sum += ((int_object*)tos)->value;
-				break;
-			case TYPE_ITER:
-				iter_Expand((iter_object*)tos,vm,stack);
-				break;
+				case TYPE_INT:
+					sum += ((int_object*)r)->value;
+					break;
 			}
+			gc_IncRefCount((object*)r);
+			gc_DecRefCount((object*)r);
+			gc_DecRefCount((object*)to);
+			i++;
+			continue;
+		}
+
+		if (t != NULL)
+			switch (t->type)
+			{
+				case TYPE_INT:
+					sum += ((int_object*)t)->value;
+					break;
+			}
+		i++;
 	}
-	int_object *tmp = CreateIntObject(sum,0);
+	int_object *tmp = CreateIntObject(sum);
 	#ifdef DEBUGGING
 	debug_printf(DEBUG_VERBOSE_STEP,"returning sum:%d\n",sum);
 	#endif
-	//IncRefCount(tmp);
 	return ((object*)tmp);
 }
 
+
+
+object *if_max(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+{
+	object *tmp =CreateEmptyObject(TYPE_NONE);
+	return (tmp);
+}
+
+object *if_abs(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+{
+	object *tmp =CreateEmptyObject(TYPE_NONE);
+	return (tmp);
+}
+
+object *if_len(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+{
+
+	object *tmp =CreateEmptyObject(TYPE_NONE);
+	return (tmp);
+}
+
+object *if_pow(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+{
+
+	object *tmp =CreateEmptyObject(TYPE_NONE);
+	return (tmp);
+}
+
+object *if_min(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+{
+
+	object *tmp =CreateEmptyObject(TYPE_NONE);
+	return (tmp);
+}
+
+object *if_sorted(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+{
+
+	object *tmp =CreateEmptyObject(TYPE_NONE);
+	return (tmp);
+}
+
+object *if_reversed(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+{
+	object *tmp =CreateEmptyObject(TYPE_NONE);
+	return (tmp);
+}
+
+object *if_all(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+{
+
+	object *tmp =CreateEmptyObject(TYPE_NONE);
+	return (tmp);
+}
+
+object *if_any(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+{
+	object *tmp =CreateEmptyObject(TYPE_NONE);
+	return (tmp);
+}
+
+object *if_chr(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+{
+	object *tmp =CreateEmptyObject(TYPE_NONE);
+	return (tmp);
+}
+
+object *if_ord(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+{
+	object *tmp =CreateEmptyObject(TYPE_NONE);
+	return (tmp);
+}
+
+object *if_cmp(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+{
+	object *tmp =CreateEmptyObject(TYPE_NONE);
+	return (tmp);
+}
+
+object *if_hex(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+{
+	object *tmp =CreateEmptyObject(TYPE_NONE);
+	return (tmp);
+}
+
+object *if_int(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+{
+	object *tmp =CreateEmptyObject(TYPE_NONE);
+	return (tmp);
+}
+
+object *if_float(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+{
+
+	object *tmp =CreateEmptyObject(TYPE_NONE);
+	return (tmp);
+}
+
+object *if_iter(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+{
+
+	object *tmp =CreateEmptyObject(TYPE_NONE);
+	return (tmp);
+}
+
+object *if_map(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+{
+
+	object *tmp =CreateEmptyObject(TYPE_NONE);
+	return (tmp);
+}
+
+
+
+
 void AddInternalFunctions(struct _vm *vm)
 {
-	function_object *list = CreateCFunction(&if_list, "list");
-	function_object *range = CreateCFunction(&if_range, "range");
-	function_object *print = CreateCFunction(&if_print, "print");
-	function_object *sum = CreateCFunction(&if_sum, "sum");
-	function_object *next = CreateCFunction(&if_next, "next");
-	vm_AddFunctionObject(vm, list);
-	vm_AddFunctionObject(vm, range);
-	vm_AddFunctionObject(vm, print);
-	vm_AddFunctionObject(vm, sum);
-	vm_AddFunctionObject(vm, next);
+	cfunction *list = CreateCFunction(&if_list, "list");
+	cfunction *range = CreateCFunction(&if_range, "range");
+	cfunction *print = CreateCFunction(&if_print, "print");
+	cfunction *sum = CreateCFunction(&if_sum, "sum");
+	cfunction *next = CreateCFunction(&if_next, "next");
+	vm_AddFunction(vm, list);
+	vm_AddFunction(vm, range);
+	vm_AddFunction(vm, print);
+	vm_AddFunction(vm, sum);
+	vm_AddFunction(vm, next);
 
-	function_object *cc = CreateCFunction(&custom_code, "custom_code");
-	vm_AddFunctionObject(vm, cc);
+	cfunction *cc = CreateCFunction(&custom_code, "custom_code");
+	vm_AddFunction(vm, cc);
 
 }
 

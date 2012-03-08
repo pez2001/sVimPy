@@ -200,7 +200,7 @@ void OpenPYC(stream *f, vm *vm)
 		if((debug_level & DEBUG_DUMP_OBJECT) > 0)
 			DumpObject(ret, 0);
 		#endif
-		FreeObject(ret);
+		gc_DecRefCount(ret);
 	}
 	#ifdef DEBUGGING
 	//debug_printf(DEBUG_VERBOSE_TESTS,"object executed:%s\n", filename);
@@ -209,20 +209,21 @@ void OpenPYC(stream *f, vm *vm)
 	debug_printf(DEBUG_VERBOSE_TESTS,"cleaning up object\n");
 	#endif
 	//DumpObject(obj,0);
-	FreeObject(obj);
+	gc_DecRefCount(obj);
 	#ifdef DEBUGGING
 	debug_printf(DEBUG_VERBOSE_TESTS,"removing object from globals\n");
 	#endif
 	vm_RemoveGlobal(vm,(code_object*)obj);
 	//printf("freeing stream\n");
 	stream_Free(f);
+	gc_Clear();
 	#ifdef DEBUGGING
 	debug_printf(DEBUG_VERBOSE_TESTS,"pyc executed\n");
 	#endif
 	//printf("pyc executed\n");
 	// mem_free(b);
 	// mem_free(bh);
-
+	
 }
 
 void brute_test(void)
@@ -249,7 +250,7 @@ void brute_test(void)
 	//debug_level |= DEBUG_COUNT_OBJECTS;
 	mem_Init();
 	#endif
-
+	gc_Init();
 	//debug_printf(DEBUG_ALL,"hi:%s\n","hi");
 
 	//ptr_tests();
@@ -433,6 +434,7 @@ void brute_test(void)
 	#endif
 	vm_Close(vm);
 	streams_Close();
+	gc_Close();
 	// printf("objects headers total size : %d\n",objects_header_total);
 	#ifdef DEBUGGING
 	if((debug_level & DEBUG_DUMP_UNSUPPORTED) > 0)
@@ -454,7 +456,7 @@ void AtomicOpenPYC(char *filename)
 	#ifdef DEBUGGING
 	debug_level = 0;
 	//debug_level |= DEBUG_INTERACTIVE;
-	//debug_level |= DEBUG_MEMORY;
+	debug_level |= DEBUG_MEMORY;
 	//debug_level |= DEBUG_SHOW_OPCODES;
 	//debug_level |= DEBUG_FULL_DUMP;
 	//debug_level |= DEBUG_STACK;
@@ -468,12 +470,13 @@ void AtomicOpenPYC(char *filename)
 	//debug_level |= DEBUG_DUMP_OBJECT;
 	//debug_level |= DEBUG_CREATION;
 	//debug_level |= DEBUG_VERBOSE_FREEING;
-	//debug_level |= DEBUG_VERBOSE_TESTS;	
+	debug_level |= DEBUG_VERBOSE_TESTS;	
 	//debug_level |= DEBUG_PTR_LISTS;
 	//debug_level |= DEBUG_INTERNAL_FUNCTIONS;
 	//debug_level |= DEBUG_COUNT_OBJECTS;
 	mem_Init();
 	#endif
+	gc_Init();
 	streams_Init();
 	
 	vm *vm = vm_Init(NULL);
@@ -531,7 +534,7 @@ void AtomicOpenPYC(char *filename)
 		if((debug_level & DEBUG_DUMP_OBJECT) > 0)
 			DumpObject(ret, 0);
 		#endif
-		FreeObject(ret);
+		gc_DecRefCount(ret);
 	}
 	#ifdef DEBUGGING
 	//debug_printf(DEBUG_VERBOSE_TESTS,"object executed:%s\n", filename);
@@ -548,7 +551,7 @@ void AtomicOpenPYC(char *filename)
 	#ifdef DEBUGGING
 	debug_printf(DEBUG_VERBOSE_TESTS,"freeing object now\n");
 	#endif
-	FreeObject(obj);
+	gc_DecRefCount(obj);
 	//printf("freeing stream\n");
 	#ifdef DEBUGGING
 	debug_printf(DEBUG_VERBOSE_TESTS,"freeing stream\n");
@@ -563,6 +566,7 @@ void AtomicOpenPYC(char *filename)
 	#endif
 	vm_Close(vm);
 	streams_Close();
+	gc_Close();
 	// printf("objects headers total size : %d\n",objects_header_total);
 	#ifdef DEBUGGING
 	if((debug_level & DEBUG_DUMP_UNSUPPORTED) > 0)
@@ -590,28 +594,76 @@ void atomic_test(void)
 
 	//append ops + generators
 	//AtomicOpenPYC("tests/test53.pyc", vm);
+
+
+	//simple stuff
+	AtomicOpenPYC("tests/test16.pyc");
+	//return;
+	AtomicOpenPYC("tests/test15.pyc");
+	AtomicOpenPYC("tests/test1.pyc");
+	AtomicOpenPYC("tests/test2.pyc");
+	AtomicOpenPYC("tests/test3.pyc");
+	AtomicOpenPYC("tests/test6.pyc");
+	AtomicOpenPYC("tests/test13.pyc");
+	AtomicOpenPYC("tests/test18.pyc");
+	AtomicOpenPYC("tests/test19.pyc");
+	AtomicOpenPYC("tests/test22.pyc");
+	AtomicOpenPYC("tests/test7.pyc");
+	AtomicOpenPYC("tests/test5.pyc");
+	AtomicOpenPYC("tests/test4.pyc");
+	AtomicOpenPYC("tests/test27.pyc");
+	AtomicOpenPYC("tests/test28.pyc");
+	AtomicOpenPYC("tests/test23.pyc");
+	AtomicOpenPYC("tests/test56.pyc");
+
+	//print + recursion
+	AtomicOpenPYC("tests/test17.pyc");
+	
+	//globals
+	AtomicOpenPYC("tests/test58.pyc");
+
+	//brute ops + closures
+	AtomicOpenPYC("tests/test32.pyc");
+
+	//function parameters
+	AtomicOpenPYC("tests/test_functions.pyc");
+	AtomicOpenPYC("tests/test50.pyc");//with keywords unordered
+	AtomicOpenPYC("tests/test49b.pyc");//kw unordered
+	AtomicOpenPYC("tests/test49.pyc");//kw
+	AtomicOpenPYC("tests/test48.pyc");//var
+	AtomicOpenPYC("tests/test47.pyc");
+	AtomicOpenPYC("tests/test46.pyc");
+	AtomicOpenPYC("tests/test36.pyc");//call_function_var
+	AtomicOpenPYC("tests/test37.pyc");//call_function_kw
+	AtomicOpenPYC("tests/test38.pyc");//call_function_var_kw 
+	AtomicOpenPYC("tests/test39.pyc");//call_function
+
+	//builtins
+	AtomicOpenPYC("tests/test_range.pyc");
+	//AtomicOpenPYC("tests/test_builtins2.pyc");
+	AtomicOpenPYC("tests/test_builtins.pyc");
+	//return;
 	
 	//simple generator with yield
 	AtomicOpenPYC("tests/test59.pyc");
 	//return;
-	
+
 	//simple print 
 	AtomicOpenPYC("tests/test_print.pyc");
-	//return;
+
 	
-	AtomicOpenPYC("tests/test_range.pyc");
 	AtomicOpenPYC("tests/test_yield.pyc");
+	//return;
 	AtomicOpenPYC("tests/test_next.pyc");
 	AtomicOpenPYC("tests/test_next2.pyc");
 	AtomicOpenPYC("tests/test_next3.pyc");
 	AtomicOpenPYC("tests/test_list.pyc");
 	AtomicOpenPYC("tests/test_return.pyc");
+
 	//while loop + break + continue
 	AtomicOpenPYC("tests/test_while.pyc");
 	//return;
 
-	//print + recursion
-	AtomicOpenPYC("tests/test17.pyc");
 	//return;
 	AtomicOpenPYC("tests/test8.pyc");
 	AtomicOpenPYC("tests/test9.pyc");
@@ -623,34 +675,13 @@ void atomic_test(void)
 	//return;
 	AtomicOpenPYC("tests/test24b.pyc");
 	AtomicOpenPYC("tests/test24.pyc");
-	
 	AtomicOpenPYC("tests/test52.pyc");
-
-	
 	AtomicOpenPYC("tests/test26.pyc");
 	AtomicOpenPYC("tests/test20.pyc");
-	
-
-
 	
 	//iters
 	AtomicOpenPYC("tests/test61.pyc");
 	AtomicOpenPYC("tests/test60.pyc");
-
-	
-	
-	//function parameters
-	AtomicOpenPYC("tests/test50.pyc");//with keywords unordered
-	AtomicOpenPYC("tests/test49b.pyc");//kw unordered
-	AtomicOpenPYC("tests/test49.pyc");//kw
-	AtomicOpenPYC("tests/test48.pyc");//var
-	AtomicOpenPYC("tests/test47.pyc");
-	AtomicOpenPYC("tests/test46.pyc");
-	AtomicOpenPYC("tests/test_functions.pyc");
-	AtomicOpenPYC("tests/test36.pyc");//call_function_var
-	AtomicOpenPYC("tests/test37.pyc");//call_function_kw
-	AtomicOpenPYC("tests/test38.pyc");//call_function_var_kw 
-	AtomicOpenPYC("tests/test39.pyc");//call_function
 	
 	//pos + kw defaults
 	AtomicOpenPYC("tests/test55c.pyc");
@@ -683,36 +714,11 @@ void atomic_test(void)
 	//comparing
 	AtomicOpenPYC("tests/test_compare.pyc");
 
-	//globals
-	AtomicOpenPYC("tests/test58.pyc");
-
 	//closures and deref opcodes
 	AtomicOpenPYC("tests/test57.pyc");
 	AtomicOpenPYC("tests/test29.pyc");
 	
-	//brute ops + closures
-	AtomicOpenPYC("tests/test32.pyc");
 
-	//simple stuff
-	AtomicOpenPYC("tests/test1.pyc");
-	AtomicOpenPYC("tests/test2.pyc");
-	AtomicOpenPYC("tests/test3.pyc");
-	AtomicOpenPYC("tests/test6.pyc");
-	AtomicOpenPYC("tests/test13.pyc");
-	AtomicOpenPYC("tests/test15.pyc");
-	AtomicOpenPYC("tests/test16.pyc");
-	AtomicOpenPYC("tests/test18.pyc");
-	AtomicOpenPYC("tests/test19.pyc");
-	AtomicOpenPYC("tests/test22.pyc");
-	AtomicOpenPYC("tests/test7.pyc");
-	AtomicOpenPYC("tests/test5.pyc");
-	AtomicOpenPYC("tests/test4.pyc");
-	AtomicOpenPYC("tests/test27.pyc");
-	AtomicOpenPYC("tests/test28.pyc");
-	AtomicOpenPYC("tests/test23.pyc");
-	AtomicOpenPYC("tests/test56.pyc");
-	
-	
 	//ellipsis object
 	AtomicOpenPYC("tests/test43.pyc");
 	AtomicOpenPYC("tests/test40.pyc");
@@ -737,9 +743,9 @@ void atomic_test(void)
 	AtomicOpenPYC("tests/e20.pyc");
 	AtomicOpenPYC("tests/e_small.pyc");
 	
-	//OpenPYC(stream_CreateFromFile("tests/e_med.pyc"), vm);
+	//AtomicOpenPYC("tests/e_med.pyc");
 	
-	//OpenPYC("tests/e_bigger.pyc", vm);
+	//AtomicOpenPYC("tests/e_bigger.pyc");
 	//OpenPYC("tests/e_max.pyc", vm);
 
 	//OpenPYC("tests/test.pyc", vm);
@@ -749,7 +755,6 @@ void atomic_test(void)
 
 
 }
-
 
 int main(int argc, char *argv[])
 {

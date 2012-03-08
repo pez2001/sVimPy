@@ -36,9 +36,13 @@ extern "C"  {
 
 void iter_Expand(iter_object *iter,struct _vm *vm,stack *stack);
 
+void iter_ExpandTuple(iter_object *iter,struct _vm *vm,tuple_object *to);
+
+tuple_object *iter_TupleExpand(iter_object *iter,struct _vm *vm);
+
 object *iter_NextNow(iter_object *iter,struct _vm *vm);
 
-object *iter_Next(iter_object *iter,struct _vm *vm);
+object *iter_Next(iter_object *iter);
 
 iter_object *iter_CreateIter(object *iteration);//struct _vm *vm
 

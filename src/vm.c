@@ -76,6 +76,24 @@ r :\n\
 
 #endif
 
+cfunction *AllocCFunction(void)
+{
+	#ifdef DEBUGGING
+	return((cfunction*) mem_malloc(sizeof(cfunction),"AllocCFunction() return"));
+	#else
+	return((cfunction*) malloc(sizeof(cfunction)));
+	#endif
+}
+
+void FreeCFunction(cfunction *cf)
+{
+	#ifdef DEBUGGING
+	assert(mem_free(cf));
+	#else
+	free(cf);
+	#endif
+}
+
 BOOL vm_SearchObject(object *obj,object *needle)
 {
 	if (obj != NULL)
@@ -113,8 +131,6 @@ BOOL vm_SearchObject(object *obj,object *needle)
 			}			
 			break;
 		case TYPE_FUNCTION:
-			if(((function_object*)obj)->func_type == FUNC_PYTHON)
-			{
 				#ifdef USE_DEBUGGING
 				debug_printf(DEBUG_ALL,"checking function defaults\n");
 				#endif
@@ -133,12 +149,11 @@ BOOL vm_SearchObject(object *obj,object *needle)
 				#ifdef USE_DEBUGGING
 				debug_printf(DEBUG_ALL,"checking code\n");
 				#endif
-				if(vm_SearchObject((object*)((function_object*)obj)->func.code,needle))
+				if(vm_SearchObject((object*)((function_object*)obj)->func,needle))
 					return(1);
 				#ifdef USE_DEBUGGING
 				debug_printf(DEBUG_ALL,"checked function\n",obj->type,obj,needle);
 				#endif
-			}
 			break;
 		case TYPE_REF:
 			return(vm_SearchObject(((ref_object*)obj)->ref,needle));
@@ -207,14 +222,15 @@ BOOL vm_ObjectExists(vm *vm, object  *obj)
 	return(0);
 }
 
-function_object *CreateCFunction(object *(*func) (vm *vm,stack *stack), char *name)
-{
-	function_object *fo = CreateFunctionObject(FUNC_C,0);
-	fo->func.func = func;
-	fo->name = str_Copy(name);
+cfunction *CreateCFunction(object *(*func) (vm *vm,tuple_object *locals,tuple_object *kw_locals), char *name)
+{	
+	cfunction *fo = AllocCFunction();
+	fo->func = func;
+	//fo->name = str_Copy(name);
+	fo->name = name;
 	return (fo);
 }
-
+/*
 function_object *CreateCObjFunction(object *(*func) (vm *vm,object *obj),	char *name)
 {
 	function_object *fo = CreateFunctionObject(FUNC_C_OBJ,0);
@@ -222,63 +238,73 @@ function_object *CreateCObjFunction(object *(*func) (vm *vm,object *obj),	char *
 	fo->name = str_Copy(name);
 	return (fo);
 }
-
-function_object *CreatePythonFunction(code_object *code)
+*/
+/*function_object *CreatePythonFunction(code_object *code)
 {
 	function_object *fo = CreateFunctionObject(FUNC_PYTHON,0);
-	fo->func.code = code;
+	fo->func = code;
 	IncRefCount((object*)code);
-	fo->name = code->name;
+	//fo->name = code->name;
 	return (fo);
 }
-
-int vm_AddFunctionObject(vm *vm, function_object *fo)
+*/
+int vm_AddFunction(vm *vm, cfunction *fo)
 {
 	ptr_Push(vm->functions, fo);
-	IncRefCount((object*)fo);
+	//IncRefCount((object*)fo);
+	//printf("a:%s\n",fo->name);
 	return (vm->functions->num - 1);
 }
 
-void vm_RemoveFunction(vm *vm, char *name)
+void vm_RemoveFunctionByName(vm *vm, char *name)
 {
 	for (NUM i = 0; i < vm->functions->num; i++)
 	{
-		if (!strcmp(((function_object*) vm->functions->items[i])->name, name))
+		if (!strcmp(((cfunction*)vm->functions->items[i])->name, name))
 		{
-			FreeObject((object*)vm->functions->items[i]);
+			FreeCFunction((cfunction*)vm->functions->items[i]);
 			ptr_Remove(vm->functions, i);
 			return;
 		}
 	}
 }
 
-void vm_RemoveFunctionObject(vm *vm, function_object *fo)
+void vm_RemoveFunction(vm *vm, cfunction *fo)
 {
 	for (NUM i = 0; i < vm->functions->num; i++)
 	{
 		if (vm->functions->items[i] == fo)
 		{
-			FreeObject((object*)fo);
+			FreeCFunction((cfunction*)fo);
 			ptr_Remove(vm->functions, i);
 			return;
 		}
 	}
 }
 
-object *vm_ExecuteCFunction(vm *vm, char *name, stack *stack)
+object *vm_ExecuteCFunctionByName(vm *vm, char *name,tuple_object *locals,tuple_object *kw_locals)
 {
-	function_object *fo = vm_FindFunction(vm, name);
+	cfunction *fo = vm_FindFunction(vm, name);
 
-	if (fo != NULL && fo->func_type == FUNC_C)
+	if (fo != NULL)
 	{
 		// printf("fd found:%s\n",fd->name);
 		
-		return ((*fo->func.func) (vm,stack));
+		return ((*fo->func) (vm,locals,kw_locals));
 	}
 	return(NULL);
 }
 
-object *vm_ExecuteCObjFunction(vm *vm, char *name, object *obj)
+object *vm_ExecuteCFunction(vm *vm, cfunction *cf, tuple_object *locals,tuple_object *kw_locals)
+{
+	if (cf != NULL)
+	{	
+		return ((*cf->func) (vm,locals,kw_locals));
+	}
+	return(NULL);
+}
+
+/*object *vm_ExecuteCObjFunction(vm *vm, char *name, object *obj)
 {
 	function_object *fo = vm_FindFunction(vm, name);
 
@@ -288,15 +314,15 @@ object *vm_ExecuteCObjFunction(vm *vm, char *name, object *obj)
 	}
 	return(NULL);
 }
-
-function_object *vm_FindFunction(vm *vm, char *name)
+*/
+cfunction *vm_FindFunction(vm *vm, char *name)
 {
 	for (NUM i = 0; i < vm->functions->num; i++)
 	{
-		if (!strcmp(((function_object*) vm->functions->items[i])->name, name))
-			return ((function_object*) (vm->functions->items[i]));
+		if (!strcmp(((cfunction*) vm->functions->items[i])->name, name))
+			return((cfunction*)vm->functions->items[i]);
 	}
-	return (NULL);
+	return(NULL);
 }
 
 vm *vm_Init(code_object *co)
@@ -309,7 +335,7 @@ vm *vm_Init(code_object *co)
 
 	tmp->functions = ptr_CreateList(0, 0);
 	tmp->blocks = stack_Init();
-	tmp->garbage = ptr_CreateList(0,0);
+
 	tmp->globals = ptr_CreateList(0,0);
 	tmp->running = 0;
 	tmp->interrupt_vm = 0;
@@ -327,11 +353,10 @@ void vm_Close(vm *vm)
 	if (vm->functions->num)
 	{
 		for (NUM i = 0; i < vm->functions->num; i++)
-			FreeObject((object*)vm->functions->items[i]);
+			FreeCFunction((cfunction*)vm->functions->items[i]);
 	}
 	ptr_CloseList(vm->functions);
-	gc_Clear(vm->garbage,vm);
-	ptr_CloseList(vm->garbage);
+
 	//for(NUM i = 0;i<vm->blocks->list->num;i++)
 	//		FreeObject((object*)vm->blocks->list->items[i]);
 	stack_Close(vm->blocks, 1);
@@ -358,7 +383,7 @@ void vm_FreeGlobals(vm *vm)
 {
 	for(int i=0;i<vm->globals->num;i++)
 	{	
-			FreeObject((object*)vm->globals->items[i]);
+			gc_DecRefCount((object*)vm->globals->items[i]);
 	}
 }
 
@@ -392,14 +417,14 @@ void vm_Stop(vm *vm)
 	vm->running = 0;
 }
 
-block_object *vm_StartObject(vm *vm,object *obj,stack *locals,NUM argc)
+block_object *vm_StartCodeObject(vm *vm,code_object *co,stack *locals,NUM argc)
 {
-		code_object *co = (code_object*)obj;
+		//code_object *co = (code_object*)obj;
 		string_object *bytecodes = (string_object*) co->code;
 		block_object *bo = AllocBlockObject();
 		bo->type = TYPE_BLOCK;
 		bo->code = co;
-		IncRefCount((object*)bo->code);
+		gc_IncRefCount((object*)bo->code);
 		bo->ip = 0;
 		//bo->iter = NULL;
 		bo->start = 0;
@@ -413,7 +438,7 @@ block_object *vm_StartObject(vm *vm,object *obj,stack *locals,NUM argc)
 			for (NUM i = 0; i < argc; i++)
 			{
 				// printf("adding local %d\n",i);
-				object *local = stack_Pop(locals,vm->garbage);
+				object *local = stack_Pop(locals);
 
 				if(GetItem(co->varnames,i)->type != TYPE_KV)
 					{
@@ -429,22 +454,11 @@ block_object *vm_StartObject(vm *vm,object *obj,stack *locals,NUM argc)
 		return(bo);
 }
 
-object *vm_StartFunctionObject(vm *vm,function_object *fo,stack *locals,stack *kw_locals,NUM argc,NUM kw_argc)
-{
-		if(fo->func_type == FUNC_C)
-		{
-			#ifdef DEBUGGING
-			debug_printf(DEBUG_VERBOSE_STEP,"executing C function: %s\n",  fo->name);
-			#endif
-			object *tmp = vm_ExecuteCFunction(vm, fo->name,locals);
-			return(tmp);
-		}
-		if(fo->func_type == FUNC_PYTHON)
-		{
-			#ifdef DEBUGGING
-			debug_printf(DEBUG_VERBOSE_STEP,"executing python function: %s\n",  fo->name);
-			#endif
-		}
+object *vm_StartFunctionObject(vm *vm,function_object *fo,stack *locals,stack *kw_locals,NUM argc,NUM kw_argc) //TODO switch to tuple based calling convention
+{	
+		#ifdef DEBUGGING
+		debug_printf(DEBUG_VERBOSE_STEP,"executing python function: %s\n",  fo->func->name);
+		#endif
 	
 		//code_object *co = (code_object*)fo->code;
 		//tuple_object *defaults = fo->defaults;
@@ -456,118 +470,114 @@ object *vm_StartFunctionObject(vm *vm,function_object *fo,stack *locals,stack *k
 		bo->ref_count = 0;
 		bo->stack = stack_Init();		// co->stacksize
 		//bo->initiated_locals = 1;
-		if(fo->func_type == FUNC_PYTHON)
+		string_object *bytecodes = (string_object *) fo->func->code;
+		bo->code = fo->func;
+		gc_IncRefCount((object*)bo->code);
+		bo->len = bytecodes->len;
+		if(((tuple_object*)fo->func->varnames)->list != NULL)
 		{
-			//printf("preparing python function\n");
-			string_object *bytecodes = (string_object *) fo->func.code->code;
-			bo->code = fo->func.code;
-			IncRefCount((object*)bo->code);
-			bo->len = bytecodes->len;
-			if(((tuple_object*)fo->func.code->varnames)->list != NULL)
+			ClearDictValues(fo->func->varnames);
+			//int locals_num = ((tuple_object*)fo->func.code->varnames)->list->num;
+			if(fo->defaults!=NULL)
 			{
-				ClearDictValues(fo->func.code->varnames);
-				//int locals_num = ((tuple_object*)fo->func.code->varnames)->list->num;
-				if(fo->defaults!=NULL)
+				NUM locals_num = fo->defaults->list->num;
+				//printf("locals num:%d\n",locals_num);
+				//printf("loading default values\n");
+				for(NUM i = 0;i < fo->defaults->list->num; i++) //load default values
 				{
-					NUM locals_num = fo->defaults->list->num;
-					//printf("locals num:%d\n",locals_num);
-					//printf("loading default values\n");
-					for(NUM i = 0;i < fo->defaults->list->num; i++) //load default values
+					if(GetItem(fo->func->varnames,(locals_num-1) - i)->type != TYPE_KV)
 					{
-						if(GetItem(fo->func.code->varnames,(locals_num-1) - i)->type != TYPE_KV)
-						{
-							SetItem(fo->func.code->varnames,(locals_num-1) - i,(object*)ConvertToKVObjectValued(GetItem(fo->func.code->varnames,(locals_num-1) - i),GetItem((object*)fo->defaults,i)));
-						}		
-						else
-						{
-							SetDictItemByIndex(fo->func.code->varnames,(locals_num-1) - i,GetItem((object*)fo->defaults,i));
-						}
-					}
-				}
-				if(fo->kw_defaults != NULL)
-					{
-					//printf("loading kw defaults\n");
-					for(NUM i = 0;i < fo->kw_defaults->list->num; i++) //load default keyword values
-					{
-						kv_object *kv = (kv_object*)GetItem((object*)fo->kw_defaults,i);
-						SetDictItem(fo->func.code->varnames,kv->key,kv->value);
-					}
-				}
-			}
-			//printf("loading arguments\n");
-			if (argc > 0 && locals != NULL)
-			{
-				NUM oarg = argc;
-				if(oarg > fo->func.code->argcount)
-					oarg = fo->func.code->argcount;
-				//printf("oarg:%d,locals:%d\n",oarg,stack_Pointer(locals));
-				for (NUM i = 0; i < oarg; i++)
-				{
-					object *local = stack_Pop(locals,vm->garbage);
-					if(GetItem(fo->func.code->varnames,i)->type != TYPE_KV)
-					{
-						SetItem(fo->func.code->varnames,i,(object*)ConvertToKVObjectValued(GetItem(fo->func.code->varnames,i),local));
-					}
+						SetItem(fo->func->varnames,(locals_num-1) - i,(object*)ConvertToKVObjectValued(GetItem(fo->func->varnames,(locals_num-1) - i),GetItem((object*)fo->defaults,i)));
+					}		
 					else
 					{
-						SetDictItemByIndex(fo->func.code->varnames,i,local);
+						SetDictItemByIndex(fo->func->varnames,(locals_num-1) - i,GetItem((object*)fo->defaults,i));
 					}
 				}
-			
-				//printf("loading arguments 2\n");
-				if(argc > fo->func.code->argcount)
-				{
-					NUM narg = argc - fo->func.code->argcount;
-					//printf("more locals than argcount:%d\n",narg);
-					tuple_object *nt = CreateTuple(0,0); //creating tuple from the rest of the arguments
-					for (NUM i = 0; i < narg; i++)
-					{
-						object *t = stack_Pop(locals,vm->garbage);
-						t = DissolveRef(t);
-						if(t->type == TYPE_KV)
-							t = ((kv_object*)t)->value;
-						//DumpObject(t,0);
-						AppendItem((object*)nt,t);
-					}
-					//DumpObject(nt,0);
-					SetDictItemByIndex(fo->func.code->varnames,fo->func.code->argcount+fo->func.code->kwonlyargcount,(object*)nt);
-				}		
 			}
-			//printf("loading keyword arguments\n");
-			if(kw_argc > 0 && kw_locals != NULL)
+			if(fo->kw_defaults != NULL)
 			{
-				for(NUM i = 0;i< kw_argc;i++)
+				//printf("loading kw defaults\n");
+				for(NUM i = 0;i < fo->kw_defaults->list->num; i++) //load default keyword values
 				{
-					kv_object *kw_local = (kv_object*)stack_Pop(kw_locals,vm->garbage);
-					SetDictItem(fo->func.code->varnames,kw_local->key,kw_local->value);
-				}
-			}
-			
-			if (fo->closure != NULL)
-			{
-				for (NUM i = 0; i < GetTupleLen((object*)fo->closure); i++)
-				{
-					object *local = GetItem((object*)fo->closure,i);
-					if(local->type == TYPE_KV)
-						local = ((kv_object*)local)->value;
-					if(GetItem(fo->func.code->freevars,i)->type != TYPE_KV)
-					{
-						SetItem(fo->func.code->freevars,i,(object*)ConvertToKVObjectValued(GetItem(fo->func.code->freevars,i),local));
-					}
-					else
-					{
-						SetDictItemByIndex(fo->func.code->freevars,i,local);
-					}
+					kv_object *kv = (kv_object*)GetItem((object*)fo->kw_defaults,i);
+					SetDictItem(fo->func->varnames,kv->key,kv->value);
 				}
 			}
 		}
-		if(fo->func_type == FUNC_PYTHON && ((fo->func.code->co_flags & CO_NESTED)>0 || (fo->func.code->co_flags & CO_GENERATOR)>0) )
+			//printf("loading arguments\n");
+		if (argc > 0 && locals != NULL)
+		{
+			NUM oarg = argc;
+			if(oarg > fo->func->argcount)
+				oarg = fo->func->argcount;
+			//printf("oarg:%d,locals:%d\n",oarg,stack_Pointer(locals));
+			for (NUM i = 0; i < oarg; i++)
+			{
+				object *local = stack_Pop(locals);
+				if(GetItem(fo->func->varnames,i)->type != TYPE_KV)
+				{
+					SetItem(fo->func->varnames,i,(object*)ConvertToKVObjectValued(GetItem(fo->func->varnames,i),local));
+				}
+				else
+				{
+					SetDictItemByIndex(fo->func->varnames,i,local);
+				}
+			}
+					//printf("loading arguments 2\n");
+			if(argc > fo->func->argcount)
+			{
+				NUM narg = argc - fo->func->argcount;
+				//printf("more locals than argcount:%d\n",narg);
+				tuple_object *nt = CreateTuple(0); //creating tuple from the rest of the arguments
+				for (NUM i = 0; i < narg; i++)
+				{
+					object *t = stack_Pop(locals);
+					t = DissolveRef(t);
+					if(t->type == TYPE_KV)
+						t = ((kv_object*)t)->value;
+					//DumpObject(t,0);
+					AppendItem((object*)nt,t);
+				}
+				//DumpObject(nt,0);
+				SetDictItemByIndex(fo->func->varnames,fo->func->argcount+fo->func->kwonlyargcount,(object*)nt);
+			}		
+		}
+		//printf("loading keyword arguments\n");
+		if(kw_argc > 0 && kw_locals != NULL)
+		{
+			for(NUM i = 0;i< kw_argc;i++)
+			{
+				kv_object *kw_local = (kv_object*)stack_Pop(kw_locals);
+				SetDictItem(fo->func->varnames,kw_local->key,kw_local->value);
+			}
+		}
+			
+		if (fo->closure != NULL)
+		{
+			for (NUM i = 0; i < GetTupleLen((object*)fo->closure); i++)
+			{
+				object *local = GetItem((object*)fo->closure,i);
+				if(local->type == TYPE_KV)
+					local = ((kv_object*)local)->value;
+				if(GetItem(fo->func->freevars,i)->type != TYPE_KV)
+				{
+					SetItem(fo->func->freevars,i,(object*)ConvertToKVObjectValued(GetItem(fo->func->freevars,i),local));
+				}
+				else
+				{
+					SetDictItemByIndex(fo->func->freevars,i,local);
+				}
+			}
+		}
+		
+		if( ((fo->func->co_flags & CO_NESTED)>0 || (fo->func->co_flags & CO_GENERATOR)>0) )
 		{
 			//if((fo->func.code->co_flags & CO_GENERATOR) >0)
 			//	printf("function is a generator\n");
 			//else
 			//	printf("function is nested\n");
-			iter_object *iter = CreateIterObject(0);
+			iter_object *iter = CreateIterObject();
 			iter_InitGenerator(iter,bo);
 			return((object*)iter);
 		}
@@ -577,28 +587,102 @@ object *vm_StartFunctionObject(vm *vm,function_object *fo,stack *locals,stack *k
 		return(NULL);//got nothing to return now
 }
 
-function_object *vm_ResolveFunction(vm *vm,object *to_resolve)
+object *vm_StartCFunction(vm *vm,cfunction *cf,stack *locals,stack *kw_locals,NUM argc,NUM kw_argc)
 {
+	#ifdef DEBUGGING
+	debug_printf(DEBUG_VERBOSE_STEP,"executing C function: %s\n",  cf->name);
+	#endif
+	tuple_object *clocals = NULL;
+	tuple_object *ckw_locals = NULL;
+	if(kw_argc > 0 && kw_locals != NULL)
+	{
+		ckw_locals = CreateTuple(0);
+		if(kw_locals->list->num)
+		{
+			do
+			{
+				object *kw_local = stack_Pop(kw_locals);
+				AppendItem((object*)ckw_locals,kw_local);
+			}while(kw_locals->list->num);
+		}
+	}
+	else
+		ckw_locals = CreateTuple(0);
+
+	if (locals != NULL)
+	{
+		clocals = CreateTuple(0);
+		if(locals->list->num)
+		{
+			do
+			{
+				object *local = stack_Pop(locals);
+				AppendItem((object*)clocals,local);
+				//InsertItem((object*)clocals,0,local);
+			}while(locals->list->num);
+		}
+	}
+	else
+		clocals = CreateTuple(0);
+	gc_IncRefCount((object*)clocals);
+	gc_IncRefCount((object*)ckw_locals);
+	//printf("executing C function: %s\n",  fo->name);
+	object *tmp = vm_ExecuteCFunction(vm, cf,clocals,ckw_locals);
+	gc_DecRefCount((object*)clocals);
+	gc_DecRefCount((object*)ckw_locals);
+	return(tmp);
+}
+
+resolve_container *AllocResolveContainer(void)
+{
+	#ifdef DEBUGGING
+	return((resolve_container*) mem_malloc(sizeof(resolve_container),"AllocResolveContainer() return"));
+	#else
+	return((resolve_container*) malloc(sizeof(resolve_container)));
+	#endif
+}
+
+void FreeResolveContainer(resolve_container *rc)
+{
+	#ifdef DEBUGGING
+	assert(mem_free(rc));
+	#else
+	free(rc);
+	#endif
+}
+
+resolve_container *vm_ResolveFunction(vm *vm,object *to_resolve)
+{
+	resolve_container *rc = AllocResolveContainer();
 	if(to_resolve->type == TYPE_KV)
 		to_resolve = ((kv_object*)to_resolve)->value;
 	to_resolve = DissolveRef(to_resolve);
 
 	if (to_resolve != NULL && to_resolve->type == TYPE_FUNCTION)
 	{
-		return((function_object*)to_resolve); //nothing to do here
+		rc->func_type = FUNC_PYTHON;
+		rc->func.fo = (function_object*)to_resolve;
+		return(rc); //nothing to do here
 	}
 	else	if (to_resolve != NULL && to_resolve->type == TYPE_CODE)
 	{
 		#ifdef DEBUGGING
 		debug_printf(DEBUG_ALL,"WARNING: cant resolve from code object\n");
 		#endif
-		return(NULL);
+		rc->func_type = FUNC_NOT_FOUND;
+		return(rc);
 	}
 	else if (to_resolve != NULL && to_resolve->type == TYPE_UNICODE)
 	{
-		function_object *f = vm_FindFunction(vm, ((unicode_object*)to_resolve)->value);
+		//printf("sf:%s\n",((unicode_object*)to_resolve)->value);
+		cfunction *f = vm_FindFunction(vm, ((unicode_object*)to_resolve)->value);
 		if(f != NULL)
-			return(f);
+		{
+			rc->func_type = FUNC_C;
+			rc->func.cfo = f;
+			//printf("rf:%s\n",f->name);
+			return(rc);
+		}
 		else
 		{
 			object *caller_func = NULL;
@@ -618,15 +702,19 @@ function_object *vm_ResolveFunction(vm *vm,object *to_resolve)
 				#ifdef DEBUGGING
 				debug_printf(DEBUG_ALL,"WARNING: cant resolve from code object\n");
 				#endif
-				return(NULL);
+				rc->func_type = FUNC_NOT_FOUND;
+				return(rc);
 			}
 			else if (caller_func != NULL && ((object*)caller_func)->type == TYPE_FUNCTION)
 			{
-				return((function_object*)caller_func);
+				rc->func_type = FUNC_PYTHON;
+				rc->func.fo = (function_object*)caller_func;
+				return(rc);
 			}
 		}
 	}
-	return(NULL);
+	rc->func_type = FUNC_NOT_FOUND;
+	return(rc);
 }
 
 #ifdef DEBUGGING
@@ -679,7 +767,9 @@ void vm_DumpCode(vm *vm,BOOL dump_descriptions, BOOL from_start)
 #ifdef DEBUGGING
 object *vm_InteractiveRunObject(vm *vm, object *obj, stack *locals, NUM argc)
 {
-		vm_StartObject(vm,obj,locals,argc);
+		if(obj->type != TYPE_CODE)
+			return(CreateEmptyObject(TYPE_NONE));
+		vm_StartCodeObject(vm,(code_object*)obj,locals,argc);
 		object *ret = NULL;
 		int steps = 0;
 		while(ret == NULL)
@@ -844,7 +934,7 @@ object *vm_InteractiveRunObject(vm *vm, object *obj, stack *locals, NUM argc)
 					printf("%d steps in a row\n",steps);
 				}
 				else
-					ret = vm_StepObject(vm);
+					ret = vm_Step(vm);
 			}else
 			if(strlen(cmd)>= 1 && cmd[0] == 'j')
 			{
@@ -856,7 +946,7 @@ object *vm_InteractiveRunObject(vm *vm, object *obj, stack *locals, NUM argc)
 					bo->ip = pos;
 				}
 				else
-					ret = vm_StepObject(vm);
+					ret = vm_Step(vm);
 			}else
 			if(strlen(cmd)>= 1 && cmd[0] == 'r')
 			{
@@ -873,13 +963,13 @@ object *vm_InteractiveRunObject(vm *vm, object *obj, stack *locals, NUM argc)
 			{
 				//printf("running\n");
 				if(vm->running)
-					ret = vm_StepObject(vm);
+					ret = vm_Step(vm);
 				else
 				{
 					for(int i=0;i<steps;i++)
 					{
 						printf("step %d\n",i+1);
-						ret = vm_StepObject(vm);
+						ret = vm_Step(vm);
 						if(ret != NULL)
 							return(ret);
 					}
@@ -910,7 +1000,7 @@ object *vm_CallFunction(vm *vm,char *name,stack *locals,NUM argc)
 		object *ret = vm_StartFunctionObject(vm,(function_object*)f,locals,NULL,argc,0);
 		//printf("pushed func\n");
 			while(ret == NULL)
-				ret = vm_StepObject(vm);
+				ret = vm_Step(vm);
 		return(ret);
 	}
 	return(NULL);
@@ -918,13 +1008,13 @@ object *vm_CallFunction(vm *vm,char *name,stack *locals,NUM argc)
 
 object *vm_RunPYC(vm *vm,stream *f ,BOOL free_object)
 {
-	debug_printf(DEBUG_ALL,"running pyc\n");
+	//debug_printf(DEBUG_ALL,"running pyc\n");
 	long pyc_magic = MAGIC;
 	BOOL r = stream_Open(f);
-	printf("r:%d\n",r);
+	//printf("r:%d\n",r);
 	if (!r)
 		return(NULL);//TODO maybe return an empty object for simplification
-	debug_printf(DEBUG_ALL,"open\n");
+	//debug_printf(DEBUG_ALL,"open\n");
 	#if defined(USE_DEBUGGING)
 	//debug_printf(DEBUG_ALL,"running pyc\n");
 	#endif
@@ -950,11 +1040,11 @@ object *vm_RunPYC(vm *vm,stream *f ,BOOL free_object)
 	#endif
 	if (ret != NULL)
 	{
-		FreeObject(ret);
+		gc_DecRefCount(ret);
 	}
 	if(free_object)
 	{
-		FreeObject(obj);
+		gc_DecRefCount(obj);
 		vm_RemoveGlobal(vm,(code_object*)obj);
 		stream_Free(f);
 		return(NULL);
@@ -965,14 +1055,16 @@ object *vm_RunPYC(vm *vm,stream *f ,BOOL free_object)
 
 object *vm_RunObject(vm *vm, object *obj, stack *locals, NUM argc)
 {
-		vm_StartObject(vm,obj,locals,argc);
+		if(obj->type != TYPE_CODE)
+			return(CreateEmptyObject(TYPE_NONE));
+		vm_StartCodeObject(vm,(code_object*)obj,locals,argc);
 		object *ret = NULL;
 		while(ret == NULL)
-			ret = vm_StepObject(vm);
+			ret = vm_Step(vm);
 		return(ret);
 }
 
-object *vm_StepObject(vm *vm)
+object *vm_Step(vm *vm)
 {
 	block_object *bo = (block_object*) stack_Top(vm->blocks);
 	object *obj = (object*)bo->code;
@@ -1054,7 +1146,7 @@ object *vm_StepObject(vm *vm)
 			}
 			if (op_thru)
 			{
-				gc_Clear(vm->garbage,vm);
+				gc_Clear();
 				return(NULL);
 			}
 			#endif // -- FOR DEBUGGING
@@ -1082,43 +1174,23 @@ object *vm_StepObject(vm *vm)
 			case OPCODE_YIELD_VALUE:
 				{
 					bo->ip++;
-					object *ret = stack_Pop(bo->stack,vm->garbage);
-					//debug_printf(DEBUG_ALL,"yielding :\n");
-					//DumpObject(ret,0);
-					//debug_printf(DEBUG_ALL,"incrementing ref_count in step-YIELD_VALUE - ret\n");
-					IncRefCount(ret);
-					//printf("yielding\n");
-					gc_Clear(vm->garbage,vm);
+					object *ret = stack_Pop(bo->stack);
+					gc_IncRefCount(ret);
+					gc_Clear();
 					#ifdef DEBUGGING
 					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 					{
 						debug_printf(DEBUG_VERBOSE_STEP,"yield object @:%x\n",ret);
 						DumpObject(ret,0);
 					}
-					#endif
-					
+					#endif			
 					return(ret);
 				}
 				break;
+				
 			case OPCODE_RETURN_VALUE:
 				{
-					//printf("return\n");
-					//stack_Dump(bo->stack);
-					object *ret = stack_Pop(bo->stack,vm->garbage);
-					/*IncRefCount(ret);
-					//ret->flags |= OFLAG_LEFT_NAMESPACE;
-					//ret = DissolveRef(ret);
-					//	if(ret->type == TYPE_KV)
-					//	{
-					//		ret = ((kv_object*)ret)->value;
-					//		((kv_object*)ret)->value = NULL;
-					//	}
-					//assert(ret != NULL);
-					//ret = stack_Pop(bo->stack,vm->garbage);
-					//object *t = stack_Pop(bo->stack);*/
-					//debug_printf(DEBUG_ALL,"returning :\n");
-					//DumpObject(ret,0);
-
+					object *ret = stack_Pop(bo->stack);
 					#ifdef DEBUGGING
 					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 					{
@@ -1126,24 +1198,13 @@ object *vm_StepObject(vm *vm)
 						DumpObject(ret,0);
 					}
 					#endif
-					stack_Pop(vm->blocks,vm->garbage);
-					/*ret = CopyObject(ret);
-					//ret = CreateRefObject(ret,0);
-					//printf("popped block:%x\n",pbo);
-					//DumpObject(pbo,0);
-					//stack_Dump(bo->stack);
-					//if(!stack_IsEmpty(vm->blocks))
-					//{
-					//if(debug_level > 5)
-					//	printf("pushing ret\n");*/
-
+					stack_Pop(vm->blocks);
 					if(!stack_IsEmpty(vm->blocks))
 					{
 						block_object *parent = (block_object*)stack_Top(vm->blocks);
 						#ifdef DEBUGGING
 						if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 						{
-							//DumpObject((object*)parent,0);
 							stack_Dump(parent->stack);
 						}
 						#endif
@@ -1154,18 +1215,11 @@ object *vm_StepObject(vm *vm)
 					}
 					else 
 					{
-						//debug_printf(DEBUG_ALL,"incrementing ref_count in step-RETURN_VALUE - ret\n");
-						IncRefCount(ret);
-						gc_Clear(vm->garbage,vm);
-						/*object *tmp = CreateEmptyObject(TYPE_NONE,0);
-						//IncRefCount(tmp);
-						//printf("no return object on stack , returning NONE object\n");
-						//return (tmp);
-						//return (NULL);*/
-						//debug_printf(DEBUG_ALL,"code finished - no blocks left to execute\n");
+						gc_IncRefCount(ret);
+						gc_Clear();
 						return(ret);
 					}					
-					gc_Clear(vm->garbage,vm);
+					gc_Clear();
 					return (NULL);
 				}
 
@@ -1178,27 +1232,25 @@ object *vm_StepObject(vm *vm)
 
 			case OPCODE_POP_TOP:
 				{
-					stack_Pop(bo->stack,vm->garbage);
+					stack_Pop(bo->stack);
 					op_thru = 1;
 				}
 				break;
 
 			case OPCODE_POP_BLOCK:
 				{
-					stack_Pop(vm->blocks,vm->garbage);
+					stack_Pop(vm->blocks);
 					op_thru = 1;
 				}
 				break;
 
 			case OPCODE_BREAK_LOOP:
 				{
-					//block_object *bbo = (block_object *) 
-					//bo->ip = bbo->start + bbo->len - 1;
 					#ifdef DEBUGGING
-					block_object *bbo = (block_object *) stack_Pop(vm->blocks,vm->garbage);
+					block_object *bbo = (block_object *) stack_Pop(vm->blocks);
 					debug_printf(DEBUG_VERBOSE_STEP,"break to: %d ,start: %d ,len:%d\n",bo->ip,bbo->start,bbo->len);
 					#else
-					stack_Pop(vm->blocks,vm->garbage);
+					stack_Pop(vm->blocks);
 					#endif
 					op_thru = 1;
 				}
@@ -1240,16 +1292,16 @@ object *vm_StepObject(vm *vm)
 					tos1 = stack_Second(bo->stack);
 					stack_Adjust(bo->stack, 2);
 					stack_SetTop(bo->stack, tos);
-					IncRefCount(tos);
+					gc_IncRefCount(tos);
 					stack_SetSecond(bo->stack, tos1);
-					IncRefCount(tos1);
+					gc_IncRefCount(tos1);
 					op_thru = 1;
 				}
 				break;
 
 			case OPCODE_GET_ITER:
 				{
-					object *iter = stack_Pop(bo->stack,vm->garbage);
+					object *iter = stack_Pop(bo->stack);
 					#ifdef DEBUGGING
 					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 					{
@@ -1336,7 +1388,7 @@ object *vm_StepObject(vm *vm)
 
 			if (op_thru)
 			{
-				gc_Clear(vm->garbage,vm);
+				gc_Clear();
 				return(NULL);
 			}
 
@@ -1364,7 +1416,7 @@ object *vm_StepObject(vm *vm)
 			case OPCODE_LIST_APPEND:
 			case OPCODE_SET_ADD:
 				{
-					tos = stack_Pop(bo->stack,vm->garbage);
+					tos = stack_Pop(bo->stack);
 					tos = DissolveRef(tos);
 					if(tos->type == TYPE_KV)
 						tos = ((kv_object*)tos)->value;
@@ -1405,8 +1457,8 @@ object *vm_StepObject(vm *vm)
 			case OPCODE_BINARY_SUBSCR:
 			case OPCODE_MAP_ADD:
 				{
-					tos = stack_Pop(bo->stack,vm->garbage);
-					tos1 = stack_Pop(bo->stack,vm->garbage);
+					tos = stack_Pop(bo->stack);
+					tos1 = stack_Pop(bo->stack);
 					tos = DissolveRef(tos);
 					tos1 = DissolveRef(tos1);
 					if(tos->type == TYPE_KV)
@@ -1423,9 +1475,9 @@ object *vm_StepObject(vm *vm)
 			case OPCODE_STORE_SUBSCR:
 			case OPCODE_STORE_MAP:
 				{
-					tos = stack_Pop(bo->stack,vm->garbage);
-					tos1 = stack_Pop(bo->stack,vm->garbage);
-					tos2 = stack_Pop(bo->stack,vm->garbage);
+					tos = stack_Pop(bo->stack);
+					tos1 = stack_Pop(bo->stack);
+					tos2 = stack_Pop(bo->stack);
 					tos = DissolveRef(tos);
 					tos1 = DissolveRef(tos1);
 					tos2 = DissolveRef(tos2);
@@ -1447,24 +1499,12 @@ object *vm_StepObject(vm *vm)
 			{
 			case OPCODE_FOR_ITER:
 				{
-					//printf("stack\n");
-					//stack_Dump(bo->stack);
 					object *next =  NULL;
 					if(stack_Top(bo->stack)->type == TYPE_ITER)
 						next = iter_NextNow((iter_object*)stack_Top(bo->stack),vm);
-					/*if(next != NULL && next->type == TYPE_BLOCK)
-					{
-						stack_Push(vm->blocks, next);
-					}
-					else*/
 					if (next != NULL && next->type == TYPE_NONE)
 					{
-						//FreeObject(next);
-						//DecRefCountGC(next,vm->garbage);
-						//debug_printf(DEBUG_ALL,"for iter thru\n");
-						//debug_printf(DEBUG_ALL,"returning iter:\n");
-						//DumpObject(next,0);
-						stack_Pop(bo->stack,vm->garbage);
+						stack_Pop(bo->stack);
 						stack_Push(bo->stack, next);
 						bo->ip = bo->ip + arg;
 					}
@@ -1472,23 +1512,7 @@ object *vm_StepObject(vm *vm)
 					if (next != NULL && next->type != TYPE_NONE)
 					{
 						stack_Push(bo->stack, next);
-						//DecRefCountGC(next,vm->garbage);
-						//debug_printf(DEBUG_ALL,"for iter pushed next object on stack\n");
-						
 					}
-					else
-					{
-						//if(next != NULL)
-						//	DecRefCountGC(next,vm->garbage);
-							//FreeObject(next);
-						#ifdef USE_DEBUGGING
-						debug_printf(DEBUG_ALL,"WARNING !!!! for iter thru\n");
-						#endif
-						stack_Pop(bo->stack,vm->garbage);
-						bo->ip = bo->ip + arg;
-					}
-					//printf("stack after\n");
-					//stack_Dump(bo->stack);
 				}
 				break;
 				
@@ -1520,10 +1544,10 @@ object *vm_StepObject(vm *vm)
 					
 					if(narg > 0)
 					{
-						defaults = CreateTuple(narg,0); //creating defaults tuple
+						defaults = CreateTuple(narg); //creating defaults tuple
 						for (NUM i = 0; i < narg; i++)
 						{
-							object *t = stack_Pop(bo->stack,vm->garbage);
+							object *t = stack_Pop(bo->stack);
 							t = DissolveRef(t);
 							if(t->type == TYPE_KV)
 								t = ((kv_object*)t)->value;
@@ -1532,17 +1556,17 @@ object *vm_StepObject(vm *vm)
 					}
 					if(nkey >0)
 					{
-						kw_defaults = CreateTuple(0,0); //creating kw defaults tuple
+						kw_defaults = CreateTuple(0); //creating kw defaults tuple
 						for (NUM i = 0; i < nkey; i++)//keyword arguments
 						{
-							object *value = stack_Pop(bo->stack,vm->garbage);
+							object *value = stack_Pop(bo->stack);
 							value = DissolveRef(value);
-							object *key = stack_Pop(bo->stack,vm->garbage);
+							object *key = stack_Pop(bo->stack);
 							key = DissolveRef(key);
 							SetDictItem((object*)kw_defaults,key,value);
 						}
 					}
-					function_object *fo = CreateFunctionObject_MAKE_FUNCTION((code_object*)tos,defaults,kw_defaults,0);
+					function_object *fo = CreateFunctionObject_MAKE_FUNCTION((code_object*)tos,defaults,kw_defaults);
 					stack_Push(bo->stack,(object*)fo);
 				}
 				break;
@@ -1554,14 +1578,14 @@ object *vm_StepObject(vm *vm)
 					//NUM n = (NUM) (narg + (nkey*2));
 					tuple_object *defaults = NULL;
 					tuple_object *kw_defaults = NULL;
-					tos1 = stack_Pop(bo->stack,vm->garbage);
+					tos1 = stack_Pop(bo->stack);
 					tos1 = DissolveRef(tos1);
 					if(narg > 0)
 					{
-						defaults = CreateTuple(narg,0); //creating defaults tuple
+						defaults = CreateTuple(narg); //creating defaults tuple
 						for (NUM i = 0; i < narg; i++)
 						{
-							object *t = stack_Pop(bo->stack,vm->garbage);
+							object *t = stack_Pop(bo->stack);
 							t = DissolveRef(t);
 							if(t->type == TYPE_KV)
 								t = ((kv_object*)t)->value;
@@ -1570,16 +1594,16 @@ object *vm_StepObject(vm *vm)
 					}
 					if(nkey >0)
 					{
-						kw_defaults = CreateTuple(0,0); //creating kw defaults tuple
+						kw_defaults = CreateTuple(0); //creating kw defaults tuple
 						for (NUM i = 0; i < nkey; i++)//keyword arguments
 						{
-							object *value = stack_Pop(bo->stack,vm->garbage);
-							object *key = stack_Pop(bo->stack,vm->garbage);
+							object *value = stack_Pop(bo->stack);
+							object *key = stack_Pop(bo->stack);
 							SetDictItem((object*)kw_defaults,key,value);
 						}
 					}
 					//DumpObject(tos1,0);
-					function_object *fo = CreateFunctionObject_MAKE_CLOSURE((code_object*)tos,(tuple_object*)tos1,defaults,kw_defaults,0);
+					function_object *fo = CreateFunctionObject_MAKE_CLOSURE((code_object*)tos,(tuple_object*)tos1,defaults,kw_defaults);
 					stack_Push(bo->stack,(object*)fo);
 				}
 				break;
@@ -1637,13 +1661,12 @@ object *vm_StepObject(vm *vm)
 					block_object *block = AllocBlockObject();
 					block->start = bo->ip;
 					block->code = co;
-					IncRefCount((object*)co);
+					gc_IncRefCount((object*)co);
 					block->ip = bo->ip;
 					block->len = bo->ip + arg;
 					block->ref_count = 0;
 					block->type = TYPE_BLOCK;
 					block->stack = stack_Init();
-					//printf("block - start: %d, len: %d\n",block->start,block->len);
 					#ifdef DEBUGGING
 					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 						DumpObject((object*)bo,0);
@@ -1655,14 +1678,14 @@ object *vm_StepObject(vm *vm)
 				
 			case OPCODE_BUILD_SET:
 				{
-					tuple_object *to =CreateTuple(0,0);
+					tuple_object *to =CreateTuple(0);
 					stack_Push(bo->stack,(object*)to);
 				}
 				break;
 				
 			case OPCODE_BUILD_MAP:
 				{
-					tuple_object *to =CreateTuple(0, OFLAG_IS_DICT);
+					tuple_object *to =CreateTuple(0);
 					stack_Push(bo->stack,(object*)to);
 				}
 				break;
@@ -1670,21 +1693,25 @@ object *vm_StepObject(vm *vm)
 			case OPCODE_BUILD_TUPLE:
 			case OPCODE_BUILD_LIST:
 				{
-					// stack_Push(BuildList(bo->stack,arg),bo->stack);
-					stack *blcall = NULL;
-					blcall = stack_Init();	// arg
-					tos = NULL;
+					tuple_object *blcall = NULL;
+					blcall = CreateTuple(0);	// arg
 					for (NUM i = 0; i < arg; i++)
 					{
-						stack_Push(blcall, stack_Pop(bo->stack,vm->garbage));
+						object *t = stack_Pop(bo->stack);
+						if(t->type == TYPE_ITER)
+							iter_ExpandTuple((iter_object*)t,vm,blcall);
+						else
+							AppendItem((object*)blcall, t);
 					}
-					object *tmp = vm_ExecuteCFunction(vm, "list", blcall);
-					if (tmp != NULL)
-					{
-						stack_Push(bo->stack, tmp);
-						//DecRefCount(tmp);
-					}
-					stack_Close(blcall, 0);
+					//IncRefCount((object*)blcall);
+					//IncRefCount((object*)blca);
+					//object *tmp = vm_ExecuteCFunction(vm, "list", blcall,NULL);
+					//if (tmp != NULL)
+					//{
+					//	stack_Push(bo->stack, tmp);
+					//}
+					//FreeObject((object*)blcall);
+					stack_Push(bo->stack,(object*)blcall);
 				}
 				break;
 				
@@ -1719,7 +1746,21 @@ object *vm_StepObject(vm *vm)
 						if(lgo != NULL)
 							break;
 					}
-						
+					if(lgo == NULL) //push an unicode object as failsafe
+					{
+						unicode_object *uso = NULL;
+					if(((object*)co_names->list->items[arg])->type == TYPE_KV)
+						uso = (unicode_object*)((kv_object*)co_names->list->items[arg])->key;
+					else
+						uso = (unicode_object*)co_names->list->items[arg];
+					stack_Push(bo->stack,(object*)uso);	
+					//printf("pu:%s\n",uso->value);
+					}else
+					{
+						//printf("lgo:%s\n",name);
+						//DumpObject(lgo,0);
+					}
+					/*	
 					if (lgo == NULL)
 					{
 						lgo =(object*) vm_FindFunction(vm, name);
@@ -1731,6 +1772,8 @@ object *vm_StepObject(vm *vm)
 							break;
 						}
 					}
+				
+					*/
 					stack_Push(bo->stack, lgo);
 					#ifdef DEBUGGING
 					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
@@ -1922,16 +1965,9 @@ object *vm_StepObject(vm *vm)
 				{
 					object *fast = NULL;
 					if(arg < GetTupleLen(co->cellvars))
-						//GetDictItemByIndex(co->cellvars,arg);
 						fast = GetItem(co->cellvars,arg);
-						//fast = GetItem(co->freevars,arg);
-					//if(fast == NULL)
 					else
-						//fast = GetDictItemByIndex(co->freevars,arg - GetTupleLen(co->cellvars));
 						fast = GetItem(co->freevars,arg - GetTupleLen(co->cellvars));
-					//printf("closure:\n");
-					//DumpObject(fast,0);
-					//printf("-- closure\n");
 					stack_Push(bo->stack, fast);
 					#ifdef DEBUGGING
 					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
@@ -1949,11 +1985,6 @@ object *vm_StepObject(vm *vm)
 
 			case OPCODE_STORE_NAME:
 				{
-					//tuple_object *co_names = (tuple_object *) co->names;
-					//if(tos->type == TYPE_CODE)
-						//tos = CreateRefObject(tos,0);
-					//else
-						//tos = CopyObject(tos);
 					if(GetItem(co->names,arg)->type != TYPE_KV)
 					{
 						SetItem(co->names,arg,(object*)ConvertToKVObjectValued(GetItem(co->names,arg),tos));
@@ -1991,7 +2022,6 @@ object *vm_StepObject(vm *vm)
 					DumpObject(tos1,0);
 					#endif
 					SetDictItem(tos2,tos,tos1);
-					//stack_Push(bo->stack,);
 				}
 				break;
 
@@ -2014,12 +2044,6 @@ object *vm_StepObject(vm *vm)
 					tos1 = DissolveRef(tos1);
 					if(tos1->type == TYPE_KV)
 						tos1 = ((kv_object*)tos1)->value;
-					//#ifdef DEBUGGING
-					//assert(tos1 != NULL);
-					//DumpObject(tos1,0);
-					//printf("append item:\n");
-					//DumpObject(tos,0);
-					//#endif
 					AppendItem(tos1,tos);
 				}
 				break;
@@ -2073,10 +2097,7 @@ object *vm_StepObject(vm *vm)
 					}
 					if (tos1->type == TYPE_TUPLE)
 					{
-						// DumpObject(tos2,0);
-						// printf("ssa: %d\n",ssa);
 						DeleteItem(tos1, dsa);
-						// DumpObject (tos1, 0);
 					}
 				}
 				break;
@@ -2084,8 +2105,6 @@ object *vm_StepObject(vm *vm)
 			case OPCODE_STORE_SUBSCR:
 				{
 					NUM ssa = 0;
-					//tos2 = CopyObject(tos2);
-					//IncRefCount(tos2);
 					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"tos:%c\n",tos->type);
 					debug_printf(DEBUG_VERBOSE_STEP,"tos1:%c\n",tos1->type);
@@ -2097,7 +2116,6 @@ object *vm_StepObject(vm *vm)
 					}
 					if (tos1->type == TYPE_TUPLE)
 					{
-						// DumpObject(tos2,0);
 					#ifdef DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"ssa: %d\n",ssa);
 					#endif
@@ -2105,7 +2123,6 @@ object *vm_StepObject(vm *vm)
 						SetItem(tos1, ssa, tos2);
 					else
 						SetDictItem(tos1,tos,tos2);
-						// DumpObject(tos1,0);
 					#ifdef DEBUGGING
 					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 						 DumpObject(tos1,0);
@@ -2117,8 +2134,6 @@ object *vm_StepObject(vm *vm)
 			case OPCODE_BINARY_SUBSCR:
 				{
 					NUM bsa = 0;
-
-					// printf("binary subscribe");
 					if (tos->type == TYPE_INT)
 					{
 						bsa = (NUM) ((int_object*)tos)->value;
@@ -2156,7 +2171,7 @@ object *vm_StepObject(vm *vm)
 						{
 						case TYPE_UNICODE:
 							{
-								unicode_object *uso = CreateUnicodeObject(str_FromChar(((unicode_object*)tos)->value[i]),0);
+								unicode_object *uso = CreateUnicodeObject(str_FromChar(((unicode_object*)tos)->value[i]));
 								#ifdef DEBUGGING
 								if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 									DumpObject((object*)uso,0);
@@ -2178,7 +2193,7 @@ object *vm_StepObject(vm *vm)
 				{
 					if (tos->type == TYPE_INT)
 					{
-						int_object *up = CreateIntObject(+((int_object*)tos)->value,0);
+						int_object *up = CreateIntObject(+((int_object*)tos)->value);
 						stack_Push(bo->stack, (object*)up);
 					}
 				}
@@ -2188,7 +2203,7 @@ object *vm_StepObject(vm *vm)
 				{
 					if (tos->type == TYPE_INT)
 					{
-						int_object *up = CreateIntObject(-((int_object*)tos)->value,0);
+						int_object *up = CreateIntObject(-((int_object*)tos)->value);
 						stack_Push(bo->stack, (object*)up);
 					}
 				}
@@ -2198,17 +2213,17 @@ object *vm_StepObject(vm *vm)
 				{
 					if (tos->type == TYPE_INT)
 					{
-						object *up = CreateEmptyObject(((int_object*)tos)->value > 0 ? TYPE_TRUE : TYPE_FALSE,0);
+						object *up = CreateEmptyObject(((int_object*)tos)->value > 0 ? TYPE_TRUE : TYPE_FALSE);
 						stack_Push(bo->stack, up);
 					}
 					else if (tos->type == TYPE_TRUE || tos->type == TYPE_FALSE)
 					{
-						object *up = CreateEmptyObject(tos->type == TYPE_TRUE ? TYPE_TRUE : TYPE_FALSE,0);
+						object *up = CreateEmptyObject(tos->type == TYPE_TRUE ? TYPE_TRUE : TYPE_FALSE);
 						stack_Push(bo->stack, up);
 					}
 					else if (tos->type == TYPE_NONE || tos->type == TYPE_NULL)
 					{
-						object *up = CreateEmptyObject( TYPE_FALSE,0);
+						object *up = CreateEmptyObject( TYPE_FALSE);
 						stack_Push(bo->stack, up);
 					}
 				}
@@ -2218,7 +2233,7 @@ object *vm_StepObject(vm *vm)
 				{
 					if (tos->type == TYPE_INT)
 					{
-						int_object *up = CreateIntObject(-((((int_object*)tos)->value) + 1),0);
+						int_object *up = CreateIntObject(-((((int_object*)tos)->value) + 1));
 						stack_Push(bo->stack, (object*)up);
 					}
 				}
@@ -2264,12 +2279,12 @@ object *vm_StepObject(vm *vm)
 			case OPCODE_CALL_FUNCTION_VAR_KW:
 			case OPCODE_CALL_FUNCTION_KW:
 				{
-						kw_list = (tuple_object*)stack_Pop(bo->stack,vm->garbage);
+						kw_list = (tuple_object*)stack_Pop(bo->stack);
 				}
 			case OPCODE_CALL_FUNCTION_VAR:
 				{
 					if(op == OPCODE_CALL_FUNCTION_VAR_KW || op == OPCODE_CALL_FUNCTION_VAR)
-						var_list = (tuple_object*)stack_Pop(bo->stack,vm->garbage);
+						var_list = (tuple_object*)stack_Pop(bo->stack);
 				}
 			case OPCODE_CALL_FUNCTION:
 				{
@@ -2280,11 +2295,21 @@ object *vm_StepObject(vm *vm)
 					NUM n = (NUM) (narg + (nkey*2));
 					//fetch function object from tos and Resolve to function object
 					object *function = stack_Get(bo->stack,stack_Pointer(bo->stack) - n);
-					//printf("calling function:\n");
-					//DumpObject(function,0);
-					function_object *fo = vm_ResolveFunction(vm,function);
-					//printf("resolved to:\n");
-					//DumpObject(fo,0);
+					//function_object *fo = vm_ResolveFunction(vm,function);
+					resolve_container *rc = vm_ResolveFunction(vm,function);
+					if(rc->func_type == FUNC_NOT_FOUND)
+					{	
+						//printf("nf\n");
+						FreeResolveContainer(rc);
+						#ifdef DEBUGGING
+						debug_printf(DEBUG_ALL,"Function not found:\n");
+						DumpObject(function,0);
+						debug_printf(DEBUG_ALL,"dumping stack\n");
+						stack_Dump(bo->stack);
+						assert(0);
+						#endif
+						break;
+					}
 					
 					if (narg > 0 || var_list != NULL)
 						call = stack_Init();	// arg, 
@@ -2292,82 +2317,72 @@ object *vm_StepObject(vm *vm)
 						kw_call = stack_Init();
 					if(kw_list != NULL) //variable keyword arguments
 					{
-						//printf("var keywords found:%d\n",kw_list->list->num);
 						for (NUM i = kw_list->list->num-1; i >= 0 ;i--)
 						{
-							//printf("i:%d\n",i);
 							object *v = GetItem((object*)kw_list,i);
-							//stack_Push(call, v);
-							//DumpObject(v,0);
-							if(fo->func_type == FUNC_PYTHON)
+							if(rc->func_type == FUNC_PYTHON)
 							{
-								//printf("setting varname\n");
-								SetDictItem(fo->func.code->varnames,((kv_object*)v)->key,((kv_object*)v)->value);
+								SetDictItem(rc->func.fo->func->varnames,((kv_object*)v)->key,((kv_object*)v)->value);
 							}
 						}	
 					}
-					
-					//printf("kwlist prepared\n");
 					if(var_list != NULL) //variable list arguments
 					{
-						//printf("var list found:%d\n",var_list->list->num);
 						for (NUM i = var_list->list->num; i >= 0 ;--i)
 						{
 							object *v = GetItem((object*)var_list,i);
 							stack_Push(call, (object*)v);
-							//DumpObject(v,0);
-							//printf("i:%d\n");
 						}	
 					}
-					//if(call != NULL)
-					//	stack_Dump(call);
-					//printf("var list prepared\n");
-					
 					for (NUM i = 0; i < nkey; i++)//keyword arguments
 					{
-						object *value = stack_Pop(bo->stack,vm->garbage);
-						object *key = stack_Pop(bo->stack,vm->garbage);
-						//now setdictitem in function code varnames
-						//printf("keyword arg:\n");
-						//DumpObject(key,0);
-						//printf("value:\n");
-						//DumpObject(value,0);
+						object *value = stack_Pop(bo->stack);
+						object *key = stack_Pop(bo->stack);
+
 						
-						if(fo->func_type == FUNC_PYTHON)
+						if(rc->func_type == FUNC_PYTHON || rc->func_type == FUNC_C)
 						{
-							//printf("setting varname\n");
-							//SetDictItem(fo->func.code->varnames,key,value);
-							kv_object *kv = CreateKVObject(key,value,0);
+
+							kv_object *kv = CreateKVObject(key,value);
 							stack_Push(kw_call,(object*)kv);
 						}
 					}
-					//stack_Dump(kw_call);
-					//printf("narg:%d\n",narg);
 					for (NUM i = 0; i < narg; i++)//positional arguments
 					{
-						stack_Push(call, stack_Pop(bo->stack,vm->garbage));
+						stack_Push(call, stack_Pop(bo->stack));
 					}
 					if(var_list != NULL)
  						narg += var_list->list->num;
 
-					//pop function object
-					//object *function_name = stack_Pop(bo->stack,vm->garbage);
-					stack_Pop(bo->stack,vm->garbage);
-					//printf("pushing function block on block stack\n");
-					//debug_printf(DEBUG_ALL,"incrementing ref_count in step-CALL_FUNCTION - fo\n");
-					IncRefCount((object*)fo);
-					
-					object *pret = vm_StartFunctionObject(vm,fo, call,kw_call,narg,nkey);
-					//debug_printf(DEBUG_ALL,"decrementing ref_count in step-CALL_FUNCTION - fo\n");
-					DecRefCountGC((object*)fo,vm->garbage);
-					if (pret != NULL)
+					stack_Pop(bo->stack);//finally pop the function for real
+					if(rc->func_type == FUNC_PYTHON)
 					{
+						gc_IncRefCount((object*)rc->func.fo);
+						object *pret = vm_StartFunctionObject(vm,rc->func.fo, call,kw_call,narg,nkey);
+						gc_DecRefCount((object*)rc->func.fo);
+						if (pret != NULL)
+						{
 							stack_Push(bo->stack, pret);
+						}
+					}else
+					if(rc->func_type == FUNC_C)
+					{
+						//printf("e c:%s\n",rc->func.cfo->name);
+						object *pret = vm_StartCFunction(vm,rc->func.cfo, call,kw_call,narg,nkey);
+						if (pret != NULL)
+						{
+							stack_Push(bo->stack, pret);
+						}
+						//printf("executed\n");
 					}
+					
+					FreeResolveContainer(rc);
+					//printf("rc freed\n");
 					if (narg > 0 || var_list != NULL)
 						stack_Close(call, 1);
 					if (nkey > 0)
 						stack_Close(kw_call, 1);
+					//printf("stacks closed\n"); 
 				}
 				break;
 
@@ -2383,8 +2398,7 @@ object *vm_StepObject(vm *vm)
 				
 			}
 
-			// printf("step\n");
-			gc_Clear(vm->garbage,vm);
+			gc_Clear();
 			return(NULL);
 		} //END OF STEP
 		#ifdef DEBUGGING
@@ -2393,16 +2407,16 @@ object *vm_StepObject(vm *vm)
 		object *ret = NULL;
 		if(stack_IsEmpty(bo->stack))
 		{
-			stack_Pop(vm->blocks,vm->garbage);
-			gc_Clear(vm->garbage,vm);
+			stack_Pop(vm->blocks);
+			gc_Clear();
 			return(NULL);
 		}
 		else
 		{
-			stack_Pop(vm->blocks,vm->garbage);
-			ret = stack_Pop(bo->stack,vm->garbage);
-			IncRefCount(ret);
-			gc_Clear(vm->garbage,vm);
+			stack_Pop(vm->blocks);
+			ret = stack_Pop(bo->stack);
+			gc_IncRefCount(ret);
+			gc_Clear();
 			return (ret);
 		}
 	}

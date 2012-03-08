@@ -30,25 +30,25 @@
 CFLAGS= -Wall -pedantic -Wstrict-prototypes -O2 -std=c99 -fbounds-check -Wuninitialized
 # CFLAGS= -W -w -O2 -std=c99 
 CC=gcc
-VERSION = 0.49a
+VERSION = 0.5a
 AR=ar
 LD=ld
 
 #arduino environment
-ARDUINO_AVR_DIR = /C/Users/pez2001/Documents/Arduino-1.0
+ARDUINO_AVR_DIR = /C/Users/asus/Documents/Arduino-1.0
 
-#ARDUINO_TERM = /C/Program\ Files\ \(x86\)/Putty/putty -load arduino_uno
-#ARDUINO_MCU = atmega328p
-#ARDUINO_PORT = com3
-#ARDUINO_UPLOAD_RATE = 115200
-#ARDUINO_UPLOAD_RATE = 57600
-#ARDUINO_AVRDUDE_PROGRAMMER = arduino
-
-ARDUINO_TERM = /C/Program\ Files\ \(x86\)/Putty/putty -load arduino_mega
-ARDUINO_MCU = atmega2560
-ARDUINO_PORT = com5
+ARDUINO_TERM = /C/Program\ Files\ \(x86\)/Putty/putty -load arduino_uno
+ARDUINO_MCU = atmega328p
+ARDUINO_PORT = com3
 ARDUINO_UPLOAD_RATE = 115200
-ARDUINO_AVRDUDE_PROGRAMMER = stk500v2
+#ARDUINO_UPLOAD_RATE = 57600
+ARDUINO_AVRDUDE_PROGRAMMER = arduino
+
+#ARDUINO_TERM = /C/Program\ Files\ \(x86\)/Putty/putty -load arduino_mega
+#ARDUINO_MCU = atmega2560
+#ARDUINO_PORT = com5
+#ARDUINO_UPLOAD_RATE = 115200
+#ARDUINO_AVRDUDE_PROGRAMMER = stk500v2
 
 ARDUINO_AVRDUDE_PORT = $(ARDUINO_PORT)
 ARDUINO_AVRDUDE_WRITE_FLASH = -U flash:w:arduino.hex:i
@@ -84,8 +84,10 @@ ARDUINO_LIB_DIR = arduino/libarduino
 
 ARDUINO_CORE_SRC = $(ARDUINO_LIB_DIR)/wiring.c $(ARDUINO_LIB_DIR)/wiring_analog.c $(ARDUINO_LIB_DIR)/wiring_digital.c $(ARDUINO_LIB_DIR)/wiring_pulse.c $(ARDUINO_LIB_DIR)/wiring_shift.c $(ARDUINO_LIB_DIR)/WInterrupts.c 
 ARDUINO_LIB_OBJ = $(ARDUINO_LIB_DIR)/wiring.ao $(ARDUINO_LIB_DIR)/wiring_analog.ao $(ARDUINO_LIB_DIR)/wiring_digital.ao $(ARDUINO_LIB_DIR)/wiring_pulse.ao $(ARDUINO_LIB_DIR)/wiring_shift.ao $(ARDUINO_LIB_DIR)/WInterrupts.ao 
-ARDUINO_CXXSRC = $(ARDUINO_LIB_DIR)/HardwareSerial.cpp $(ARDUINO_LIB_DIR)/WMath.cpp $(ARDUINO_LIB_DIR)/Print.cpp $(ARDUINO_LIB_DIR)/Stream.cpp $(ARDUINO_LIB_DIR)/Tone.cpp $(ARDUINO_LIB_DIR)/WString.cpp
-ARDUINO_LIB_CXX_OBJ = $(ARDUINO_LIB_DIR)/HardwareSerial.aopp $(ARDUINO_LIB_DIR)/WMath.aopp $(ARDUINO_LIB_DIR)/Print.aopp $(ARDUINO_LIB_DIR)/Stream.aopp $(ARDUINO_LIB_DIR)/Tone.aopp $(ARDUINO_LIB_DIR)/WString.aopp
+#ARDUINO_CXXSRC = $(ARDUINO_LIB_DIR)/HardwareSerial.cpp $(ARDUINO_LIB_DIR)/WMath.cpp $(ARDUINO_LIB_DIR)/Print.cpp $(ARDUINO_LIB_DIR)/Stream.cpp $(ARDUINO_LIB_DIR)/Tone.cpp $(ARDUINO_LIB_DIR)/WString.cpp
+ARDUINO_CXXSRC = $(ARDUINO_LIB_DIR)/WMath.cpp $(ARDUINO_LIB_DIR)/WString.cpp
+#ARDUINO_LIB_CXX_OBJ = $(ARDUINO_LIB_DIR)/HardwareSerial.aopp $(ARDUINO_LIB_DIR)/WMath.aopp $(ARDUINO_LIB_DIR)/Print.aopp $(ARDUINO_LIB_DIR)/Stream.aopp $(ARDUINO_LIB_DIR)/Tone.aopp $(ARDUINO_LIB_DIR)/WString.aopp
+ARDUINO_LIB_CXX_OBJ = $(ARDUINO_LIB_DIR)/WMath.aopp $(ARDUINO_LIB_DIR)/WString.aopp
 ARDUINO_VM_OBJ = vm.ao strops.ao numops.ao opcodes.ao object.ao memory.ao stack.ao lists.ao internal_functions.ao stream.ao garbage.ao debug.ao iterators.ao
 
 
@@ -138,7 +140,7 @@ arduino.hex: arduino.elf
 	$(ARDUINO_OBJCOPY) -g --strip-unneeded -O ihex -R .eeprom $< $@
 
 upload: clean arduino.hex
-	printf "0" >$(ARDUINO_PORT)
+#	printf "0" >$(ARDUINO_PORT)
 	$(ARDUINO_AVRDUDE) $(ARDUINO_AVRDUDE_FLAGS) $(ARDUINO_AVRDUDE_WRITE_FLASH)
 
 uploadview: upload

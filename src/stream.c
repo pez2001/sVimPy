@@ -423,9 +423,9 @@ BOOL stream_flash_memory_read(struct _stream *stream,void *ptr,STREAM_NUM len)
 	char *bytes = (char*)ptr_Get(stream->tags,0);
 	//STREAM_NUM blen = (STREAM_NUM)ptr_Get(stream->tags,1);
 	STREAM_NUM offset = (STREAM_NUM)ptr_Get(stream->tags,2);
-	printf("reading\r\n");
+	//printf("reading\r\n");
 	memcpy_P(ptr,(bytes+offset),len);
-	printf("read\r\n");
+	//printf("read\r\n");
 	ptr_Set(stream->tags,2,(void*)(offset+len));
 	return(1);
 }

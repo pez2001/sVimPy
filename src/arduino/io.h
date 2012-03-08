@@ -42,14 +42,14 @@
 //#define LOW 0
 //#define HIGH 1
 
-object *a_pinMode(vm *vm,stack * stack); //(pin,mode);
-object *a_digitalRead(vm *vm,stack * stack); //(pin);
-object *a_digitalWrite(vm *vm,stack * stack); //(pin,value);
-object *a_analogRead(vm *vm,stack * stack); //(pin,);
-object *a_analogWrite(vm *vm,stack * stack); //(pin,value);
-object *a_delay(vm *vm,stack * stack); //(ms);
-object *a_serialprint(vm *vm,stack * stack); //(message);
-object *a_serialBegin(vm *vm,stack * stack); //(baudrate);
+object *a_pinMode(vm *vm,tuple_object *locals,tuple_object *kw_locals); //(pin,mode);
+object *a_digitalRead(vm *vm,tuple_object *locals,tuple_object *kw_locals); //(pin);
+object *a_digitalWrite(vm *vm,tuple_object *locals,tuple_object *kw_locals); //(pin,value);
+object *a_analogRead(vm *vm,tuple_object *locals,tuple_object *kw_locals); //(pin,);
+object *a_analogWrite(vm *vm,tuple_object *locals,tuple_object *kw_locals); //(pin,value);
+object *a_delay(vm *vm,tuple_object *locals,tuple_object *kw_locals); //(ms);
+object *a_serialprint(vm *vm,tuple_object *locals,tuple_object *kw_locals); //(message);
+object *a_serialBegin(vm *vm,tuple_object *locals,tuple_object *kw_locals); //(baudrate);
 
 void AddArduinoFunctions(vm *vm);
 void AddArduinoGlobals(vm *vm);

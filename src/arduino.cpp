@@ -6,21 +6,21 @@ extern "C" void __cxa_pure_virtual() { while (1); }
 
 #define UART_BAUD_SELECT  115200
 
-void put_char(unsigned char C) 
+void put_char(unsigned char c) 
 { 
         while ( (UCSR0A & _BV(UDRE0)) ==0); 
-        if (C =='\n') 
-            putchar ('\r'); 
-        UDR0 = C; 
+        //if (c =='\n') 
+        //    put_char ('\r'); 
+        UDR0 = c; 
 } 
 
 
-//initialise USART: stop bits: 1, parity: none 
 void initUSART (void) 
 { 
      UCSR0B = ( _BV(RXEN0) | _BV(TXEN0) );    
-     UBRR0H =  (uint8_t) (UART_BAUD_SELECT >>8); 
-     UBRR0L = (uint8_t) (UART_BAUD_SELECT);    
+	 unsigned short baud_setting = (F_CPU / 8 / UART_BAUD_SELECT - 1) / 2;
+     UBRR0H =  (uint8_t) (baud_setting >>8); 
+     UBRR0L = (uint8_t) (baud_setting);    
 } 
 
 /*void ptr_tests()
@@ -89,26 +89,27 @@ int get_free_memory(void)
   else
     free_memory = ((int)&free_memory) - ((int)__brkval);
 
-  return free_memory;
+  return(free_memory);
 }
 static FILE uartout = {0} ;
 
 static int uart_putchar (char c, FILE *stream)
 {
-    Serial.write(c) ;
-    return 0 ;
+    //Serial.write(c) ;
+    put_char(c);
+	return(0);
 }
-
+/*
 inline void setup (vm *vm) 
 {
-  
-	Serial.begin(115200);
-	fdev_setup_stream (&uartout, uart_putchar, NULL, _FDEV_SETUP_WRITE);
-	stdout = &uartout ;
+
+	//Serial.begin(115200);
+
+	printf("st:%4d\r\n",get_free_memory());
+	delay(1000);
 	//debug_printf(DEBUG_ALL,"\r\nsetup\r\n");
 //  delay(250);
 //initUSART();
-//  pinMode(13, OUTPUT);     
 //  digitalWrite(13, HIGH);
 //  delay(1000);              // wait for a second
 //  digitalWrite(13, LOW);
@@ -128,56 +129,110 @@ inline void setup (vm *vm)
 	//Serial.println("");
 	//Serial.println("setup");
 	streams_Init();
-	AddInternalFunctions(vm);
+	printf("si:%4d\r\n",get_free_memory());
+	delay(1000);	
+	//AddInternalFunctions(vm);
+	//printf("if:%4d\r\n",get_free_memory());
+	//delay(1000);
 	AddArduinoFunctions(vm);
+	printf("af:%4d\r\n",get_free_memory());
+	delay(1000);
 	AddArduinoGlobals(vm);
 	//Serial.println(get_free_memory());
+	printf("ag:%4d\r\n",get_free_memory());
+	delay(1000);
 	stream *m = stream_CreateFromFlashBytes(((char*)&blink),BLINK_LEN);
 	//stream *m = stream_CreateFromBytes(((char*)&blink),BLINK_LEN);
 	//Serial.println("stream");
 	//Serial.println(get_free_memory());
-	printf("created stream:%d\r\n",get_free_memory());
+	printf("cs:%4d\r\n",get_free_memory());
+	delay(1000);
 	//debug_printf(DEBUG_ALL,"run pyc\r\n");
 	//Serial.print("run");
 	
 	vm_RunPYC(vm,m,0);
 	
-	debug_printf(DEBUG_ALL,"run thru\r\n");
+	//debug_printf(DEBUG_ALL,"run thru\r\n");
 	//Serial.println("thru");
 	vm_CallFunction(vm,"setup",NULL,0);
-	debug_printf(DEBUG_ALL,"called setup\r\n");
+	//debug_printf(DEBUG_ALL,"called setup\r\n");
 	//vm_Close(vm);
 	//Serial.println("done");
+	 pinMode(13, OUTPUT);     
 
+digitalWrite(13, LOW);    
 }
 void loop (vm *vm) 
 {
-/*  digitalWrite(13, HIGH);   // set the LED on
-  delay(100);              // wait for a second
-  digitalWrite(13, LOW);    // set the LED off
-  delay(100);              // wait for a second
- */
- //Serial.println("loop\n");	
-	//debug_printf(DEBUG_ALL,"loop\r\n");
 	vm_CallFunction(vm,"loop",NULL,0);
-    //debug_printf(DEBUG_ALL,"loop thru\r\n");
-
 }
-	
+*/
 int __attribute__((OS_main)) main(void)  
 {
 	init();
 
-	#if defined(USBCON)
-	USB.attach();
-	#endif
-	
+	//#if defined(USBCON)
+	//USB.attach();
+	//#endif
+	initUSART();
+	fdev_setup_stream (&uartout, uart_putchar, NULL, _FDEV_SETUP_WRITE);
+	stdout = &uartout;
+	printf("in:%4d\n",get_free_memory());
+	gc_Init();
 	vm *vm = vm_Init(NULL);
 
-	setup(vm);
-    
+	//setup(vm);
+	
+
+	debug_level = 0;
+	//debug_level |= DEBUG_VERBOSE_TESTS;	
+	//debug_level |= DEBUG_SHOW_OPCODES;
+	//debug_printf(DEBUG_ALL,"\nsetup:%d\r\n",get_free_memory());
+	//ptr_tests();
+	//Serial.println("");
+	//Serial.println("setup");
+	streams_Init();
+	//printf("si:%4d\r\n",get_free_memory());
+	//delay(1000);	
+	//AddInternalFunctions(vm);
+	//printf("if:%4d\r\n",get_free_memory());
+	//delay(1000);
+	AddArduinoFunctions(vm);
+	//printf("af:%4d\r\n",get_free_memory());
+	//delay(1000);
+	AddArduinoGlobals(vm);
+	//Serial.println(get_free_memory());
+	//printf("ag:%4d\r\n",get_free_memory());
+	//delay(1000);
+	stream *m = stream_CreateFromFlashBytes(((char*)&blink),BLINK_LEN);
+	//stream *m = stream_CreateFromFlashBytes(((char*)&fade_min),FADE_MIN_LEN);
+	//stream *m = stream_CreateFromBytes(((char*)&blink),BLINK_LEN);
+	//Serial.println("stream");
+	//Serial.println(get_free_memory());
+	printf("cs:%4d\n",get_free_memory());
+	//delay(1000);
+	//debug_printf(DEBUG_ALL,"run pyc\r\n");
+	//Serial.print("run");
+	
+	vm_RunPYC(vm,m,0);
+	printf("rp:%4d\n",get_free_memory());
+	//debug_printf(DEBUG_ALL,"run thru\r\n");
+	//Serial.println("thru");
+	vm_CallFunction(vm,"setup",NULL,0);
+	printf("cf:%4d\n",get_free_memory());
+	//debug_printf(DEBUG_ALL,"called setup\r\n");
+	//vm_Close(vm);
+	//Serial.println("done");
+	 //pinMode(13, OUTPUT);     
+	
+    int c = 0;
 	for (;;)
-		loop(vm);
+	{
+		vm_CallFunction(vm,"loop",NULL,0);
+		printf("loop:%4d\n",c);
+		c++;
+	}
+		//		loop(vm);
         
 	return 0;
 }

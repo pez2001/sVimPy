@@ -57,7 +57,7 @@ void stack_Clear(stack *stack, BOOL free_objects)
 			{
 					//FreeObject((object**)&((object*)(ptr_Pop(stack->list))));
 					object *fo = (object*)ptr_Pop(stack->list);
-					FreeObject(fo);
+					gc_DecRefCount(fo);
 					//printf("freed %d object\n",i);
 			}
 			//printf("stack list num:%d\n",stack->list->num);
@@ -79,7 +79,7 @@ void stack_Push(stack *stack, struct _object * x)
 	if (x == NULL)
 		return;
 	//debug_printf(DEBUG_ALL,"incrementing ref_count in stack_Push() - x\n");
-	IncRefCount(x);
+	gc_IncRefCount(x);
 	ptr_Push(stack->list, x);
 }
 
@@ -244,7 +244,7 @@ void stack_Dump(stack *stack)
 }
 #endif
 
-struct _object *stack_Pop(stack *stack,ptr_list *gc)
+struct _object *stack_Pop(stack *stack)
 {
 	if (stack->list->num < 1)
 	{
@@ -255,7 +255,7 @@ struct _object *stack_Pop(stack *stack,ptr_list *gc)
 	}
 	object *r = ptr_Pop(stack->list);
 	//debug_printf(DEBUG_ALL,"decrementing ref_count in stack_Pop() - r\n");
-	DecRefCountGC(r,gc);
+	gc_DecRefCount(r);
 	return (r);
 }
 

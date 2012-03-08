@@ -24,21 +24,38 @@
 #ifndef GARBAGE_H
 #define GARBAGE_H
 
+#include "features.h"
 #include "types.h"
 #include "lists.h"
 #include "object.h"
 #include "debug.h"
 
-#include "vm.h"
+//#include "vm.h"
 
 #ifdef __cplusplus
 extern "C"  {
 #endif
 
+struct _object;
+
+void gc_FreeObject(struct _object *obj);
+
+void gc_IncRefCount(struct _object *obj);
+
+//void gc_DecRefCountGC(object *obj,ptr_list *gc);
+
+void gc_DecRefCount(struct _object *obj);
+
+BOOL gc_HasNoRefs(struct _object *obj);
+
+BOOL gc_HasRefs(struct _object *obj);
+
+void gc_Init(void);
+
+void gc_Close(void);
 
 //void gc_Clear(ptr_list *gc_collection);
-void gc_Clear(ptr_list *gc_collection,struct _vm* vm);
-
+void gc_Clear(void);
 
 #ifdef __cplusplus
 } 

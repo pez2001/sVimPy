@@ -13,14 +13,13 @@
 
 #include "arduino/io.h"
 
-//extern "C" {
 //#include "debug.h"
 #include "vm.h"
 #include "object.h"
 //#include "memory.h"
 #include "internal_functions.h"
 #include "arduino/blink.h"
-//}
+//#include "arduino/fade_min.h"
 
 
 

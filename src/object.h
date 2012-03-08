@@ -32,6 +32,7 @@
 #include "lists.h"
 #include "stream.h"
 #include "stack.h"
+#include "garbage.h"
 
 #include "debug.h"
 #ifdef DEBUGGING
@@ -105,25 +106,24 @@ extern "C"  {
 
 // internal types
 #define TYPE_FUNCTION 'f'
+//#define TYPE_CFUNCTION 'C'
 #define TYPE_BLOCK 'b'
 #define TYPE_KV 'k'
 #define TYPE_REF 'r'
 #define TYPE_ITER 'R'
 
 
-//function types
-#define FUNC_PYTHON 1
-#define FUNC_C 2
-#define FUNC_C_OBJ 4
+
 
 struct _vm;
 struct _stack;
 struct _object;
+struct _tuple_object;
 struct _code_object;
 
 typedef	union _object_func
 {
-	struct _object* (*func) (struct _vm *vm,struct _stack *stack);
+	struct _object* (*func) (struct _vm *vm,struct _tuple_object *locals,struct _tuple_object *kw_locals);
 	struct _object* (*func_obj) (struct _vm *vm,struct _object *object);
 	struct _code_object *code;
 } object_func;
@@ -137,14 +137,14 @@ typedef	union _object_func
 typedef struct _object
 {
 	OBJECT_TYPE type;
-	OBJECT_FLAGS flags;
+	//OBJECT_FLAGS flags;
 	OBJECT_REF_COUNT ref_count;
 } object;
 
 typedef struct _ref_object
 {
 	OBJECT_TYPE type;
-	OBJECT_FLAGS flags;
+	//OBJECT_FLAGS flags;
 	OBJECT_REF_COUNT ref_count;
 	object *ref;
 } ref_object;
@@ -153,7 +153,7 @@ typedef struct _ref_object
 typedef struct _int_object
 {
 	OBJECT_TYPE type;
-	OBJECT_FLAGS flags;
+	//OBJECT_FLAGS flags;
 	OBJECT_REF_COUNT ref_count;
 	INT value;
 } int_object;
@@ -161,7 +161,7 @@ typedef struct _int_object
 typedef struct _float_object
 {
 	OBJECT_TYPE type;
-	OBJECT_FLAGS flags;
+	//OBJECT_FLAGS flags;
 	OBJECT_REF_COUNT ref_count;
 	FLOAT value;
 } float_object;
@@ -169,7 +169,7 @@ typedef struct _float_object
 typedef struct _unicode_object
 {
 	OBJECT_TYPE type;
-	OBJECT_FLAGS flags;
+	//OBJECT_FLAGS flags;
 	OBJECT_REF_COUNT ref_count;
 	char *value;
 }unicode_object;
@@ -178,7 +178,7 @@ typedef struct _unicode_object
 typedef struct _kv_object
 {
 	OBJECT_TYPE type;
-	OBJECT_FLAGS flags;
+	//OBJECT_FLAGS flags;
 	OBJECT_REF_COUNT ref_count;
 	void *value;
 	void *key;
@@ -196,7 +196,7 @@ typedef struct
 typedef struct _code_object
 {
 	OBJECT_TYPE type;
-	OBJECT_FLAGS flags;
+	//OBJECT_FLAGS flags;
 	OBJECT_REF_COUNT ref_count;
 	char *name;
 	NUM argcount;
@@ -220,7 +220,7 @@ typedef struct _code_object
 typedef struct _string_object
 {
 	OBJECT_TYPE type;
-	OBJECT_FLAGS flags;
+	//OBJECT_FLAGS flags;
 	OBJECT_REF_COUNT ref_count;
 	char *content;
 	NUM len;
@@ -230,8 +230,10 @@ typedef struct _string_object
 typedef struct _tuple_object
 {
 	OBJECT_TYPE type;
-	OBJECT_FLAGS flags;
+	//OBJECT_FLAGS flags;
 	OBJECT_REF_COUNT ref_count;
+	//object *ptr;
+	INDEX ptr;
 	ptr_list *list;
 } tuple_object;
 
@@ -242,22 +244,32 @@ typedef struct _tuple_object
 typedef struct _function_object
 {
 	OBJECT_TYPE type;
-	OBJECT_FLAGS flags;
+	//OBJECT_FLAGS flags;
 	OBJECT_REF_COUNT ref_count;
-	char *name;//used quickly find functions by name
+	//char *name;//used quickly find functions by name
 	tuple_object *defaults;//set to default values in MAKE_FUNCTION opcode
 	tuple_object *kw_defaults;//set to default keyword values in MAKE_FUNCTION opcode
 	tuple_object *closure;
-	//code_object *code;
-	unsigned char func_type;
-	union _object_func func;
+	struct _code_object *func;
+	//unsigned char func_type;
+	//union _object_func func;
 } function_object;
 
+/*
+typedef struct _cfunction_object
+{
+	OBJECT_TYPE type;
+	//OBJECT_FLAGS flags;
+	OBJECT_REF_COUNT ref_count;
+	char *name;//used quickly find functions by name
+	struct _object* (*func) (struct _vm *vm,struct _tuple_object *locals,struct _tuple_object *kw_locals);
+} cfunction_object;
+*/
 //TODO create struct for generator storage
 typedef struct _iter_object
 {
 	OBJECT_TYPE type;
-	OBJECT_FLAGS flags;
+	//OBJECT_FLAGS flags;
 	OBJECT_REF_COUNT ref_count;
 	object *tag;//used for storage of iter options and actual ptr
 	object *(*iter_func)(struct _iter_object *iter);
@@ -267,7 +279,7 @@ typedef struct _iter_object
 typedef struct _block_object
 {
 	OBJECT_TYPE type;
-	OBJECT_FLAGS flags;
+	//OBJECT_FLAGS flags;
 	OBJECT_REF_COUNT ref_count;
 	code_object *code;
 	INDEX start;
@@ -280,15 +292,6 @@ typedef struct _block_object
 #pragma pack(pop)				/* restore original alignment from stack */
 #endif
 
-void IncRefCount(object *obj);
-
-void DecRefCountGC(object *obj,ptr_list *gc);
-
-void DecRefCount(object *obj);
-
-BOOL HasNoRefs(object *obj);
-
-BOOL HasRefs(object *obj);
 
 kv_object *ConvertToKVObject(object *key);
 
@@ -319,6 +322,8 @@ int_object *AllocIntObject(void);
 float_object *AllocFloatObject(void);
 
 function_object *AllocFunctionObject(void);
+
+//cfunction_object *AllocCFunctionObject(void);
 
 /*object *AsObject(void *ptr);
 
@@ -367,35 +372,36 @@ object *ReadObject(stream *f);
 
 object *DissolveRef(object *obj);
 
-ref_object *CreateRefObject(object *ref_to,OBJECT_FLAGS flags);
+ref_object *CreateRefObject(object *ref_to);//,OBJECT_FLAGS flags);
 
-int_object *CreateIntObject(INT value,OBJECT_FLAGS flags);
+int_object *CreateIntObject(INT value);//,OBJECT_FLAGS flags);
 
-float_object *CreateFloatObject(FLOAT value,OBJECT_FLAGS flags);
+float_object *CreateFloatObject(FLOAT value);//,OBJECT_FLAGS flags);
 
-unicode_object *CreateUnicodeObject(char *value,OBJECT_FLAGS flags);
+unicode_object *CreateUnicodeObject(char *value);//,OBJECT_FLAGS flags);
 
-tuple_object *CreateTuple(NUM num,OBJECT_FLAGS flags);
+tuple_object *CreateTuple(NUM num);//,OBJECT_FLAGS flags);
 
-string_object *CreateStringObject(char *bytes,NUM len,OBJECT_FLAGS flags);
+string_object *CreateStringObject(char *bytes,NUM len);//,OBJECT_FLAGS flags);
 
-kv_object *CreateKVObject(object *key,object *value,OBJECT_FLAGS flags);
+kv_object *CreateKVObject(object *key,object *value);//,OBJECT_FLAGS flags);
 
-object *CreateEmptyObject(char type,OBJECT_FLAGS flags);
+object *CreateEmptyObject(char type);//,OBJECT_FLAGS flags);
 
-function_object *CreateFunctionObject_MAKE_FUNCTION(code_object *function_code,tuple_object *defaults,tuple_object *kw_defaults,OBJECT_FLAGS flags);
+function_object *CreateFunctionObject_MAKE_FUNCTION(code_object *function_code,tuple_object *defaults,tuple_object *kw_defaults);//,OBJECT_FLAGS flags);
 
-function_object *CreateFunctionObject_MAKE_CLOSURE(code_object *function_code,tuple_object *closure,tuple_object *defaults,tuple_object *kw_defaults,OBJECT_FLAGS flags);
+function_object *CreateFunctionObject_MAKE_CLOSURE(code_object *function_code,tuple_object *closure,tuple_object *defaults,tuple_object *kw_defaults);//,OBJECT_FLAGS flags);
 
-function_object *CreateFunctionObject(unsigned char func_type,OBJECT_FLAGS flags);
+function_object *CreateFunctionObject(code_object *co);//unsigned char func_type);//,OBJECT_FLAGS flags);
+
+//cfunction_object *CreateCFunctionObject(char *name,struct _object* (*func) (struct _vm *vm,struct _tuple_object *locals,struct _tuple_object *kw_locals));//,OBJECT_FLAGS flags);
 
 //iter_object *CreateIterObject(object *(*iter_func)(struct _iter_object *iter),object *tag,int flags);
 
-iter_object *CreateIterObject(OBJECT_FLAGS flags);
+iter_object *CreateIterObject(void);//OBJECT_FLAGS flags);
 
 //void FreeBlockObject(object *obj);
 
-void FreeObject(object *obj);
 
 void PrintObject(object *obj);
 
@@ -438,6 +444,8 @@ BOOL object_compare(object *a,object *b);
 void AppendDictItem(object *tuple,object *key,object *value);
 
 void AppendItem(object *tuple,object *value);
+
+void InsertItem(object *tuple,INDEX index,object *value);
 
 void ClearDictValues(object *tuple);
 
