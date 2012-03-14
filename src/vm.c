@@ -1053,7 +1053,7 @@ object *vm_Step(vm *vm)
 
 		BOOL has_extended_arg = 0;
 		short extended_arg = 0;
-
+		//printf("mem chunks:%d\n",mem_chunks_top);
 		if(bo->ip < bo->len)
 		{
 			unsigned char op = (unsigned char)string[bo->ip++];	// get op and increment code pointer
@@ -1482,6 +1482,7 @@ object *vm_Step(vm *vm)
 					{
 						stack_Pop(bo->stack);
 						//stack_Push(bo->stack, next);
+						gc_DecRefCount(next);
 						bo->ip = bo->ip + arg;
 					}
 					else

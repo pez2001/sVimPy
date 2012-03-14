@@ -143,6 +143,8 @@ typedef struct _resolve_container
 #pragma pack(pop)				/* restore original alignment from stack */
 #endif
 
+//extern long mem_chunks_top;
+
 resolve_container *AllocResolveContainer(void);
 
 void FreeResolveContainer(resolve_container *rc);

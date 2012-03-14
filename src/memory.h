@@ -46,7 +46,7 @@ typedef struct
 	int is_freed;
 } mem_chunk;
 
-#define MAX_MEM_CHUNKS 20000000
+#define MAX_MEM_CHUNKS 200000000
 
 void mem_Init(void);
 

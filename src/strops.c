@@ -40,6 +40,12 @@ char *str_Cat(char *a, char *b)
 	memset(tmp, 0, strlen(a) + strlen(b) + 1);
 	memcpy(tmp, a, strlen(a));
 	memcpy(tmp + strlen(a), b, strlen(b));
+	//#ifdef DEBUGGING
+	//assert(mem_free(a));
+	//#else
+	//free(a);
+	//#endif
+	
 	return (tmp);
 }
 

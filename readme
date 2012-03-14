@@ -35,6 +35,7 @@ Features include:
 	0.4    better implementation of generators/iterators and implement yield opcode
 	0.5    implement streams for reading
 	0.55  fix function calls bugs introduced during rewrite of some code parts
+	0.56  add svimpy interpreter executable + pyc_compress tool (WriteObject function)
 	0.6    internal functions
 	0.7    add module import abilities
 	0.75  stream writing/printing + sd-fat support

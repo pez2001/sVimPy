@@ -574,30 +574,38 @@ void AtomicOpenPYC(char *filename)
 	if((debug_level & DEBUG_DUMP_UNSUPPORTED) > 0)
 		DumpUnsupportedOpCodes();
 	
-	#ifdef DEBUGGING
-	debug_printf(DEBUG_VERBOSE_TESTS,"closing memory manager\n");
-	#endif
-	mem_Close();
-	if((debug_level & DEBUG_MEMORY)>0)
-		printf("%d memory chunks leaked\n", mem_chunks_num);
-	#endif
 	printf("}\n");
+	/*
 	printf("Original Python Output\n{\n");
 	char *py_cmd = NULL;
 	py_cmd = str_Cat(py_cmd,"c:/python32/python ");
 	//printf("executing python cmd:%s\n",py_cmd);
-	py_cmd = str_Cat(py_cmd,filename);
+	char *py_cmdf = NULL;
+	py_cmdf = str_Cat(py_cmd,filename);
 	//printf("executing python cmd:%s\n",py_cmd);
-	system(py_cmd);
+	system(py_cmdf);
 	printf("\n}\n");
+	#ifdef DEBUGGING
+	assert(mem_free(py_cmd));
+	assert(mem_free(py_cmdf));
+	debug_printf(DEBUG_VERBOSE_TESTS,"closing memory manager\n");
+	#else
+	free(py_cmd);
+	free(py_cmdf);
+	#endif
+	*/
+	mem_Close();
+	if((debug_level & DEBUG_MEMORY)>0)
+		printf("%d memory chunks leaked\n", mem_chunks_num);
+	#endif
 }
 
 void atomic_test(void)
 {
 	#ifdef DEBUGGING
 	debug_level = 0;
-	debug_level |= DEBUG_INTERACTIVE;
-	//debug_level |= DEBUG_MEMORY;
+	//debug_level |= DEBUG_INTERACTIVE;
+	debug_level |= DEBUG_MEMORY;
 	//debug_level |= DEBUG_SHOW_OPCODES;
 	//debug_level |= DEBUG_FULL_DUMP;
 	//debug_level |= DEBUG_STACK;
@@ -626,7 +634,16 @@ void atomic_test(void)
 
 	//append ops + generators
 	//AtomicOpenPYC("tests/test53.pyc", vm);
-	AtomicOpenPYC("tests/test47.pyc");
+	
+	//AtomicOpenPYC("tests/test_yield.pyc");
+	
+	//iters
+	AtomicOpenPYC("tests/test61.pyc");
+	//return;
+	AtomicOpenPYC("tests/test60.pyc");
+
+
+	//AtomicOpenPYC("tests/test47.pyc");
 	
 	//pos + kw defaults
 	AtomicOpenPYC("tests/test55c.pyc");
@@ -637,9 +654,6 @@ void atomic_test(void)
 	//kw defaults
 	AtomicOpenPYC("tests/test54.pyc");
 	
-	//iters
-	AtomicOpenPYC("tests/test61.pyc");
-	AtomicOpenPYC("tests/test60.pyc");
 
 	//simple stuff
 	AtomicOpenPYC("tests/test16.pyc");
@@ -765,7 +779,7 @@ void atomic_test(void)
 	//brute prime
 	AtomicOpenPYC("tests/e20.pyc");
 	AtomicOpenPYC("tests/e_small.pyc");	
-	AtomicOpenPYC("tests/e_med.pyc");
+	//AtomicOpenPYC("tests/e_med.pyc");
 
 
 }
@@ -775,6 +789,7 @@ int main(int argc, char *argv[])
 	//ptr_tests();
 	//stream_tests();
 	//brute_test();
+	for(int i=0;i<1000;i++)
 	atomic_test();
 	//AtomicOpenPYC("tests/test_nested_function.pyc");
 	//AtomicOpenPYC("tests/test_function_default_value.pyc");

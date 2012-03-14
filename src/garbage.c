@@ -132,7 +132,7 @@ void gc_FreeObject(object *obj)
 			debug_printf(DEBUG_GC,"%x : %d (decreasing due FreeObject)\n",obj,obj->ref_count);
 		}
 		#endif
-		gc_DecRefCount(obj);
+		//gc_DecRefCount(obj);
 		return;
 	}
 

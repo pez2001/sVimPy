@@ -109,23 +109,23 @@ void iter_Expand(iter_object *iter,struct _vm *vm,stack *stack)
 		//	printf("n:%c\n",n->type);
 		//else 
 		//	printf("n: NULL\n");
+		//gc_DecRefCount(n);
 		stack_Push(tmp,n);
 		//debug_printf(DEBUG_ALL,"decrementing ref_count in iter_Expand() - n\n");
-		//DecRefCountGC(n,vm->garbage);
 	}while(n->type != TYPE_NONE);
 	//printf("pushing expanded items\n");
 	while(tmp->list->num)
 	{
 		object *s = stack_Pop(tmp);
-		if(s->type != TYPE_NONE)
-		{
+		//if(s->type != TYPE_NONE)
+		//{
 			stack_Push(stack,s);
-		}
-		else
-		{
+		//}
+		//else
+		//{
 			//FreeObject(s);
-			gc_DecRefCount(s);
-		}
+		//	gc_DecRefCount(s);
+		//}
 	}
 	stack_Close(tmp,0);
 	//debug_printf(DEBUG_ALL,"decrementing ref_count in iter_Expand() - iter\n");
@@ -146,11 +146,11 @@ tuple_object *iter_TupleExpand(iter_object *iter,struct _vm *vm)
 		//if(n->type != TYPE_NONE)
 		//{
 			//DumpObject((object*)n,0);
-			AppendItem((object*)to,n);
+		//gc_DecRefCount(n);
+		AppendItem((object*)to,n);
 		//}
 		//else //TODO just a quick fix ... the real problem lies hidden deep in the jungle of gc calls
 			//if(n->ref_count==0)
-		//		gc_DecRefCount(n);
 		//else
 		 //DumpObject(n,0);
 		//	DecRefCountGC((object*)n,vm->garbage);
@@ -168,13 +168,13 @@ void iter_ExpandTuple(iter_object *iter,struct _vm *vm,tuple_object *to)
 		n = iter_NextNow(iter,vm);
 		//if(n->type != TYPE_NONE)
 		//{
-			AppendItem((object*)to,n);
+		//gc_DecRefCount(n);
+		AppendItem((object*)to,n);
 		//}
 		//else
 			//if(n->ref_count==0)
 			//{
 			//	printf("KILLING UNREFED OBJECT\n");
-		//		gc_DecRefCount(n);
 			//}
 	//else
 		//	DumpObject(n,0);
@@ -218,7 +218,7 @@ object *iter_NextNow(iter_object *iter,struct _vm *vm)
 				if(vm->blocks->list->num)
 				{
 					ret = stack_Pop(n->stack);
-					//DecRefCountGC(ret,vm->garbage);
+					//gc_DecRefCount(ret);
 					//IncRefCount(ret);
 				}	
 				iter_ClearBlockStack(iter,vm);
@@ -243,7 +243,7 @@ object *iter_NextNow(iter_object *iter,struct _vm *vm)
 	}
 	//printf("iter thru next:\n");
 	//DumpObject(next,0);
-	//DecRefCountGC(next,vm->garbage);
+	gc_DecRefCount(next);
 	//IncRefCount(next);
 	return(next);
 }
@@ -259,7 +259,8 @@ object *iter_Sequence(iter_object *iter)
 	{
 		int_object *r = CreateIntObject(pos->value);
 		pos->value+=step->value;
-		//IncRefCount((object*)r);
+		//printf("created sq:%x\n",r);
+		gc_IncRefCount((object*)r);
 		return((object*)r);
 	}
 	else
@@ -267,7 +268,8 @@ object *iter_Sequence(iter_object *iter)
 		int_object *start = (int_object*)GetItem((object*)seq,3);
 		pos->value = start->value;
 		object *r = CreateEmptyObject( TYPE_NONE);
-		//IncRefCount(r);
+		//printf("created:%x\n",r);
+		gc_IncRefCount(r);
 		return(r);
 	}
 }
@@ -302,7 +304,7 @@ object *iter_Generator(iter_object *iter)
 	//printf("finished returning empty object\n");
 	bo->ip = bo->start;//reset iterator for further uses
 	object *r = CreateEmptyObject( TYPE_NONE);
-	//IncRefCount(r);
+	gc_IncRefCount(r);
 	return(r);
 }
 
@@ -327,12 +329,12 @@ object *iter_Iteration(iter_object *iter)
 		if(next == NULL)
 		{
 			object *r = CreateEmptyObject( TYPE_NONE);
-			//IncRefCount(r);
+			gc_IncRefCount(r);
 			return(r);
 		}
 
 	}
-	//IncRefCount(next);
+	gc_IncRefCount(next);
 	return(next);
 }
 
