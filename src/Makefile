@@ -29,7 +29,7 @@
 MAJOR_VERSION = 0
 MINOR_VERSION = 55
 #builds are counted since version 0.5 roughly
-BUILD = 116
+BUILD = 117
 
 CFLAGS= -Wall -pedantic -Wstrict-prototypes -O2 -std=c99 -fbounds-check -Wuninitialized -DBUILD=$(BUILD) -DMAJOR_VERSION=$(MAJOR_VERSION) -DMINOR_VERSION=$(MINOR_VERSION)
 # CFLAGS= -W -w -O2 -std=c99 
@@ -97,9 +97,9 @@ ARDUINO_VM_OBJ = vm.ao strops.ao numops.ao opcodes.ao object.ao memory.ao stack.
 VM_FILES = vm.c strops.c numops.c opcodes.c object.c memory.c stack.c lists.c internal_functions.c stream.c garbage.c debug.c iterators.c types.c
 VM_INCLUDES = vm.h strops.h numops.h opcodes.h object.h memory.h stack.h lists.h internal_functions.h stream.h garbage.h debug.h iterators.h types.h
 VM_OBJ = vm.o strops.o numops.o opcodes.o object.o memory.o stack.o lists.o internal_functions.o stream.o garbage.o debug.o iterators.o types.o
-UT_FILES = unit_tests.c arduino/io.c
-UT_OBJ = unit_tests.o arduino/io.o
-UT_INCLUDES = unit_tests.h arduino/io.h
+UT_FILES = unit_tests.c 
+UT_OBJ = unit_tests.o 
+UT_INCLUDES = unit_tests.h
 
 ARDUINO_FILES = arduino.cpp arduino/io.cpp arduino/debug.cpp
 ARDUINO_INCLUDE_FILES = arduino.h arduino/io.h arduino/debug.h
@@ -186,6 +186,7 @@ git:
 	git push -u origin master
 	
 indent:	
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
 	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
 	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
 	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
