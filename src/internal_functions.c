@@ -347,7 +347,8 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 	}
 	if(cmp_op == 8) // is (compare instances)
 	{
-		new_tos = CreateEmptyObject(tos == tos1 ? TYPE_TRUE : TYPE_FALSE);
+		//new_tos = CreateEmptyObject(tos == tos1 ? TYPE_TRUE : TYPE_FALSE);
+		new_tos = CreateEmptyObject(!object_compare(tos ,tos1) ? TYPE_TRUE : TYPE_FALSE);
 		#ifdef DEBUGGING
 		debug_printf(DEBUG_VERBOSE_STEP,"%x is %x == %c\n",tos, tos1, new_tos->type);
 		#endif
@@ -355,7 +356,8 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 	}
 	if(cmp_op == 9) // is not (compare instances)
 	{
-		new_tos = CreateEmptyObject(tos != tos1 ? TYPE_TRUE : TYPE_FALSE);
+		//new_tos = CreateEmptyObject(tos != tos1 ? TYPE_TRUE : TYPE_FALSE);
+		new_tos = CreateEmptyObject(object_compare(tos ,tos1) ? TYPE_TRUE : TYPE_FALSE);
 		#ifdef DEBUGGING
 		debug_printf(DEBUG_VERBOSE_STEP,"%x is not %x == %c\n",tos, tos1, new_tos->type);
 		#endif
@@ -588,7 +590,7 @@ object *if_print(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 		object *t = GetItem((object *)locals,i);//TODO maybe move this into PrintObject() as case ITER:	
 		if(t->type == TYPE_ITER)
 		{
-			printf("TUPLE EXPAND in print\n");
+			//printf("TUPLE EXPAND in print\n");
 			tuple_object *to = iter_TupleExpand((iter_object*)t,vm);
 			gc_IncRefCount((object*)to);
 			PrintObject((object*)to);
@@ -599,6 +601,7 @@ object *if_print(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 		if(t->type == TYPE_NONE)
 		{
 			i++;
+			//gc_DecRefCount((object*)t);
 			continue;
 		}
 		if (printed_something)

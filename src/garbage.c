@@ -68,7 +68,8 @@ void gc_DecRefCount(object *obj)
 		}
 		return;
 	 }
-	obj->ref_count--;
+	if(obj->ref_count > 1)
+		obj->ref_count--;
 	#ifdef DEBUGGING
 	debug_printf(DEBUG_GC,"%x : %d refs (decremented[GC]:%c)\n",obj,obj->ref_count,obj->type);
 	#endif

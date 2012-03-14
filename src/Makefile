@@ -26,11 +26,14 @@
 
 
 
+MAJOR_VERSION = 0
+MINOR_VERSION = 55
+#builds are counted since version 0.5 roughly
+BUILD = 64
 
-CFLAGS= -Wall -pedantic -Wstrict-prototypes -O2 -std=c99 -fbounds-check -Wuninitialized
+CFLAGS= -Wall -pedantic -Wstrict-prototypes -O2 -std=c99 -fbounds-check -Wuninitialized -DBUILD=$(BUILD) -DMAJOR_VERSION=$(MAJOR_VERSION) -DMINOR_VERSION=$(MINOR_VERSION)
 # CFLAGS= -W -w -O2 -std=c99 
 CC=gcc
-VERSION = 0.5a
 AR=ar
 LD=ld
 
@@ -103,17 +106,29 @@ ARDUINO_INCLUDE_FILES = arduino.h arduino/io.h arduino/debug.h
 ARDUINO_OBJ = arduino.aopp arduino/io.aopp arduino/debug.aopp
 ARDUINO_LIBS = core.a
 
+TOOLS_BUILD_INC_FILES = tools/build_inc/build_inc.c
+TOOLS_BUILD_INC_INCLUDE_FILES = tools/build_inc/build_inc.h
+TOOLS_BUILD_INC_OBJ = tools/build_inc/build_inc.o
+
 test: clean all
 	unit_tests.exe
 
-all: unit_tests
+all: unit_tests build_inc
+	build_inc.exe Makefile BUILD
 
 unit_tests: vm_static $(UT_OBJ) 
 	$(CC) $(UT_OBJ) vm.a  -o unit_tests 
 
-unit_test_o: $(VM_OBJ) $(UT_OBJ)
+unit_tests_o: $(VM_OBJ) $(UT_OBJ)
 	$(CC) $(VM_OBJ) $(UT_OBJ)  -o unit_tests 
 
+build_inc: $(TOOLS_BUILD_INC_OBJ) 
+	$(CC) $(TOOLS_BUILD_INC_OBJ) -o build_inc
+
+build_inc_o: $(TOOLS_BUILD_INC_OBJ)
+	$(CC) $(TOOLS_BUILD_INC_OBJ) -o build_inc 
+
+	
 vm_static: $(VM_OBJ)
 	$(AR) -rs vm.a $(VM_OBJ)
 
@@ -150,19 +165,19 @@ clean:
 	rm -f *.exe *.ao *.aopp arduino.hex *.o *.a *.so arduino/*.ao arduino/*.aopp arduino/libarduino/*.aopp arduino/libarduino/*.ao svimpy.src.tar.gz
 	
 srcdist:	
-	mkdir svimpy-$(VERSION)
-	cp $(VM_FILES) svimpy-$(VERSION)
-	cp $(VM_INCLUDES) svimpy-$(VERSION)
-	cp $(UT_FILES) svimpy-$(VERSION)
-	cp $(UT_INCLUDES) svimpy-$(VERSION)
-	cp $(ARDUINO_FILES) svimpy-$(VERSION)
-	cp $(ARDUINO_INCLUDE_FILES) svimpy-$(VERSION)
-	cp -r arduino svimpy-$(VERSION)
-	cp -r tests svimpy-$(VERSION)
-	cp Makefile svimpy-$(VERSION)
-	tar -cf svimpy.src-$(VERSION).tar svimpy-$(VERSION)
-	gzip -9 svimpy.src-$(VERSION).tar
-	rm -r svimpy-$(VERSION)
+	mkdir svimpy-$(VERSION).$(BUILD)
+	cp $(VM_FILES) svimpy-$(VERSION).$(BUILD)
+	cp $(VM_INCLUDES) svimpy-$(VERSION).$(BUILD)
+	cp $(UT_FILES) svimpy-$(VERSION).$(BUILD)
+	cp $(UT_INCLUDES) svimpy-$(VERSION).$(BUILD)
+	cp $(ARDUINO_FILES) svimpy-$(VERSION).$(BUILD)
+	cp $(ARDUINO_INCLUDE_FILES) svimpy-$(VERSION).$(BUILD)
+	cp -r arduino svimpy-$(VERSION).$(BUILD)
+	cp -r tests svimpy-$(VERSION).$(BUILD)
+	cp Makefile svimpy-$(VERSION).$(BUILD)
+	tar -cf svimpy.src-$(VERSION).$(BUILD).tar svimpy-$(VERSION).$(BUILD)
+	gzip -9 svimpy.src-$(VERSION).$(BUILD).tar
+	rm -r svimpy-$(VERSION).$(BUILD)
 
 git:	
 	git add *
@@ -171,4 +186,62 @@ git:
 	git push -u origin master
 	
 indent:	
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
+	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h
 	indent -bap -bli0 -i4 -l79 -ncs -npcs -npsl -fca -lc79 -fc1 -ts4 *.c *.h

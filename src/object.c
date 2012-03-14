@@ -597,7 +597,7 @@ void PrintObject(object *obj)
 					if(i != 0)
 						printf(", ");
 					object *ti = to->list->items[i];
-					if(ti != NULL)
+					if(ti != NULL && ti->type != TYPE_NONE)
 						PrintObject(ti);
 				}
 			}
@@ -619,11 +619,21 @@ void DumpObject(object * obj, char level)
 	{
 	case TYPE_BLOCK:
 		debug_printf(DEBUG_ALL,"block object\n");
+		for (char i = 0; i < level; i++)
+		debug_printf(DEBUG_ALL,"\t");
 		debug_printf(DEBUG_ALL,"stack @%x\n",((block_object*)obj)->stack);
+		for (char i = 0; i < level; i++)
+		debug_printf(DEBUG_ALL,"\t");
 		debug_printf(DEBUG_ALL,"code @%x\n",((block_object*)obj)->code);
 		//debug_printf(DEBUG_ALL,"iter @%x\n",((block_object*)obj)->iter);
+		for (char i = 0; i < level; i++)
+		debug_printf(DEBUG_ALL,"\t");
 		debug_printf(DEBUG_ALL,"start: %d\n",((block_object*)obj)->start);
+		for (char i = 0; i < level; i++)
+		debug_printf(DEBUG_ALL,"\t");
 		debug_printf(DEBUG_ALL,"len: %d\n",((block_object*)obj)->len);
+		for (char i = 0; i < level; i++)
+		debug_printf(DEBUG_ALL,"\t");
 		debug_printf(DEBUG_ALL,"ip: %d\n",((block_object*)obj)->ip);
 		//printf("stack @%x\n",((block_object*)obj)->stack);
 		//DumpObject(((block_object*)obj)->iter,0);
@@ -1006,10 +1016,10 @@ BOOL object_compare(object *a,object *b)
 	switch (a->type)
 	{
 	case TYPE_NULL:
-		return(1);
+		return(0);
 		break;
 	case TYPE_NONE:
-		return(1);
+		return(0);
 		break;
 	case TYPE_KV:
 		return(object_compare(((kv_object*)a)->key,((kv_object*)b)->key) && object_compare(((kv_object*)a)->value,((kv_object*)b)->value));

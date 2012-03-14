@@ -64,7 +64,7 @@ void iter_RestoreBlockStack(iter_object *iter,struct _vm *vm)
 
 void iter_ClearBlockStack(iter_object *iter,struct _vm *vm)
 {
-	stack_Push(vm->blocks,iter->tag);
+	//stack_Push(vm->blocks,iter->tag);
 	while(iter->block_stack->list->num)
 	{
 		block_object *bo = (block_object*)stack_Pop(iter->block_stack);
@@ -124,7 +124,7 @@ void iter_Expand(iter_object *iter,struct _vm *vm,stack *stack)
 		else
 		{
 			//FreeObject(s);
-			//DecRefCountGC(s,vm->garbage);
+			gc_DecRefCount(s);
 		}
 	}
 	stack_Close(tmp,0);
@@ -143,14 +143,14 @@ tuple_object *iter_TupleExpand(iter_object *iter,struct _vm *vm)
 		n = iter_NextNow(iter,vm);
 		//if(n==NULL)
 		//	printf("WARNING NEXTNOW RETURNED NULL\n");
-		if(n->type != TYPE_NONE)
-		{
+		//if(n->type != TYPE_NONE)
+		//{
 			//DumpObject((object*)n,0);
 			AppendItem((object*)to,n);
-		}
-		else //TODO just a quick fix ... the real problem lies hidden deep in the jungle of gc calls
-			if(n->ref_count==0)
-				gc_DecRefCount(n);
+		//}
+		//else //TODO just a quick fix ... the real problem lies hidden deep in the jungle of gc calls
+			//if(n->ref_count==0)
+		//		gc_DecRefCount(n);
 		//else
 		 //DumpObject(n,0);
 		//	DecRefCountGC((object*)n,vm->garbage);
@@ -166,15 +166,15 @@ void iter_ExpandTuple(iter_object *iter,struct _vm *vm,tuple_object *to)
 	do
 	{
 		n = iter_NextNow(iter,vm);
-		if(n->type != TYPE_NONE)
-		{
+		//if(n->type != TYPE_NONE)
+		//{
 			AppendItem((object*)to,n);
-		}
-		else
-			if(n->ref_count==0)
+		//}
+		//else
+			//if(n->ref_count==0)
 			//{
 			//	printf("KILLING UNREFED OBJECT\n");
-				gc_DecRefCount(n);
+		//		gc_DecRefCount(n);
 			//}
 	//else
 		//	DumpObject(n,0);

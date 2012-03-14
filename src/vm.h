@@ -193,19 +193,31 @@ void vm_Exit(vm *vm); //exit vm
 
 void vm_Stop(vm *vm); //pause vm execution
 
-object *vm_CallFunction(vm *vm,char *name,stack *locals,NUM argc);//call a python function from C
+//object *vm_CallFunction(vm *vm,char *name,stack *locals,NUM argc);//call a python function from C
+
+object *vm_CallFunction(vm *vm,char *name, tuple_object *locals);//call a python function from C
 
 object *vm_RunPYC(vm *vm,stream *f,BOOL free_object);
 
-object *vm_RunObject(vm *vm, object *obj, stack *locals, NUM argc);//run a python code object
+//object *vm_RunObject(vm *vm, object *obj, stack *locals, NUM argc);//run a python code object
 
-object *vm_InteractiveRunObject(vm *vm, object *obj, stack *locals, NUM argc);
+//object *vm_InteractiveRunObject(vm *vm, object *obj, stack *locals, NUM argc);
 
-block_object *vm_StartCodeObject(vm *vm,code_object *co,stack *locals,NUM argc);
+//block_object *vm_StartCodeObject(vm *vm,code_object *co,stack *locals,NUM argc);
 
-object *vm_StartFunctionObject(vm *vm,function_object *fo,stack *locals,stack *kw_locals,NUM argc,NUM kw_argc);//run a python function object //TODO check if argc can be omitted
+object *vm_RunObject(vm *vm, object *obj, tuple_object *locals);//run a python code object
 
-object *vm_StartCFunction(vm *vm,cfunction *cfo,stack *locals,stack *kw_locals,NUM argc,NUM kw_argc);
+object *vm_InteractiveRunObject(vm *vm, object *obj,  tuple_object *locals);
+
+block_object *vm_StartCodeObject(vm *vm,code_object *co, tuple_object *locals);
+
+//object *vm_StartFunctionObject(vm *vm,function_object *fo,stack *locals,stack *kw_locals,NUM argc,NUM kw_argc);//run a python function object 
+
+//object *vm_StartCFunction(vm *vm,cfunction *cfo,stack *locals,stack *kw_locals,NUM argc,NUM kw_argc);
+
+object *vm_StartFunctionObject(vm *vm,function_object *fo,tuple_object *locals,tuple_object *kw_locals);//run a python function object 
+
+object *vm_StartCFunction(vm *vm,cfunction *cfo,tuple_object *locals,tuple_object *kw_locals);
 
 resolve_container *vm_ResolveFunction(vm *vm,object *to_resolve);//input can be function_objects ,code_objects, unicode_objects -> returns a function_object if any
 
