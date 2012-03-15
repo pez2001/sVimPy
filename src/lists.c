@@ -26,9 +26,9 @@
 ptr_list *ptr_CreateList(NUM num, unsigned char flags)
 {
 	#ifdef DEBUGGING
-	ptr_list *tmp = (ptr_list *) mem_malloc(sizeof(ptr_list), "ptr_CreateList() return");
+	ptr_list *tmp = (ptr_list*) mem_malloc(sizeof(ptr_list), "ptr_CreateList() return");
 	#else
-	ptr_list *tmp = (ptr_list *) malloc(sizeof(ptr_list));
+	ptr_list *tmp = (ptr_list*) malloc(sizeof(ptr_list));
 	#endif
 	if (num)
 	{
@@ -53,7 +53,7 @@ ptr_list_with_tag *ptr_CreateTaggedList(NUM num, int flags)
 }
 */
 
-void ptr_CloseList(ptr_list * list)
+void ptr_CloseList(ptr_list *list)
 {
 	if (list->num > 0 )//|| list->num != NULL)
 	{
@@ -70,7 +70,7 @@ void ptr_CloseList(ptr_list * list)
 	#endif
 }
 
-void ptr_Push(ptr_list * list, void *ptr)
+void ptr_Push(ptr_list *list, void *ptr)
 {
 	if (!list->num)
 	{
@@ -94,7 +94,7 @@ void ptr_Push(ptr_list * list, void *ptr)
 	}
 }
 
-void *ptr_Pop(ptr_list * list)
+void *ptr_Pop(ptr_list *list)
 {
 	if (list->num)
 	{
@@ -105,7 +105,7 @@ void *ptr_Pop(ptr_list * list)
 	return (NULL);
 }
 
-BOOL ptr_Insert(ptr_list * list, INDEX index, void *ptr)
+BOOL ptr_Insert(ptr_list *list, INDEX index, void *ptr)
 {
 	if (index == 0 && !list->num)
 	{
@@ -137,7 +137,7 @@ BOOL ptr_Insert(ptr_list * list, INDEX index, void *ptr)
 	return (0);
 }
 
-void ptr_MoveUp(ptr_list * list, INDEX index)
+void ptr_MoveUp(ptr_list *list, INDEX index)
 {
 	if (!list->num)
 		return;
@@ -147,7 +147,7 @@ void ptr_MoveUp(ptr_list * list, INDEX index)
 	}
 }
 
-void ptr_MoveDown(ptr_list * list, INDEX index)
+void ptr_MoveDown(ptr_list *list, INDEX index)
 {
 	if (!list->num)
 		return;
@@ -157,7 +157,7 @@ void ptr_MoveDown(ptr_list * list, INDEX index)
 	}
 }
 
-void *ptr_Remove(ptr_list * list, INDEX index)
+void *ptr_Remove(ptr_list *list, INDEX index)
 {
 	if (!list->num)
 		return (NULL);
@@ -175,7 +175,7 @@ void *ptr_Remove(ptr_list * list, INDEX index)
 			// memcpy(&list->items[index],&list->items[index+1],len *
 			// sizeof(void*));
 		}
-		if (list->num - 1 == 0)
+		if ((list->num - 1 )== 0)
 		{
 			//printf("freeing empty list\n");
 			#ifdef DEBUGGING
@@ -201,7 +201,7 @@ void *ptr_Remove(ptr_list * list, INDEX index)
 	return (NULL);
 }
 
-void ptr_Clear(ptr_list * list)
+void ptr_Clear(ptr_list *list)
 {
 	if (list->num)
 	{
@@ -215,12 +215,12 @@ void ptr_Clear(ptr_list * list)
 	list->num = 0;
 }
 
-NUM ptr_GetNum(ptr_list * list)
+NUM ptr_GetNum(ptr_list *list)
 {
 	return (list->num);
 }
 
-void *ptr_Get(ptr_list * list, INDEX index)
+void *ptr_Get(ptr_list *list, INDEX index)
 {
 	if (index < list->num)
 		return (list->items[index]);
@@ -228,18 +228,18 @@ void *ptr_Get(ptr_list * list, INDEX index)
 		return (NULL);
 }
 
-void ptr_Set(ptr_list * list, INDEX index, void *ptr)
+void ptr_Set(ptr_list *list, INDEX index, void *ptr)
 {
 	if (index < list->num)
 		list->items[index] = ptr;
 }
 
-void ptr_Queue(ptr_list * list, void *ptr)
+void ptr_Queue(ptr_list *list, void *ptr)
 {
 	ptr_Insert(list, 0, ptr);
 }
 
-void *ptr_Dequeue(ptr_list * list)
+void *ptr_Dequeue(ptr_list *list)
 {
 	if (!list->num)
 		return (NULL);

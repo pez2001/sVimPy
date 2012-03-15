@@ -605,7 +605,7 @@ void atomic_test(void)
 	#ifdef DEBUGGING
 	debug_level = 0;
 	//debug_level |= DEBUG_INTERACTIVE;
-	debug_level |= DEBUG_MEMORY;
+	//debug_level |= DEBUG_MEMORY;
 	//debug_level |= DEBUG_SHOW_OPCODES;
 	//debug_level |= DEBUG_FULL_DUMP;
 	//debug_level |= DEBUG_STACK;
@@ -689,7 +689,7 @@ void atomic_test(void)
 	AtomicOpenPYC("tests/test58.pyc");
 
 	//brute ops + closures
-	AtomicOpenPYC("tests/test32.pyc");
+	//AtomicOpenPYC("tests/test32.pyc");
 
 	//function parameters
 	AtomicOpenPYC("tests/test_functions.pyc");
