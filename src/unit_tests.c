@@ -605,7 +605,7 @@ void atomic_test(void)
 	#ifdef DEBUGGING
 	debug_level = 0;
 	//debug_level |= DEBUG_INTERACTIVE;
-	//debug_level |= DEBUG_MEMORY;
+	debug_level |= DEBUG_MEMORY;
 	//debug_level |= DEBUG_SHOW_OPCODES;
 	//debug_level |= DEBUG_FULL_DUMP;
 	//debug_level |= DEBUG_STACK;
@@ -789,8 +789,12 @@ int main(int argc, char *argv[])
 	//ptr_tests();
 	//stream_tests();
 	//brute_test();
-	for(int i=0;i<1000;i++)
-	atomic_test();
+	for(int i=0;i<100000;i++)
+	{
+		char *tmp = (char*)malloc(i);
+		atomic_test();
+		free(tmp);
+	}
 	//AtomicOpenPYC("tests/test_nested_function.pyc");
 	//AtomicOpenPYC("tests/test_function_default_value.pyc");
 	//AtomicOpenPYC("tests/test_function_default_value2.pyc");

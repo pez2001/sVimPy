@@ -70,6 +70,10 @@ void gc_DecRefCount(object *obj)
 	 }
 	if(obj->ref_count > 1)
 		obj->ref_count--;
+	else
+	{
+		printf("possibly freed object is still be referenced by objects: %x\n",obj);
+	}
 	#ifdef DEBUGGING
 	debug_printf(DEBUG_GC,"%x : %d refs (decremented[GC]:%c)\n",obj,obj->ref_count,obj->type);
 	#endif

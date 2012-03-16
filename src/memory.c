@@ -84,8 +84,8 @@ void *mem_realloc(void *ptr, size_t size)
 		{
 			if (mem_chunk_items[i]->ptr == ptr && !mem_chunk_items[i]->is_freed)
 			{
-				mem_chunk_items[i]->ptr = realloc(ptr, size+10);
-				memset(((unsigned char*)mem_chunk_items[i]->ptr+size),255,10);
+				mem_chunk_items[i]->ptr = realloc(ptr, size+(BOUNDS_LEN*2));
+				memset(((unsigned char*)mem_chunk_items[i]->ptr+size),255,(BOUNDS_LEN*2));
 				mem_chunks_actual_size += size - mem_chunk_items[i]->size;
 				if (mem_chunks_actual_size > mem_chunks_max_size)
 					mem_chunks_max_size = mem_chunks_actual_size;
@@ -102,14 +102,16 @@ void *mem_realloc(void *ptr, size_t size)
 	}
 }
 
+#define BOUNDS_LEN 10
+
 void *mem_malloc(size_t size, char *description)
 {
 	if((debug_level & DEBUG_MEMORY) > 0)
 		mem_chunks_num++;
-	void *tmp = malloc(size+10);
+	void *tmp = malloc(size+(BOUNDS_LEN*2));
 	//tmp = *(&tmp + size*3);
 	//tmp += size*3;
-	memset(tmp,255,size+10);
+	memset(tmp,255,size+(BOUNDS_LEN*2));
 	if((debug_level & DEBUG_MEMORY) > 0)
 	{
 	if (size == 0)
@@ -117,12 +119,15 @@ void *mem_malloc(size_t size, char *description)
 		debug_printf(DEBUG_MEMORY,"allocated zero bytes\n");
 		// return(NULL);
 	}
+	
+	tmp = (void*) *(((char*)tmp)+BOUNDS_LEN);
 	// else
 	//debug_printf(DEBUG_ALLOCS,"allocated %d bytes @%x\n",size,tmp);
 	if((debug_level & DEBUG_ALLOCS)>0)
 		printf("allocated %d bytes @%x\n",size,tmp);
 	mem_Push(tmp, size, description);
 	}
+	
 	return (tmp);
 }
 
@@ -131,27 +136,30 @@ int mem_free(void *ptr)
 	if((debug_level & DEBUG_MEMORY) > 0)
 	{
 	int f = 0;
-
+	ptr = (void*) *(((char*)ptr)-BOUNDS_LEN);
 	for (int i = 0; i < mem_chunks_top; i++)
 	{
 		if (mem_chunk_items[i]->ptr == ptr && !mem_chunk_items[i]->is_freed)
 		{
 			f = 1;
 			mem_chunk_items[i]->is_freed = 1;
+			memset(ptr,255,mem_chunk_items[i]->size+(BOUNDS_LEN*2));
 			unsigned char *bound = (unsigned char*)mem_chunk_items[i]->ptr;
 			bound += mem_chunk_items[i]->size+1;
-			if(*bound != 255)
+			unsigned char *bound2 = (unsigned char*)mem_chunk_items[i]->ptr;
+			bound2 -= 1;
+			if(*bound != 255 || *bound2 != 255)
 			{
 				printf("buffer overun detected in alloc: %s (%d) @%x : ", mem_chunk_items[i]->description, mem_chunk_items[i]->size, mem_chunk_items[i]->ptr);
 				//printf("buffer overun detected in alloc @ %x\n",ptr);
 				for (int ix = mem_chunk_items[i]->size; ix < mem_chunk_items[i]->size+10; ix++)
 				{
-					printf("%x ", *((unsigned char *)(mem_chunk_items[i]->ptr + ix)));
+					printf("%x ", *((unsigned char*)(mem_chunk_items[i]->ptr + ix)));
 				}
 				printf("  ");
 				for (int ix = mem_chunk_items[i]->size; ix < mem_chunk_items[i]->size+10; ix++)
 				{
-					printf("%c  ",*((unsigned char *)(mem_chunk_items[i]->ptr + ix)));
+					printf("%c  ",*((unsigned char*)(mem_chunk_items[i]->ptr + ix)));
 				}
 				printf("\n");
 	
