@@ -1,0 +1,3 @@
+NAME=test_pos.pos
+ITEM=test_functions.rpyc
+ITEM=test_print.rpyc

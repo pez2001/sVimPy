@@ -151,7 +151,7 @@ ranging from 0 to 3. The handler will find the traceback as TOS2, the parameter 
 The resulting object is pushed onto the stack, to be subsequently stored by a STORE_FAST instruction.", 1, 1},
 {OPCODE_IMPORT_STAR, "IMPORT_STAR", "Loads all symbols not starting with \"_\" directly from the module TOS to the local namespace.\n\
 The module is popped after loading all names. This opcode implements from module import *.", 0, 1},
-{OPCODE_YIELD_VALUE, "YIELD_VALUE", "Pops TOS and yields it from a generator.", 0, 0},
+{OPCODE_YIELD_VALUE, "YIELD_VALUE", "Pops TOS and yields it from a generator.", 0, 1},
 {OPCODE_STORE_LOCALS, "STORE_LOCALS", "Pops TOS from the stack and stores it as the current frame’s f_locals. This is used in class construction.", 0, 0},
 {OPCODE_STORE_MAP, "STORE_MAP", "Store a key and value pair in a dictionary. Pops the key and value while leaving the dictionary on the stack.", 0, 1},
 {OPCODE_STORE_ATTR, "STORE_ATTR", "Implements TOS.name = TOS1, where /namei/ is the index of name in co_names.", 1, 0},
@@ -199,9 +199,9 @@ void DumpUnsupportedOpCodes(void)
 		if (!opcodes[i].supported)
 		{
 	if((debug_level & DEBUG_FULL_DUMP) > 0)
-			debug_printf(DEBUG_FULL_DUMP,"[%d,%xh] opcode: [ %s ]\n%s\n\n", i, opcodes[i].opcode,opcodes[i].name,opcodes[i].description);
+			debug_printf(DEBUG_FULL_DUMP,"[%3d,%xh] opcode: [ %s ]\n%s\n\n", i, opcodes[i].opcode,opcodes[i].name,opcodes[i].description);
 		else
-			debug_printf(DEBUG_ALL,"[%d,%xh] opcode: [ %s ]\n", i, opcodes[i].opcode,opcodes[i].name);
+			debug_printf(DEBUG_ALL,"[%3d,%xh] opcode: [ %s ]\n", i, opcodes[i].opcode,opcodes[i].name);
 
 		
 		}

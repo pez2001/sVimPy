@@ -37,7 +37,7 @@
 #include "arduino/io.h"
 
 
-#ifdef DEBUGGING
+#ifdef USE_DEBUGGING
 extern long mem_chunks_num;
 extern long mem_chunks_actual_size;
 extern long mem_chunks_max_size;

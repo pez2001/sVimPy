@@ -79,7 +79,7 @@ void stack_SetThird(stack *stack, struct _object * x);
 
 void stack_Adjust(stack *stack, REL_NUM by);
 
-#ifdef DEBUGGING
+#ifdef USE_DEBUGGING
 void stack_Dump(stack *stack);
 #endif
 

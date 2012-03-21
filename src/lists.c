@@ -25,14 +25,14 @@
 
 ptr_list *ptr_CreateList(NUM num, unsigned char flags)
 {
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	ptr_list *tmp = (ptr_list*) mem_malloc(sizeof(ptr_list), "ptr_CreateList() return");
 	#else
 	ptr_list *tmp = (ptr_list*) malloc(sizeof(ptr_list));
 	#endif
 	if (num)
 	{
-		#ifdef DEBUGGING
+		#ifdef USE_DEBUGGING
 		tmp->items = (void **)mem_malloc(num * sizeof(void *),"ptr_CreateList() items");
 		#else
 		tmp->items = (void **)malloc(num * sizeof(void *));
@@ -57,14 +57,16 @@ void ptr_CloseList(ptr_list *list)
 {
 	if (list->num > 0 )//|| list->num != NULL)
 	{
-		#ifdef DEBUGGING
-		assert(mem_free(list->items));
+		#ifdef USE_DEBUGGING
+		//assert(mem_free(list->items));
+		mem_free(list->items);
 		#else
 		free(list->items);
 		#endif
 	}
-	#ifdef DEBUGGING
-	assert(mem_free(list));
+	#ifdef USE_DEBUGGING
+	//assert(mem_free(list));
+	mem_free(list);
 	#else
 	free(list);
 	#endif
@@ -75,7 +77,7 @@ void ptr_Push(ptr_list *list, void *ptr)
 	if (!list->num)
 	{
 		list->num = 1;
-		#ifdef DEBUGGING
+		#ifdef USE_DEBUGGING
 		list->items = (void**)mem_malloc(list->num * sizeof(void*),"ptr_Push() items");
 		#else
 		list->items = (void**)malloc(list->num * sizeof(void*));
@@ -84,7 +86,7 @@ void ptr_Push(ptr_list *list, void *ptr)
 	}
 	else
 	{
-		#ifdef DEBUGGING
+		#ifdef USE_DEBUGGING
 		list->items = (void**)mem_realloc(list->items,(list->num + 1) * sizeof(void*));
 		#else
 		list->items = (void**)realloc(list->items,(list->num + 1) * sizeof(void*));
@@ -114,7 +116,7 @@ BOOL ptr_Insert(ptr_list *list, INDEX index, void *ptr)
 	else if (index < list->num - 1)
 	{
 		list->num++;
-		#ifdef DEBUGGING
+		#ifdef USE_DEBUGGING
 		list->items = (void **)mem_realloc(list->items, (list->num) * sizeof(void *));
 		#else
 		list->items = (void **)realloc(list->items, (list->num) * sizeof(void *));
@@ -178,8 +180,9 @@ void *ptr_Remove(ptr_list *list, INDEX index)
 		if ((list->num - 1 )== 0)
 		{
 			//printf("freeing empty list\n");
-			#ifdef DEBUGGING
-			assert(mem_free(list->items));
+			#ifdef USE_DEBUGGING
+			//assert(mem_free(list->items));
+			mem_free(list->items);
 			#else
 			free(list->items);
 			#endif
@@ -188,7 +191,7 @@ void *ptr_Remove(ptr_list *list, INDEX index)
 		}
 		else
 		{
-			#ifdef DEBUGGING
+			#ifdef USE_DEBUGGING
 			list->items =	(void**)mem_realloc(list->items, (list->num - 1) * sizeof(void *));
 			#else
 			list->items =	(void**)realloc(list->items, (list->num - 1) * sizeof(void *));
@@ -205,8 +208,9 @@ void ptr_Clear(ptr_list *list)
 {
 	if (list->num)
 	{
-		#ifdef DEBUGGING
-		assert(mem_free(list->items));
+		#ifdef USE_DEBUGGING
+		//assert(mem_free(list->items));
+		mem_free(list->items);
 		#else
 		free(list->items);
 		#endif

@@ -38,7 +38,7 @@ void gc_Close(void)
 void gc_IncRefCount(object *obj)
 {
 	obj->ref_count++;
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_GC) > 0)
 	{
 		debug_printf(DEBUG_GC,"%x : %d refs (incremented:%c)\n",obj,obj->ref_count,obj->type);
@@ -55,7 +55,7 @@ void gc_DecRefCount(object *obj)
 		obj->ref_count--;
 		if(!ptr_Contains(garbage,obj))
 		{
-			#ifdef DEBUGGING
+			#ifdef USE_DEBUGGING
 			if((debug_level & DEBUG_GC) > 0)
 			{
 				//debug_printf(DEBUG_GC,"object has no refs anymore -> put into gc\n");
@@ -72,9 +72,14 @@ void gc_DecRefCount(object *obj)
 		obj->ref_count--;
 	else
 	{
-		printf("possibly freed object is still be referenced by objects: %x\n",obj);
+			#ifdef USE_DEBUGGING
+			if((debug_level & DEBUG_GC) > 0)
+			{
+				debug_printf(DEBUG_GC,"possibly freed object is still be referenced by objects: %x\n",obj);
+			}
+			#endif
 	}
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_GC,"%x : %d refs (decremented[GC]:%c)\n",obj,obj->ref_count,obj->type);
 	#endif
 }
@@ -85,7 +90,7 @@ void gc_DecRefCount(object *obj)
 	if(obj->ref_count == 1)
 	{
 		//obj->ref_count--;
-		#ifdef DEBUGGING
+		#ifdef USE_DEBUGGING
 		if((debug_level & DEBUG_GC) > 0)
 		{
 			//debug_printf(DEBUG_GC,"object has no refs anymore -> freeing\n");
@@ -98,7 +103,7 @@ void gc_DecRefCount(object *obj)
 		return;
 	 }
 	obj->ref_count--;
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_GC,"%x : %d refs (decremented[F]:%c)\n",obj,obj->ref_count,obj->type);
 	#endif
 }
@@ -118,7 +123,7 @@ void gc_FreeObject(object *obj)
 {
 	if (obj == NULL)
 		return;
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_FREEING) > 0)
 	{
 		debug_printf(DEBUG_FREEING,"object to be freed\n");
@@ -130,20 +135,21 @@ void gc_FreeObject(object *obj)
 	
 	if(obj->ref_count > 1)
 	{
-		#ifdef DEBUGGING
+		#ifdef USE_DEBUGGING
 		if((debug_level & DEBUG_GC) > 0)
 		{
 			debug_printf(DEBUG_GC,"%x : %d (decreasing due FreeObject)\n",obj,obj->ref_count);
 		}
 		#endif
 		//gc_DecRefCount(obj);
+		printf("Impossible\n");
 		return;
 	}
 
 	switch(obj->type)
 	{
 	case TYPE_BLOCK:
-		#ifdef DEBUGGING
+		#ifdef USE_DEBUGGING
 		debug_printf(DEBUG_VERBOSE_FREEING,"Freeing block object %x\n",obj);
 		#endif
 		gc_DecRefCount((object*)((block_object*)obj)->code);
@@ -151,19 +157,19 @@ void gc_FreeObject(object *obj)
 			stack_Close(((block_object*)obj)->stack,1);
 		break;
 	case TYPE_REF:
-		#ifdef DEBUGGING
+		#ifdef USE_DEBUGGING
 		debug_printf(DEBUG_VERBOSE_FREEING,"Freeing Ref to %x\n",((ref_object*)obj)->ref);
 		#endif
 		break;
 	case TYPE_ITER:
-		#ifdef DEBUGGING
+		#ifdef USE_DEBUGGING
 		debug_printf(DEBUG_VERBOSE_FREEING,"Freeing Iter %x\n",obj);
 		#endif
 		if(((iter_object*)obj)->block_stack != NULL)
 		{	
 			stack_Close(((iter_object*)obj)->block_stack,1);
 		}
-		#ifdef DEBUGGING
+		#ifdef USE_DEBUGGING
 		debug_printf(DEBUG_VERBOSE_FREEING,"Freeing Iter tag %x\n",((iter_object*)obj)->tag);
 		#endif
 		gc_DecRefCount(((iter_object*)obj)->tag);
@@ -187,19 +193,27 @@ void gc_FreeObject(object *obj)
 		gc_DecRefCount((object*)((function_object*)obj)->func);
 		break;
 	case TYPE_UNICODE:
-		#ifdef DEBUGGING
-		debug_printf(DEBUG_VERBOSE_FREEING,"freeing unicode object @%x\n",obj);
-		assert(mem_free(((unicode_object*)obj)->value));
-		#else
-		free(((unicode_object*)obj)->value);
-		#endif
+	   if(((unicode_object*)obj)->value != NULL)
+		{
+			#ifdef USE_DEBUGGING
+			debug_printf(DEBUG_VERBOSE_FREEING,"freeing unicode object @%x\n",obj);
+			//assert(mem_free(((unicode_object*)obj)->value));
+			mem_free(((unicode_object*)obj)->value);
+			#else
+			free(((unicode_object*)obj)->value);
+			#endif
+		}
 		break;
 	case TYPE_STRING:
-		#ifdef DEBUGGING
-		assert(mem_free(((string_object *)obj)->content));
-		#else
-		free(((string_object*)obj)->content);
-		#endif
+		if(((string_object *)obj)->content != NULL)
+		{
+			#ifdef USE_DEBUGGING
+			//assert(mem_free(((string_object *)obj)->content));
+			mem_free(((string_object *)obj)->content);
+			#else
+			free(((string_object*)obj)->content);
+			#endif
+		}
 		break;
 	case TYPE_TUPLE:
 		if (((tuple_object*)obj)->list != NULL)
@@ -215,11 +229,14 @@ void gc_FreeObject(object *obj)
 		}
 		break;
 	case TYPE_CODE:
-		#ifdef DEBUGGING
-		assert(mem_free(((code_object*)obj)->name));
-		#else
-		free(((code_object*)obj)->name);
-		#endif
+		if(((code_object*)obj)->name != NULL)
+		{
+			#ifdef USE_DEBUGGING
+			assert(mem_free(((code_object*)obj)->name));
+			#else
+			free(((code_object*)obj)->name);
+			#endif
+		}
 		gc_DecRefCount(((code_object*)obj)->code);
 		gc_DecRefCount(((code_object*)obj)->consts);
 		gc_DecRefCount(((code_object*)obj)->names);
@@ -229,8 +246,9 @@ void gc_FreeObject(object *obj)
 		break;
 	}
 
-	#ifdef DEBUGGING
-	assert(mem_free(obj));
+	#ifdef USE_DEBUGGING
+	//assert(mem_free(obj));
+	mem_free(obj);
 	debug_printf(DEBUG_FREEING,"freed object:%x\n",obj);
 	#else
 	free(obj);
@@ -240,7 +258,7 @@ void gc_FreeObject(object *obj)
 //void gc_Clear(ptr_list *gc_collection)
 void gc_Clear(void)
 {
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_GC,"gc_Clear();\n");
 	#endif
 	while(garbage->num)
@@ -249,7 +267,7 @@ void gc_Clear(void)
 		if(gc_HasNoRefs(g))
 		{
 			//FreeObject(g);
-			#ifdef DEBUGGING
+			#ifdef USE_DEBUGGING
 			if((debug_level & DEBUG_GC) > 0)
 			{
 				debug_printf(DEBUG_GC,"%x : %d (killed:%c)\n",g,g->ref_count,g->type);
@@ -263,7 +281,7 @@ void gc_Clear(void)
 		}
 		else
 		{
-			#ifdef DEBUGGING
+			#ifdef USE_DEBUGGING
 			if((debug_level & DEBUG_GC) > 0)
 			{
 				debug_printf(DEBUG_GC,"%x : %d (survived:%c)\n",g,g->ref_count,g->type);

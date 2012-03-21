@@ -24,7 +24,7 @@
 
 stack *stack_Init(void)
 {
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	stack *tmp = (stack *)mem_malloc(sizeof(stack), "stack_Init() return");
 	#else
 	stack *tmp = (stack *)malloc(sizeof(stack));
@@ -39,8 +39,9 @@ void stack_Close(stack *stack, BOOL free_objects)
 	{
 		stack_Clear(stack,free_objects);
 		ptr_CloseList(stack->list);
-		#ifdef DEBUGGING
-		assert(mem_free(stack));
+		#ifdef USE_DEBUGGING
+		//assert(mem_free(stack));
+		mem_free(stack);
 		#else
 		free(stack);
 		#endif
@@ -62,7 +63,7 @@ void stack_Clear(stack *stack, BOOL free_objects)
 			}
 			//printf("stack list num:%d\n",stack->list->num);
 		}
-		#ifdef DEBUGGING
+		#ifdef USE_DEBUGGING
 		else if (stack->list->num > 0)
 			debug_printf(DEBUG_STACK,"%d items left untouched on stack\n", stack->list->num);
 		#endif
@@ -87,7 +88,7 @@ struct _object *stack_Bottom(stack *stack)
 {
 	if (stack->list->num < 1)
 	{
-		#ifdef DEBUGGING
+		#ifdef USE_DEBUGGING
 		debug_printf(DEBUG_STACK,"stack_Bottom() - stack underflow - no top\n");
 		#endif
 		return (NULL);
@@ -104,7 +105,7 @@ struct _object *stack_Get(stack *stack,INDEX index)
 	//printf("get %d\n",index);
 	if (index >= stack->list->num || index < 0)
 	{
-		#ifdef DEBUGGING
+		#ifdef USE_DEBUGGING
 		debug_printf(DEBUG_STACK,"stack_Get() - stack underflow - index out of range\n");
 		#endif
 		return (NULL);
@@ -122,7 +123,7 @@ struct _object *stack_Top(stack *stack)
 {
 	if (stack->list->num < 1)
 	{
-		#ifdef DEBUGGING
+		#ifdef USE_DEBUGGING
 		debug_printf(DEBUG_STACK,"stack_Top() - stack underflow - no top\n");
 		#endif
 		return (NULL);
@@ -135,7 +136,7 @@ struct _object *stack_Second(stack *stack)
 {
 	if (stack->list->num < 2)
 	{
-		#ifdef DEBUGGING
+		#ifdef USE_DEBUGGING
 		debug_printf(DEBUG_STACK,"stack_Second() - stack underflow - no top\n");
 		#endif
 		return (NULL);
@@ -148,7 +149,7 @@ struct _object *stack_Third(stack *stack)
 {
 	if (stack->list->num < 3)
 	{
-		#ifdef DEBUGGING
+		#ifdef USE_DEBUGGING
 		debug_printf(DEBUG_STACK,"stack_Third() - stack underflow - no top\n");
 		#endif
 		return (NULL);
@@ -162,7 +163,7 @@ void stack_SetBottom(stack *stack, struct _object * x)
 {
 	if (stack->list->num < 1)
 	{
-		#ifdef DEBUGGING
+		#ifdef USE_DEBUGGING
 		debug_printf(DEBUG_STACK,"stack_SetBottom() - stack underflow - no top\n");
 		#endif
 		return;
@@ -175,7 +176,7 @@ void stack_SetTop(stack *stack, object * x)
 {
 	if (stack->list->num < 1)
 	{
-		#ifdef DEBUGGING
+		#ifdef USE_DEBUGGING
 		debug_printf(DEBUG_STACK,"stack_SetTop() - stack underflow - no top\n");
 		#endif
 		return;
@@ -188,7 +189,7 @@ void stack_SetSecond(stack *stack, struct _object * x)
 {
 	if (stack->list->num < 2)
 	{
-		#ifdef DEBUGGING
+		#ifdef USE_DEBUGGING
 		debug_printf(DEBUG_STACK,"stack_SetSecond() - stack underflow - no top\n");
 		#endif
 		return;
@@ -201,7 +202,7 @@ void stack_SetThird(stack *stack, struct _object * x)
 {
 	if (stack->list->num < 3)
 	{
-		#ifdef DEBUGGING
+		#ifdef USE_DEBUGGING
 		debug_printf(DEBUG_STACK,"stack_SetThird() - stack underflow - no top\n");
 		#endif
 		return;
@@ -220,7 +221,7 @@ void stack_Adjust(stack *stack, REL_NUM by)
 		ptr_Pop(stack->list);
 }
 
-#ifdef DEBUGGING
+#ifdef USE_DEBUGGING
 void stack_Dump(stack *stack)
 {
 	if(stack == NULL)
@@ -248,7 +249,7 @@ struct _object *stack_Pop(stack *stack)
 {
 	if (stack->list->num < 1)
 	{
-		#ifdef DEBUGGING
+		#ifdef USE_DEBUGGING
 		debug_printf(DEBUG_STACK,"stack_Pop() - stack underflow\n");
 		#endif
 		return (NULL);

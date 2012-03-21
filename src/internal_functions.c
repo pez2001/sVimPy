@@ -40,7 +40,7 @@ object *StringCompare(object *a,object *b)
 	as = ((unicode_object *)a)->value;
 	bs = ((unicode_object *)b)->value;
 	object *r = CreateEmptyObject(!strcmp(as,bs) ? TYPE_TRUE : TYPE_FALSE);
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	debug_printf (DEBUG_VERBOSE_STEP,"%s == %s == %c\n", as, bs,r->type);
 	#endif
 	return(r);
@@ -67,7 +67,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 		{
 			SetItem((object*)mtr,i,tos1);
 		}
-		#ifdef DEBUGGING
+		#ifdef USE_DEBUGGING
 		if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 			DumpObject((object*)mtr,0);
 		#endif
@@ -102,7 +102,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_BINARY_MULTIPLY:
 				{
 					((float_object*)new_tos)->value = bf  * af;
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g * %7g = %7g\n", bf, af, bf  * af);
 					#endif
 				}
@@ -111,7 +111,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_BINARY_OR:
 				{
 					((float_object*)new_tos)->value = (long)bf  | (long)af;
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g | %7g = %7g\n", bf, af, (long)bf  | (long)af);
 					#endif
 				}
@@ -120,7 +120,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_BINARY_XOR:
 				{
 					((float_object*)new_tos)->value = (long)bf  ^ (long)af;
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g ^ %7g = %7g\n", bf, af, (long)bf  ^ (long)af);
 					#endif
 				}
@@ -129,7 +129,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_BINARY_AND:
 				{
 					((float_object*)new_tos)->value = (long)bf  & (long)af;
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g & %7g = %7g\n", bf, af, (long)bf  & (long)af);
 					#endif
 				}
@@ -138,7 +138,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_BINARY_LSHIFT:
 				{
 					((float_object*)new_tos)->value = (long)bf << (long)af;
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g << %7g = %7g\n", bf, af, (long)bf << (long)af);
 					#endif
 				}
@@ -147,7 +147,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_BINARY_RSHIFT:
 				{
 					((float_object*)new_tos)->value =  (long)bf >>  (long)af;
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g>> %7g = %7g\n", bf, af,  (long)bf >>  (long)af);
 					#endif
 				}
@@ -156,7 +156,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_BINARY_MODULO:
 				{
 					((float_object*)new_tos)->value =  (long)bf %  (long)af;
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g %% %7g = %7g\n", bf, af,  (long)bf %  (long)af);
 					#endif
 				}
@@ -165,7 +165,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_BINARY_FLOOR_DIVIDE:
 				{
 					((float_object*)new_tos)->value = floor(bf / af);
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g // %7g = %7g\n", bf, af, floor(bf / af));
 					#endif
 				}
@@ -174,7 +174,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_BINARY_TRUE_DIVIDE:
 				{
 					((float_object*)new_tos)->value = bf / af;
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g / %7g = %7g\n", bf, af, bf / af);
 					#endif
 				}
@@ -183,7 +183,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_BINARY_SUBTRACT:
 				{
 					((float_object*)new_tos)->value = bf-af;
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g - %7g = %7g\n", bf, af, bf - af);
 					#endif
 				}
@@ -192,7 +192,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_BINARY_POWER:
 				{
 					((float_object*)new_tos)->value = long_pow(bf, af);
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g ** %7g = %7g\n", bf, af, long_pow(bf, af));
 					#endif
 				}
@@ -201,7 +201,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_BINARY_ADD:
 				{
 					((float_object*)new_tos)->value = bf + af;
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g + %7g = %7g\n", bf, af, bf + af);
 					#endif					
 				}
@@ -221,7 +221,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_BINARY_MULTIPLY:
 				{
 					((int_object*)new_tos)->value = b * a;
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d * %d = %d\n", b, a, b * a);
 					#endif
 				}
@@ -230,7 +230,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_BINARY_OR:
 				{
 					((int_object*)new_tos)->value = b | a;
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d | %d = %d\n", b, a, b | a);
 					#endif
 				}
@@ -239,7 +239,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_BINARY_XOR:
 				{
 					((int_object*)new_tos)->value = b ^ a;
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d ^ %d = %d\n", b, a, b ^ a);
 					#endif
 				}
@@ -248,7 +248,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_BINARY_AND:
 				{
 					((int_object*)new_tos)->value = b & a;
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d & %d = %d\n", b, a, b & a);
 					#endif
 				}
@@ -257,7 +257,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_BINARY_LSHIFT:
 				{
 					((int_object*)new_tos)->value = b << a;
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d << %d = %d\n", b, a, b << a);
 					#endif
 				}
@@ -266,7 +266,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_BINARY_RSHIFT:
 				{
 					((int_object*)new_tos)->value = b >> a;
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d >> %d = %d\n", b, a, b >> a);
 					#endif
 				}
@@ -275,7 +275,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_BINARY_MODULO:
 				{
 					((int_object*)new_tos)->value = b % a;
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d %% %d = %d\n", b, a, b % a);
 					#endif
 				}
@@ -284,7 +284,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_BINARY_FLOOR_DIVIDE:
 				{
 					((int_object*)new_tos)->value = b / a;
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d / %d = %d\n", b, a, b / a);
 					#endif
 				}
@@ -293,7 +293,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_BINARY_TRUE_DIVIDE:
 				{
 					((int_object*)new_tos)->value = b / a;
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d / %d = %d\n", b, a, b / a);
 					#endif
 				}
@@ -302,7 +302,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_BINARY_SUBTRACT:
 				{
 					((int_object*)new_tos)->value = b-a;
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d - %d = %d\n", b, a, b - a);
 					#endif
 				}
@@ -311,7 +311,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_BINARY_POWER:
 				{
 					((int_object*)new_tos)->value = long_pow(b, a);
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d ** %d = %d\n", b, a, long_pow(b, a));
 					#endif
 				}
@@ -320,7 +320,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_BINARY_ADD:
 				{
 					((int_object*)new_tos)->value = b + a;
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d + %d = %d\n", b, a, b + a);
 					#endif
 				}
@@ -340,7 +340,7 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 	if ((tos->type == TYPE_FALSE || tos->type == TYPE_TRUE) && (tos1->type == TYPE_FALSE || tos1->type == TYPE_TRUE)) //bool compare
 	{
 		new_tos = CreateEmptyObject(tos1->type == tos->type ? TYPE_TRUE : TYPE_FALSE);
-		#ifdef DEBUGGING
+		#ifdef USE_DEBUGGING
 		debug_printf (DEBUG_VERBOSE_STEP,"%c == %c == %c\n", tos1->type, tos->type, new_tos->type);
 		#endif
 		return(new_tos);
@@ -349,7 +349,7 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 	{
 		//new_tos = CreateEmptyObject(tos == tos1 ? TYPE_TRUE : TYPE_FALSE);
 		new_tos = CreateEmptyObject(!object_compare(tos ,tos1) ? TYPE_TRUE : TYPE_FALSE);
-		#ifdef DEBUGGING
+		#ifdef USE_DEBUGGING
 		debug_printf(DEBUG_VERBOSE_STEP,"%x is %x == %c\n",tos, tos1, new_tos->type);
 		#endif
 		return(new_tos);
@@ -358,7 +358,7 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 	{
 		//new_tos = CreateEmptyObject(tos != tos1 ? TYPE_TRUE : TYPE_FALSE);
 		new_tos = CreateEmptyObject(object_compare(tos ,tos1) ? TYPE_TRUE : TYPE_FALSE);
-		#ifdef DEBUGGING
+		#ifdef USE_DEBUGGING
 		debug_printf(DEBUG_VERBOSE_STEP,"%x is not %x == %c\n",tos, tos1, new_tos->type);
 		#endif
 		return(new_tos);
@@ -366,18 +366,18 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 	if(cmp_op == 6) // in (contained in tuple)
 	{
 		new_tos = CreateEmptyObject( GetItemIndex(tos, tos1) != -1 ? TYPE_TRUE : TYPE_FALSE);
-		#ifdef DEBUGGING
+		#ifdef USE_DEBUGGING
 		debug_printf(DEBUG_VERBOSE_STEP,"%x in %x == %c\n",tos, tos1, new_tos->type);
 		#endif
 		return(new_tos);
 		}
 	if(cmp_op == 7) // not int (not contained in tuple)
 	{
-		#ifdef DEBUGGING
+		#ifdef USE_DEBUGGING
 		debug_printf(DEBUG_VERBOSE_STEP,"index:%d\n",GetItemIndex(tos, tos1));
 		#endif
 		new_tos = CreateEmptyObject( GetItemIndex(tos, tos1) == -1 ? TYPE_TRUE : TYPE_FALSE);
-		#ifdef DEBUGGING
+		#ifdef USE_DEBUGGING
 		debug_printf(DEBUG_VERBOSE_STEP,"%x not in %x == %c\n",tos, tos1, new_tos->type);
 		#endif
 		return(new_tos);
@@ -408,7 +408,7 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 			case 0:	// <
 				{
 					new_tos = CreateEmptyObject(bf < af ? TYPE_TRUE : TYPE_FALSE);
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g < %7g == %c\n", bf, af, new_tos->type);
 					#endif
 				}
@@ -416,7 +416,7 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 			case 1:	// <=
 				{
 					new_tos = CreateEmptyObject(bf <= af ? TYPE_TRUE : TYPE_FALSE);
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g <= %7g == %c\n", bf, af, new_tos->type);
 					#endif
 				}
@@ -424,7 +424,7 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 			case 2:	// ==
 				{
 					new_tos = CreateEmptyObject(bf == af ? TYPE_TRUE : TYPE_FALSE);
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g == %7g == %c\n", bf, af, new_tos->type);
 					#endif
 				}
@@ -432,7 +432,7 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 			case 3:	// !=
 				{
 					new_tos = CreateEmptyObject(bf != af ? TYPE_TRUE : TYPE_FALSE);
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g != %7g == %c\n", bf, af, new_tos->type);
 					#endif
 				}
@@ -440,7 +440,7 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 			case 4:	// >
 				{
 					new_tos = CreateEmptyObject( bf > af ? TYPE_TRUE : TYPE_FALSE);
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g < %7g == %c\n", bf, af, new_tos->type);
 					#endif
 				}
@@ -448,7 +448,7 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 			case 5:	// >=
 				{
 					new_tos = CreateEmptyObject(bf >= af ? TYPE_TRUE : TYPE_FALSE);
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g >= %7g == %c\n", bf, af, new_tos->type);
 					#endif
 				}
@@ -466,7 +466,7 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 			case 0:	// <
 				{
 					new_tos = CreateEmptyObject(b < a ? TYPE_TRUE : TYPE_FALSE);
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d < %d == %c\n", b, a, new_tos->type);
 					#endif
 			}
@@ -474,7 +474,7 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 			case 1:	// <=
 				{
 					new_tos = CreateEmptyObject(b <= a ? TYPE_TRUE : TYPE_FALSE);
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d <= %d == %c\n", b, a, new_tos->type);
 					#endif
 			}
@@ -482,7 +482,7 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 			case 2:	// ==
 				{
 					new_tos = CreateEmptyObject(b == a ? TYPE_TRUE : TYPE_FALSE);
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d == %d == %c\n", b, a, new_tos->type);
 					#endif
 				}
@@ -490,7 +490,7 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 			case 3:	// !=
 				{
 					new_tos = CreateEmptyObject(b != a ? TYPE_TRUE : TYPE_FALSE);
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d != %d == %c\n", b, a, new_tos->type);
 					#endif
 			}
@@ -498,7 +498,7 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 			case 4:	// >
 				{
 					new_tos = CreateEmptyObject( b > a ? TYPE_TRUE : TYPE_FALSE);
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d < %d == %c\n", b, a, new_tos->type);
 					#endif
 				}
@@ -506,7 +506,7 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 			case 5:	// >=
 				{
 					new_tos = CreateEmptyObject(b >= a ? TYPE_TRUE : TYPE_FALSE);
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d >= %d == %c\n", b, a, new_tos->type);
 					#endif
 				}
@@ -551,7 +551,7 @@ object *if_range(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 	if (locals->list->num < 1)
 	{
 		object *tmp = CreateEmptyObject(TYPE_NONE);
-		#ifdef DEBUGGING
+		#ifdef USE_DEBUGGING
 		debug_printf(DEBUG_ALL,"not enough args for range\n");
 		#endif
 		return (tmp);
@@ -652,7 +652,7 @@ object *if_sum(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 		i++;
 	}
 	int_object *tmp = CreateIntObject(sum);
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_VERBOSE_STEP,"returning sum:%d\n",sum);
 	#endif
 	return ((object*)tmp);

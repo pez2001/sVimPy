@@ -225,7 +225,7 @@ resolve_container *vm_ResolveFunction(vm *vm,object *to_resolve);//input can be 
 
 object *vm_Step(vm *vm);//single step vm //TODO rename to vm_Step
 
-#ifdef DEBUGGING
+#ifdef USE_DEBUGGING
 void vm_DumpCode(vm *vm,BOOL dump_descriptions,BOOL from_start);//dump human readable code of the vm's actual running block 
 #endif
 

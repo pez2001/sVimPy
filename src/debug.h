@@ -30,7 +30,7 @@
 #include "arduino/debug.h"
 #endif
 
-#ifdef DEBUGGING
+#ifdef USE_DEBUGGING
 #ifndef USE_ARDUINO_DEBUGGING
 
 #include "assert.h"

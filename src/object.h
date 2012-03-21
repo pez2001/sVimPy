@@ -35,7 +35,7 @@
 #include "garbage.h"
 
 #include "debug.h"
-#ifdef DEBUGGING
+#ifdef USE_DEBUGGING
 #include "assert.h"
 #include "memory.h"
 #endif
@@ -370,6 +370,18 @@ char ReadChar(stream *f);
 
 object *ReadObject(stream *f);
 
+object *ReadObjectPlus(stream *f);
+
+void WriteLong(long l,stream *f);
+
+void WriteFloat(FLOAT fl,stream *f);
+
+void WriteChar(char c,stream *f);
+
+void WriteObject(object *obj,stream *f);
+
+void WriteObjectPlus(object *obj,stream *f);
+
 object *DissolveRef(object *obj);
 
 ref_object *CreateRefObject(object *ref_to);//,OBJECT_FLAGS flags);
@@ -405,7 +417,7 @@ iter_object *CreateIterObject(void);//OBJECT_FLAGS flags);
 
 void PrintObject(object *obj);
 
-#ifdef DEBUGGING
+#ifdef USE_DEBUGGING
 void DumpObject(object *obj, char level);
 
 char *DumpObjectXml(object *obj, char level);

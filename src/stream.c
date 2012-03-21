@@ -27,7 +27,7 @@ streams *stream_globals;
 
 stream *AllocStream(void)
 {
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	return((stream*) mem_malloc(sizeof(stream), "AllocStream() return"));
 	#else
 	return((stream*) malloc(sizeof(stream)));
@@ -36,7 +36,7 @@ stream *AllocStream(void)
 
 streams *AllocStreams(void)
 {
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	return((streams*) mem_malloc(sizeof(streams), "AllocStreams() return"));
 	#else
 	return((streams*) malloc(sizeof(streams)));
@@ -45,7 +45,7 @@ streams *AllocStreams(void)
 
 stream_type *AllocStreamType(void)
 {
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	return((stream_type*) mem_malloc(sizeof(stream_type), "AllocStreamType() return"));
 	#else
 	return((stream_type*) malloc(sizeof(stream_type)));
@@ -54,27 +54,33 @@ stream_type *AllocStreamType(void)
 
 char *AllocStreamBytes(STREAM_NUM len)
 {
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	return((char*) mem_malloc(len, "AllocStreamBytes() return"));
 	#else
 	return((char*) malloc(len));
 	#endif
 }
 
-
 void streams_Init(void)
 {
 	stream_types = ptr_CreateList(0,0);
 	stream_globals = AllocStreams();
+	
 	//memory stream
 	stream_type *mtype = AllocStreamType();
 	mtype->type = STREAM_TYPE_MEMORY;
-	mtype->stream_open = &stream_memory_open;
-	mtype->stream_close = &stream_memory_close;
+	mtype->stream_open = NULL;
+	mtype->stream_close = NULL;
+	//mtype->stream_open = &stream_memory_open;
+	//mtype->stream_close = &stream_memory_close;
 	mtype->stream_free = &stream_memory_free;
 	mtype->stream_read = &stream_memory_read;
-	mtype->stream_write = &stream_memory_write;
-	mtype->stream_seek = &stream_memory_seek;
+	mtype->stream_write  = NULL;
+	mtype->stream_seek = NULL;
+	mtype->stream_getpos = NULL;
+	//mtype->stream_write = &stream_memory_write;
+	//mtype->stream_seek = &stream_memory_seek;
+	//mtype->stream_getpos = &stream_memory_getpos;
 	ptr_Push(stream_types,mtype);
 	//file stream
 	#ifndef USE_ARDUINO_FUNCTIONS
@@ -86,6 +92,7 @@ void streams_Init(void)
 	ftype->stream_read = &stream_file_read;
 	ftype->stream_write = &stream_file_write;
 	ftype->stream_seek = &stream_file_seek;
+	ftype->stream_getpos = &stream_file_getpos;
 	ptr_Push(stream_types,ftype);
 	#endif
 	
@@ -93,15 +100,21 @@ void streams_Init(void)
 	//arduino flash memory stream
 	stream_type *fmtype = AllocStreamType();
 	fmtype->type = STREAM_TYPE_FLASH_MEMORY;
-	fmtype->stream_open = &stream_flash_memory_open;
-	fmtype->stream_close = &stream_flash_memory_close;
+	fmtype->stream_open = NULL;
+	fmtype->stream_close = NULL;
+	//fmtype->stream_open = &stream_flash_memory_open;
+	//fmtype->stream_close = &stream_flash_memory_close;
 	fmtype->stream_free = &stream_flash_memory_free;
 	fmtype->stream_read = &stream_flash_memory_read;
-	fmtype->stream_write = &stream_flash_memory_write;
-	fmtype->stream_seek = &stream_flash_memory_seek;
+	fmtype->stream_write = NULL;
+	fmtype->stream_seek = NULL;
+	fmtype->stream_getpos  = NULL;
+	//fmtype->stream_write = &stream_flash_memory_write;
+	//fmtype->stream_seek = &stream_flash_memory_seek;
+	//fmtype->stream_getpos = &stream_flash_memory_getpos;
 	ptr_Push(stream_types,fmtype);
 
-
+	
 	//arduino serial stream
 
 	#endif
@@ -127,7 +140,7 @@ void streams_Close(void)
 	INDEX i = 0;	
 	do
 	{
-		#ifdef DEBUGGING
+		#ifdef USE_DEBUGGING
 		assert(mem_free(stream_types->items[i]));
 		#else
 		free(stream_types->items[i]);
@@ -135,7 +148,7 @@ void streams_Close(void)
 		i++;
 	}while(i < stream_types->num);
 	ptr_CloseList(stream_types);
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	assert(mem_free(stream_globals));
 	#else
 	free(stream_globals);
@@ -143,7 +156,7 @@ void streams_Close(void)
 }
 
 #ifndef USE_ARDUINO_FUNCTIONS
-stream *stream_CreateFromFile(char *filename)
+stream *stream_CreateFromFile(char *filename,char *flags)
 {
 	stream *str = AllocStream();
 	ptr_list *fopt = ptr_CreateList(0,0);
@@ -151,6 +164,7 @@ stream *stream_CreateFromFile(char *filename)
 	ptr_Push(fopt,fname);
 	str->type = streams_GetStreamType(STREAM_TYPE_FILE);
 	str->tags = fopt;
+	str->flags = str_Copy(flags);
 	return(str);
 }
 #endif
@@ -165,7 +179,7 @@ stream *stream_CreateFromBytes(char *bytes ,STREAM_NUM len)
 	ptr_Push(mopt,(void*)offset);
 	//printf("getting stream type\n");
 	str->type = streams_GetStreamType(STREAM_TYPE_MEMORY);
-
+	str->flags = NULL;
 	/*tuple_object *b = CreateTuple(4,0);
 	string_object s* = CreateStringObject(bytes,len,0);
 	SetItem((object*)b,0,(object*)s);
@@ -197,6 +211,7 @@ stream *stream_CreateFromFlashBytes(char *bytes ,STREAM_NUM len)
 	//printf("got stream type\n");
 	//debug_printf(DEBUG_ALL,"open:%x\n",str->type->stream_open);
 	str->tags = mopt;
+	str->flags = NULL;
 	return(str);
 }
 #endif
@@ -229,52 +244,68 @@ stream *stream_CreateDebugOutput(void)
 
 BOOL stream_Open(struct _stream *stream)
 {
-	//printf("stream opening:%x\n",stream->type->stream_open);
+	if(stream->type->stream_open == NULL)
+		return(0);
 	BOOL b = stream->type->stream_open(stream);
-	//printf("stream opened\n");
 	return(b);
-	//return(stream->type->stream_open(stream));
 }
 
 BOOL stream_Close(struct _stream *stream)
 {
+	if(stream->type->stream_close == NULL)
+		return(0);
 	return(stream->type->stream_close(stream));
 }
 
 BOOL stream_Free(struct _stream *stream)
 {
+	if(stream->type->stream_free == NULL)
+		return(0);
 	return(stream->type->stream_free(stream));
 }
 
 BOOL stream_Read(struct _stream *stream,void *ptr,STREAM_NUM len)
 {
+	if(stream->type->stream_read == NULL)
+		return(0);
 	return(stream->type->stream_read(stream,ptr,len));
 }
 
-BOOL stream_Write(struct _stream *stream,char *bytes ,STREAM_NUM len)
+BOOL stream_Write(struct _stream *stream,void *ptr ,STREAM_NUM len)
 {
-	return(stream->type->stream_write(stream,bytes,len));
+	if(stream->type->stream_write == NULL)
+		return(0);
+	return(stream->type->stream_write(stream,ptr,len));
 }
 
-BOOL stream_Seek(struct _stream *stream,STREAM_NUM offset)
+BOOL stream_Seek(struct _stream *stream,STREAM_NUM offset,STREAM_ORIGIN origin)
 {
-	return(stream->type->stream_seek(stream,offset));
+	if(stream->type->stream_seek == NULL)
+		return(0);
+	return(stream->type->stream_seek(stream,offset,origin));
 }
 
+INT stream_GetPos(struct _stream *stream)
+{
+	if(stream->type->stream_getpos == NULL)
+		return(0);
+	return(stream->type->stream_getpos(stream));
+}
 //file stream functions
 
 #ifndef USE_ARDUINO_FUNCTIONS
 BOOL stream_file_open(struct _stream *stream)
 {
 	FILE *f;
-	//printf("opening file stream\n");
 	char *filename = (char*)ptr_Get(stream->tags,0);
 	#if defined(USE_DEBUGGING)
 	debug_printf(DEBUG_VERBOSE_TESTS,"opened file:%s\n",filename);
 	#endif
+	if(stream->flags != NULL)
+	f = fopen(filename, stream->flags);
+	else
+		f = fopen(filename, "rb");
 	
-	//printf("filename:%s\n",filename);
-	f = fopen(filename, "rb");
 	if (f == NULL)
 		return(0);
 	ptr_Push(stream->tags,f);
@@ -295,16 +326,22 @@ BOOL stream_file_free(struct _stream *stream)
 	if(stream->tags->num> 1)
 		stream_file_close(stream);
 	char *filename = ptr_Pop(stream->tags);
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	assert(mem_free(filename));
 	#else
 	free(filename);
 	#endif		
 	
 	ptr_CloseList(stream->tags);
-	#ifdef DEBUGGING
+	//if(stream->flags != NULL)
+	//	printf("stream flags:[%s]\n",stream->flags);
+	#ifdef USE_DEBUGGING
+	if(stream->flags != NULL)
+		assert(mem_free(stream->flags));
 	assert(mem_free(stream));
 	#else
+	if(stream->flags != NULL)
+		free(stream->flags);
 	free(stream);
 	#endif		
 
@@ -316,32 +353,49 @@ BOOL stream_file_read(struct _stream *stream,void *ptr,STREAM_NUM len)
 	if(stream->tags->num<=1)
 		return(0);
 	FILE *f = (FILE*)ptr_Get(stream->tags,1);
-	//char *bytes = AllocStreamBytes(len);
-	if(fread(ptr, len, 1, f) != len)
+	if(fread(ptr, len, 1, f) != 1)
 		return(0);
 	return(1);
 }
 
-BOOL stream_file_write(struct _stream *stream,char *bytes ,STREAM_NUM len)
+BOOL stream_file_write(struct _stream *stream,void *ptr ,STREAM_NUM len)
 {
 	if(stream->tags->num<=1)
 		return(0);
-	//FILE *f = (FILE*)ptr_Get(stream->tags,1);
-	return(0);
+	FILE *f = (FILE*)ptr_Get(stream->tags,1);
+	if(fwrite(ptr, len, 1, f) != 1)
+		return(0);
+	return(1);
 }
 
-BOOL stream_file_seek(struct _stream *stream,STREAM_NUM offset)
+BOOL stream_file_seek(struct _stream *stream,STREAM_NUM offset,STREAM_ORIGIN origin)
 { 
 	if(stream->tags->num<=1)
 		return(0);
-	//FILE *f = (FILE*)ptr_Get(stream->tags,1);
-	return(0);
+	FILE *f = (FILE*)ptr_Get(stream->tags,1);
+	int org = 0;
+	if(origin == STREAM_ORIGIN_SET)
+		org = SEEK_SET;
+	else if(origin == STREAM_ORIGIN_CUR)
+		org = SEEK_CUR;
+	else if(origin == STREAM_ORIGIN_END)
+		org = SEEK_END;
+	return(fseek(f,offset,org));
+}
+
+INT stream_file_getpos(struct _stream *stream)
+{ 
+	if(stream->tags->num<=1)
+		return(0);
+	FILE *f = (FILE*)ptr_Get(stream->tags,1);
+	if(feof(f))
+		return(-1);//triple usage of getpos as feof detector and error detector
+	return(ftell(f));
 }
 #endif
-
+/*
 BOOL stream_memory_open(struct _stream *stream)
 {
-	//printf("memory opened\n");
 	return(1);
 }
 
@@ -349,21 +403,17 @@ BOOL stream_memory_close(struct _stream *stream)
 {
 	return(1);
 }
-
+*/
 BOOL stream_memory_free(struct _stream *stream)
 {
-/*	char *bytes = (char*)ptr_Get(stream->tags,0);
-	STREAM_NUM = (STREAM_NUM)ptr_Get(stream->tags,1);
-	#ifdef DEBUGGING
-	assert(mem_free(filename));
-	#else
-	free(filename);
-	#endif		
-	*/
 	ptr_CloseList(stream->tags);
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
+	if(stream->flags != NULL)
+		assert(mem_free(stream->flags));
 	assert(mem_free(stream));
 	#else
+	if(stream->flags != NULL)
+		free(stream->flags);
 	free(stream);
 	#endif		
 	return(1);
@@ -371,33 +421,31 @@ BOOL stream_memory_free(struct _stream *stream)
 
 BOOL stream_memory_read(struct _stream *stream,void *ptr,STREAM_NUM len)
 {
-	//printf("memory read\n");
 	char *bytes = (char*)ptr_Get(stream->tags,0);
-	//STREAM_NUM blen = (STREAM_NUM)ptr_Get(stream->tags,1);
 	STREAM_NUM offset = (STREAM_NUM)ptr_Get(stream->tags,2);
-	//printf("copying bytes :%d,%d\n",len,offset);
-	//printf("bytes@%x,b+o:%x\n",bytes,(bytes+offset));
 	memcpy(ptr,*(&bytes+offset),len);
-	//printf("updating offset\n");
 	ptr_Set(stream->tags,2,(void*)(offset+len));
 	return(1);
 }
-
-BOOL stream_memory_write(struct _stream *stream,char *bytes ,STREAM_NUM len)
+/*
+BOOL stream_memory_write(struct _stream *stream,void *ptr ,STREAM_NUM len)
 {
 	return(0);
 }
 
-BOOL stream_memory_seek(struct _stream *stream,STREAM_NUM offset)
+BOOL stream_memory_seek(struct _stream *stream,STREAM_NUM offset,STREAM_ORIGIN origin)
 { 
 	return(0);
 }
-
+INT stream_memory_getpos(struct _stream *stream)
+{ 
+	return(0);
+}
+*/
 #ifdef USE_ARDUINO_FUNCTIONS
-
+/*
 BOOL stream_flash_memory_open(struct _stream *stream)
 {
-	//printf("memory opened\n");
 	return(1);
 }
 
@@ -405,13 +453,17 @@ BOOL stream_flash_memory_close(struct _stream *stream)
 {
 	return(1);
 }
-
+*/
 BOOL stream_flash_memory_free(struct _stream *stream)
 {
 	ptr_CloseList(stream->tags);
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
+	if(stream->flags != NULL)
+		assert(mem_free(stream->flags));
 	assert(mem_free(stream));
 	#else
+	if(stream->flags != NULL)
+		free(stream->flags);
 	free(stream);
 	#endif		
 	return(1);
@@ -419,27 +471,27 @@ BOOL stream_flash_memory_free(struct _stream *stream)
 
 BOOL stream_flash_memory_read(struct _stream *stream,void *ptr,STREAM_NUM len)
 {
-	//debug_printf(DEBUG_ALL," reading stream\r\n");
 	char *bytes = (char*)ptr_Get(stream->tags,0);
-	//STREAM_NUM blen = (STREAM_NUM)ptr_Get(stream->tags,1);
 	STREAM_NUM offset = (STREAM_NUM)ptr_Get(stream->tags,2);
-	//printf("reading\r\n");
 	memcpy_P(ptr,(bytes+offset),len);
-	//printf("read\r\n");
 	ptr_Set(stream->tags,2,(void*)(offset+len));
 	return(1);
 }
-
-BOOL stream_flash_memory_write(struct _stream *stream,char *bytes ,STREAM_NUM len)
+/*
+BOOL stream_flash_memory_write(struct _stream *stream,void *ptr ,STREAM_NUM len)
 {
 	return(0);
 }
 
-BOOL stream_flash_memory_seek(struct _stream *stream,STREAM_NUM offset)
+BOOL stream_flash_memory_seek(struct _stream *stream,STREAM_NUM offset,STREAM_ORIGIN origin)
 { 
 	return(0);
 }
-
+INT stream_flash_memory_getpos(struct _stream *stream)
+{ 
+	return(0);
+}
+*/
 #endif
 
 

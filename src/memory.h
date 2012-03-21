@@ -30,7 +30,7 @@
 #include "debug.h"
 
 
-#ifdef DEBUGGING
+#ifdef USE_DEBUGGING
 
 #ifdef __cplusplus
 extern "C"  {
@@ -58,6 +58,8 @@ void *mem_realloc(void *ptr, size_t size);
 
 int mem_free(void *ptr);
 
+
+void mem_cnf(void);
 
 #ifdef __cplusplus
 } 

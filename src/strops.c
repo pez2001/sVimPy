@@ -32,7 +32,7 @@ char *str_Cat(char *a, char *b)
 	else
 		if(a == NULL && b == NULL)
 			return(NULL);
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	char *tmp = (char *)mem_malloc(strlen(a) + strlen(b) + 1, "str_Cat() return");
 	#else
 	char *tmp = (char *)malloc(strlen(a) + strlen(b) + 1);
@@ -40,7 +40,7 @@ char *str_Cat(char *a, char *b)
 	memset(tmp, 0, strlen(a) + strlen(b) + 1);
 	memcpy(tmp, a, strlen(a));
 	memcpy(tmp + strlen(a), b, strlen(b));
-	//#ifdef DEBUGGING
+	//#ifdef USE_DEBUGGING
 	//assert(mem_free(a));
 	//#else
 	//free(a);
@@ -56,7 +56,7 @@ char *str_Substring(char *a,INDEX start,NUM len)
 		e = strlen(a) - start;
 	else
 		e = len;
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	char *tmp = (char *)mem_malloc(e + 1, "str_Copy() return");
 	#else
 	char *tmp = (char *)malloc(e + 1);
@@ -68,7 +68,7 @@ char *str_Substring(char *a,INDEX start,NUM len)
 
 char *str_Copy(char *a)
 {
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	char *tmp = (char *)mem_malloc(strlen(a) + 1, "str_Copy() return");
 	#else
 	char *tmp = (char *)malloc(strlen(a) + 1);
@@ -81,7 +81,7 @@ char *str_Copy(char *a)
 
 char *str_FromChar(char c)
 {
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	char *tmp = (char *)mem_malloc(2, "str_FromChar() return");
 	#else
 	char *tmp = (char *)malloc(2);
@@ -121,7 +121,7 @@ char *str_PrintfVa(char *format,NUM len,va_list va)
 	//va_end(va);
 	//printf("len:%d\n",len);
 	//printf("format:%s\n",format);
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	output = (char*) mem_malloc((len),"str_PrintfVA() - return");
 	#else
 	output = (char*) malloc((len));

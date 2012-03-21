@@ -22,7 +22,7 @@
 
 #include "debug.h"
 
-#ifdef DEBUGGING
+#ifdef USE_DEBUGGING
 #ifndef USE_ARDUINO_DEBUGGING
 void debug_printf(int msg_debug_level,char* format, ...)
 {

@@ -33,7 +33,7 @@
 #include "stdlib.h"
 #include "string.h"
 
-#ifdef DEBUGGING
+#ifdef USE_DEBUGGING
 #include "memory.h"
 #include "assert.h"
 #endif

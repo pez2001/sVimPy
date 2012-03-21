@@ -22,7 +22,7 @@
 
 #include "vm.h"
 
-#ifdef DEBUGGING
+#ifdef USE_DEBUGGING
 
 const char *helpmsg = "Commands:\n\
 dbs :\n\
@@ -78,7 +78,7 @@ r :\n\
 
 cfunction *AllocCFunction(void)
 {
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	return((cfunction*) mem_malloc(sizeof(cfunction),"AllocCFunction() return"));
 	#else
 	return((cfunction*) malloc(sizeof(cfunction)));
@@ -87,7 +87,7 @@ cfunction *AllocCFunction(void)
 
 void FreeCFunction(cfunction *cf)
 {
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	assert(mem_free(cf));
 	#else
 	free(cf);
@@ -327,7 +327,7 @@ cfunction *vm_FindFunction(vm *vm, char *name)
 
 vm *vm_Init(code_object *co)
 {
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	vm *tmp = (vm *) mem_malloc(sizeof(vm), "vm_Init() return");
 	#else
 	vm *tmp = (vm *)malloc(sizeof(vm));
@@ -362,7 +362,7 @@ void vm_Close(vm *vm)
 	stack_Close(vm->blocks, 1);
 	vm_FreeGlobals(vm);
 	ptr_CloseList(vm->globals);
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	assert(mem_free(vm));
 	#else
 	free(vm);
@@ -391,7 +391,7 @@ void vm_Interrupt(vm *vm,object *(*interrupt) (struct _vm *vm,stack *stack))
 {
 	vm->interrupt_handler = interrupt;
 	vm->interrupt_vm = 1;
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_ALL,"forcing interrupt\n");
 	#endif
 }
@@ -456,7 +456,7 @@ block_object *vm_StartCodeObject(vm *vm,code_object *co,tuple_object *locals)
 
 object *vm_StartFunctionObject(vm *vm,function_object *fo,tuple_object *locals,tuple_object *kw_locals)
 {	
-		#ifdef DEBUGGING
+		#ifdef USE_DEBUGGING
 		debug_printf(DEBUG_VERBOSE_STEP,"executing python function: %s\n",  fo->func->name);
 		#endif
 	
@@ -600,7 +600,7 @@ object *vm_StartFunctionObject(vm *vm,function_object *fo,tuple_object *locals,t
 
 object *vm_StartCFunction(vm *vm,cfunction *cf,tuple_object *locals,tuple_object *kw_locals)
 {
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_VERBOSE_STEP,"executing C function: %s\n",  cf->name);
 	#endif
 	object *tmp = vm_ExecuteCFunction(vm, cf,locals,kw_locals);
@@ -609,7 +609,7 @@ object *vm_StartCFunction(vm *vm,cfunction *cf,tuple_object *locals,tuple_object
 
 resolve_container *AllocResolveContainer(void)
 {
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	return((resolve_container*) mem_malloc(sizeof(resolve_container),"AllocResolveContainer() return"));
 	#else
 	return((resolve_container*) malloc(sizeof(resolve_container)));
@@ -618,8 +618,9 @@ resolve_container *AllocResolveContainer(void)
 
 void FreeResolveContainer(resolve_container *rc)
 {
-	#ifdef DEBUGGING
-	assert(mem_free(rc));
+	#ifdef USE_DEBUGGING
+	//assert(mem_free(rc));
+	mem_free(rc);
 	#else
 	free(rc);
 	#endif
@@ -640,7 +641,7 @@ resolve_container *vm_ResolveFunction(vm *vm,object *to_resolve)
 	}
 	else	if (to_resolve != NULL && to_resolve->type == TYPE_CODE)
 	{
-		#ifdef DEBUGGING
+		#ifdef USE_DEBUGGING
 		debug_printf(DEBUG_ALL,"WARNING: cant resolve from code object\n");
 		#endif
 		rc->func_type = FUNC_NOT_FOUND;
@@ -673,7 +674,7 @@ resolve_container *vm_ResolveFunction(vm *vm,object *to_resolve)
 
 			if (caller_func != NULL && ((object*)caller_func)->type == TYPE_CODE)
 			{
-				#ifdef DEBUGGING
+				#ifdef USE_DEBUGGING
 				debug_printf(DEBUG_ALL,"WARNING: cant resolve from code object\n");
 				#endif
 				rc->func_type = FUNC_NOT_FOUND;
@@ -691,7 +692,7 @@ resolve_container *vm_ResolveFunction(vm *vm,object *to_resolve)
 	return(rc);
 }
 
-#ifdef DEBUGGING
+#ifdef USE_DEBUGGING
 void vm_DumpCode(vm *vm,BOOL dump_descriptions, BOOL from_start)
 {
 				block_object *bo = (block_object *) stack_Top(vm->blocks);
@@ -738,7 +739,7 @@ void vm_DumpCode(vm *vm,BOOL dump_descriptions, BOOL from_start)
 }
 #endif
 
-#ifdef DEBUGGING
+#ifdef USE_DEBUGGING
 object *vm_InteractiveRunObject(vm *vm, object *obj, tuple_object *locals)
 {
 		if(obj->type != TYPE_CODE)
@@ -856,7 +857,7 @@ object *vm_InteractiveRunObject(vm *vm, object *obj, tuple_object *locals)
 			}else
 			if(strlen(cmd)>= 1 && cmd[0] == 'q')
 			{
-				#ifdef DEBUGGING
+				#ifdef USE_DEBUGGING
 				assert(mem_free(cmd));
 				#else
 				free(cmd)
@@ -927,7 +928,7 @@ object *vm_InteractiveRunObject(vm *vm, object *obj, tuple_object *locals)
 				vm->running = 1;
 				vm->interrupt_vm = 0;
 			}
-			#ifdef DEBUGGING
+			#ifdef USE_DEBUGGING
 			assert(mem_free(cmd));
 			#else
 			free(cmd);
@@ -1127,7 +1128,7 @@ object *vm_Step(vm *vm)
 			#endif // -- FOR DEBUGGING
 		
 			
-			#ifdef DEBUGGING
+			#ifdef USE_DEBUGGING
 			debug_printf(DEBUG_VERBOSE_STEP,"preparing opcode\n");
 			#endif
 			// prepare opcode argument,increment codepointer and intepret
@@ -1152,7 +1153,7 @@ object *vm_Step(vm *vm)
 					object *ret = stack_Pop(bo->stack);
 					gc_IncRefCount(ret);
 					gc_Clear();
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 					{
 						debug_printf(DEBUG_VERBOSE_STEP,"yield object @:%x\n",ret);
@@ -1167,7 +1168,7 @@ object *vm_Step(vm *vm)
 				{
 					object *ret = stack_Pop(bo->stack);
 					//stack_Dump(bo->stack);
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 					{
 						debug_printf(DEBUG_VERBOSE_STEP,"ret object @:%x\n",ret);
@@ -1178,14 +1179,14 @@ object *vm_Step(vm *vm)
 					if(!stack_IsEmpty(vm->blocks))
 					{
 						block_object *parent = (block_object*)stack_Top(vm->blocks);
-						#ifdef DEBUGGING
+						#ifdef USE_DEBUGGING
 						if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 						{
 							stack_Dump(parent->stack);
 						}
 						#endif
 						stack_Push(parent->stack,ret);
-						#ifdef DEBUGGING
+						#ifdef USE_DEBUGGING
 						debug_printf(DEBUG_VERBOSE_STEP,"still blocks on the stack\n");
 						#endif
 					}
@@ -1222,7 +1223,7 @@ object *vm_Step(vm *vm)
 
 			case OPCODE_BREAK_LOOP:
 				{
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					block_object *bbo = (block_object *) stack_Pop(vm->blocks);
 					debug_printf(DEBUG_VERBOSE_STEP,"break to: %d ,start: %d ,len:%d\n",bo->ip,bbo->start,bbo->len);
 					#else
@@ -1278,7 +1279,7 @@ object *vm_Step(vm *vm)
 			case OPCODE_GET_ITER:
 				{
 					object *iter = stack_Pop(bo->stack);
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 					{
 					 debug_printf(DEBUG_VERBOSE_STEP,"iter:\n");
@@ -1368,7 +1369,7 @@ object *vm_Step(vm *vm)
 				return(NULL);
 			}
 
-			#ifdef DEBUGGING
+			#ifdef USE_DEBUGGING
 			debug_printf(DEBUG_VERBOSE_STEP,"fetching tos items\n");
 			#endif
 			// fetch tos items 
@@ -1396,7 +1397,7 @@ object *vm_Step(vm *vm)
 					tos = DissolveRef(tos);
 					if(tos->type == TYPE_KV)
 						tos = ((kv_object*)tos)->value;
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					assert(tos != NULL);
 					#endif
 				}
@@ -1441,7 +1442,7 @@ object *vm_Step(vm *vm)
 						tos = ((kv_object*)tos)->value;
 					if(tos1->type == TYPE_KV)
 						tos1 = ((kv_object*)tos1)->value;
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					assert(tos != NULL);
 					assert(tos1 != NULL);
 					#endif
@@ -1467,7 +1468,7 @@ object *vm_Step(vm *vm)
 				break;
 			}
 
-			#ifdef DEBUGGING
+			#ifdef USE_DEBUGGING
 			debug_printf(DEBUG_VERBOSE_STEP,"executing main ops\n");
 			#endif
 			// execute remaining ops here
@@ -1644,7 +1645,7 @@ object *vm_Step(vm *vm)
 					block->ref_count = 0;
 					block->type = TYPE_BLOCK;
 					block->stack = stack_Init();
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 						DumpObject((object*)bo,0);
 					#endif
@@ -1705,7 +1706,7 @@ object *vm_Step(vm *vm)
 						name = ((unicode_object*)((kv_object*)co_names->list->items[arg])->key)->value;
 					else
 						name = ((unicode_object*)co_names->list->items[arg])->value;
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"searching for:%s\n", name);
 					#endif
 					object *lgo = NULL;
@@ -1748,7 +1749,7 @@ object *vm_Step(vm *vm)
 						lgo =(object*) vm_FindFunction(vm, name);
 						if (lgo  == NULL)
 						{
-							#ifdef DEBUGGING
+							#ifdef USE_DEBUGGING
 							debug_printf(DEBUG_VERBOSE_STEP,"global not found\n");
 							#endif
 							break;
@@ -1757,7 +1758,7 @@ object *vm_Step(vm *vm)
 				
 					*/
 					stack_Push(bo->stack, lgo);
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 						DumpObject(lgo,1);
 					#endif
@@ -1773,7 +1774,7 @@ object *vm_Step(vm *vm)
 						name = ((unicode_object*)((kv_object*)co_names->list->items[arg])->key)->value;
 					else
 						name = ((unicode_object*)co_names->list->items[arg])->value;
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 					{
 						debug_printf(DEBUG_VERBOSE_STEP,"name:%s\n",name);
@@ -1823,7 +1824,7 @@ object *vm_Step(vm *vm)
 							break;
 						}
 					}
-				//#ifdef DEBUGGING
+				//#ifdef USE_DEBUGGING
 				//debug_printf(DEBUG_VERBOSE_STEP,"global not found\n");
 				//#endif
 				}
@@ -1864,7 +1865,7 @@ object *vm_Step(vm *vm)
 					if(name->type == TYPE_KV)
 						name = ((kv_object*)name)->value;
 					stack_Push(bo->stack, name);
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 						DumpObject(name,1);
 					#endif
@@ -1875,7 +1876,7 @@ object *vm_Step(vm *vm)
 				{
 					object *lconst = GetItem(co->consts,arg);
 					stack_Push(bo->stack, lconst);
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 						DumpObject(lconst,1);
 					#endif
@@ -1888,7 +1889,7 @@ object *vm_Step(vm *vm)
 					if(fast->type == TYPE_KV)
 						fast = ((kv_object*)fast)->value;
 					stack_Push(bo->stack, fast);
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 						DumpObject(fast,1);
 					#endif
@@ -1919,7 +1920,7 @@ object *vm_Step(vm *vm)
 							SetDictItemByIndex(co->freevars,arg - GetTupleLen(co->cellvars),tos);
 						}
 					}
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 						DumpObject(tos,1);
 					#endif
@@ -1936,7 +1937,7 @@ object *vm_Step(vm *vm)
 						if(cell->type == TYPE_KV)
 							cell = ((kv_object*)cell)->value;
 					stack_Push(bo->stack, cell);
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 						DumpObject(cell,1);
 					#endif
@@ -1951,7 +1952,7 @@ object *vm_Step(vm *vm)
 					else
 						fast = GetItem(co->freevars,arg - GetTupleLen(co->cellvars));
 					stack_Push(bo->stack, fast);
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 						DumpObject(fast,1);
 					#endif
@@ -1975,7 +1976,7 @@ object *vm_Step(vm *vm)
 					{
 						SetDictItemByIndex(co->names,arg,tos);
 					}
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 						DumpObject(tos,1);
 					#endif
@@ -1995,7 +1996,7 @@ object *vm_Step(vm *vm)
 					tos2 = DissolveRef(tos2);
 					if(tos2->type == TYPE_KV)
 						tos2 = ((kv_object*)tos2)->value;
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					assert(tos2 != NULL);
 					DumpObject(tos2,0);
 					printf("append dict item:\n");
@@ -2013,7 +2014,7 @@ object *vm_Step(vm *vm)
 					tos1 = DissolveRef(tos1);
 					if(tos1->type == TYPE_KV)
 						tos1 = ((kv_object*)tos1)->value;
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					assert(tos1 != NULL);
 					#endif
 					AppendItem(tos1,tos);
@@ -2032,25 +2033,25 @@ object *vm_Step(vm *vm)
 				
 			case OPCODE_STORE_FAST:
 				{
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 						DumpObject(tos,1);
 					#endif
 					if(GetItem(co->varnames,arg)->type != TYPE_KV)
 					{
-						#ifdef DEBUGGING
+						#ifdef USE_DEBUGGING
 						debug_printf(DEBUG_VERBOSE_STEP,"converting\n");
 						#endif
 						SetItem(co->varnames,arg,(object*)ConvertToKVObjectValued(GetItem(co->varnames,arg),tos));
 					}
 				else
 				{
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"updating\n");
 					#endif
 					SetDictItemByIndex(co->varnames,arg,tos);
 				}
-				#ifdef DEBUGGING
+				#ifdef USE_DEBUGGING
 				if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 					DumpObject(tos,1);
 				#endif
@@ -2087,7 +2088,7 @@ object *vm_Step(vm *vm)
 			case OPCODE_STORE_SUBSCR:
 				{
 					NUM ssa = 0;
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"tos:%c\n",tos->type);
 					debug_printf(DEBUG_VERBOSE_STEP,"tos1:%c\n",tos1->type);
 					#endif
@@ -2098,14 +2099,14 @@ object *vm_Step(vm *vm)
 					}
 					if (tos1->type == TYPE_TUPLE)
 					{
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"ssa: %d\n",ssa);
 					#endif
 					if (tos->type == TYPE_INT)
 						SetItem(tos1, ssa, tos2);
 					else
 						SetDictItem(tos1,tos,tos2);
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 						 DumpObject(tos1,0);
 					#endif
@@ -2123,7 +2124,7 @@ object *vm_Step(vm *vm)
 				
 					if (tos1->type == TYPE_TUPLE)
 					{
-						#ifdef DEBUGGING
+						#ifdef USE_DEBUGGING
 						if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 						{
 							DumpObject(tos1, 0);
@@ -2136,7 +2137,7 @@ object *vm_Step(vm *vm)
 							bst = GetItem(tos1, bsa);
 						else
 							bst = GetDictItem(tos1,tos);
-						#ifdef DEBUGGING
+						#ifdef USE_DEBUGGING
 						if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 							DumpObject(bst, 0);
 						#endif
@@ -2154,7 +2155,7 @@ object *vm_Step(vm *vm)
 						case TYPE_UNICODE:
 							{
 								unicode_object *uso = CreateUnicodeObject(str_FromChar(((unicode_object*)tos)->value[i]));
-								#ifdef DEBUGGING
+								#ifdef USE_DEBUGGING
 								if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 									DumpObject((object*)uso,0);
 								#endif
@@ -2162,7 +2163,7 @@ object *vm_Step(vm *vm)
 							}
 						}
 					}
-					#ifdef DEBUGGING
+					#ifdef USE_DEBUGGING
 					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 					{
 						stack_Dump(bo->stack);
@@ -2283,7 +2284,7 @@ object *vm_Step(vm *vm)
 					{	
 						//printf("nf\n");
 						FreeResolveContainer(rc);
-						#ifdef DEBUGGING
+						#ifdef USE_DEBUGGING
 						debug_printf(DEBUG_ALL,"Function not found:\n");
 						DumpObject(function,0);
 						debug_printf(DEBUG_ALL,"dumping stack\n");
@@ -2399,7 +2400,7 @@ object *vm_Step(vm *vm)
 				break;
 
 			default:
-				#ifdef DEBUGGING
+				#ifdef USE_DEBUGGING
 				if((debug_level & DEBUG_DUMP_UNSUPPORTED) > 0)
 				{
 					int index = GetOpcodeIndex(op);
@@ -2413,7 +2414,7 @@ object *vm_Step(vm *vm)
 			gc_Clear();
 			return(NULL);
 		} //END OF STEP
-		#ifdef DEBUGGING
+		#ifdef USE_DEBUGGING
 		debug_printf(DEBUG_VERBOSE_STEP,"code thru.\n");
 		#endif
 		object *ret = NULL;

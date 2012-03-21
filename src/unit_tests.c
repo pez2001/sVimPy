@@ -23,7 +23,7 @@
 #include "unit_tests.h"
 
 
-#ifdef DEBUGGING
+#ifdef USE_DEBUGGING
 int debug_level = 0;
 
 void ptr_tests(void)
@@ -97,7 +97,7 @@ void stream_tests(void)
 {
 	long pyc_magic = MAGIC;
 	printf("stream tests\n");
-	stream *f = stream_CreateFromFile("tests/test52.pyc");
+	stream *f = stream_CreateFromFile("tests/test52.pyc","rb");
 	
 	if (!stream_Open(f))
 	{
@@ -132,12 +132,7 @@ void stream_tests(void)
 	}
 	printf("read magic:%d\n",mmagic);
 	stream_Free(m);
-	
-	
-	
-	
 	printf("stream tests done\n");
-	
 }
 #endif
 
@@ -152,7 +147,7 @@ void OpenPYC(stream *f, vm *vm)
 	
 	if (!stream_Open(f))
 		return;
-	//#ifdef DEBUGGING
+	//#ifdef USE_DEBUGGING
 	//debug_printf(DEBUG_VERBOSE_TESTS,"executing object:%s\n", filename);
 	//#endif
 	// int r = fread(bh,4,1,f);
@@ -178,12 +173,12 @@ void OpenPYC(stream *f, vm *vm)
 	// printf("max objects : %d\n",objects_max);
 	// printf("objects headers total size : %d\n",objects_header_total);
 	vm_AddGlobal(vm, (code_object*)obj);
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_DUMP_OBJECT) > 0)
 		DumpObject(obj, 0);
 	#endif
 	object *ret = NULL;
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_INTERACTIVE) > 0)
 		ret = vm_InteractiveRunObject(vm, obj, NULL);	// ,obj
 	else
@@ -191,18 +186,18 @@ void OpenPYC(stream *f, vm *vm)
 	#else
 	ret = vm_RunObject(vm, obj, NULL);	// ,obj
 	#endif
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_ALL,"\n");
 	#endif
 	if (ret != NULL)
 	{
-		#ifdef DEBUGGING
+		#ifdef USE_DEBUGGING
 		if((debug_level & DEBUG_DUMP_OBJECT) > 0)
 			DumpObject(ret, 0);
 		#endif
 		gc_DecRefCount(ret);
 	}
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	//debug_printf(DEBUG_VERBOSE_TESTS,"object executed:%s\n", filename);
 	if((debug_level & DEBUG_DUMP_OBJECT) > 0)
 		DumpObject(obj,0);
@@ -210,14 +205,14 @@ void OpenPYC(stream *f, vm *vm)
 	#endif
 	//DumpObject(obj,0);
 	gc_DecRefCount(obj);
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_VERBOSE_TESTS,"removing object from globals\n");
 	#endif
 	vm_RemoveGlobal(vm,(code_object*)obj);
 	//printf("freeing stream\n");
 	stream_Free(f);
 	gc_Clear();
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_VERBOSE_TESTS,"pyc executed\n");
 	#endif
 	//printf("pyc executed\n");
@@ -228,7 +223,7 @@ void OpenPYC(stream *f, vm *vm)
 
 void brute_test(void)
 {
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	//debug_level |= DEBUG_INTERACTIVE;
 	debug_level |= DEBUG_MEMORY;
 	// debug_level |= DEBUG_SHOW_OPCODES;
@@ -293,134 +288,134 @@ void brute_test(void)
 	stream *m = stream_CreateFromBytes((char*)&test_pyc,TEST_PYC_LEN);
 	OpenPYC(m,vm);
 	
-	OpenPYC(stream_CreateFromFile("tests/test52.pyc"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test52.pyc","rb"), vm);
 	
 	//generators
-	OpenPYC(stream_CreateFromFile("tests/test25.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test24b.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test24.pyc"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test25.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test24b.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test24.pyc","rb"), vm);
 	
 	
-	OpenPYC(stream_CreateFromFile("tests/test26.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test20.pyc"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test26.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test20.pyc","rb"), vm);
 	
 	//simple generator with yield
-	OpenPYC(stream_CreateFromFile("tests/test59.pyc"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test59.pyc","rb"), vm);
 
 	
 	//iters
-	OpenPYC(stream_CreateFromFile("tests/test61.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test60.pyc"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test61.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test60.pyc","rb"), vm);
 
 	//print + recursion
-	OpenPYC(stream_CreateFromFile("tests/test17.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test8.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test9.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test12.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test11.pyc"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test17.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test8.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test9.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test12.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test11.pyc","rb"), vm);
 	
 	//function parameters
-	OpenPYC(stream_CreateFromFile("tests/test50.pyc"), vm);//with keywords unordered
-	OpenPYC(stream_CreateFromFile("tests/test49b.pyc"), vm);//kw unordered
-	OpenPYC(stream_CreateFromFile("tests/test49.pyc"), vm);//kw
-	OpenPYC(stream_CreateFromFile("tests/test48.pyc"), vm);//var
-	OpenPYC(stream_CreateFromFile("tests/test47.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test46.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test_functions.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test36.pyc"), vm);//call_function_var
-	OpenPYC(stream_CreateFromFile("tests/test37.pyc"), vm);//call_function_kw
-	OpenPYC(stream_CreateFromFile("tests/test38.pyc"), vm);//call_function_var_kw 
-	OpenPYC(stream_CreateFromFile("tests/test39.pyc"), vm);//call_function
+	OpenPYC(stream_CreateFromFile("tests/test50.pyc","rb"), vm);//with keywords unordered
+	OpenPYC(stream_CreateFromFile("tests/test49b.pyc","rb"), vm);//kw unordered
+	OpenPYC(stream_CreateFromFile("tests/test49.pyc","rb"), vm);//kw
+	OpenPYC(stream_CreateFromFile("tests/test48.pyc","rb"), vm);//var
+	OpenPYC(stream_CreateFromFile("tests/test47.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test46.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test_functions.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test36.pyc","rb"), vm);//call_function_var
+	OpenPYC(stream_CreateFromFile("tests/test37.pyc","rb"), vm);//call_function_kw
+	OpenPYC(stream_CreateFromFile("tests/test38.pyc","rb"), vm);//call_function_var_kw 
+	OpenPYC(stream_CreateFromFile("tests/test39.pyc","rb"), vm);//call_function
 	
 	//pos + kw defaults
-	OpenPYC(stream_CreateFromFile("tests/test55c.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test55b.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test55.pyc"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test55c.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test55b.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test55.pyc","rb"), vm);
 
 	//kw defaults
-	OpenPYC(stream_CreateFromFile("tests/test54.pyc"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test54.pyc","rb"), vm);
 
 	//storing of globals/vars and deletion of globals/vars
-	OpenPYC(stream_CreateFromFile("tests/test21ba2.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test21.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test21b.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test21ba.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test21ba3.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test21bb.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test21c.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test21d.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test21e.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test21a.pyc"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test21ba2.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test21.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test21b.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test21ba.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test21ba3.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test21bb.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test21c.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test21d.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test21e.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test21a.pyc","rb"), vm);
 	
 	//loops + recursion
-	OpenPYC(stream_CreateFromFile("tests/test35.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test34.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test33.pyc"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test35.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test34.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test33.pyc","rb"), vm);
 
 	//nested tuple printing
-	OpenPYC(stream_CreateFromFile("tests/test51.pyc"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test51.pyc","rb"), vm);
 	
 	//comparing
-	OpenPYC(stream_CreateFromFile("tests/test_compare.pyc"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test_compare.pyc","rb"), vm);
 
 	//globals
-	OpenPYC(stream_CreateFromFile("tests/test58.pyc"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test58.pyc","rb"), vm);
 
 	//closures and deref opcodes
-	OpenPYC(stream_CreateFromFile("tests/test57.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test29.pyc"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test57.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test29.pyc","rb"), vm);
 	
 	//brute ops + closures
-	OpenPYC(stream_CreateFromFile("tests/test32.pyc"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test32.pyc","rb"), vm);
 
 	//simple stuff
-	OpenPYC(stream_CreateFromFile("tests/test1.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test2.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test3.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test6.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test13.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test15.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test16.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test18.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test19.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test22.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test7.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test5.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test4.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test27.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test28.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test23.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test56.pyc"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test1.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test2.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test3.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test6.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test13.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test15.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test16.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test18.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test19.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test22.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test7.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test5.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test4.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test27.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test28.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test23.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test56.pyc","rb"), vm);
 	
 	
 	//while loop + break + continue
-	OpenPYC(stream_CreateFromFile("tests/test_while.pyc"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test_while.pyc","rb"), vm);
 
 	//ellipsis object
-	OpenPYC(stream_CreateFromFile("tests/test43.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test40.pyc"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test43.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test40.pyc","rb"), vm);
 
 	//most binary ops test
-	OpenPYC(stream_CreateFromFile("tests/test14.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test14b.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test14f.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test14bf.pyc"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test14.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test14b.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test14f.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test14bf.pyc","rb"), vm);
 
 	//floats
-	OpenPYC(stream_CreateFromFile("tests/test44.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test42.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test41.pyc"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test44.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test42.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test41.pyc","rb"), vm);
 
 	//dictionaries
-	OpenPYC(stream_CreateFromFile("tests/test30.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test31.pyc"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test30.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/test31.pyc","rb"), vm);
 	
 	
 	//brute prime (classless it takes longer because of range
-	OpenPYC(stream_CreateFromFile("tests/e20.pyc"), vm);
-	OpenPYC(stream_CreateFromFile("tests/e_small.pyc"), vm);
+	OpenPYC(stream_CreateFromFile("tests/e20.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile("tests/e_small.pyc","rb"), vm);
 	
-	//OpenPYC(stream_CreateFromFile("tests/e_med.pyc"), vm);
+	//OpenPYC(stream_CreateFromFile("tests/e_med.pyc","rb"), vm);
 	
 	//OpenPYC("tests/e_bigger.pyc", vm);
 	//OpenPYC("tests/e_max.pyc", vm);
@@ -429,18 +424,18 @@ void brute_test(void)
 	//OpenPYC("tests/test10.pyc", vm);
 	//OpenPYC("tests/e.pyc", vm);
 	
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_VERBOSE_TESTS,"closing vm\n");
 	#endif
 	vm_Close(vm);
 	streams_Close();
 	gc_Close();
 	// printf("objects headers total size : %d\n",objects_header_total);
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_DUMP_UNSUPPORTED) > 0)
 		DumpUnsupportedOpCodes();
 	
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_VERBOSE_TESTS,"closing memory manager\n");
 	#endif
 	mem_Close();
@@ -453,10 +448,10 @@ void brute_test(void)
 
 void AtomicOpenPYC(char *filename)
 {
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	//debug_level = 0;
 	//debug_level |= DEBUG_INTERACTIVE;
-	//debug_level |= DEBUG_MEMORY;
+	debug_level |= DEBUG_MEMORY;
 	//debug_level |= DEBUG_SHOW_OPCODES;
 	//debug_level |= DEBUG_FULL_DUMP;
 	//debug_level |= DEBUG_STACK;
@@ -470,7 +465,7 @@ void AtomicOpenPYC(char *filename)
 	//debug_level |= DEBUG_DUMP_OBJECT;
 	//debug_level |= DEBUG_CREATION;
 	//debug_level |= DEBUG_VERBOSE_FREEING;
-	//debug_level |= DEBUG_VERBOSE_TESTS;	
+	debug_level |= DEBUG_VERBOSE_TESTS;	
 	//debug_level |= DEBUG_PTR_LISTS;
 	//debug_level |= DEBUG_INTERNAL_FUNCTIONS;
 	//debug_level |= DEBUG_COUNT_OBJECTS;
@@ -485,10 +480,10 @@ void AtomicOpenPYC(char *filename)
 	AddInternalFunctions(vm);
 
 	long pyc_magic = MAGIC;
-	stream *f = stream_CreateFromFile(filename);
+	stream *f = stream_CreateFromFile(filename,"rb");
 	if (!stream_Open(f))
 		return;
-	//#ifdef DEBUGGING
+	//#ifdef USE_DEBUGGING
 	//debug_printf(DEBUG_VERBOSE_TESTS,"executing object:%s\n", filename);
 	//#endif
 	// int r = fread(bh,4,1,f);
@@ -514,12 +509,12 @@ void AtomicOpenPYC(char *filename)
 	// printf("max objects : %d\n",objects_max);
 	// printf("objects headers total size : %d\n",objects_header_total);
 	vm_AddGlobal(vm, (code_object*)obj);
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_DUMP_OBJECT) > 0)
 		DumpObject(obj, 0);
 	#endif
 	object *ret = NULL;
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_INTERACTIVE) > 0)
 		ret = vm_InteractiveRunObject(vm, obj, NULL);	// ,obj
 	else
@@ -527,50 +522,50 @@ void AtomicOpenPYC(char *filename)
 	#else
 	ret = vm_RunObject(vm, obj, NULL);	// ,obj
 	#endif
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_ALL,"\n");
 	#endif
 	if (ret != NULL)
 	{
-		#ifdef DEBUGGING
+		#ifdef USE_DEBUGGING
 		if((debug_level & DEBUG_DUMP_OBJECT) > 0)
 			DumpObject(ret, 0);
 		#endif
 		gc_DecRefCount(ret);
 	}
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	//debug_printf(DEBUG_VERBOSE_TESTS,"object executed:%s\n", filename);
 	if((debug_level & DEBUG_DUMP_OBJECT) > 0)
 		DumpObject(obj,0);
 	debug_printf(DEBUG_VERBOSE_TESTS,"cleaning up object:%s\n",filename);
 	#endif
 	//DumpObject(obj,0);
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_VERBOSE_TESTS,"removing object from globals\n");
 	#endif
 	vm_RemoveGlobal(vm,(code_object*)obj);
 
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_VERBOSE_TESTS,"freeing object now\n");
 	#endif
 	gc_DecRefCount(obj);
 	//printf("freeing stream\n");
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_VERBOSE_TESTS,"freeing stream\n");
 	#endif
 	stream_Free(f);
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_VERBOSE_TESTS,"pyc executed\n");
 	#endif
 
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_VERBOSE_TESTS,"closing vm\n");
 	#endif
 	vm_Close(vm);
 	streams_Close();
 	gc_Close();
 	// printf("objects headers total size : %d\n",objects_header_total);
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_DUMP_UNSUPPORTED) > 0)
 		DumpUnsupportedOpCodes();
 	
@@ -585,7 +580,7 @@ void AtomicOpenPYC(char *filename)
 	//printf("executing python cmd:%s\n",py_cmd);
 	system(py_cmdf);
 	printf("\n}\n");
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	assert(mem_free(py_cmd));
 	assert(mem_free(py_cmdf));
 	debug_printf(DEBUG_VERBOSE_TESTS,"closing memory manager\n");
@@ -602,7 +597,7 @@ void AtomicOpenPYC(char *filename)
 
 void atomic_test(void)
 {
-	#ifdef DEBUGGING
+	#ifdef USE_DEBUGGING
 	debug_level = 0;
 	//debug_level |= DEBUG_INTERACTIVE;
 	debug_level |= DEBUG_MEMORY;
@@ -619,7 +614,7 @@ void atomic_test(void)
 	//debug_level |= DEBUG_DUMP_OBJECT;
 	//debug_level |= DEBUG_CREATION;
 	//debug_level |= DEBUG_VERBOSE_FREEING;
-	//debug_level |= DEBUG_VERBOSE_TESTS;	
+	debug_level |= DEBUG_VERBOSE_TESTS;	
 	//debug_level |= DEBUG_PTR_LISTS;
 	//debug_level |= DEBUG_INTERNAL_FUNCTIONS;
 	//debug_level |= DEBUG_COUNT_OBJECTS;
@@ -791,8 +786,12 @@ int main(int argc, char *argv[])
 	//brute_test();
 	for(int i=0;i<100000;i++)
 	{
+		printf("[[[[[%d]]]]]\n",i);
 		char *tmp = (char*)malloc(i);
 		atomic_test();
+		//mem_Init();
+		//ptr_tests();
+		//mem_Close();
 		free(tmp);
 	}
 	//AtomicOpenPYC("tests/test_nested_function.pyc");

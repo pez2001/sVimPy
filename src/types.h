@@ -33,8 +33,22 @@
 //stream 
 #ifdef USE_ARDUINO_FUNCTIONS
 #define STREAM_NUM unsigned short
+// used in INDEXING situations
+#define INDEX short 
+//used in enum over array and total numbers
+//#define NUM unsigned short
+#define NUM short
+//used in relative calcs
+#define REL_NUM short
 #else
 #define STREAM_NUM long 
+// used in INDEXING situations
+#define INDEX long 
+//used in enum over array and total numbers
+//#define NUM unsigned short
+#define NUM long
+//used in relative calcs
+#define REL_NUM long
 #endif
 
 #define STREAM_TYPE_ID char
@@ -44,13 +58,6 @@
 //standard floating number size
 #define FLOAT float
 
-// used in INDEXING situations
-#define INDEX short 
-//used in enum over array and total numbers
-//#define NUM unsigned short
-#define NUM short
-//used in relative calcs
-#define REL_NUM short
 
 //used for boolean comparisons
 #define BOOL unsigned char
