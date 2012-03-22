@@ -33,6 +33,8 @@ void ExecutePYC(char *filename)
 	//printf("executing object:%s\n", filename);
 	vm *vm = vm_Init(NULL);
 	AddInternalFunctions(vm);
+	fmod_Init(vm);
+
 	long pyc_magic = MAGIC;
 	stream *f = stream_CreateFromFile(filename,"rb");
 	if (!stream_Open(f))
@@ -57,6 +59,7 @@ void ExecutePYC(char *filename)
 	gc_DecRefCount(obj);
 	stream_Free(f);
 	vm_Close(vm);
+	fmod_Close();
 	streams_Close();
 	gc_Close();
 }
@@ -68,6 +71,7 @@ void ExecuteRPYC(char *filename)
 	//printf("executing object:%s\n", filename);
 	vm *vm = vm_Init(NULL);
 	AddInternalFunctions(vm);
+	fmod_Init(vm);
 	stream *f = stream_CreateFromFile(filename,"rb");
 	if (!stream_Open(f))
 		return;
@@ -87,6 +91,7 @@ void ExecuteRPYC(char *filename)
 	gc_DecRefCount(obj);
 	stream_Free(f);
 	vm_Close(vm);
+	fmod_Close();
 	streams_Close();
 	gc_Close();
 }
@@ -98,6 +103,8 @@ void ExecuteRPYC_PLUS(char *filename)
 	//printf("executing object:%s\n", filename);
 	vm *vm = vm_Init(NULL);
 	AddInternalFunctions(vm);
+	fmod_Init(vm);
+
 	stream *f = stream_CreateFromFile(filename,"rb");
 	if (!stream_Open(f))
 		return;
@@ -117,6 +124,7 @@ void ExecuteRPYC_PLUS(char *filename)
 	gc_DecRefCount(obj);
 	stream_Free(f);
 	vm_Close(vm);
+	fmod_Close();
 	streams_Close();
 	gc_Close();
 }

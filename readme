@@ -1,4 +1,4 @@
-	sVimPy-0.57
+	sVimPy-0.59
 
 sVimPy is a very small Python virtual machine intended for use in microcontroller projects.
 
@@ -12,21 +12,25 @@ The microcontroller bootloader is still missing (no arduinos left for experiment
 
 Features include: 
 
- * function calling
  * a stack based VM
  * garbage collection
  * very low memory usage
  * an interactive debugging console
  * dictionaries and tuples
  * iterations 
+ * compares
  * VM single stepping (game loop usage is possible)
- * C function calling,
+ * calling Pyton functions from C and Python itself
+ * calling C functions from C and Python,
  * a small memory footprint
  * fast performance
  * the ability to be used as a library in other projects
  * simple API + code
+ * it's easy to add new functions to be called from python
  * possible usage as a small deployment executable for Python projects
-
+ * portable interpreter executable
+ * an additional minimal pyc format called rpyc+ (code object layout minimized)
+ * some support tools to be used with svimpy
  
 	Roadmap :
 	
@@ -37,18 +41,20 @@ Features include:
 	0.55  fix function calls bugs introduced during rewrite of some code parts + build_inc tool (to automatically increment build number)
 	0.56  fixed a million dollar bug :-) BLINK example runs on an atmega328p with only 2kb 
 	0.57  stream writing
-	0.58  add svimpy interpreter executable + pyc_compress tool (WriteObject function) + pack_pos tool (for packing of python objects)
+	0.58  add svimpy interpreter executable + pyc_compress tool (WriteObject function) + pack_pos tool (for packing of python objects) + cleaned up debugging + Makefile enhancements
+	0.59  added mp3 playback with external library to test wrapper abilities (every engine needs mp3 support) of course i dont intend to use it on small scale devices just for testing
 	0.6    internal functions
 	0.7    add module import abilities
 	0.75  stream printing + sd-fat support
 	0.8    vm feature complete (except classes ,exceptions and some builtin functions)
 	0.9    memory optimizations including object locking mechanism + caching  for near zero byte memory usage interpretation of python code
-	1.0    stable release + real life applications
+	0.99  source clean up + prepare packaging
+	1.0    stable release + real life applications + packaging
 	1.1    custom bootloader
 	1.5    ??? :-)
 	2.0    slices
 	2.1    classes
-	
+	3.0    time sliced multithreading
 	
 	
 	

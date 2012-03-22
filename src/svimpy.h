@@ -24,7 +24,10 @@
 #ifndef SVIMPY_H
 #define SVIMPY_H
 
+#include "features.h"
 #include "vm.h"
+
+#include "libraries/fmod_wrapper.h"
 
 #include <stdio.h>
 #include <stdlib.h>

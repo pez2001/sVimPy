@@ -27,12 +27,12 @@
 
 
 MAJOR_VERSION = 0
-MINOR_VERSION = 57
+MINOR_VERSION = 59
 #builds are counted since version 0.5 roughly
 BUILD = 220
 DEBUG_BUILD = 6
 
-CFLAGS= -W -w -O2 -std=c99 -DBUILD=$(BUILD) -DMAJOR_VERSION=$(MAJOR_VERSION) -DMINOR_VERSION=$(MINOR_VERSION)
+CFLAGS= -Ilibraries/fmod -W -w -O2 -std=c99 -DBUILD=$(BUILD) -DMAJOR_VERSION=$(MAJOR_VERSION) -DMINOR_VERSION=$(MINOR_VERSION)
 DEBUG_CFLAGS = -m32 -g3 -O0 -Wall -pedantic -Wstrict-prototypes -std=c99 -fbounds-check -Wuninitialized -DUSE_DEBUGGING -DBUILD=$(BUILD) -DMAJOR_VERSION=$(MAJOR_VERSION) -DMINOR_VERSION=$(MINOR_VERSION)
 CC=gcc
 AR=ar
@@ -121,10 +121,10 @@ TOOLS_PACK_POS_FILES = tools/pack_pos/pack_pos.c
 TOOLS_PACK_POS_INCLUDE_FILES = tools/pack_pos/pack_pos.h
 TOOLS_PACK_POS_OBJ = tools/pack_pos/pack_pos.o
 
-SVIMPY_FILES = svimpy.c
-SVIMPY_INCLUDE_FILES = svimpy.h
-SVIMPY_OBJ = svimpy.o
-SVIMPY_DEBUG_OBJ = svimpy.do
+SVIMPY_FILES = svimpy.c libraries/fmod_wrapper.c
+SVIMPY_INCLUDE_FILES = svimpy.h libraries/fmod_wrapper.h
+SVIMPY_OBJ = svimpy.o libraries/fmod_wrapper.o
+SVIMPY_DEBUG_OBJ = svimpy.do libraries/fmod_wrapper.do
 
 test: clean all
 	unit_tests.exe
@@ -166,10 +166,10 @@ compress_pyc_o: $(TOOLS_COMPRESS_PYC_OBJ)
 	$(CC) $(TOOLS_COMPRESS_PYC_OBJ) -o compress_pyc 
 
 svimpy: vm_static $(SVIMPY_OBJ) 
-	$(CC) $(SVIMPY_OBJ) vm.a  -o svimpy 
+	$(CC) $(SVIMPY_OBJ) vm.a libraries/libfmodex.a -lkernel32 -o svimpy 
 
 svimpy_debug: vm_static_debug $(SVIMPY_DEBUG_OBJ) 
-	$(CC) $(SVIMPY_DEBUG_OBJ) vm.da  -o svimpy_debug 
+	$(CC) $(SVIMPY_DEBUG_OBJ) vm.da libraries/libfmodex.a -o svimpy_debug 
 
 svimpy_o: $(VM_OBJ) $(SVIMPY_OBJ)
 	$(CC) $(VM_OBJ) $(SVIMPY_OBJ)  -o svimpy 

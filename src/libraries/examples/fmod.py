@@ -1,6 +1,8 @@
-/* 
+"""
  * sVimPy - small Virtual interpreting machine for Python
  * (c) 2012 by Tim Theede aka Pez2001 <pez2001@voyagerproject.de> / vp
+ *
+ * python arduino api wrapper
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,43 +20,6 @@
  *
  * THIS SOFTWARE IS SUPPLIED AS IT IS WITHOUT ANY WARRANTY!
  *
- */
+"""
 
-
-#ifndef FEATURES_H
-#define FEATURES_H
-
-
-
-//#define USE_CALL_FUNCTION_VAR
-//#define USE_CALL_FUNCTION_VAR_KW
-//#define USE_CALL_FUNCTION_KEYWORDS
-
-//#define USE_INTERACTIVE_CONSOLE
-
-//#define USE_GENERATORS
-
-//#define USE_EXTENDED_INTERFACE
-
-//#define USE_OUTPUT
-
-//#define USE_INPUT
-
-//#define USE_SERIAL_STREAM
-
-#define USE_FILE_STREAM
-
-#define USE_INTERNAL_FUNCTIONS
-
-//#define USE_ARDUINO_FUNCTIONS
-
-#define USE_FMOD_FUNCTIONS
-
-#ifdef USE_ARDUINO_FUNCTIONS
-#undef USE_DEBUGGING
-//#define USE_ARDUINO_DEBUGGING
-//#define USE_ARDUINO_OPCODE_DEBUGGING
-#endif
-
-
-#endif
+def playSound(filename,mode):pass

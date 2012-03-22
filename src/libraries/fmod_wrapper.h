@@ -20,11 +20,25 @@
  *
  */
 
+#ifndef FMOD_WRAPPER_H
+#define FMOD_WRAPPER_H
 
-#ifndef ARDUINO_IO_H
-#define ARDUINO_IO_H
+#include "../features.h"
 
-#ifdef USE_ARDUINO_FUNCTIONS
+#ifdef USE_FMOD_FUNCTIONS
+
+//#include "fmod/fmod_codec.h"
+//#include "fmod/fmod_dsp.h"
+//#include "fmod/fmod_memoryinfo.h"
+//#include "fmod/fmod_output.h"
+#include "fmod/fmod.h"
+#include "fmod/fmod_errors.h"
+//#include <windows.h>
+void __stdcall Sleep(unsigned long);
+//#include <unistd.h>
+//int usleep(unsigned long useconds) __THROW;
+//unsigned int sleep(unsigned int seconds) __THROW;
+//void WINAPI Sleep( __in  long dwMilliseconds);
 
 #include "../types.h"
 #include "../object.h"
@@ -33,19 +47,15 @@
 #include "../debug.h"
 
 
-#include "libarduino/arduino.h"
+object *fmod_playSound(vm *vm,tuple_object *locals,tuple_object *kw_locals); //(filename,mode); - returns id object used in other functions
+object *fmod_Sleep(vm *vm,tuple_object *locals,tuple_object *kw_locals);
+void AddFmodFunctions(vm *vm);
+void AddFmodGlobals(vm *vm);
 
-object *a_pinMode(vm *vm,tuple_object *locals,tuple_object *kw_locals); //(pin,mode);
-object *a_digitalRead(vm *vm,tuple_object *locals,tuple_object *kw_locals); //(pin);
-object *a_digitalWrite(vm *vm,tuple_object *locals,tuple_object *kw_locals); //(pin,value);
-object *a_analogRead(vm *vm,tuple_object *locals,tuple_object *kw_locals); //(pin,);
-object *a_analogWrite(vm *vm,tuple_object *locals,tuple_object *kw_locals); //(pin,value);
-object *a_delay(vm *vm,tuple_object *locals,tuple_object *kw_locals); //(ms);
-object *a_serialprint(vm *vm,tuple_object *locals,tuple_object *kw_locals); //(message);
-object *a_serialBegin(vm *vm,tuple_object *locals,tuple_object *kw_locals); //(baudrate);
 
-void AddArduinoFunctions(vm *vm);
-void AddArduinoGlobals(vm *vm);
+void fmod_Init(vm *vm);
+void fmod_Close(void);
+
 
 #endif
 #endif
