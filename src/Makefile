@@ -29,8 +29,8 @@
 MAJOR_VERSION = 0
 MINOR_VERSION = 59
 #builds are counted since version 0.5 roughly
-BUILD = 220
-DEBUG_BUILD = 6
+BUILD = 221
+DEBUG_BUILD = 7
 
 CFLAGS= -Ilibraries/fmod -W -w -O2 -std=c99 -DBUILD=$(BUILD) -DMAJOR_VERSION=$(MAJOR_VERSION) -DMINOR_VERSION=$(MINOR_VERSION)
 DEBUG_CFLAGS = -m32 -g3 -O0 -Wall -pedantic -Wstrict-prototypes -std=c99 -fbounds-check -Wuninitialized -DUSE_DEBUGGING -DBUILD=$(BUILD) -DMAJOR_VERSION=$(MAJOR_VERSION) -DMINOR_VERSION=$(MINOR_VERSION)
