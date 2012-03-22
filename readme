@@ -59,7 +59,8 @@ Features include:
 	0.8    vm feature complete 
 	        (except classes ,exceptions and some builtin functions)
 	0.9    memory optimizations including object locking mechanism 
-	        + caching  for near zero byte memory usage interpretation of python code
+	        + caching  for near zero byte memory usage interpretation 
+			of python code
 	0.99  source clean up + prepare packaging
 	1.0    stable release + real life applications + packaging
 	1.1    custom bootloader
