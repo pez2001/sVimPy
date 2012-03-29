@@ -188,6 +188,7 @@ void AddArduinoGlobals(vm *vm)
 	a_globals->varnames = NULL;
 	a_globals->freevars = NULL;
 	a_globals->cellvars = NULL;
+	a_globals->ref_count = 0;
 	a_globals->names = (object*)CreateTuple(4);
 
 	int_object *vinput = CreateIntObject(0);

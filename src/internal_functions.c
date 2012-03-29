@@ -550,22 +550,23 @@ object *if_open(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 	file->varnames = NULL;
 	file->freevars = NULL;
 	file->cellvars = NULL;
-	file->names = (object*)CreateTuple(4);
-
+	file->names = (object*)CreateTuple(1);
+	gc_IncRefCount(file->names);
+	file->ref_count = 0;
 	//int_object *vinput = CreateIntObject(0);
 	//int_object *voutput = CreateIntObject(1);
 	//int_object *vlow = CreateIntObject(0);
 	//int_object *vhigh = CreateIntObject(1);
 	
-	cfunction_object *cfo = CreateCFunctionObject(&if_file_readline,NULL,(tuple_object*)file->varnames);
+	cfunction_object *cfo = CreateCFunctionObject(&if_file_readline,NULL,NULL);//,(tuple_object*)file->varnames);
 	unicode_object *readline = CreateUnicodeObject(str_Copy("readline"));
 	kv_object *kvreadline = CreateKVObject((object*)readline,(object*) cfo);
 	SetItem(file->names,0,(object*)kvreadline);
 	
 	return((object*)file);
 		
-	object *tmp =CreateEmptyObject(TYPE_NONE);
-	return (tmp);
+	//object *tmp =CreateEmptyObject(TYPE_NONE);
+	//return (tmp);
 }
 
 object *if_list(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
