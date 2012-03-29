@@ -45,58 +45,6 @@ void initUSART (void)
      UBRR0L = (uint8_t) (baud_setting);    
 } 
 
-/*void ptr_tests()
-{
-	ptr_list *p = ptr_CreateList(0, 0);
-	digitalWrite(13, HIGH);
-	delay(1000);
-	ptr_Push(p, (void*)1);
-	ptr_Push(p, (void*)2);
-	ptr_Push(p, (void*)3);
-	ptr_Push(p, (void*)4);
-	digitalWrite(13, LOW);
-	delay(1000);
-	long x =(long) ptr_Pop(p);
-	ptr_Push(p, (void*)5);
-	digitalWrite(13, HIGH);
-	delay(1000);
-	long r = (long)ptr_Remove(p, 2);
-	digitalWrite(13, LOW);
-	delay(1000);
-	digitalWrite(13, HIGH);
-	delay(1000);
-	ptr_Insert(p, 3, (void*)66);
-	ptr_Insert(p, 0, (void*)99);
-	digitalWrite(13, HIGH);
-	delay(1000);
-	ptr_Set(p, 1, (void*)22);
-	digitalWrite(13, LOW);
-	delay(1000);
-	ptr_Queue(p, (void*)88);
-	digitalWrite(13, HIGH);
-	delay(1000);
-	ptr_Clear(p);
-	digitalWrite(13, LOW);
-	delay(1000);
-	ptr_Push(p, (void*)0);
-	digitalWrite(13, HIGH);
-	delay(1000);
-	for (int i = 0; i < 100; i++)
-		ptr_Push(p, (void*)1);
-	for (int i = 0; i < 100; i++)
-		ptr_Pop(p);
-
-	for (int i = 0; i < 100; i++)
-	{
-		ptr_Push(p,(void*)0);
-		ptr_Pop(p);
-	}
-	digitalWrite(13, LOW);
-	delay(1000);
-	ptr_CloseList(p);
-}
-*/
-
 int debug_level = 0;
 
 extern void *__bss_end;
@@ -240,7 +188,7 @@ int __attribute__((OS_main)) main(void)
 	printf("rp:%4d\n",get_free_memory());
 	//debug_printf(DEBUG_ALL,"run thru\r\n");
 	//Serial.println("thru");
-	vm_CallFunction(vm,"setup",NULL,0);
+	vm_CallFunction(vm,"setup",NULL);
 	printf("cf:%4d\n",get_free_memory());
 	//debug_printf(DEBUG_ALL,"called setup\r\n");
 	//vm_Close(vm);
@@ -250,9 +198,9 @@ int __attribute__((OS_main)) main(void)
     int c = 0;
 	for (;;)
 	{
-		vm_CallFunction(vm,"loop",NULL,0);
-		printf("loop:%4d\n",c);
-		c++;
+		vm_CallFunction(vm,"loop",NULL);
+		//printf("loop:%4d\n",c);
+		//c++;
 	}
 		//		loop(vm);
         

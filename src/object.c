@@ -31,15 +31,6 @@ block_object *AllocBlockObject(void)
 	return((block_object *)malloc(sizeof(block_object)));
 	#endif
 }
-/*
-loop_block_object *AllocLoopBlockObject()
-{	
-	#ifdef USE_DEBUGGING
-	return((loop_block_object *)mem_malloc(sizeof(loop_block_object), "AllocLoopBlockObject() return"));
-	#else
-	return((loop_block_object *)malloc(sizeof(loop_block_object)));
-	#endif
-}*/
 
 kv_object *AllocKVObject(void)
 {
@@ -76,16 +67,16 @@ function_object *AllocFunctionObject(void)
 	return((function_object *) malloc(sizeof(function_object)));
 	#endif
 }
-/*
+
 cfunction_object *AllocCFunctionObject(void)
 {
 	#ifdef USE_DEBUGGING
-	return((cfunction_object *) mem_malloc(sizeof(cfunction_object),"AllocCFunctionObject() return"));
+	return((cfunction_object*) mem_malloc(sizeof(cfunction_object),"AllocCFunctionObject() return"));
 	#else
-	return((cfunction_object *) malloc(sizeof(cfunction_object)));
+	return((cfunction_object*) malloc(sizeof(cfunction_object)));
 	#endif
 }
-*/
+
 string_object *AllocStringObject(void)
 {
 	#ifdef USE_DEBUGGING
@@ -479,17 +470,30 @@ function_object *CreateFunctionObject(code_object *co)//unsigned char func_type)
 	#endif
 	return(r);
 }
-/*
-cfunction_object *CreateCFunctionObject(char *name,struct _object* (*func) (struct _vm *vm,struct _tuple_object *locals,struct _tuple_object *kw_locals))//,OBJECT_FLAGS flags)
+
+cfunction_object *CreateCFunctionObject(struct _object* (*func) (struct _vm *vm,struct _tuple_object *locals,struct _tuple_object *kw_locals),tuple_object *defaults,tuple_object *kw_defaults)
 {
 	cfunction_object *r = AllocCFunctionObject();
 	r->type = TYPE_CFUNCTION;
 	//r->flags = flags;
 	//r->func.func = NULL;
 	r->func = func;
-	r->name = NULL;
+	//r->name = NULL;
 	r->ref_count = 0;
-	//r->func_type = func_type;
+	if(defaults != NULL)
+	{
+		r->defaults = defaults;
+		gc_IncRefCount((object*)defaults);
+	}
+	else
+		r->defaults = NULL;
+	if(kw_defaults != NULL)
+	{
+		r->kw_defaults = kw_defaults;
+		gc_IncRefCount((object*)kw_defaults);
+	}
+	else
+		r->kw_defaults = NULL;
 	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
@@ -499,7 +503,7 @@ cfunction_object *CreateCFunctionObject(char *name,struct _object* (*func) (stru
 	#endif
 	return(r);
 }
-*/
+
 iter_object *CreateIterObject(void)//OBJECT_FLAGS flags)
 {
 	iter_object *r = AllocIterObject();
@@ -718,12 +722,12 @@ void DumpObject(object * obj, char level)
 			debug_printf(DEBUG_ALL,"C Object function\n");
 		}*/
 		break;
-/*	case TYPE_CFUNCTION:
-			debug_printf(DEBUG_ALL,"cfunction object: %s\n",((cfunction_object*)obj)->name);
+	case TYPE_CFUNCTION:
+			debug_printf(DEBUG_ALL,"cfunction object: %x\n",((cfunction_object*)obj)->func);
 			for (char i = 0; i < level; i++)
 				debug_printf(DEBUG_ALL,"\t");
 			debug_printf(DEBUG_ALL,"C function\n");
-		break;*/
+		break;
 	case TYPE_UNICODE:
 		debug_printf(DEBUG_ALL,"unicode object: %s\n", ((unicode_object*)obj)->value);
 		break;

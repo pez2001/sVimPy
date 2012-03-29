@@ -245,7 +245,7 @@ stream *stream_CreateDebugOutput(void)
 BOOL stream_Open(struct _stream *stream)
 {
 	if(stream->type->stream_open == NULL)
-		return(0);
+		return(1);
 	BOOL b = stream->type->stream_open(stream);
 	return(b);
 }
@@ -253,42 +253,42 @@ BOOL stream_Open(struct _stream *stream)
 BOOL stream_Close(struct _stream *stream)
 {
 	if(stream->type->stream_close == NULL)
-		return(0);
+		return(1);
 	return(stream->type->stream_close(stream));
 }
 
 BOOL stream_Free(struct _stream *stream)
 {
 	if(stream->type->stream_free == NULL)
-		return(0);
+		return(1);
 	return(stream->type->stream_free(stream));
 }
 
 BOOL stream_Read(struct _stream *stream,void *ptr,STREAM_NUM len)
 {
 	if(stream->type->stream_read == NULL)
-		return(0);
+		return(1);
 	return(stream->type->stream_read(stream,ptr,len));
 }
 
 BOOL stream_Write(struct _stream *stream,void *ptr ,STREAM_NUM len)
 {
 	if(stream->type->stream_write == NULL)
-		return(0);
+		return(1);
 	return(stream->type->stream_write(stream,ptr,len));
 }
 
 BOOL stream_Seek(struct _stream *stream,STREAM_NUM offset,STREAM_ORIGIN origin)
 {
 	if(stream->type->stream_seek == NULL)
-		return(0);
+		return(1);
 	return(stream->type->stream_seek(stream,offset,origin));
 }
 
 INT stream_GetPos(struct _stream *stream)
 {
 	if(stream->type->stream_getpos == NULL)
-		return(0);
+		return(1);
 	return(stream->type->stream_getpos(stream));
 }
 //file stream functions

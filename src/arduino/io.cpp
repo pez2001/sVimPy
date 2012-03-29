@@ -29,7 +29,7 @@ object *a_pinMode(vm *vm,tuple_object *locals,tuple_object *kw_locals)
  //pin,mode
 	object *pin = GetItem((object*)locals,0);
 	object *mode = GetItem((object*)locals,1);
-	printf("pinMode\n");
+	//printf("pinMode\n");
 	//TODO only a temp solution
 	if(pin->type == TYPE_KV)
 		pin = (object*)((kv_object*)pin)->value;
@@ -37,7 +37,7 @@ object *a_pinMode(vm *vm,tuple_object *locals,tuple_object *kw_locals)
 		mode = (object*)((kv_object*)mode)->value;
 	if(pin->type == TYPE_INT && mode->type == TYPE_INT)
 		pinMode(((int_object*)pin)->value,((int_object*)mode)->value);
-	printf("pinMode: %d to %d\n",((int_object*)pin)->value,((int_object*)mode)->value);
+	//printf("pinMode: %d to %d\n",((int_object*)pin)->value,((int_object*)mode)->value);
 	object *tmp =CreateEmptyObject(TYPE_NONE);
 	return (tmp);	
 }
@@ -58,19 +58,35 @@ object *a_digitalRead(vm *vm,tuple_object *locals,tuple_object *kw_locals)
 object *a_digitalWrite(vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
  //pin,value
+	if(locals->list->num < 2)
+	{
+		//printf("not enough args for digitalWrite();\r\n");
+		object *tmp =CreateEmptyObject(TYPE_NONE);
+		return (tmp);	
+	}
 	object *pin = GetItem((object*)locals,0);
-	object *value = GetItem((object*)locals,1);
-    //printf("pt:%c,vt:%c\r\n",pin->type,value->type);
-	printf("digitalWrite\n");
+	object *val = GetItem((object*)locals,1);
+    //PrintObject(pin);
+	//printf("\r\nval:");
+	//PrintObject(val);
+	//printf("\r\n");
+	//printf("pt:%c,vt:%c\r\n",pin->type,val->type);
+	//printf("digitalWrite\n");
 	//TODO only a temp solution
 	if(pin->type == TYPE_KV)
-		pin = (object*)((kv_object*)pin)->value;
-	if(value->type == TYPE_KV)
-		value = (object*)((kv_object*)value)->value;
-	if(pin->type == TYPE_INT && value->type == TYPE_INT)
+		pin =(object*) ((kv_object*)pin)->value;
+	if(val->type == TYPE_KV)
 	{
-		printf("digitalWrite:%d,val:%d\r\n",((int_object*)pin)->value,((int_object*)value)->value);
-		digitalWrite(((int_object*)pin)->value,((int_object*)value)->value);
+		val =(object*) ((kv_object*)val)->value;
+		//printf("pt:%c,vt:%c\r\n",pin->type,val->type);
+		//printf("val:%d\r\n",((int_object*)val)->value);
+	}
+	if((pin->type == TYPE_INT) && (val->type == TYPE_INT))
+	{
+		//printf("dw:\r\n");
+		//printf("pin:%d\r\n",((int_object*)pin)->value);
+		//printf("val:%d\r\n",((int_object*)val)->value);
+		digitalWrite(((int_object*)pin)->value,((int_object*)val)->value);
 	}
 	object *tmp =CreateEmptyObject(TYPE_NONE);
 	return (tmp);	
@@ -103,10 +119,12 @@ object *a_analogWrite(vm *vm,tuple_object *locals,tuple_object *kw_locals)
 object *a_delay(vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
  //ms
- 	printf("delay\n");
+ 	//printf("delay\n");
  	object *ms = GetItem((object*)locals,0);
-	if(ms->type == TYPE_INT)
-		delay(((int_object*)ms)->value);
+	//if(ms->type == TYPE_INT)
+	//	printf("delay:%d\r\n",((int_object*)ms)->value);
+	//	delay(((int_object*)ms)->value);
+	//delay(8);
 	object *tmp =CreateEmptyObject(TYPE_NONE);
 	return (tmp);	
 }
@@ -158,6 +176,7 @@ void AddArduinoFunctions(vm *vm)
 void AddArduinoGlobals(vm *vm)
 {
 	code_object *a_globals = AllocCodeObject();
+	a_globals->type = TYPE_CODE;
 	a_globals->name = str_Copy("Arduino");
 	a_globals->argcount = 0;
 	a_globals->kwonlyargcount = 0;

@@ -523,6 +523,51 @@ object *custom_code(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 	return(BinaryOp(a,b,OPCODE_BINARY_ADD));
 }
 
+object *if_file_readline(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+{
+	printf("readline called\n");
+	object *tmp =CreateEmptyObject(TYPE_NONE);
+	return (tmp);
+}
+
+
+object *if_open(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+{
+	object *x = GetItem((object*)locals,0);
+	if(x->type == TYPE_UNICODE)
+		printf("opening file:%s\n",((unicode_object*)x)->value);
+		
+	code_object *file = AllocCodeObject();
+	file->type = TYPE_CODE;
+	file->name = str_Copy(((unicode_object*)x)->value);
+	file->argcount = 0;
+	file->kwonlyargcount = 0;
+	file->nlocals = 4;
+	file->stacksize = 0;
+	file->co_flags = 0;
+	file->code = NULL;
+	file->consts = NULL;
+	file->varnames = NULL;
+	file->freevars = NULL;
+	file->cellvars = NULL;
+	file->names = (object*)CreateTuple(4);
+
+	//int_object *vinput = CreateIntObject(0);
+	//int_object *voutput = CreateIntObject(1);
+	//int_object *vlow = CreateIntObject(0);
+	//int_object *vhigh = CreateIntObject(1);
+	
+	cfunction_object *cfo = CreateCFunctionObject(&if_file_readline,NULL,(tuple_object*)file->varnames);
+	unicode_object *readline = CreateUnicodeObject(str_Copy("readline"));
+	kv_object *kvreadline = CreateKVObject((object*)readline,(object*) cfo);
+	SetItem(file->names,0,(object*)kvreadline);
+	
+	return((object*)file);
+		
+	object *tmp =CreateEmptyObject(TYPE_NONE);
+	return (tmp);
+}
+
 object *if_list(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
 	tuple_object *r = CreateTuple(0);
@@ -541,8 +586,11 @@ object *if_list(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 
 object *if_next(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
-	object *iter = GetItem((object*)locals,0);
+	iter_object *iter  = iter_CreateIter(GetItem((object *)locals,0),vm);
+	//object *iter = GetItem((object*)locals,0);
+	gc_IncRefCount((object*)iter);
 	object *next = iter_NextNow((iter_object*)iter,vm);
+	gc_DecRefCount((object*)iter);
 	return(next);
 }
 
@@ -567,16 +615,15 @@ object *if_range(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 
 	if (st == NULL && e == NULL && s->type == TYPE_INT)
 	{
-		iter_InitSequence(iter,0,((int_object*)s)->value,1);
+		iter_InitSequence(iter,vm,0,((int_object*)s)->value,1);
 	}
 	else if (st == NULL && s->type == TYPE_INT && e->type == TYPE_INT)
 	{
-		iter_InitSequence(iter,((int_object*)s)->value,((int_object*)e)->value,1);
+		iter_InitSequence(iter,vm,((int_object*)s)->value,((int_object*)e)->value,1);
 	}
-	else if (st != NULL && s->type == TYPE_INT && e->type == TYPE_INT
-			 && st->type == TYPE_INT)
+	else if (st != NULL && s->type == TYPE_INT && e->type == TYPE_INT && st->type == TYPE_INT)
 	{
-		iter_InitSequence(iter,((int_object*)s)->value,((int_object*)e)->value,((int_object*)st)->value);
+		iter_InitSequence(iter,vm,((int_object*)s)->value,((int_object*)e)->value,((int_object*)st)->value);
 	}
 	return ((object*)iter);
 }
@@ -658,39 +705,150 @@ object *if_sum(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 	return ((object*)tmp);
 }
 
-
-
 object *if_max(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
+	object *max = NULL;
+	INDEX i = 0;
+	object *t = GetItem((object *)locals,0);	
+	if(t->type == TYPE_ITER)
+	{
+		tuple_object *to = iter_TupleExpand((iter_object*)t,vm);
+		gc_IncRefCount((object*)to);
+		object *r = if_max(vm,to,NULL);
+		gc_DecRefCount((object*)to);
+		return(r);
+	}
+
+	while(i < locals->list->num)
+	{
+		object *t = GetItem((object *)locals,i);//TODO maybe move this into PrintObject() as case ITER:	
+
+		if (t != NULL)
+			switch (t->type)
+			{
+				case TYPE_INT:
+					if(max == NULL)
+						max = t;
+					else
+					if(((int_object*)t)->value > ((int_object*)max)->value)
+						max = t;//((int_object*)t)->value;
+					break;
+			}
+		i++;
+	}
+	if(max == NULL)
+	{
 	object *tmp =CreateEmptyObject(TYPE_NONE);
 	return (tmp);
+	}
+	return (max);
 }
 
 object *if_abs(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
+	object *a = GetItem((object*)locals,0);
+	switch(a->type)
+	{
+		case TYPE_INT:
+			{
+				int_object *tmp = CreateIntObject(abs(((int_object*)a)->value));
+				return ((object*)tmp);
+			}
+		case TYPE_BINARY_FLOAT:
+			{
+				float_object *tmp = CreateFloatObject(abs(((float_object*)a)->value));
+				return ((object*)tmp);
+			}
+	}
 	object *tmp =CreateEmptyObject(TYPE_NONE);
 	return (tmp);
 }
 
 object *if_len(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
-
-	object *tmp =CreateEmptyObject(TYPE_NONE);
-	return (tmp);
+	if(locals->list->num != 1)
+	{
+		object *tmp = CreateEmptyObject(TYPE_NONE);
+		return (tmp);
+	}
+	int_object *len = CreateIntObject(GetTupleLen(GetItem((object *)locals,0)));
+	#ifdef USE_DEBUGGING
+	debug_printf(DEBUG_VERBOSE_STEP,"returning len:%d\n",len);
+	#endif
+	return ((object*)len);
 }
 
 object *if_pow(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
-
+	if (locals->list->num < 2)
+	{
+		object *tmp = CreateEmptyObject(TYPE_NONE);
+		#ifdef USE_DEBUGGING
+		debug_printf(DEBUG_ALL,"not enough args for pow\n");
+		#endif
+		return (tmp);
+	}
+	object *x = GetItem((object*)locals,0);
+	object *y = GetItem((object*)locals,1);
+	object *z =  NULL;
+	if (locals->list->num > 2)
+		z = GetItem((object*)locals,2);
+	if (z == NULL && x->type == TYPE_INT && y->type == TYPE_INT)
+	{	
+		object *r = BinaryOp(x,y,OPCODE_BINARY_POWER);
+		return(r);
+	}
+	else
+	if (z != NULL && x->type == TYPE_INT && y->type == TYPE_INT && z->type == TYPE_INT)
+	{
+		object *r = BinaryOp(x,y,OPCODE_BINARY_POWER);
+		object *rm = BinaryOp(r,z,OPCODE_BINARY_MODULO);
+		gc_IncRefCount(r);
+		gc_DecRefCount(r);
+		return(rm);
+	}
+	//return ((object*)iter);
 	object *tmp =CreateEmptyObject(TYPE_NONE);
 	return (tmp);
 }
 
 object *if_min(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
+	object *min = NULL;
+	INDEX i = 0;
+	object *t = GetItem((object *)locals,0);	
+	if(t->type == TYPE_ITER)
+	{
+		tuple_object *to = iter_TupleExpand((iter_object*)t,vm);
+		gc_IncRefCount((object*)to);
+		object *r = if_min(vm,to,NULL);
+		gc_DecRefCount((object*)to);
+		return(r);
+	}
 
+	while(i < locals->list->num)
+	{
+		object *t = GetItem((object *)locals,i);	
+
+		if (t != NULL)
+			switch (t->type)
+			{
+				case TYPE_INT:
+					if(min == NULL)
+						min = t;
+					else
+					if(((int_object*)t)->value < ((int_object*)min)->value)
+						min = t;//((int_object*)t)->value;
+					break;
+			}
+		i++;
+	}
+	if(min == NULL)
+	{
 	object *tmp =CreateEmptyObject(TYPE_NONE);
 	return (tmp);
+	}
+	return (min);
 }
 
 object *if_sorted(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
@@ -708,25 +866,62 @@ object *if_reversed(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 
 object *if_all(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
-
-	object *tmp =CreateEmptyObject(TYPE_NONE);
-	return (tmp);
+	iter_object *iter = iter_CreateIter(GetItem((object *)locals,0),vm);
+	gc_IncRefCount((object*)iter);
+	object *r = CreateEmptyObject(TYPE_TRUE);
+	object *n = NULL;
+	do
+	{
+		n = iter_NextNow(iter,vm);
+		if(n->type != TYPE_TRUE)
+		 r->type = TYPE_FALSE;
+	}while(n->type != TYPE_NONE);
+	gc_DecRefCount((object*)iter);
+	return(r);
 }
 
 object *if_any(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
-	object *tmp =CreateEmptyObject(TYPE_NONE);
-	return (tmp);
+	iter_object *iter  = iter_CreateIter(GetItem((object *)locals,0),vm);
+	gc_IncRefCount((object*)iter);
+	object *r = CreateEmptyObject(TYPE_FALSE);
+	object *n = NULL;
+	do
+	{
+		n = iter_NextNow(iter,vm);
+		if(n->type == TYPE_TRUE)
+		 r->type = TYPE_TRUE;
+	}while(n->type != TYPE_NONE);
+	gc_DecRefCount((object*)iter);
+	return(r);
 }
 
 object *if_chr(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
+	object *a = GetItem((object*)locals,0);
+	if(a->type == TYPE_INT)
+	{
+		char *chr = str_FromChar(((int_object*)a)->value);
+		unicode_object *r = CreateUnicodeObject(chr);
+		#ifdef USE_DEBUGGING
+		assert(mem_free(chr));
+		#else
+		free(chr);
+		#endif
+		return((object*)r);
+	}
 	object *tmp =CreateEmptyObject(TYPE_NONE);
 	return (tmp);
 }
 
 object *if_ord(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
+	object *a = GetItem((object*)locals,0);
+	if(a->type == TYPE_UNICODE && strlen(((unicode_object*)a)->value) > 0)
+	{	
+		int_object *r = CreateIntObject(((unicode_object*)a)->value[0]);
+		return((object*)r);
+	}
 	object *tmp =CreateEmptyObject(TYPE_NONE);
 	return (tmp);
 }
@@ -739,8 +934,34 @@ object *if_cmp(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 
 object *if_hex(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
+	object *a = GetItem((object*)locals,0);
+	if(a->type == TYPE_INT)
+	{
+		NUM chars = 0;
+		for(INDEX i = 0;i<4;i++) // calculate space requirements
+		{
+			if((((int_object*)a)->value >> (i*8) & 255) > 0 )
+				chars = i;
+		}
+		#ifdef USE_DEBUGGING
+		char *tmp = (char *)mem_malloc(chars*2 + 1, "if_hex(); tmp");
+		#else
+		char *tmp = (char *)malloc(chars*2 + 1);
+		#endif
+		memset(tmp,0,chars*2 + 1);
+		sprintf(tmp,"%X",((int_object*)a)->value);
+		
+		unicode_object *r = CreateUnicodeObject(tmp);
+		#ifdef USE_DEBUGGING
+		assert(mem_free(tmp));
+		#else
+		free(tmp);
+		#endif
+		return((object*)r);
+	}
 	object *tmp =CreateEmptyObject(TYPE_NONE);
 	return (tmp);
+
 }
 
 object *if_int(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
@@ -758,6 +979,18 @@ object *if_float(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 
 object *if_iter(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
+	if(locals->list->num == 2)
+	{//uses a sentinel
+		//TODO will not work
+		iter_object *iter  = iter_CreateIter(GetItem((object *)locals,0),vm);
+		return((object*)iter);
+	}
+	else
+	if(locals->list->num == 2)
+	{
+		iter_object *iter  = iter_CreateIter(GetItem((object *)locals,0),vm);
+		return((object*)iter);
+	}
 
 	object *tmp =CreateEmptyObject(TYPE_NONE);
 	return (tmp);
@@ -776,15 +1009,19 @@ object *if_map(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 void AddInternalFunctions(struct _vm *vm)
 {
 	cfunction *list = CreateCFunction(&if_list, "list");
-	cfunction *range = CreateCFunction(&if_range, "range");
-	cfunction *print = CreateCFunction(&if_print, "print");
-	cfunction *sum = CreateCFunction(&if_sum, "sum");
-	cfunction *next = CreateCFunction(&if_next, "next");
 	vm_AddFunction(vm, list);
+	cfunction *range = CreateCFunction(&if_range, "range");
 	vm_AddFunction(vm, range);
+	cfunction *print = CreateCFunction(&if_print, "print");
 	vm_AddFunction(vm, print);
+	cfunction *sum = CreateCFunction(&if_sum, "sum");
 	vm_AddFunction(vm, sum);
+	cfunction *next = CreateCFunction(&if_next, "next");
 	vm_AddFunction(vm, next);
+	cfunction *open = CreateCFunction(&if_open, "open");
+	vm_AddFunction(vm, open);
+	cfunction *iter = CreateCFunction(&if_iter, "iter");
+	vm_AddFunction(vm, iter);
 
 	cfunction *cc = CreateCFunction(&custom_code, "custom_code");
 	vm_AddFunction(vm, cc);

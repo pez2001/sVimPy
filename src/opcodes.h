@@ -75,7 +75,7 @@
 #define OPCODE_INPLACE_XOR 						0x4e
 #define OPCODE_INPLACE_OR 						0x4f
 #define OPCODE_BREAK_LOOP 						0x50
-#define OPCODE_WITH_CLEANUP 					0x52
+#define OPCODE_WITH_CLEANUP 					0x51
 #define OPCODE_RETURN_VALUE 					0x53
 #define OPCODE_IMPORT_STAR						0x54
 #define OPCODE_YIELD_VALUE 						0x56
@@ -126,10 +126,11 @@
 #define OPCODE_CALL_FUNCTION_VAR 			0x8c
 #define OPCODE_CALL_FUNCTION_KW 			0x8d
 #define OPCODE_CALL_FUNCTION_VAR_KW 	0x8e
-#define OPCODE_EXTENDED_ARG 					0x8f
-#define OPCODE_LIST_APPEND						0x90
-#define OPCODE_SET_ADD								0x91
-#define OPCODE_MAP_ADD								0x92
+#define OPCODE_SETUP_WITH	 					0x8f
+#define OPCODE_EXTENDED_ARG 					0x90
+#define OPCODE_LIST_APPEND						0x91
+#define OPCODE_SET_ADD								0x92
+#define OPCODE_MAP_ADD								0x93
 
 #if defined(USE_DEBUGGING) || defined(USE_ARDUINO_OPCODE_DEBUGGING)
 #ifdef __cplusplus

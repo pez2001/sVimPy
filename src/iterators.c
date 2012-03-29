@@ -21,20 +21,22 @@
  */
 
 #include "iterators.h"
-iter_object *iter_CreateIter(object *iteration)//,struct _vm *vm
+iter_object *iter_CreateIter(object *iteration,struct _vm *vm)//,struct _vm *vm
 {
+	if(iteration->type == TYPE_KV) //TODO remove here
+		iteration = ((kv_object*)iteration)->value;
 	if(iteration->type == TYPE_TUPLE)
 	{
 		iter_object *iter = CreateIterObject();
-		iter_InitIteration(iter,(tuple_object*)iteration);
+		iter_InitIteration(iter,vm,(tuple_object*)iteration);
 		return(iter);
-	}/*
-	else	if(iteration->type == TYPE_FUNCTION && ((function_object *)iteration)->func_type == FUNC_PYTHON && ( ((((function_object *)iteration)->func.code->co_flags & CO_GENERATOR)>0) || ((((function_object *)iteration)->func.code->co_flags & CO_NESTED)>0) ) )
+	}
+	else	if(iteration->type == TYPE_CFUNCTION)
 	{
-		iter_object *iter = CreateIterObject(0);
-		iter_InitGenerator(iter,(function_object*)iteration);	
+		iter_object *iter = CreateIterObject();
+		iter_InitCFGenerator(iter,vm,(cfunction_object*)iteration);	
 		return(iter);
-	}*/
+	}
 	else if(iteration->type == TYPE_ITER)
 	{
 		//printf("iteration already created\n");
@@ -74,6 +76,7 @@ void iter_ClearBlockStack(iter_object *iter,struct _vm *vm)
 		//DumpObject(bo,0);
 	}
 }
+
 void iter_SaveBlockStack(iter_object *iter,struct _vm *vm)
 {
 	block_object *bo = NULL;
@@ -88,9 +91,9 @@ void iter_SaveBlockStack(iter_object *iter,struct _vm *vm)
 	}//while(bo != iter);
 }
 
-object *iter_Next(iter_object *iter)
+object *iter_Next(iter_object *iter,struct _vm *vm)
 {
-	object *next = iter->iter_func(iter);
+	object *next = iter->iter_func(iter,vm);
 	//IncRefCount(next);
 	return(next);
 }
@@ -186,7 +189,7 @@ void iter_ExpandTuple(iter_object *iter,struct _vm *vm,tuple_object *to)
 object *iter_NextNow(iter_object *iter,struct _vm *vm)
 {
 	//printf("nextNow()\n");
-	object *next = iter->iter_func(iter);
+	object *next = iter->iter_func(iter,vm);
 	//printf("iter executed:%x\n",iter);
 	if(next->type == TYPE_BLOCK) //used only to differentiate between an object to return and a generator not finished
 	{
@@ -248,7 +251,7 @@ object *iter_NextNow(iter_object *iter,struct _vm *vm)
 	return(next);
 }
 
-object *iter_Sequence(iter_object *iter)
+object *iter_Sequence(iter_object *iter,struct _vm *vm)
 {
 	tuple_object *seq = (tuple_object*)iter->tag;
 	int_object *pos = (int_object*)GetItem((object*)seq,2);
@@ -274,7 +277,7 @@ object *iter_Sequence(iter_object *iter)
 	}
 }
 
-void iter_InitSequence(iter_object *iter,INDEX start,NUM end,NUM step)
+void iter_InitSequence(iter_object *iter,struct _vm *vm,INDEX start,NUM end,NUM step)
 {
 	tuple_object *seq = CreateTuple(4);
 	int_object *iend = CreateIntObject(end);
@@ -292,7 +295,7 @@ void iter_InitSequence(iter_object *iter,INDEX start,NUM end,NUM step)
 	iter->iter_func = &iter_Sequence;
 }
 
-object *iter_Generator(iter_object *iter)
+object *iter_Generator(iter_object *iter,struct _vm *vm)
 {
 	//printf("iter->ref_count:%d\n",iter->ref_count);
 	block_object *bo = (block_object*)iter->tag;
@@ -308,7 +311,7 @@ object *iter_Generator(iter_object *iter)
 	return(r);
 }
 
-void iter_InitGenerator(iter_object *iter,block_object *bo)
+void iter_InitGenerator(iter_object *iter,struct _vm *vm,block_object *bo)
 {
 	iter->tag = (object*)bo;
 	//debug_printf(DEBUG_ALL,"incrementing ref_count in iter_InitGenerator() - bo\n");
@@ -318,7 +321,25 @@ void iter_InitGenerator(iter_object *iter,block_object *bo)
 	iter->iter_func = &iter_Generator;
 }
 
-object *iter_Iteration(iter_object *iter)
+object *iter_CFGenerator(iter_object *iter,struct _vm *vm)
+{
+	cfunction_object *cfo = (cfunction_object*)iter->tag;
+	object *r = vm_StartCFunctionObject(vm,cfo,NULL,NULL);
+	gc_IncRefCount(r);
+	return(r);
+}
+
+void iter_InitCFGenerator(iter_object *iter,struct _vm *vm,cfunction_object *cfo)
+{
+	iter->tag = (object*)cfo;
+	//debug_printf(DEBUG_ALL,"incrementing ref_count in iter_InitGenerator() - bo\n");
+	gc_IncRefCount((object*)cfo);
+	iter->block_stack = stack_Init();
+	iter->iter_func = &iter_CFGenerator;
+}
+
+
+object *iter_Iteration(iter_object *iter,struct _vm *vm)
 {
 	tuple_object *it = (tuple_object*)iter->tag;
 	object *next = GetNextItem((object*)it);
@@ -338,7 +359,7 @@ object *iter_Iteration(iter_object *iter)
 	return(next);
 }
 
-void iter_InitIteration(iter_object *iter,tuple_object *to)
+void iter_InitIteration(iter_object *iter,struct _vm *vm,tuple_object *to)
 {
 	ResetIteration((object*)to);
 	iter->tag = (object*)to;

@@ -40,6 +40,8 @@ extern "C"  {
 // object *pow(object *base,object *exp);
 struct _vm;
 
+object *if_open(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+
 object *if_range(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
 
 object *if_print(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);

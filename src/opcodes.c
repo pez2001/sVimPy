@@ -42,7 +42,7 @@ const cmp_op cmp_ops[] = {
 {11, "BAD"} //NOT SUPPORTED
 };
 
-const NUM opcodecount = 101;
+const NUM opcodecount = 102;
 
 #ifndef USE_ARDUINO_OPCODE_DEBUGGING
 
@@ -141,7 +141,7 @@ The top element on the stack contains the keyword arguments dictionary, followed
 The top element on the stack contains the keyword arguments dictionary, followed by the variable-arguments tuple,\n\
 followed by explicit keyword and positional arguments.", 1, 1}, // SUPPORTED
 {OPCODE_END_FINALLY, "END_FINALLY", "Terminates a finally clause. The interpreter recalls whether the exception has to be re-raised,\n\
-or whether the function returns, and continues with the outer-next block.", 0, 0},
+or whether the function returns, and continues with the outer-next block.", 0, 1},
 {OPCODE_LOAD_BUILD_CLASS, "LOAD_BUILD_CLASS", "Pushes builtins.__build_class__() onto the stack. It is later called by CALL_FUNCTION to construct a class.", 0, 0},
 {OPCODE_BUILD_CLASS, "BUILD_CLASS", "Creates a new class object. TOS is the methods dictionary,\n\
 TOS1 the tuple of the names of the base classes, and TOS2 the class name.", 0, 0},
@@ -167,7 +167,7 @@ SECOND = WHY_*; no retval below it\n\
 (SECOND, THIRD, FOURTH) = exc_info()\n\
 In the last case, TOS(SECOND, THIRD, FOURTH) is called, otherwise TOS(None, None, None). In addition, TOS is removed from the stack.\n\
 If the stack represents an exception, and the function call returns a ‘true’ value, this information is “zapped”\n\
-and replaced with a single WHY_SILENCED to prevent END_FINALLY from re-raising the exception. (But non-local gotos will still be resumed.)", 0, 0},
+and replaced with a single WHY_SILENCED to prevent END_FINALLY from re-raising the exception. (But non-local gotos will still be resumed.)", 0, 1},
 {OPCODE_BUILD_MAP, "BUILD_MAP", "Pushes a new empty dictionary object onto the stack.\n\
 The argument is ignored and set to /zero/ by the compiler.", 1, 1}, // SUPPORTED
 {OPCODE_BUILD_SET, "BUILD_SET", "Pushes a new empty set object onto the stack.\n\
@@ -188,7 +188,8 @@ a subsequent STORE_FAST instruction modifies the namespace.", 1, 1},
 where the total number of values can be smaller than the number of items in the iterable:\n\
 one the new values will be a list of all leftover items.The low byte of counts is the number of values\n\
 before the list value, the high byte of counts the number of values after it. The resulting values are put onto the stack right-to-left.", 1, 0},
-{OPCODE_LOAD_ATTR, "LOAD_ATTR", "Replaces TOS with getattr(TOS, co_names[/namei/]).", 1, 0}
+{OPCODE_LOAD_ATTR, "LOAD_ATTR", "Replaces TOS with getattr(TOS, co_names[/namei/]).", 1, 1},
+{OPCODE_SETUP_WITH, "SETUP_WITH", "No description.", 1, 1}
 };
 
 void DumpUnsupportedOpCodes(void)

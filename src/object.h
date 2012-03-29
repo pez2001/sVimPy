@@ -82,15 +82,15 @@ extern "C"  {
 
 
 //#define OFLAG_ON_STACK 1
-#define OFLAG_UNLOADED 2		// set if object was unloaded -> obj->ptr ==
+//#define OFLAG_UNLOADED 2		// set if object was unloaded -> obj->ptr ==
 								// seek_pos // or just dump to file and reread 
 								// if accessed
 
-#define OFLAG_HOLD_IN_MEMORY 4
+//#define OFLAG_HOLD_IN_MEMORY 4
 //#define OFLAG_HAS_VALUE_PTR 8
-#define OFLAG_TUPLE_PTR 16		// used to iterate over tuples
-#define OFLAG_TUPLE_RESTART_FLAG 32	// used to iterate over tuples
-#define OFLAG_IS_DICT 64 //used distinguish between tuples and dicts because both use the same structs
+//#define OFLAG_TUPLE_PTR 16		// used to iterate over tuples
+//#define OFLAG_TUPLE_RESTART_FLAG 32	// used to iterate over tuples
+//#define OFLAG_IS_DICT 64 //used distinguish between tuples and dicts because both use the same structs
 //#define OFLAG_LEFT_NAMESPACE 128
 
 //code flags
@@ -103,10 +103,13 @@ extern "C"  {
 #define CO_NOFREE       0x0040
 
 
+//internal code flags
+#define CO_MODULE_ROOT 0x0080
+
 
 // internal types
 #define TYPE_FUNCTION 'f'
-//#define TYPE_CFUNCTION 'C'
+#define TYPE_CFUNCTION 'C'
 #define TYPE_BLOCK 'b'
 #define TYPE_KV 'k'
 #define TYPE_REF 'r'
@@ -184,15 +187,6 @@ typedef struct _kv_object
 	void *key;
 } kv_object;				// TO OPTIMIZE MEMORY USAGE -> only used in tuples 
 
-/*								
-typedef struct
-{
-	char type;
-	unsigned char flags;
-	unsigned short  ref_count;
-} empty_object;					// TO OPTIMIZE MEMORY USAGE
-*/
-
 typedef struct _code_object
 {
 	OBJECT_TYPE type;
@@ -203,7 +197,7 @@ typedef struct _code_object
 	NUM kwonlyargcount;
 	NUM nlocals;
 	NUM stacksize;
-	long co_flags;
+	long co_flags; //TODO minimize storage here
 	object *code;
 	object *consts;
 	object *names;
@@ -216,6 +210,22 @@ typedef struct _code_object
 	// long codesize;
 	// long firstlineno;
 } code_object;
+
+typedef struct _class_object
+{
+	OBJECT_TYPE type;
+	//OBJECT_FLAGS flags;
+	OBJECT_REF_COUNT ref_count;
+	char *name;
+	NUM nlocals;
+	object *base_classes;
+	object *code;
+	object *consts;
+	object *names;
+	object *varnames;
+	object *freevars;
+	object *cellvars;
+} class_object;
 
 typedef struct _string_object
 {
@@ -255,16 +265,17 @@ typedef struct _function_object
 	//union _object_func func;
 } function_object;
 
-/*
 typedef struct _cfunction_object
 {
 	OBJECT_TYPE type;
 	//OBJECT_FLAGS flags;
 	OBJECT_REF_COUNT ref_count;
-	char *name;//used quickly find functions by name
+	tuple_object *defaults;//set to default values in MAKE_FUNCTION opcode
+	tuple_object *kw_defaults;//set to default keyword values in MAKE_FUNCTION opcode
+	//tuple_object *closure;
 	struct _object* (*func) (struct _vm *vm,struct _tuple_object *locals,struct _tuple_object *kw_locals);
 } cfunction_object;
-*/
+
 //TODO create struct for generator storage
 typedef struct _iter_object
 {
@@ -272,7 +283,7 @@ typedef struct _iter_object
 	//OBJECT_FLAGS flags;
 	OBJECT_REF_COUNT ref_count;
 	object *tag;//used for storage of iter options and actual ptr
-	object *(*iter_func)(struct _iter_object *iter);
+	object *(*iter_func)(struct _iter_object *iter,struct _vm *vm);
 	struct _stack *block_stack;//iters will save blocks on stack when yielding
 } iter_object;
 
@@ -301,8 +312,6 @@ object *AllocObject(void);
 
 block_object *AllocBlockObject(void);
 
-//loop_block_object *AllocLoopBlockObject();
-
 kv_object *AllocKVObject(void);
 
 ref_object *AllocRefObject(void);
@@ -323,7 +332,7 @@ float_object *AllocFloatObject(void);
 
 function_object *AllocFunctionObject(void);
 
-//cfunction_object *AllocCFunctionObject(void);
+cfunction_object *AllocCFunctionObject(void);
 
 /*object *AsObject(void *ptr);
 
@@ -406,7 +415,7 @@ function_object *CreateFunctionObject_MAKE_CLOSURE(code_object *function_code,tu
 
 function_object *CreateFunctionObject(code_object *co);//unsigned char func_type);//,OBJECT_FLAGS flags);
 
-//cfunction_object *CreateCFunctionObject(char *name,struct _object* (*func) (struct _vm *vm,struct _tuple_object *locals,struct _tuple_object *kw_locals));//,OBJECT_FLAGS flags);
+cfunction_object *CreateCFunctionObject(struct _object* (*func) (struct _vm *vm,struct _tuple_object *locals,struct _tuple_object *kw_locals),tuple_object *defaults,tuple_object *kw_defaults);//,OBJECT_FLAGS flags); //used for in python storage of external calls
 
 //iter_object *CreateIterObject(object *(*iter_func)(struct _iter_object *iter),object *tag,int flags);
 

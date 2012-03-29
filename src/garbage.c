@@ -192,6 +192,10 @@ void gc_FreeObject(object *obj)
 		gc_DecRefCount((object*)((function_object*)obj)->closure);
 		gc_DecRefCount((object*)((function_object*)obj)->func);
 		break;
+	case TYPE_CFUNCTION:
+		gc_DecRefCount((object*)((function_object*)obj)->defaults);
+		gc_DecRefCount((object*)((function_object*)obj)->kw_defaults);
+		break;
 	case TYPE_UNICODE:
 	   if(((unicode_object*)obj)->value != NULL)
 		{

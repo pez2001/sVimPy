@@ -27,10 +27,10 @@
 
 
 MAJOR_VERSION = 0
-MINOR_VERSION = 59
+MINOR_VERSION = 7
 #builds are counted since version 0.5 roughly
-BUILD = 221
-DEBUG_BUILD = 7
+BUILD = 234
+DEBUG_BUILD = 95
 
 CFLAGS= -Ilibraries/fmod -W -w -O2 -std=c99 -DBUILD=$(BUILD) -DMAJOR_VERSION=$(MAJOR_VERSION) -DMINOR_VERSION=$(MINOR_VERSION)
 DEBUG_CFLAGS = -m32 -g3 -O0 -Wall -pedantic -Wstrict-prototypes -std=c99 -fbounds-check -Wuninitialized -DUSE_DEBUGGING -DBUILD=$(BUILD) -DMAJOR_VERSION=$(MAJOR_VERSION) -DMINOR_VERSION=$(MINOR_VERSION)
@@ -78,7 +78,8 @@ ARDUINO_SIZE = $(ARDUINO_AVR_TOOLS_PATH)/avr-size
 ARDUINO_NM = $(ARDUINO_AVR_TOOLS_PATH)/avr-nm
 ARDUINO_AVRDUDE = $(ARDUINO_AVR_TOOLS_PATH)/avrdude
 ARDUINO_PYTHON_FEATURES = -DUSE_ARDUINO_FUNCTIONS
-ARDUINO_FLAGS = $(ARDUINO_PYTHON_FEATURES)  -g -gdwarf-2 -fno-tree-scev-cprop -ffreestanding -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums -fno-move-loop-invariants -fno-tree-loop-optimize -mcall-prologues -fno-inline-small-functions -Os -Wl,--gc-sections,--relax -g -fno-exceptions -ffunction-sections -fdata-sections -DF_CPU=16000000L -DARDUINO=100 -mmcu=$(ARDUINO_MCU)
+#ARDUINO_FLAGS = $(ARDUINO_PYTHON_FEATURES)  -g -gdwarf-2 -fno-tree-scev-cprop -ffreestanding -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums -fno-move-loop-invariants -fno-tree-loop-optimize -mcall-prologues -fno-inline-small-functions -Os -Wl,--gc-sections,--relax -g -fno-exceptions -ffunction-sections -fdata-sections -DF_CPU=16000000L -DARDUINO=100 -mmcu=$(ARDUINO_MCU)
+ARDUINO_FLAGS = $(ARDUINO_PYTHON_FEATURES)  -fno-tree-scev-cprop -ffreestanding -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums -fno-move-loop-invariants -fno-tree-loop-optimize -mcall-prologues -fno-inline-small-functions -Os -Wl,--gc-sections,--relax -fno-exceptions -ffunction-sections -fdata-sections -DF_CPU=16000000L -DARDUINO=100 -mmcu=$(ARDUINO_MCU)
 #-fno-inline-small-functions  -finline-limit=6 -fno-jump-tables
 ARDUINO_CINCS = -I$(ARDUINO_INCLUDES) -I$(ARDUINO_STANDARD_INCLUDES)
 ARDUINO_CFLAGS = $(ARDUINO_FLAGS) $(ARDUINO_CINCS) $(ARDUINO_CWARN) $(ARDUINO_CSTANDARD) $(ARDUINO_CTUNING)

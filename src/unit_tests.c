@@ -446,12 +446,58 @@ void brute_test(void)
 
 }
 
+object *ImportModule(struct _vm *vm,char *module_name)
+{
+	long pyc_magic = MAGIC;
+	char *path = str_Copy("tests/");
+	char *mod_path = str_Cat(path,module_name);
+	char *filename = str_Cat(mod_path,".pyc");
+	#ifdef USE_DEBUGGING
+	assert(mem_free(path));
+	assert(mem_free(mod_path));
+	#else
+	free(path);
+	free(mod_path);
+	#endif
+
+	
+	//printf("trying to import module:%s\n",filename);
+	stream *f = stream_CreateFromFile(filename,"rb");
+	if (!stream_Open(f))
+		return(NULL);
+	long magic = ReadLong(f);
+	if (magic != pyc_magic)
+		return(NULL);
+	ReadLong(f);//skip time
+	object *obj = ReadObject(f);
+	if(obj->type != TYPE_CODE)
+	{
+		#ifdef USE_DEBUGGING
+		assert(mem_free(filename));
+		#else
+		free(filename);
+		#endif
+		gc_IncRefCount(obj);
+		gc_DecRefCount(obj);
+		return(NULL);
+	}else
+	((code_object*)obj)->co_flags ^=	CO_MODULE_ROOT;
+	
+	#ifdef USE_DEBUGGING
+	assert(mem_free(filename));
+	#else
+	free(filename);
+	#endif
+	stream_Free(f);
+	return(obj);
+}
+
 void AtomicOpenPYC(char *filename)
 {
 	#ifdef USE_DEBUGGING
 	//debug_level = 0;
 	//debug_level |= DEBUG_INTERACTIVE;
-	debug_level |= DEBUG_MEMORY;
+	//debug_level |= DEBUG_MEMORY;
 	//debug_level |= DEBUG_SHOW_OPCODES;
 	//debug_level |= DEBUG_FULL_DUMP;
 	//debug_level |= DEBUG_STACK;
@@ -465,7 +511,7 @@ void AtomicOpenPYC(char *filename)
 	//debug_level |= DEBUG_DUMP_OBJECT;
 	//debug_level |= DEBUG_CREATION;
 	//debug_level |= DEBUG_VERBOSE_FREEING;
-	debug_level |= DEBUG_VERBOSE_TESTS;	
+	//debug_level |= DEBUG_VERBOSE_TESTS;	
 	//debug_level |= DEBUG_PTR_LISTS;
 	//debug_level |= DEBUG_INTERNAL_FUNCTIONS;
 	//debug_level |= DEBUG_COUNT_OBJECTS;
@@ -477,6 +523,7 @@ void AtomicOpenPYC(char *filename)
 	printf("sVimPy Python Output\n{\n");
 
 	vm *vm = vm_Init(NULL);
+	vm->import_module_handler = &ImportModule;
 	AddInternalFunctions(vm);
 
 	long pyc_magic = MAGIC;
@@ -601,12 +648,12 @@ void atomic_test(void)
 	debug_level = 0;
 	//debug_level |= DEBUG_INTERACTIVE;
 	debug_level |= DEBUG_MEMORY;
-	//debug_level |= DEBUG_SHOW_OPCODES;
+	debug_level |= DEBUG_SHOW_OPCODES;
 	//debug_level |= DEBUG_FULL_DUMP;
 	//debug_level |= DEBUG_STACK;
 	//debug_level |= DEBUG_LISTS;
 	//debug_level |= DEBUG_GC;
-	//debug_level |= DEBUG_VERBOSE_STEP;
+	debug_level |= DEBUG_VERBOSE_STEP;
 	//debug_level |= DEBUG_VM;
 	//debug_level |= DEBUG_FREEING;
 	//debug_level |= DEBUG_ALLOCS;
@@ -620,18 +667,21 @@ void atomic_test(void)
 	//debug_level |= DEBUG_COUNT_OBJECTS;
 	#endif
 	printf("Atomic Tests Version : %d.%d-%d\n",MAJOR_VERSION,MINOR_VERSION,BUILD+1);
-	//import	
-	//AtomicOpenPYC(stream_CreateFromFile("tests/test_import.pyc"), vm);
 
-	//custom code + import_from + import_star opcodes
-	//AtomicOpenPYC("tests/test45.pyc", vm);
-
+	//open file test + if_iter with sentinel
+	AtomicOpenPYC("tests/test_open.pyc");
+	return;
 
 	//append ops + generators
 	//AtomicOpenPYC("tests/test53.pyc", vm);
 	
-	//AtomicOpenPYC("tests/test_yield.pyc");
+	AtomicOpenPYC("tests/test_yield.pyc");
 	
+	//custom code + import_from + import_star opcodes
+	AtomicOpenPYC("tests/test_import.pyc");
+	//return;
+	AtomicOpenPYC("tests/test45.pyc");
+
 	//iters
 	AtomicOpenPYC("tests/test61.pyc");
 	//return;
@@ -784,7 +834,8 @@ int main(int argc, char *argv[])
 	//ptr_tests();
 	//stream_tests();
 	//brute_test();
-	for(int i=0;i<100000;i++)
+	atomic_test();
+/*	for(int i=0;i<100000;i++)
 	{
 		printf("[[[[[%d]]]]]\n",i);
 		char *tmp = (char*)malloc(i);
@@ -793,7 +844,7 @@ int main(int argc, char *argv[])
 		//ptr_tests();
 		//mem_Close();
 		free(tmp);
-	}
+	}*/
 	//AtomicOpenPYC("tests/test_nested_function.pyc");
 	//AtomicOpenPYC("tests/test_function_default_value.pyc");
 	//AtomicOpenPYC("tests/test_function_default_value2.pyc");

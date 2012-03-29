@@ -33,7 +33,6 @@
 extern "C"  {
 #endif
 
-
 void iter_Expand(iter_object *iter,struct _vm *vm,stack *stack);
 
 void iter_ExpandTuple(iter_object *iter,struct _vm *vm,tuple_object *to);
@@ -42,22 +41,25 @@ tuple_object *iter_TupleExpand(iter_object *iter,struct _vm *vm);
 
 object *iter_NextNow(iter_object *iter,struct _vm *vm);
 
-object *iter_Next(iter_object *iter);
+object *iter_Next(iter_object *iter,struct _vm *vm);
 
-iter_object *iter_CreateIter(object *iteration);//struct _vm *vm
+iter_object *iter_CreateIter(object *iteration,struct _vm *vm);//struct _vm *vm
 
-object *iter_Sequence(iter_object *iter);
+object *iter_Sequence(iter_object *iter,struct _vm *vm);
 
-void iter_InitSequence(iter_object *iter,INDEX start,NUM end,NUM step);
+void iter_InitSequence(iter_object *iter,struct _vm *vm,INDEX start,NUM end,NUM step);
 
-object *iter_Generator(iter_object *iter);
+object *iter_Generator(iter_object *iter,struct _vm *vm);
 
-void iter_InitGenerator(iter_object *iter,block_object *bo);
+void iter_InitGenerator(iter_object *iter,struct _vm *vm,block_object *bo);
 
-object *iter_Iteration(iter_object *iter);
+object *iter_CFGenerator(iter_object *iter,struct _vm *vm);
 
-void iter_InitIteration(iter_object *iter,tuple_object *to);
+void iter_InitCFGenerator(iter_object *iter,struct _vm *vm,cfunction_object *cfo);
 
+object *iter_Iteration(iter_object *iter,struct _vm *vm);
+
+void iter_InitIteration(iter_object *iter,struct _vm *vm,tuple_object *to);
 
 #ifdef __cplusplus
 } 

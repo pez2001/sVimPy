@@ -116,6 +116,7 @@ typedef struct _vm
 	ptr_list *globals;
 	object *(*interrupt_handler) (struct _vm *vm,stack *stack);
 	BOOL interrupt_vm;
+	object *(*import_module_handler) (struct _vm *vm,char *module_name);
 	BOOL running;
 	object *(*step_handler) (struct _vm *vm);//TODO implement step handler to execute external work functions
 } vm;
@@ -126,8 +127,8 @@ typedef struct _cfunction
 	struct _object* (*func) (struct _vm *vm,struct _tuple_object *locals,struct _tuple_object *kw_locals);
 } cfunction;
 
-
-typedef	union _resolve_function
+//TODO REMOVE not needed and be done by just pushin a cfunction_object on the stack
+/*typedef	union _resolve_function
 {
 	struct _function_object *fo;
 	struct _cfunction *cfo;
@@ -138,16 +139,16 @@ typedef struct _resolve_container
 	OBJECT_TYPE func_type;
 	union _resolve_function func;
 } resolve_container;
-
+*/
 #ifndef USE_ARDUINO_FUNCTIONS
 #pragma pack(pop)				/* restore original alignment from stack */
 #endif
 
 //extern long mem_chunks_top;
 
-resolve_container *AllocResolveContainer(void);
+//resolve_container *AllocResolveContainer(void);
 
-void FreeResolveContainer(resolve_container *rc);
+//void FreeResolveContainer(resolve_container *rc);
 
 cfunction *AllocCFunction(void);
 
@@ -219,9 +220,12 @@ block_object *vm_StartCodeObject(vm *vm,code_object *co, tuple_object *locals);
 
 object *vm_StartFunctionObject(vm *vm,function_object *fo,tuple_object *locals,tuple_object *kw_locals);//run a python function object 
 
-object *vm_StartCFunction(vm *vm,cfunction *cfo,tuple_object *locals,tuple_object *kw_locals);
+object *vm_StartCFunction(vm *vm,cfunction *cf,tuple_object *locals,tuple_object *kw_locals);
 
-resolve_container *vm_ResolveFunction(vm *vm,object *to_resolve);//input can be function_objects ,code_objects, unicode_objects -> returns a function_object if any
+object *vm_StartCFunctionObject(vm *vm,cfunction_object *cfo,tuple_object *locals,tuple_object *kw_locals);//run a python function object 
+
+//object *vm_ResolveFunction(vm *vm,object *to_resolve);//input can be function_objects ,code_objects, unicode_objects -> returns a function_object if any
+//resolve_container *vm_ResolveFunction(vm *vm,object *to_resolve);//input can be function_objects ,code_objects, unicode_objects -> returns a function_object if any
 
 object *vm_Step(vm *vm);//single step vm //TODO rename to vm_Step
 
