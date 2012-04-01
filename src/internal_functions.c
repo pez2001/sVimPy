@@ -530,6 +530,13 @@ object *if_file_readline(struct _vm *vm,tuple_object *locals,tuple_object *kw_lo
 	return (tmp);
 }
 
+object *if_build_class(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+{
+	printf("build_class called\n");
+	object *tmp =CreateEmptyObject(TYPE_NONE);
+	return (tmp);
+}
+
 
 object *if_open(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {

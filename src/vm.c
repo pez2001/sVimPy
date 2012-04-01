@@ -1368,7 +1368,7 @@ object *vm_Step(vm *vm)
 			case OPCODE_LOAD_CLOSURE:
 			case OPCODE_STORE_LOCALS:
 			case OPCODE_PRINT_EXPR:
-			case OPCODE_LOAD_BUILD_CLASS:
+			//case OPCODE_LOAD_BUILD_CLASS:
 			//case OPCODE_WITH_CLEANUP:
 			//case OPCODE_END_FINALLY:
 			case OPCODE_BUILD_CLASS:
@@ -1428,6 +1428,7 @@ object *vm_Step(vm *vm)
 			case OPCODE_IMPORT_STAR:
 			case OPCODE_SETUP_WITH:
 			case OPCODE_LOAD_ATTR:
+			case OPCODE_STORE_ATTR:
 				{
 					tos = stack_Pop(bo->stack);
 					tos = DissolveRef(tos);
@@ -1511,6 +1512,12 @@ object *vm_Step(vm *vm)
 			// execute remaining ops here
 			switch (op)
 			{
+			case OPCODE_LOAD_BUILD_CLASS:
+				{
+					cfunction_object *cfo = CreateCFunctionObject(&if_build_class,NULL,NULL);
+					stack_Push(bo->stack,cfo);
+				}
+				break;
 			case OPCODE_FOR_ITER:
 				{
 					object *next =  NULL;
@@ -1564,6 +1571,23 @@ object *vm_Step(vm *vm)
 				}
 				break;
 				
+			case OPCODE_STORE_ATTR:
+				{
+				//"Implements TOS.name = TOS1, where /namei/ is the index of name in co_names."
+					if(GetItem(co->names,arg)->type != TYPE_KV)
+					{
+						SetItem(co->names,arg,(object*)ConvertToKVObjectValued(GetItem(co->names,arg),tos));
+					}
+					else
+					{
+						SetDictItemByIndex(co->names,arg,tos);
+					}
+					#ifdef USE_DEBUGGING
+					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
+						DumpObject(tos,1);
+					#endif
+				}	
+				break;
 			case OPCODE_IMPORT_NAME:
 				{
 					object *name = GetItem(co->names,arg);
@@ -1775,7 +1799,7 @@ object *vm_Step(vm *vm)
 			case OPCODE_SETUP_WITH:
 				{
 					printf("setup with:%d,%d\n",bo->ip,arg);
-					DumpObject(tos,0);
+					//DumpObject(tos,0);
 					block_object *block = AllocBlockObject();
 					block->start = bo->ip;
 					block->code = co;

@@ -665,8 +665,16 @@ void atomic_test(void)
 	//debug_level |= DEBUG_PTR_LISTS;
 	//debug_level |= DEBUG_INTERNAL_FUNCTIONS;
 	//debug_level |= DEBUG_COUNT_OBJECTS;
-	#endif
+	printf("Atomic Tests Version : %d.%d-%d\n",MAJOR_VERSION,MINOR_VERSION,DEBUG_BUILD+1);
+    #else
 	printf("Atomic Tests Version : %d.%d-%d\n",MAJOR_VERSION,MINOR_VERSION,BUILD+1);
+	#endif
+
+	AtomicOpenPYC("tests/Play.pyc");
+
+	//classes tests
+	AtomicOpenPYC("tests/test_class.pyc");
+	return;
 
 	//open file test + if_iter with sentinel
 	AtomicOpenPYC("tests/test_open.pyc");

@@ -142,7 +142,7 @@ The top element on the stack contains the keyword arguments dictionary, followed
 followed by explicit keyword and positional arguments.", 1, 1}, // SUPPORTED
 {OPCODE_END_FINALLY, "END_FINALLY", "Terminates a finally clause. The interpreter recalls whether the exception has to be re-raised,\n\
 or whether the function returns, and continues with the outer-next block.", 0, 1},
-{OPCODE_LOAD_BUILD_CLASS, "LOAD_BUILD_CLASS", "Pushes builtins.__build_class__() onto the stack. It is later called by CALL_FUNCTION to construct a class.", 0, 0},
+{OPCODE_LOAD_BUILD_CLASS, "LOAD_BUILD_CLASS", "Pushes builtins.__build_class__() onto the stack. It is later called by CALL_FUNCTION to construct a class.", 0, 1},
 {OPCODE_BUILD_CLASS, "BUILD_CLASS", "Creates a new class object. TOS is the methods dictionary,\n\
 TOS1 the tuple of the names of the base classes, and TOS2 the class name.", 0, 0},
 {OPCODE_RAISE_VARARGS, "RAISE_VARARGS", "Raises an exception. /argc/ indicates the number of parameters to the raise statement,\n\
@@ -154,7 +154,7 @@ The module is popped after loading all names. This opcode implements from module
 {OPCODE_YIELD_VALUE, "YIELD_VALUE", "Pops TOS and yields it from a generator.", 0, 1},
 {OPCODE_STORE_LOCALS, "STORE_LOCALS", "Pops TOS from the stack and stores it as the current frame’s f_locals. This is used in class construction.", 0, 0},
 {OPCODE_STORE_MAP, "STORE_MAP", "Store a key and value pair in a dictionary. Pops the key and value while leaving the dictionary on the stack.", 0, 1},
-{OPCODE_STORE_ATTR, "STORE_ATTR", "Implements TOS.name = TOS1, where /namei/ is the index of name in co_names.", 1, 0},
+{OPCODE_STORE_ATTR, "STORE_ATTR", "Implements TOS.name = TOS1, where /namei/ is the index of name in co_names.", 1, 1},
 {OPCODE_DELETE_ATTR, "DELETE_ATTR", "Implements del TOS.name, using /namei/ as index into co_names.", 1, 0},
 {OPCODE_SETUP_EXCEPT, "SETUP_EXCEPT", "Pushes a try block from a try-except clause onto the block stack. /delta/ points to the first except block.", 1, 0},
 {OPCODE_SETUP_FINALLY, "SETUP_FINALLY", "Pushes a try block from a try-except clause onto the block stack. /delta/ points to the finally block.", 1, 0},
@@ -189,7 +189,10 @@ where the total number of values can be smaller than the number of items in the 
 one the new values will be a list of all leftover items.The low byte of counts is the number of values\n\
 before the list value, the high byte of counts the number of values after it. The resulting values are put onto the stack right-to-left.", 1, 0},
 {OPCODE_LOAD_ATTR, "LOAD_ATTR", "Replaces TOS with getattr(TOS, co_names[/namei/]).", 1, 1},
-{OPCODE_SETUP_WITH, "SETUP_WITH", "No description.", 1, 1}
+{OPCODE_SETUP_WITH, "SETUP_WITH", "This opcode performs several operations before a with block starts.\n\
+ First, it loads __exit__() from the context manager and pushes it onto the stack for later use by WITH_CLEANUP.\n\
+ Then, __enter__() is called, and a finally block pointing to delta is pushed. Finally, the result of calling the enter method is pushed onto the stack.\n\
+ The next opcode will either ignore it (POP_TOP), or store it in (a) variable(s) (STORE_FAST, STORE_NAME, or UNPACK_SEQUENCE).", 1, 1}
 };
 
 void DumpUnsupportedOpCodes(void)

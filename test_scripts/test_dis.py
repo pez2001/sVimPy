@@ -1,4 +1,4 @@
 import dis
-import test_open
+import test_class
 
-dis.dis(test_open)
+dis.dis(test_class)

@@ -1,0 +1,54 @@
+x:inter,i:init
+main
+Disassembly of main:
+ 10           0 LOAD_GLOBAL              0 (test_class) 
+              3 LOAD_CONST               1 ('init') 
+              6 CALL_FUNCTION            1 
+              9 STORE_FAST               0 (c) 
+
+ 11          12 LOAD_FAST                0 (c) 
+             15 LOAD_ATTR                1 (show) 
+             18 LOAD_CONST               2 ('inter') 
+             21 CALL_FUNCTION            1 
+             24 POP_TOP              
+
+ 12          25 LOAD_GLOBAL              2 (print) 
+             28 LOAD_CONST               3 ('main') 
+             31 CALL_FUNCTION            1 
+             34 POP_TOP              
+             35 LOAD_CONST               0 (None) 
+             38 RETURN_VALUE         
+
+Disassembly of test_class:
+Disassembly of __init__:
+  3           0 LOAD_FAST                0 (self) 
+              3 LOAD_ATTR                0 (reset) 
+              6 LOAD_FAST                1 (i) 
+              9 CALL_FUNCTION            1 
+             12 POP_TOP              
+             13 LOAD_CONST               0 (None) 
+             16 RETURN_VALUE         
+
+Disassembly of reset:
+  5           0 LOAD_FAST                1 (i) 
+              3 LOAD_FAST                0 (self) 
+              6 STORE_ATTR               0 (i) 
+              9 LOAD_CONST               0 (None) 
+             12 RETURN_VALUE         
+
+Disassembly of show:
+  7           0 LOAD_GLOBAL              0 (print) 
+              3 LOAD_CONST               1 ('x:') 
+              6 LOAD_FAST                1 (x) 
+              9 BINARY_ADD           
+             10 LOAD_CONST               2 (',i:') 
+             13 BINARY_ADD           
+             14 LOAD_FAST                0 (self) 
+             17 LOAD_ATTR                1 (i) 
+             20 BINARY_ADD           
+             21 CALL_FUNCTION            1 
+             24 POP_TOP              
+             25 LOAD_CONST               0 (None) 
+             28 RETURN_VALUE         
+
+

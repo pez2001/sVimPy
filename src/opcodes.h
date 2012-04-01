@@ -67,8 +67,8 @@
 #define OPCODE_INPLACE_POWER 				0x43
 #define OPCODE_GET_ITER 								0x44
 #define OPCODE_STORE_LOCALS 					0x45
-#define OPCODE_PRINT_EXPR 						0x47
-#define OPCODE_LOAD_BUILD_CLASS 			0x48
+#define OPCODE_PRINT_EXPR 						0x46
+#define OPCODE_LOAD_BUILD_CLASS 			0x47
 #define OPCODE_INPLACE_LSHIFT					0x4b
 #define OPCODE_INPLACE_RSHIFT 					0x4c
 #define OPCODE_INPLACE_AND						0x4d
