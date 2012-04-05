@@ -152,10 +152,10 @@ The resulting object is pushed onto the stack, to be subsequently stored by a ST
 {OPCODE_IMPORT_STAR, "IMPORT_STAR", "Loads all symbols not starting with \"_\" directly from the module TOS to the local namespace.\n\
 The module is popped after loading all names. This opcode implements from module import *.", 0, 1},
 {OPCODE_YIELD_VALUE, "YIELD_VALUE", "Pops TOS and yields it from a generator.", 0, 1},
-{OPCODE_STORE_LOCALS, "STORE_LOCALS", "Pops TOS from the stack and stores it as the current frame’s f_locals. This is used in class construction.", 0, 0},
+{OPCODE_STORE_LOCALS, "STORE_LOCALS", "Pops TOS from the stack and stores it as the current frame’s f_locals. This is used in class construction.", 0, 1},
 {OPCODE_STORE_MAP, "STORE_MAP", "Store a key and value pair in a dictionary. Pops the key and value while leaving the dictionary on the stack.", 0, 1},
 {OPCODE_STORE_ATTR, "STORE_ATTR", "Implements TOS.name = TOS1, where /namei/ is the index of name in co_names.", 1, 1},
-{OPCODE_DELETE_ATTR, "DELETE_ATTR", "Implements del TOS.name, using /namei/ as index into co_names.", 1, 0},
+{OPCODE_DELETE_ATTR, "DELETE_ATTR", "Implements del TOS.name, using /namei/ as index into co_names.", 1, 1},
 {OPCODE_SETUP_EXCEPT, "SETUP_EXCEPT", "Pushes a try block from a try-except clause onto the block stack. /delta/ points to the first except block.", 1, 0},
 {OPCODE_SETUP_FINALLY, "SETUP_FINALLY", "Pushes a try block from a try-except clause onto the block stack. /delta/ points to the finally block.", 1, 0},
 {OPCODE_WITH_CLEANUP, "WITH_CLEANUP", "Cleans up the stack when a with statement block exits.\n\

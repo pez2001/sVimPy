@@ -42,8 +42,6 @@ void gc_FreeObject(struct _object *obj);
 
 void gc_IncRefCount(struct _object *obj);
 
-//void gc_DecRefCountGC(object *obj,ptr_list *gc);
-
 void gc_DecRefCount(struct _object *obj);
 
 BOOL gc_HasNoRefs(struct _object *obj);
@@ -54,7 +52,6 @@ void gc_Init(void);
 
 void gc_Close(void);
 
-//void gc_Clear(ptr_list *gc_collection);
 void gc_Clear(void);
 
 #ifdef __cplusplus

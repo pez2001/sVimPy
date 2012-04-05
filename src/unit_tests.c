@@ -525,7 +525,8 @@ void AtomicOpenPYC(char *filename)
 	vm *vm = vm_Init(NULL);
 	vm->import_module_handler = &ImportModule;
 	AddInternalFunctions(vm);
-
+	fmod_Init(vm);
+	AddFmodGlobals(vm);
 	long pyc_magic = MAGIC;
 	stream *f = stream_CreateFromFile(filename,"rb");
 	if (!stream_Open(f))
@@ -608,9 +609,11 @@ void AtomicOpenPYC(char *filename)
 	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_VERBOSE_TESTS,"closing vm\n");
 	#endif
+	fmod_Close();
 	vm_Close(vm);
 	streams_Close();
 	gc_Close();
+
 	// printf("objects headers total size : %d\n",objects_header_total);
 	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_DUMP_UNSUPPORTED) > 0)
@@ -670,11 +673,15 @@ void atomic_test(void)
 	printf("Atomic Tests Version : %d.%d-%d\n",MAJOR_VERSION,MINOR_VERSION,BUILD+1);
 	#endif
 
-	AtomicOpenPYC("tests/Play.pyc");
 
 	//classes tests
-	AtomicOpenPYC("tests/test_class.pyc");
+	AtomicOpenPYC("tests/test_class3.pyc");
+	//AtomicOpenPYC("tests/test_class2.pyc");
+	//AtomicOpenPYC("tests/test_class.pyc");
 	return;
+
+	//fmod tests + classes as globals
+	AtomicOpenPYC("tests/Play.pyc");
 
 	//open file test + if_iter with sentinel
 	AtomicOpenPYC("tests/test_open.pyc");

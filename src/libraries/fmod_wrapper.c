@@ -141,6 +141,31 @@ void AddFmodGlobals(vm *vm)
 	SetItem(a_globals->names,3,(object*)kvhigh);
 	
 	vm_AddGlobal(vm,a_globals);*/
+	//class_object *fmod_global = AllocClassObject();
+	//fmod_global->name = str_Copy("fmod");
+	//fmod_global->base_classes = ;
+	//fmod_global->code = ;
+	//fmod_global->names = ;
+	//fmod_global->
+	//fmod_global->
+	//fmod_global->
+
+	code_object *a_globals = AllocCodeObject();
+	a_globals->type = TYPE_CODE;
+	a_globals->ref_count = 1;
+	a_globals->name = str_Copy("fmod");
+	a_globals->argcount = 0;
+	a_globals->kwonlyargcount = 0;
+	a_globals->nlocals = 0;
+	a_globals->stacksize = 0;
+	a_globals->co_flags = 0;
+	a_globals->code = NULL;
+	a_globals->consts = NULL;
+	a_globals->varnames = NULL;
+	a_globals->freevars = NULL;
+	a_globals->cellvars = NULL;
+	a_globals->names = NULL;
+	vm_AddGlobal(vm,a_globals);
 }
 
 void fmod_Init(vm *vm)

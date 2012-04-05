@@ -84,31 +84,6 @@ void gc_DecRefCount(object *obj)
 	#endif
 }
 
-/*
-void gc_DecRefCount(object *obj)
-{
-	if(obj->ref_count == 1)
-	{
-		//obj->ref_count--;
-		#ifdef USE_DEBUGGING
-		if((debug_level & DEBUG_GC) > 0)
-		{
-			//debug_printf(DEBUG_GC,"object has no refs anymore -> freeing\n");
-			debug_printf(DEBUG_GC,"%x : 0 refs (decremented[F]:%c) - freed from memory\n",obj,obj->type);
-			//DumpObject(obj,0);
-		}
-		#endif
-		FreeObject(obj);
-		//ptr_Queue(gc,obj);
-		return;
-	 }
-	obj->ref_count--;
-	#ifdef USE_DEBUGGING
-	debug_printf(DEBUG_GC,"%x : %d refs (decremented[F]:%c)\n",obj,obj->ref_count,obj->type);
-	#endif
-}
-*/
-
 BOOL gc_HasNoRefs(object *obj)
 {
 return(!obj->ref_count);
@@ -248,6 +223,23 @@ void gc_FreeObject(object *obj)
 		gc_DecRefCount(((code_object*)obj)->freevars);
 		gc_DecRefCount(((code_object*)obj)->cellvars);
 		break;
+	case TYPE_CLASS:
+		if(((class_object*)obj)->name != NULL)
+		{
+			#ifdef USE_DEBUGGING
+			assert(mem_free(((class_object*)obj)->name));
+			#else
+			free(((class_object*)obj)->name);
+			#endif
+		}
+		gc_DecRefCount(((class_object*)obj)->code);
+		gc_DecRefCount(((class_object*)obj)->base_classes);
+		break;
+	case TYPE_CLASS_INSTANCE:
+		gc_DecRefCount(((class_instance_object*)obj)->instance_of);
+		gc_DecRefCount(((class_instance_object*)obj)->methods);
+		gc_DecRefCount(((class_instance_object*)obj)->vars);
+		break;
 	}
 
 	#ifdef USE_DEBUGGING
@@ -259,7 +251,6 @@ void gc_FreeObject(object *obj)
 	#endif
 }
 
-//void gc_Clear(ptr_list *gc_collection)
 void gc_Clear(void)
 {
 	#ifdef USE_DEBUGGING

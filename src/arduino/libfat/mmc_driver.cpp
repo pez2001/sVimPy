@@ -228,7 +228,7 @@ byte mmc::initialize() {
   SPCR = B01010011;
 
   // Enable SPI double speed mode -> clock = f/8
-  //  SPSR = _BV(SPI2X);
+   // SPSR = _BV(SPI2X);
 
   // clear status
   i = SPSR;

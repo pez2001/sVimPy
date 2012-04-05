@@ -27,10 +27,10 @@
 
 
 MAJOR_VERSION = 0
-MINOR_VERSION = 7
+MINOR_VERSION = 73
 #builds are counted since version 0.5 roughly
 BUILD = 234
-DEBUG_BUILD = 110
+DEBUG_BUILD = 160
 
 CFLAGS= -Ilibraries/fmod -W -w -O2 -std=c99 -DBUILD=$(BUILD) -DMAJOR_VERSION=$(MAJOR_VERSION) -DMINOR_VERSION=$(MINOR_VERSION)
 DEBUG_CFLAGS = -m32 -g3 -O0 -Wall -pedantic -Wstrict-prototypes -std=c99 -fbounds-check -Wuninitialized -DUSE_DEBUGGING -DBUILD=$(BUILD) -DMAJOR_VERSION=$(MAJOR_VERSION) -DMINOR_VERSION=$(MINOR_VERSION) -DDEBUG_BUILD=$(DEBUG_BUILD)
@@ -100,10 +100,10 @@ VM_FILES = vm.c strops.c numops.c opcodes.c object.c memory.c stack.c lists.c in
 VM_INCLUDES = vm.h strops.h numops.h opcodes.h object.h memory.h stack.h lists.h internal_functions.h stream.h garbage.h debug.h iterators.h types.h
 VM_OBJ = vm.o strops.o numops.o opcodes.o object.o memory.o stack.o lists.o internal_functions.o stream.o garbage.o debug.o iterators.o types.o
 VM_DEBUG_OBJ = vm.do strops.do numops.do opcodes.do object.do memory.do stack.do lists.do internal_functions.do stream.do garbage.do debug.do iterators.do types.do
-UT_FILES = unit_tests.c 
-UT_OBJ = unit_tests.o 
-UT_DEBUG_OBJ = unit_tests.do 
-UT_INCLUDES = unit_tests.h
+UT_FILES = unit_tests.c libraries/fmod_wrapper.c
+UT_OBJ = unit_tests.o libraries/fmod_wrapper.o
+UT_DEBUG_OBJ = unit_tests.do libraries/fmod_wrapper.do
+UT_INCLUDES = unit_tests.h libraries/fmod_wrapper.h
 
 ARDUINO_FILES = arduino.cpp arduino/io.cpp arduino/debug.cpp
 ARDUINO_INCLUDE_FILES = arduino.h arduino/io.h arduino/debug.h
@@ -140,10 +140,10 @@ all: build_inc svimpy unit_tests compress_pyc pack_pos debug
 	build_inc.exe Makefile BUILD
 
 unit_tests: vm_static $(UT_OBJ) 
-	$(CC) $(UT_OBJ) vm.a  -o unit_tests 
+	$(CC) $(UT_OBJ) vm.a libraries/libfmodex.a -o unit_tests 
 
 unit_tests_debug: vm_static_debug $(UT_DEBUG_OBJ) 
-	$(CC) $(UT_DEBUG_OBJ) vm.da  -o unit_tests_debug 
+	$(CC) $(UT_DEBUG_OBJ) vm.da libraries/libfmodex.a -o unit_tests_debug 
 
 unit_tests_o: $(VM_OBJ) $(UT_OBJ)
 	$(CC) $(VM_OBJ) $(UT_OBJ)  -o unit_tests 

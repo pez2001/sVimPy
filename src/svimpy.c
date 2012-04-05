@@ -197,22 +197,27 @@ int main(int argc, char** argv)
 	filename = argv[optind];
 	if(filename != NULL && strlen(filename)>0 && print_object)
 	{
-		//debug_level |= DEBUG_FULL_DUMP;
+		#ifdef USE_DEBUGGING	
+		debug_level |= DEBUG_FULL_DUMP;
+		#endif
 		gc_Init();
 		streams_Init();
 		long pyc_magic = MAGIC;
 		stream *f = stream_CreateFromFile(filename,"rb");
 		if (!stream_Open(f))
 			return(1);
-		printf("file opened\n");
+		//printf("file opened\n");
 		long magic = ReadLong(f);
 
 		if (magic != pyc_magic)
 			return(1);
 		ReadLong(f);//skip time
 		object *obj = ReadObject(f);
-		//DumpObject(obj, 0);
+		#ifdef USE_DEBUGGING	
+		DumpObject(obj, 0);
+		#else
 		PrintObject(obj);
+		#endif
 		stream_Free(f);
 		streams_Close();
 		gc_Close();
@@ -224,7 +229,7 @@ int main(int argc, char** argv)
 		ExecuteRPYC(filename);
 	else if(filename != NULL && strlen(filename)>0 && format_rpyc_plus) //use rpyc+ format
 		ExecuteRPYC_PLUS(filename);
-	else
+	else 
 		printf(svimpy_helpmsg);
 
 }

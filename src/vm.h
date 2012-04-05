@@ -110,6 +110,7 @@ extern "C"  {
 typedef struct _vm
 {
 	stack *blocks;
+	stack *exceptions;
 	ptr_list *functions;
 	//ptr_list *garbage;
 	//code_object *global;
@@ -127,28 +128,10 @@ typedef struct _cfunction
 	struct _object* (*func) (struct _vm *vm,struct _tuple_object *locals,struct _tuple_object *kw_locals);
 } cfunction;
 
-//TODO REMOVE not needed and be done by just pushin a cfunction_object on the stack
-/*typedef	union _resolve_function
-{
-	struct _function_object *fo;
-	struct _cfunction *cfo;
-} resolve_function;
 
-typedef struct _resolve_container
-{
-	OBJECT_TYPE func_type;
-	union _resolve_function func;
-} resolve_container;
-*/
 #ifndef USE_ARDUINO_FUNCTIONS
 #pragma pack(pop)				/* restore original alignment from stack */
 #endif
-
-//extern long mem_chunks_top;
-
-//resolve_container *AllocResolveContainer(void);
-
-//void FreeResolveContainer(resolve_container *rc);
 
 cfunction *AllocCFunction(void);
 
@@ -157,10 +140,6 @@ void FreeCFunction(cfunction *cf);
 BOOL vm_ObjectExists(vm *vm, object  *obj);
 
 cfunction *CreateCFunction(object *(*func) (vm *vm,tuple_object *locals,tuple_object *kw_locals), char *name);//TODO add keyword parameters
-
-//function_object *CreateCObjFunction(object *(*func) (vm *vm,object *obj),	char *name);
-
-//function_object *CreatePythonFunction(code_object *code);
 
 int vm_AddFunction(vm *vm, cfunction *fo);
 
@@ -171,8 +150,6 @@ void vm_RemoveFunction(vm *vm, cfunction *fo);
 object *vm_ExecuteCFunctionByName(vm *vm, char *name, tuple_object *locals,tuple_object *kw_locals);
 
 object *vm_ExecuteCFunction(vm *vm, cfunction *cf, tuple_object *locals,tuple_object *kw_locals);
-
-//object *vm_ExecuteCObjFunction(vm *vm, char *name, object *obj);
 
 cfunction *vm_FindFunction(vm *vm, char *name);
 
@@ -196,17 +173,9 @@ void vm_Exit(vm *vm); //exit vm
 
 void vm_Stop(vm *vm); //pause vm execution
 
-//object *vm_CallFunction(vm *vm,char *name,stack *locals,NUM argc);//call a python function from C
-
 object *vm_CallFunction(vm *vm,char *name, tuple_object *locals);//call a python function from C
 
 object *vm_RunPYC(vm *vm,stream *f,BOOL free_object);
-
-//object *vm_RunObject(vm *vm, object *obj, stack *locals, NUM argc);//run a python code object
-
-//object *vm_InteractiveRunObject(vm *vm, object *obj, stack *locals, NUM argc);
-
-//block_object *vm_StartCodeObject(vm *vm,code_object *co,stack *locals,NUM argc);
 
 object *vm_RunObject(vm *vm, object *obj, tuple_object *locals);//run a python code object
 
@@ -214,18 +183,11 @@ object *vm_InteractiveRunObject(vm *vm, object *obj,  tuple_object *locals);
 
 block_object *vm_StartCodeObject(vm *vm,code_object *co, tuple_object *locals);
 
-//object *vm_StartFunctionObject(vm *vm,function_object *fo,stack *locals,stack *kw_locals,NUM argc,NUM kw_argc);//run a python function object 
-
-//object *vm_StartCFunction(vm *vm,cfunction *cfo,stack *locals,stack *kw_locals,NUM argc,NUM kw_argc);
-
 object *vm_StartFunctionObject(vm *vm,function_object *fo,tuple_object *locals,tuple_object *kw_locals);//run a python function object 
 
 object *vm_StartCFunction(vm *vm,cfunction *cf,tuple_object *locals,tuple_object *kw_locals);
 
 object *vm_StartCFunctionObject(vm *vm,cfunction_object *cfo,tuple_object *locals,tuple_object *kw_locals);//run a python function object 
-
-//object *vm_ResolveFunction(vm *vm,object *to_resolve);//input can be function_objects ,code_objects, unicode_objects -> returns a function_object if any
-//resolve_container *vm_ResolveFunction(vm *vm,object *to_resolve);//input can be function_objects ,code_objects, unicode_objects -> returns a function_object if any
 
 object *vm_Step(vm *vm);//single step vm //TODO rename to vm_Step
 
@@ -236,6 +198,4 @@ void vm_DumpCode(vm *vm,BOOL dump_descriptions,BOOL from_start);//dump human rea
 #ifdef __cplusplus
 } 
 #endif
-
-
 #endif

@@ -26,45 +26,63 @@
 block_object *AllocBlockObject(void)
 {	
 	#ifdef USE_DEBUGGING
-	return((block_object *)mem_malloc(sizeof(block_object), "AllocBlockObject() return"));
+	return((block_object*)mem_malloc(sizeof(block_object), "AllocBlockObject() return"));
 	#else
-	return((block_object *)malloc(sizeof(block_object)));
+	return((block_object*)malloc(sizeof(block_object)));
 	#endif
 }
 
 kv_object *AllocKVObject(void)
 {
 	#ifdef USE_DEBUGGING
-	return((kv_object *) mem_malloc(sizeof(kv_object), "AllocKVObject() return"));
+	return((kv_object*) mem_malloc(sizeof(kv_object), "AllocKVObject() return"));
 	#else
-	return((kv_object *) malloc(sizeof(kv_object)));
+	return((kv_object*) malloc(sizeof(kv_object)));
 	#endif
 }
 
 object *AllocObject(void)
 {
 	#ifdef USE_DEBUGGING
-	return ((object *) mem_malloc(sizeof(object), "AllocObject() return"));
+	return ((object*) mem_malloc(sizeof(object), "AllocObject() return"));
 	#else
-	return((object *) malloc(sizeof(object)));
+	return((object*) malloc(sizeof(object)));
 	#endif
 }
 
 code_object *AllocCodeObject(void)
 {
 	#ifdef USE_DEBUGGING
-	return((code_object *) mem_malloc(sizeof(code_object), "AllocCodeObject() return"));
+	return((code_object*) mem_malloc(sizeof(code_object), "AllocCodeObject() return"));
 	#else
-	return((code_object *) malloc(sizeof(code_object)));
+	return((code_object*) malloc(sizeof(code_object)));
+	#endif
+}
+
+class_object *AllocClassObject(void)
+{
+	#ifdef USE_DEBUGGING
+	return((class_object*) mem_malloc(sizeof(class_object), "AllocClassObject() return"));
+	#else
+	return((class_object*) malloc(sizeof(class_object)));
+	#endif
+}
+
+class_instance_object *AllocClassInstanceObject(void)
+{
+	#ifdef USE_DEBUGGING
+	return((class_instance_object*) mem_malloc(sizeof(class_instance_object), "AllocClassInstanceObject() return"));
+	#else
+	return((class_instance_object*) malloc(sizeof(class_instance_object)));
 	#endif
 }
 
 function_object *AllocFunctionObject(void)
 {
 	#ifdef USE_DEBUGGING
-	return((function_object *) mem_malloc(sizeof(function_object),"AllocFunctionObject() return"));
+	return((function_object*) mem_malloc(sizeof(function_object),"AllocFunctionObject() return"));
 	#else
-	return((function_object *) malloc(sizeof(function_object)));
+	return((function_object*) malloc(sizeof(function_object)));
 	#endif
 }
 
@@ -77,21 +95,31 @@ cfunction_object *AllocCFunctionObject(void)
 	#endif
 }
 
+method_object *AllocMethodObject(void)
+{
+	#ifdef USE_DEBUGGING
+	return((method_object*) mem_malloc(sizeof(method_object),"AllocMethodObject() return"));
+	#else
+	return((method_object*) malloc(sizeof(method_object)));
+	#endif
+}
+
+
 string_object *AllocStringObject(void)
 {
 	#ifdef USE_DEBUGGING
-	return((string_object *) mem_malloc(sizeof(string_object), "AllocStringObject() return"));
+	return((string_object*) mem_malloc(sizeof(string_object), "AllocStringObject() return"));
 	#else
-	return((string_object *) malloc(sizeof(string_object)));
+	return((string_object*) malloc(sizeof(string_object)));
 	#endif
 }
 
 tuple_object *AllocTupleObject(void)
 {
 	#ifdef USE_DEBUGGING
-	return((tuple_object *) mem_malloc(sizeof(tuple_object), "AllocTupleObject() return"));
+	return((tuple_object*) mem_malloc(sizeof(tuple_object), "AllocTupleObject() return"));
 	#else
-	return((tuple_object *) malloc(sizeof(tuple_object)));
+	return((tuple_object*) malloc(sizeof(tuple_object)));
 	#endif
 }
 
@@ -504,6 +532,26 @@ cfunction_object *CreateCFunctionObject(struct _object* (*func) (struct _vm *vm,
 	return(r);
 }
 
+method_object *CreateMethodObject(object *func,class_instance_object *instance)//char *name,
+{
+	method_object *r = AllocMethodObject();
+	r->type = TYPE_METHOD;
+	r->func = func;
+	//r->name = str_Copy(name);//TODO maybe not needed and can reduce memory usage
+	r->ref_count = 0;
+	r->instance = instance;//TODO gc_IncRef(instance);
+	
+
+	#ifdef USE_DEBUGGING
+	if((debug_level & DEBUG_CREATION) > 0)
+	{
+		debug_printf(DEBUG_CREATION,"created method object\n");
+		//DumpObject(r,0);
+	}
+	#endif
+	return(r);
+}
+
 iter_object *CreateIterObject(void)//OBJECT_FLAGS flags)
 {
 	iter_object *r = AllocIterObject();
@@ -724,9 +772,9 @@ void DumpObject(object * obj, char level)
 		break;
 	case TYPE_CFUNCTION:
 			debug_printf(DEBUG_ALL,"cfunction object: %x\n",((cfunction_object*)obj)->func);
-			for (char i = 0; i < level; i++)
-				debug_printf(DEBUG_ALL,"\t");
-			debug_printf(DEBUG_ALL,"C function\n");
+			//for (char i = 0; i < level; i++)
+			//	debug_printf(DEBUG_ALL,"\t");
+			//debug_printf(DEBUG_ALL,"C function\n");
 		break;
 	case TYPE_UNICODE:
 		debug_printf(DEBUG_ALL,"unicode object: %s\n", ((unicode_object*)obj)->value);
@@ -771,44 +819,44 @@ void DumpObject(object * obj, char level)
 		for (char i = 0; i < level; i++)
 			debug_printf(DEBUG_ALL,"\t");
 		debug_printf(DEBUG_ALL,"name: %s\n", ((code_object *) obj)->name);
-	if((debug_level & DEBUG_FULL_DUMP) > 0)
+		if((debug_level & DEBUG_FULL_DUMP) > 0)
 		{
-		//for (char i = 0; i < level; i++)
-		//	debug_printf(DEBUG_ALL,"\t");
-		//debug_printf(DEBUG_ALL,"flags:%d\n",((code_object *) obj)->flags);
-		for (char i = 0; i < level; i++)
+			//for (char i = 0; i < level; i++)
+			//	debug_printf(DEBUG_ALL,"\t");
+			//debug_printf(DEBUG_ALL,"flags:%d\n",((code_object *) obj)->flags);
+			for (char i = 0; i < level; i++)
 			debug_printf(DEBUG_ALL,"\t");
-		debug_printf(DEBUG_ALL,"nlocals:%d\n",((code_object *) obj)->nlocals);
-		for (char i = 0; i < level; i++)
-			debug_printf(DEBUG_ALL,"\t");
-		debug_printf(DEBUG_ALL,"argcount:%d\n",((code_object *) obj)->argcount);
-		for (char i = 0; i < level; i++)
-			debug_printf(DEBUG_ALL,"\t");
-		debug_printf(DEBUG_ALL,"kwonlyargcount:%d\n",((code_object *) obj)->kwonlyargcount);
-		for (char i = 0; i < level; i++)
-			debug_printf(DEBUG_ALL,"\t");
-		debug_printf(DEBUG_ALL,"code:\n");
-		DumpObject(((code_object *) obj)->code, level + 1);
-		for (char i = 0; i < level; i++)
-			debug_printf(DEBUG_ALL,"\t");
-		debug_printf(DEBUG_ALL,"consts:\n");
-		DumpObject(((code_object *) obj)->consts, level + 1);
-		for (char i = 0; i < level; i++)
-			debug_printf(DEBUG_ALL,"\t");
-		debug_printf(DEBUG_ALL,"names:\n");
-		DumpObject(((code_object *) obj)->names, level + 1);
-		for (char i = 0; i < level; i++)
-			debug_printf(DEBUG_ALL,"\t");
-		debug_printf(DEBUG_ALL,"varnames:\n");
-		DumpObject(((code_object *) obj)->varnames, level + 1);
-		for (char i = 0; i < level; i++)
-			debug_printf(DEBUG_ALL,"\t");
-		debug_printf(DEBUG_ALL,"freevars:\n");
-		DumpObject(((code_object *) obj)->freevars, level + 1);
-		for (char i = 0; i < level; i++)
-			debug_printf(DEBUG_ALL,"\t");
-		debug_printf(DEBUG_ALL,"cellvars:\n");
-		DumpObject(((code_object *) obj)->cellvars, level + 1);
+			debug_printf(DEBUG_ALL,"nlocals:%d\n",((code_object *) obj)->nlocals);
+			for (char i = 0; i < level; i++)
+				debug_printf(DEBUG_ALL,"\t");
+			debug_printf(DEBUG_ALL,"argcount:%d\n",((code_object *) obj)->argcount);
+			for (char i = 0; i < level; i++)
+				debug_printf(DEBUG_ALL,"\t");
+			debug_printf(DEBUG_ALL,"kwonlyargcount:%d\n",((code_object *) obj)->kwonlyargcount);
+			for (char i = 0; i < level; i++)
+				debug_printf(DEBUG_ALL,"\t");
+			debug_printf(DEBUG_ALL,"code:\n");
+			DumpObject(((code_object *) obj)->code, level + 1);
+			for (char i = 0; i < level; i++)
+				debug_printf(DEBUG_ALL,"\t");
+			debug_printf(DEBUG_ALL,"consts:\n");
+			DumpObject(((code_object *) obj)->consts, level + 1);
+			for (char i = 0; i < level; i++)
+				debug_printf(DEBUG_ALL,"\t");
+				debug_printf(DEBUG_ALL,"names:\n");
+			DumpObject(((code_object *) obj)->names, level + 1);
+			for (char i = 0; i < level; i++)
+				debug_printf(DEBUG_ALL,"\t");
+			debug_printf(DEBUG_ALL,"varnames:\n");
+			DumpObject(((code_object *) obj)->varnames, level + 1);
+			for (char i = 0; i < level; i++)
+				debug_printf(DEBUG_ALL,"\t");
+			debug_printf(DEBUG_ALL,"freevars:\n");
+			DumpObject(((code_object *) obj)->freevars, level + 1);
+			for (char i = 0; i < level; i++)
+				debug_printf(DEBUG_ALL,"\t");
+			debug_printf(DEBUG_ALL,"cellvars:\n");
+			DumpObject(((code_object *) obj)->cellvars, level + 1);
 		}
 		// for(int i=0;i<level;i++)
 		// printf("\t");
@@ -817,6 +865,19 @@ void DumpObject(object * obj, char level)
 		for (char i = 0; i < level; i++)
 			debug_printf(DEBUG_ALL,"\t");
 		debug_printf(DEBUG_ALL,"-- code object\n");
+		break;
+	case TYPE_CLASS_INSTANCE:
+		debug_printf(DEBUG_ALL,"class_instance object:\n");
+		for (char i = 0; i < level; i++)
+			debug_printf(DEBUG_ALL,"\t");
+		debug_printf(DEBUG_ALL,"-- class_instance object\n");
+		break;
+
+	case TYPE_CLASS:
+		debug_printf(DEBUG_ALL,"class object\n");
+		for (char i = 0; i < level; i++)
+			debug_printf(DEBUG_ALL,"\t");
+		debug_printf(DEBUG_ALL,"-- class object\n");
 		break;
 	default:
 		debug_printf(DEBUG_ALL,"object type is unknown:%c\n", obj->type);

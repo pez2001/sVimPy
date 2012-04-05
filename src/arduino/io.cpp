@@ -177,7 +177,7 @@ void AddArduinoGlobals(vm *vm)
 {
 	code_object *a_globals = AllocCodeObject();
 	a_globals->type = TYPE_CODE;
-	a_globals->name = str_Copy("Arduino");
+	a_globals->name = str_Copy("arduino");
 	a_globals->argcount = 0;
 	a_globals->kwonlyargcount = 0;
 	a_globals->nlocals = 4;
@@ -188,7 +188,7 @@ void AddArduinoGlobals(vm *vm)
 	a_globals->varnames = NULL;
 	a_globals->freevars = NULL;
 	a_globals->cellvars = NULL;
-	a_globals->ref_count = 0;
+	a_globals->ref_count = 1;
 	a_globals->names = (object*)CreateTuple(4);
 
 	int_object *vinput = CreateIntObject(0);

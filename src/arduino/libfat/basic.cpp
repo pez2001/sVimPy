@@ -53,7 +53,7 @@ inline void setup (void) {
   s+=2;
   }
   /*
-  fat.OpenFile("MMC PICTURES\\Photo0018.jpg");
+  fat.OpenFile("blink.pyc");
   Serial.println("opened file");
 
   char *content = NULL;

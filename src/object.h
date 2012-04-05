@@ -74,24 +74,17 @@ extern "C"  {
 #define TYPE_SET                '<'
 #define TYPE_FROZENSET          '>'
 
-
-// #define OFLAG_USES_VALUE_PTR 1
-// #define OFLAG_IS_NAME 2
-// #define OFLAG_IS_CONST 4
-// #define OFLAG_IS_VARNAME 8
-
-
-//#define OFLAG_ON_STACK 1
-//#define OFLAG_UNLOADED 2		// set if object was unloaded -> obj->ptr ==
-								// seek_pos // or just dump to file and reread 
-								// if accessed
-
-//#define OFLAG_HOLD_IN_MEMORY 4
-//#define OFLAG_HAS_VALUE_PTR 8
-//#define OFLAG_TUPLE_PTR 16		// used to iterate over tuples
-//#define OFLAG_TUPLE_RESTART_FLAG 32	// used to iterate over tuples
-//#define OFLAG_IS_DICT 64 //used distinguish between tuples and dicts because both use the same structs
-//#define OFLAG_LEFT_NAMESPACE 128
+// internal types
+#define TYPE_FUNCTION 'f'
+#define TYPE_CFUNCTION 'C'
+#define TYPE_BLOCK 'b'
+#define TYPE_KV 'k'
+#define TYPE_REF 'r'
+#define TYPE_ITER 'R'
+#define TYPE_CLASS_INSTANCE '*'
+#define TYPE_CLASS '&'
+#define TYPE_EXCEPTION 'E'
+#define TYPE_METHOD 'M'
 
 //code flags
 #define CO_OPTIMIZED	0x0001
@@ -105,18 +98,7 @@ extern "C"  {
 
 //internal code flags
 #define CO_MODULE_ROOT 0x0080
-
-
-// internal types
-#define TYPE_FUNCTION 'f'
-#define TYPE_CFUNCTION 'C'
-#define TYPE_BLOCK 'b'
-#define TYPE_KV 'k'
-#define TYPE_REF 'r'
-#define TYPE_ITER 'R'
-
-
-
+#define CO_CLASS_ROOT 0x0100
 
 struct _vm;
 struct _stack;
@@ -216,16 +198,31 @@ typedef struct _class_object
 	OBJECT_TYPE type;
 	//OBJECT_FLAGS flags;
 	OBJECT_REF_COUNT ref_count;
-	char *name;
-	NUM nlocals;
+	char *name;//TODO remove
+	code_object *code;
 	object *base_classes;
-	object *code;
-	object *consts;
-	object *names;
-	object *varnames;
-	object *freevars;
-	object *cellvars;
 } class_object;
+
+typedef struct _class_instance_object
+{
+	OBJECT_TYPE type;
+	//OBJECT_FLAGS flags;
+	OBJECT_REF_COUNT ref_count;
+	class_object *instance_of;	
+	object *methods;
+	object *vars;
+} class_instance_object;
+
+typedef struct _method_object
+{
+	OBJECT_TYPE type;
+	//OBJECT_FLAGS flags;
+	OBJECT_REF_COUNT ref_count;
+	//char *name;
+	object *func;
+	class_instance_object *instance;
+} method_object;
+
 
 typedef struct _string_object
 {
@@ -256,13 +253,10 @@ typedef struct _function_object
 	OBJECT_TYPE type;
 	//OBJECT_FLAGS flags;
 	OBJECT_REF_COUNT ref_count;
-	//char *name;//used quickly find functions by name
 	tuple_object *defaults;//set to default values in MAKE_FUNCTION opcode
 	tuple_object *kw_defaults;//set to default keyword values in MAKE_FUNCTION opcode
 	tuple_object *closure;
 	struct _code_object *func;
-	//unsigned char func_type;
-	//union _object_func func;
 } function_object;
 
 typedef struct _cfunction_object
@@ -272,9 +266,9 @@ typedef struct _cfunction_object
 	OBJECT_REF_COUNT ref_count;
 	tuple_object *defaults;//set to default values in MAKE_FUNCTION opcode
 	tuple_object *kw_defaults;//set to default keyword values in MAKE_FUNCTION opcode
-	//tuple_object *closure;
 	struct _object* (*func) (struct _vm *vm,struct _tuple_object *locals,struct _tuple_object *kw_locals);
 } cfunction_object;
+
 
 //TODO create struct for generator storage
 typedef struct _iter_object
@@ -298,6 +292,19 @@ typedef struct _block_object
 	NUM len;
 	struct _stack *stack;
 } block_object;
+
+typedef struct _exception_object
+{
+	OBJECT_TYPE type;
+	//OBJECT_FLAGS flags;
+	OBJECT_REF_COUNT ref_count;
+	char *name;
+	char *description;
+	struct _block_object *block;//block in which the exception occured 
+} exception_object;
+
+
+
 
 #ifndef USE_ARDUINO_FUNCTIONS
 #pragma pack(pop)				/* restore original alignment from stack */
@@ -324,6 +331,10 @@ unicode_object *AllocUnicodeObject(void);
 
 code_object *AllocCodeObject(void);
 
+class_object *AllocClassObject(void);
+
+class_instance_object *AllocClassInstanceObject(void);
+
 iter_object *AllocIterObject(void);
 
 int_object *AllocIntObject(void);
@@ -333,6 +344,8 @@ float_object *AllocFloatObject(void);
 function_object *AllocFunctionObject(void);
 
 cfunction_object *AllocCFunctionObject(void);
+
+method_object *AllocMethodObject(void);
 
 /*object *AsObject(void *ptr);
 
@@ -409,6 +422,8 @@ kv_object *CreateKVObject(object *key,object *value);//,OBJECT_FLAGS flags);
 
 object *CreateEmptyObject(char type);//,OBJECT_FLAGS flags);
 
+
+
 function_object *CreateFunctionObject_MAKE_FUNCTION(code_object *function_code,tuple_object *defaults,tuple_object *kw_defaults);//,OBJECT_FLAGS flags);
 
 function_object *CreateFunctionObject_MAKE_CLOSURE(code_object *function_code,tuple_object *closure,tuple_object *defaults,tuple_object *kw_defaults);//,OBJECT_FLAGS flags);
@@ -417,6 +432,7 @@ function_object *CreateFunctionObject(code_object *co);//unsigned char func_type
 
 cfunction_object *CreateCFunctionObject(struct _object* (*func) (struct _vm *vm,struct _tuple_object *locals,struct _tuple_object *kw_locals),tuple_object *defaults,tuple_object *kw_defaults);//,OBJECT_FLAGS flags); //used for in python storage of external calls
 
+method_object *CreateMethodObject(object *func,class_instance_object *instance);//char *name,
 //iter_object *CreateIterObject(object *(*iter_func)(struct _iter_object *iter),object *tag,int flags);
 
 iter_object *CreateIterObject(void);//OBJECT_FLAGS flags);

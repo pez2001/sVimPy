@@ -523,20 +523,46 @@ object *custom_code(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 	return(BinaryOp(a,b,OPCODE_BINARY_ADD));
 }
 
+object *if_build_class(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+{
+	printf("build_class called\n");
+	DumpObject(locals,0);
+
+	function_object *class_function_object = GetItem((object*)locals,0);
+	unicode_object *class_name = (unicode_object*)GetItem((object*)locals,1);
+	class_object *class = AllocClassObject();
+	class->type = TYPE_CLASS;
+	class->name = str_Copy(class_name->value);
+	class->code = class_function_object->func;
+	class->code->co_flags ^= CO_CLASS_ROOT;
+	if(class->code != NULL)
+		gc_IncRefCount(class->code);
+	class->ref_count = 0;
+
+	if(locals->list->num> 2)
+	{
+		class->base_classes = (object*)CreateTuple(locals->list->num - 2);
+		gc_IncRefCount(class->base_classes);
+		for(INDEX i = 0;i<locals->list->num-2;i++)
+		{
+			object *bc = GetItem((object*)locals,2+i);
+			SetItem(class->base_classes,i, bc);
+		}
+	}
+	else
+		class->base_classes = NULL;
+	
+	return((object*)class);
+	//object *tmp =CreateEmptyObject(TYPE_NONE);
+	//return (tmp);
+}
+
 object *if_file_readline(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
 	printf("readline called\n");
 	object *tmp =CreateEmptyObject(TYPE_NONE);
 	return (tmp);
 }
-
-object *if_build_class(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
-{
-	printf("build_class called\n");
-	object *tmp =CreateEmptyObject(TYPE_NONE);
-	return (tmp);
-}
-
 
 object *if_open(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
