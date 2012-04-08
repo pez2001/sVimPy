@@ -474,6 +474,10 @@ INDEX GetDictItemIndex(object *tuple,object *key);
 
 INDEX GetItemIndex(object *tuple,object *obj);
 
+object *GetAttribute(object *obj,object *key);
+
+object *GetAttributeByName(object *obj,char *name);
+
 object *CopyObject(object *obj);
 
 BOOL object_compare(object *a,object *b);

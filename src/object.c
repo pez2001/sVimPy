@@ -1496,6 +1496,18 @@ object *GetDictItemByName(object *tuple,char *name)
 	return (NULL);
 }
 
+object *GetAttribute(object *obj,object *key)
+{
+
+
+}
+
+object *GetAttributeByName(object *obj,char *name)
+{
+
+
+}
+
 void ResetIteration(object *tuple)
 {
 	if (tuple == NULL || tuple->type != TYPE_TUPLE)
