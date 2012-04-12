@@ -99,6 +99,7 @@ extern "C"  {
 //internal code flags
 #define CO_MODULE_ROOT 0x0080
 #define CO_CLASS_ROOT 0x0100
+#define CO_SUB_CLASS_ROOT 0x0200
 
 struct _vm;
 struct _stack;
@@ -310,7 +311,6 @@ typedef struct _exception_object
 #pragma pack(pop)				/* restore original alignment from stack */
 #endif
 
-
 kv_object *ConvertToKVObject(object *key);
 
 kv_object *ConvertToKVObjectValued(object *key,object *value);
@@ -422,8 +422,6 @@ kv_object *CreateKVObject(object *key,object *value);//,OBJECT_FLAGS flags);
 
 object *CreateEmptyObject(char type);//,OBJECT_FLAGS flags);
 
-
-
 function_object *CreateFunctionObject_MAKE_FUNCTION(code_object *function_code,tuple_object *defaults,tuple_object *kw_defaults);//,OBJECT_FLAGS flags);
 
 function_object *CreateFunctionObject_MAKE_CLOSURE(code_object *function_code,tuple_object *closure,tuple_object *defaults,tuple_object *kw_defaults);//,OBJECT_FLAGS flags);
@@ -433,12 +431,8 @@ function_object *CreateFunctionObject(code_object *co);//unsigned char func_type
 cfunction_object *CreateCFunctionObject(struct _object* (*func) (struct _vm *vm,struct _tuple_object *locals,struct _tuple_object *kw_locals),tuple_object *defaults,tuple_object *kw_defaults);//,OBJECT_FLAGS flags); //used for in python storage of external calls
 
 method_object *CreateMethodObject(object *func,class_instance_object *instance);//char *name,
-//iter_object *CreateIterObject(object *(*iter_func)(struct _iter_object *iter),object *tag,int flags);
 
 iter_object *CreateIterObject(void);//OBJECT_FLAGS flags);
-
-//void FreeBlockObject(object *obj);
-
 
 void PrintObject(object *obj);
 
@@ -476,11 +470,17 @@ INDEX GetItemIndex(object *tuple,object *obj);
 
 object *GetAttribute(object *obj,object *key);
 
-object *GetAttributeByName(object *obj,char *name);
+//object *GetAttributeByName(object *obj,char *name);
+
+void SetAttribute(object *obj,object *key,object *value);
+
+object *GetClassMethod(object *class,object *key);
+
+object *GetClassVar(object *class,object *key);
 
 object *CopyObject(object *obj);
 
-BOOL object_compare(object *a,object *b);
+BOOL CompareObjects(object *a,object *b);
 
 void AppendDictItem(object *tuple,object *key,object *value);
 

@@ -348,7 +348,7 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 	if(cmp_op == 8) // is (compare instances)
 	{
 		//new_tos = CreateEmptyObject(tos == tos1 ? TYPE_TRUE : TYPE_FALSE);
-		new_tos = CreateEmptyObject(!object_compare(tos ,tos1) ? TYPE_TRUE : TYPE_FALSE);
+		new_tos = CreateEmptyObject(!CompareObjects(tos ,tos1) ? TYPE_TRUE : TYPE_FALSE);
 		#ifdef USE_DEBUGGING
 		debug_printf(DEBUG_VERBOSE_STEP,"%x is %x == %c\n",tos, tos1, new_tos->type);
 		#endif
@@ -357,7 +357,7 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 	if(cmp_op == 9) // is not (compare instances)
 	{
 		//new_tos = CreateEmptyObject(tos != tos1 ? TYPE_TRUE : TYPE_FALSE);
-		new_tos = CreateEmptyObject(object_compare(tos ,tos1) ? TYPE_TRUE : TYPE_FALSE);
+		new_tos = CreateEmptyObject(CompareObjects(tos ,tos1) ? TYPE_TRUE : TYPE_FALSE);
 		#ifdef USE_DEBUGGING
 		debug_printf(DEBUG_VERBOSE_STEP,"%x is not %x == %c\n",tos, tos1, new_tos->type);
 		#endif

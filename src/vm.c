@@ -310,6 +310,7 @@ vm *vm_Init(code_object *co)
 	tmp->blocks = stack_Init();
 	tmp->exceptions = stack_Init();
 	tmp->globals = ptr_CreateList(0,0);
+	tmp->classes = ptr_CreateList(0,0);
 	tmp->running = 0;
 	tmp->interrupt_vm = 0;
 	tmp->interrupt_handler = NULL;
@@ -337,6 +338,8 @@ void vm_Close(vm *vm)
 	stack_Close(vm->exceptions,1);
 	vm_FreeGlobals(vm);
 	ptr_CloseList(vm->globals);
+	vm_FreeClasses(vm);
+	ptr_CloseList(vm->classes);
 	#ifdef USE_DEBUGGING
 	assert(mem_free(vm));
 	#else
@@ -361,6 +364,26 @@ void vm_FreeGlobals(vm *vm)
 	for(int i=0;i<vm->globals->num;i++)
 	{	
 			gc_DecRefCount((object*)vm->globals->items[i]);
+	}
+}
+
+void vm_AddClass(vm *vm, class_object *co)
+{
+	ptr_Push(vm->classes,co);
+	//gc_IncRefCount(co);
+}
+
+void vm_RemoveClass(vm *vm, class_object *co)
+{
+	ptr_RemoveItem(vm->classes,co);
+	//gc_DecRefCount(co);
+}
+
+void vm_FreeClasses(vm *vm)
+{
+	for(int i=0;i<vm->classes->num;i++)
+	{	
+			gc_DecRefCount((object*)vm->classes->items[i]);
 	}
 }
 
@@ -433,36 +456,41 @@ block_object *vm_StartCodeObject(vm *vm,code_object *co,tuple_object *locals)
 
 block_object *vm_StartClassObject(vm *vm,class_object *co,tuple_object *locals)
 {
-		string_object *bytecodes = (string_object*) co->code->code;
-		block_object *bo = AllocBlockObject();
-		bo->type = TYPE_BLOCK;
-		bo->code = co->code;
-		gc_IncRefCount((object*)bo->code);
-		bo->ip = 0;
-		bo->start = 0;
-		bo->len = bytecodes->len;
-		bo->ref_count = 0;
-		bo->stack = stack_Init();		// co->stacksize
-		stack_Push(vm->blocks,(object*)bo);
-		stack_Push(bo->stack,(object*)co);
-		DumpObject((object*)bo,0);
-		if (locals != NULL)
-		{
-			for (NUM i = 0; i < locals->list->num; i++)
-			{
-				object *local = GetItem((object*)locals,i);
-				if(GetItem(co->code->varnames,i)->type != TYPE_KV)
-					{
-						SetItem(co->code->varnames,i,(object*)ConvertToKVObjectValued(GetItem(co->code->varnames,i),local));
-					}
-				else
-				{
-					SetDictItemByIndex(co->code->varnames,i,local);
-				}
-			}
-			DumpObject((object*)co->code->varnames,0);
-		}
-		return(bo);
+	
+	string_object *bytecodes = (string_object*) co->code->code;
+	block_object *bo = AllocBlockObject();
+	bo->type = TYPE_BLOCK;
+	bo->code = co->code;
+	gc_IncRefCount((object*)bo->code);
+	bo->ip = 0;
+	bo->start = 0;
+	bo->len = bytecodes->len;
+	bo->ref_count = 0;
+	bo->stack = stack_Init();		// co->stacksize
+	stack_Push(vm->blocks,(object*)bo);
+	stack_Push(bo->stack,(object*)co);
+	//printf("sc bo:\n");
+	//DumpObject((object*)bo,0);
+	//printf("sc varnames:\n");
+	//DumpObject(co->code->varnames,0);
+	
+	
+	if (locals != NULL)
+	{
+		SetDictItemByIndex(co->code->varnames,0,locals);
+		//DumpObject((object*)co->code->varnames,0);
+	}
+	
+	tuple_object *bc = (tuple_object*)co->base_classes;
+	for(INDEX i = 0;i<GetTupleLen(bc);i++)
+	{
+		((class_object*)bc->list->items[i])->code->co_flags ^= CO_SUB_CLASS_ROOT;
+		((class_object*)bc->list->items[i])->code->co_flags &= ~CO_CLASS_ROOT;
+		
+		vm_StartClassObject(vm,bc->list->items[i],NULL);
+	}
+	
+	return(bo);
 }
 
 
@@ -626,6 +654,40 @@ object *vm_StartCFunctionObject(vm *vm,cfunction_object *cfo,tuple_object *local
 	debug_printf(DEBUG_VERBOSE_STEP,"executing C function object\n");
 	#endif
 	return ((*cfo->func) (vm,locals,kw_locals));
+}
+
+object *vm_StartMethod(vm *vm,object *key,class_instance_object *cio,tuple_object *locals,tuple_object *kw_locals)
+{
+	object *m = (method_object*)GetClassMethod(cio,key);
+	if(m == NULL)
+	{
+		debug_printf(DEBUG_ALL,"method not found\n");
+		DumpObject(key,0);
+		return(NULL);
+	}
+	debug_printf(DEBUG_ALL,"starting method\n");
+	if(locals == NULL)
+		locals = CreateTuple(0);
+	InsertItem(locals,0,cio);
+	//AppendItem(locals,cio);
+	//AppendItem(locals,CreateUnicodeObject(str_Copy("hi")));
+	//printf("sm mo:\n");
+	//DumpObject((object*)mo,0);
+	printf("sm locals:\n");
+	DumpObject(locals,0);
+	//gc_IncRefCount(locals);
+	object *r = vm_StartFunctionObject(vm,(function_object*)m,locals,kw_locals);
+	//gc_DecRefCount(locals);
+}
+
+object *vm_StartMethodObject(vm *vm,method_object *mo,tuple_object *locals,tuple_object *kw_locals)
+{
+	if(locals == NULL)
+		locals = CreateTuple(0);
+	InsertItem(locals,0,mo->instance);
+	printf("smo locals:\n");
+	DumpObject(locals,0);
+	object *r = vm_StartFunctionObject(vm,(function_object*)mo->func,locals,kw_locals);//TODO add support for cfunction members
 }
 
 #ifdef USE_DEBUGGING
@@ -1095,7 +1157,7 @@ object *vm_Step(vm *vm)
 				
 			case OPCODE_RETURN_VALUE:
 				{
-					stack_Dump(bo->stack);
+					//stack_Dump(bo->stack);
 					object *ret = stack_Pop(bo->stack);
 					//stack_Dump(bo->stack);
 					#ifdef USE_DEBUGGING
@@ -1106,10 +1168,17 @@ object *vm_Step(vm *vm)
 					}
 					#endif
 					stack_Pop(vm->blocks);
+					if((bo->code->co_flags & CO_SUB_CLASS_ROOT) > 0)
+					{
+						printf("return in sub class root\n");
+						gc_Clear();
+						return (NULL);
+					}else
 					if((bo->code->co_flags & CO_CLASS_ROOT) > 0)
 					{
 						printf("return in class root\n");
 						class_object *c = (class_object*)stack_Pop(bo->stack);//this was initially pushed on stack by vm_StartClassObject();
+						vm_AddClass(vm,c);
 						//gc_IncRefCount(ret);
 						//vm_RemoveGlobal(vm,co);
 						//int od = debug_level;
@@ -1121,17 +1190,31 @@ object *vm_Step(vm *vm)
 						cio->ref_count = 0;
 						cio->instance_of = c;//stack_Pop(bo->stack);
 						gc_IncRefCount(c);
-						cio->methods = NULL;//this is a kv list of cfunctions or functions ->key is an unicode object with the methods name as value
-						cio->vars = NULL;
-						
+						cio->methods = CreateTuple(0);//this is a kv list of cfunctions or functions ->key is an unicode object with the methods name as value
+						gc_IncRefCount(cio->methods);
+						//cio->vars = NULL;
+						cio->vars = CreateTuple(0);
+						gc_IncRefCount(cio->vars);
+						DumpObject(c->code->varnames,0);
+						unicode_object *locals_name = CreateUnicodeObject(str_Copy("__locals__"));
+						object *locals = GetDictItem(c->code->varnames,locals_name);
+						SetDictItem(c->code->varnames,locals_name,NULL);
+						gc_IncRefCount(locals_name);
+						gc_DecRefCount(locals_name);
+						printf("return locals:%x\n",locals);
+						DumpObject(locals,0);
+		
 						if(!stack_IsEmpty(vm->blocks))
 						{
 							block_object *parent = (block_object*)stack_Top(vm->blocks);
 							stack_Push(parent->stack,(object*)cio);
 						}
 						
+						unicode_object *method_name = CreateUnicodeObject(str_Copy("__init__"));
+						vm_StartMethod(vm,method_name,cio,locals,NULL);
+						gc_IncRefCount(method_name);
+						gc_DecRefCount(method_name);
 						gc_Clear();
-						//vm_StartMethod("__init__",cio);
 						//stack_Push(vm->blocks,
 					}
 					else
@@ -1514,92 +1597,17 @@ object *vm_Step(vm *vm)
 					//if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 					//	DumpObject(name,1);
 					#endif
-					object *lgo = NULL;
-					//stack_Dump(bo->stack);
-					//DumpObject(tos,0);
-					if(tos->type == TYPE_CODE)
-					{
-						INDEX index = GetItemIndexByName(((code_object*)tos)->names,((unicode_object*)name)->value);
-						if(index != -1)
-						{
-							lgo = GetItem(((code_object*)tos)->names,index);
-						}
-						//DumpObject(lgo,0);
-						if(lgo != NULL) //push the imported function on stack
-							stack_Push(bo->stack, lgo);
-						else
-						{
-							#ifdef USE_DEBUGGING
-							debug_printf(DEBUG_ALL,"warning attr was not found\n");
-							#endif
-						}
-					}else if(tos->type == TYPE_CLASS)
-					{
-						INDEX index = GetItemIndexByName(((class_object*)tos)->code->names,((unicode_object*)name)->value);
-						if(index != -1)
-						{
-							lgo = GetItem(((class_object*)tos)->code->names,index);
-						}
-						//DumpObject(lgo,0);
-						if(lgo != NULL) //push the imported function on stack
-							stack_Push(bo->stack, lgo);
-						else
-						{
-							#ifdef USE_DEBUGGING
-							debug_printf(DEBUG_ALL,"warning class attr was not found\n");
-							#endif
-						}
-					}else if(tos->type == TYPE_CLASS_INSTANCE)
-					{
-						INDEX index = GetItemIndexByName(((class_instance_object*)tos)->methods,((unicode_object*)name)->value);
-						if(index != -1)
-						{
-							lgo = GetItem(((class_instance_object*)tos)->methods,index);
-						}else
-						{
-							index = GetItemIndexByName(((class_instance_object*)tos)->vars,((unicode_object*)name)->value);
-							if(index != -1)
-							{
-								lgo = GetItem(((class_instance_object*)tos)->vars,index);
-							}
-						}
-						if(lgo == NULL)
-						{
-							DumpObject((object*)((class_instance_object*)tos)->instance_of,0);						
-							DumpObject((object*)((class_instance_object*)tos)->instance_of->code,0);						
-							DumpObject(((class_instance_object*)tos)->instance_of->code->names,0);
-							INDEX index = GetItemIndexByName(((class_instance_object*)tos)->instance_of->code->names,((unicode_object*)name)->value);
-							if(index != -1)
-							{
-								lgo = GetItem(((class_instance_object*)tos)->instance_of->code->names,index);
-							}
-						}
-						//TODO continue with vars etc and base classes recursion ->maybe its time to refactor to a sneaky recursive function for attribute loading
-						//DumpObject(lgo,0);
-						if(lgo != NULL) //push the imported function on stack
-							stack_Push(bo->stack, lgo);
-						else
-						{
-							#ifdef USE_DEBUGGING
-							debug_printf(DEBUG_ALL,"warning class instance attr was not found\n");
-							#endif
-						}
-					}
+					object *attr = GetAttribute(tos,name);
+					if(attr != NULL)
+						stack_Push(bo->stack,attr);
 					else
-					{
-							#ifdef USE_DEBUGGING
-							debug_printf(DEBUG_ALL,"object type:%c has no attributes\n",tos->type);
-							DumpObject(tos,0);
-							#endif
-					}
-
+						debug_printf(DEBUG_ALL,"loading attribute failed\n");
 				}
 				break;
 				
 			case OPCODE_STORE_ATTR:
 				{
-				
-				//"Implements TOS.name = TOS1, where /namei/ is the index of name in co_names."
+					//"Implements TOS.name = TOS1, where /namei/ is the index of name in co_names."
 					object *name = GetItem(co->names,arg);
 					if(name->type == TYPE_KV)
 						name = ((kv_object*)name)->value;
@@ -1609,26 +1617,7 @@ object *vm_Step(vm *vm)
 					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 						DumpObject(tos1,1);
 					#endif
-					if(tos->type == TYPE_CODE)
-					{
-					
-						INDEX index = GetItemIndexByName(((code_object*)tos)->names,((unicode_object*)name)->value);
-						if(index != -1)
-						{
-							SetDictItemByIndex(((code_object*)tos)->names,index,tos1);
-						}
-						else
-							AppendDictItem(((code_object*)tos)->names,name,tos1);
-					}else if(tos->type == TYPE_CLASS_INSTANCE)
-					{
-						INDEX index = GetItemIndexByName(((class_instance_object*)tos)->vars,((unicode_object*)name)->value);
-						if(index != -1)
-						{
-							SetDictItemByIndex(((class_instance_object*)tos)->vars,index,tos1);
-						}
-						else
-							AppendDictItem(((class_instance_object*)tos)->vars,name,tos1);
-					}
+					SetAttribute(tos,name,tos1);
 				}	
 				break;
 			case OPCODE_IMPORT_NAME:
@@ -2560,12 +2549,17 @@ object *vm_Step(vm *vm)
 					if(rf->type == TYPE_KV)
 						rf = ((kv_object*)rf)->value;
 					rf = DissolveRef(rf);
-					if(rf != NULL && rf->type == TYPE_CLASS)
+					if(rf != NULL && rf->type == TYPE_METHOD)
+					{
+						printf("executing method\n");
+						vm_StartMethodObject(vm,rf,call,NULL);
+					
+					}else if(rf != NULL && rf->type == TYPE_CLASS)
 					{
 						#ifdef USE_DEBUGGING 
-						debug_printf(DEBUG_ALL,"executing class initializer -> returning finalized class\n");
-						vm_StartClassObject(vm,(class_object*)rf,call);
+						debug_printf(DEBUG_ALL,"executing class initializer -> returning finalized class instance\n");
 						#endif
+						vm_StartClassObject(vm,(class_object*)rf,call);
 					}else if(rf != NULL && rf->type == TYPE_CODE)
 					{
 					   //TODO add vm_StartCodeObject() here

@@ -104,7 +104,6 @@ method_object *AllocMethodObject(void)
 	#endif
 }
 
-
 string_object *AllocStringObject(void)
 {
 	#ifdef USE_DEBUGGING
@@ -596,24 +595,16 @@ kv_object *ConvertToKVObjectValued(object *key,object *value)
 	kv->ref_count = 0;
 	kv->key = key;
 	gc_IncRefCount(key);
-	kv->value = value;
-	gc_IncRefCount(value);
+	if(value != NULL)
+	{
+		kv->value = value;
+		gc_IncRefCount(value);
+	}
+	else
+		kv->value = NULL;
 	return(kv);
 }
 
-/*void FreeBlockObject(object *obj)
-{
-		//if(((block_object*)obj)->iter != NULL)
-		//	FreeObject(((block_object*)obj)->iter);
-		//printf("closing block stack\n");
-		debug_printf(DEBUG_ALL,"block object to be freed:%x\n",obj);
-		debug_printf(DEBUG_ALL,"block object code to be freed:%x\n",((block_object*)obj)->code);
-		FreeObject((object*)((block_object*)obj)->code);
-		if(((block_object*)obj)->stack != NULL)
-			stack_Close(((block_object*)obj)->stack,0);
-		//printf("closed block\n");
-}
-*/
 void PrintObject(object *obj)
 {
 	if (obj != NULL)
@@ -1065,7 +1056,7 @@ char *DumpObjectXml(object * obj, char level)
 }
 #endif
 
-BOOL object_compare(object *a,object *b)
+BOOL CompareObjects(object *a,object *b)
 {
 	//return(CompareOp(a,b,2));
 	//printf("comparing objects\n");
@@ -1087,7 +1078,7 @@ BOOL object_compare(object *a,object *b)
 		return(0);
 		break;
 	case TYPE_KV:
-		return(object_compare(((kv_object*)a)->key,((kv_object*)b)->key) && object_compare(((kv_object*)a)->value,((kv_object*)b)->value));
+		return(CompareObjects(((kv_object*)a)->key,((kv_object*)b)->key) && CompareObjects(((kv_object*)a)->value,((kv_object*)b)->value));
 	case TYPE_INT:
 		return( !(((int_object*)a)->value == ((int_object*)b)->value));
 		break;
@@ -1201,9 +1192,10 @@ object *CopyObject(object *obj)
 	}
   return(NULL);
 }
+
 void AppendDictItem(object * tuple,object *key,object *value)
 {
-	if (tuple == NULL || tuple->type != TYPE_TUPLE)
+	if (tuple == NULL || tuple->type != TYPE_TUPLE || key == NULL)
 		return;
 	if(((tuple_object *) tuple)->list == NULL)
 		((tuple_object *) tuple)->list = ptr_CreateList(0,0);
@@ -1237,7 +1229,7 @@ void AppendItem(object *tuple,object *value)
 
 void InsertItem(object *tuple,INDEX index,object *value)
 {
-	if (tuple == NULL || tuple->type != TYPE_TUPLE)
+	if (tuple == NULL || tuple->type != TYPE_TUPLE || value == NULL)
 		return;
 	if(((tuple_object*)tuple)->list == NULL)
 		((tuple_object*)tuple)->list = ptr_CreateList(0,0);
@@ -1247,6 +1239,8 @@ void InsertItem(object *tuple,INDEX index,object *value)
 
 void SetDictItem(object *tuple,object *key,object *value)
 {
+	if (tuple == NULL || tuple->type != TYPE_TUPLE || key == NULL)
+		return;
 	INDEX index = GetDictItemIndex(tuple,key);
 	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_LISTS) > 0)
@@ -1368,33 +1362,37 @@ object *GetDictItem(object *tuple,object *key)
 	INDEX index = GetDictItemIndex(tuple,key);
 	if(index != -1)
 		{
-			return(((kv_object*)GetItem(tuple,index))->value);
+			object *kv = GetItem(tuple,index);
+			if(kv->type != TYPE_KV)
+				return(NULL);
+			return(((kv_object*)kv)->value);
 		}
 	return(NULL);
 }
 
 INDEX GetDictItemIndex(object *tuple,object *key)
 {
-	if (tuple == NULL || tuple->type != TYPE_TUPLE || ((tuple_object *) tuple)->list == NULL)
+	if(tuple == NULL || tuple->type != TYPE_TUPLE || ((tuple_object *) tuple)->list == NULL || key == NULL)
 		return (-1);
 	 //printf("checking in %d tuple items for\n",((tuple_object*)tuple->ptr)->list->num);
 	//printf("getdictitemindex\n");
 	//DumpObject(key,0);
 	//DumpObject(tuple,0);
-	for (NUM i = 0; i < ((tuple_object *) tuple)->list->num; i++)
+	for(NUM i = 0; i < ((tuple_object *) tuple)->list->num; i++)
 	{
 		 //printf("checking tuple:%d\n",i);
 		// if(((tuple_object*)tuple->ptr)->items[i]->type == TYPE_UNICODE)
-		// printf("checking %s against:
-		// %s\n",name,(char*)((tuple_object*)tuple->ptr)->items[i]->ptr);
-		if (((tuple_object *) tuple)->list->items[i] != NULL && ((object*)((tuple_object *) tuple)->list->items[i])->type != TYPE_KV)
+		 
+		 //printf("checking against:\n");
+		 //%s\n",name,(char*)((tuple_object*)tuple->ptr)->items[i]->ptr);
+		if(((tuple_object *) tuple)->list->items[i] != NULL && ((object*)((tuple_object *) tuple)->list->items[i])->type != TYPE_KV)
 		{
-			if ( !object_compare( ((tuple_object *) tuple)->list->items[i],key))
+			if ( !CompareObjects(((tuple_object*) tuple)->list->items[i],key))
 				return (i);
 		}
 		else
 		{
-			if ( !object_compare( ((kv_object*)((tuple_object *) tuple)->list->items[i])->key,key))
+			if ( !CompareObjects(((kv_object*)((tuple_object*) tuple)->list->items[i])->key,key))
 				return (i);
 		}
 	}
@@ -1403,24 +1401,23 @@ INDEX GetDictItemIndex(object *tuple,object *key)
 
 INDEX GetItemIndex(object *tuple,object *obj)
 {
-	if (tuple == NULL || tuple->type != TYPE_TUPLE || ((tuple_object *) tuple)->list == NULL)
-		return (-1);
+	if(tuple == NULL || tuple->type != TYPE_TUPLE || ((tuple_object *) tuple)->list == NULL || obj == NULL)
+		return(-1);
 
-	for (NUM i = 0; i < ((tuple_object *) tuple)->list->num; i++)
+	for(NUM i = 0; i < ((tuple_object *) tuple)->list->num; i++)
 	{
-
-		if (((tuple_object *) tuple)->list->items[i] != NULL && ((object*)((tuple_object *) tuple)->list->items[i])->type != TYPE_KV)
+		if(((tuple_object *) tuple)->list->items[i] != NULL && ((object*)((tuple_object *) tuple)->list->items[i])->type != TYPE_KV)
 		{
-			if ( !object_compare( ((tuple_object *) tuple)->list->items[i],obj))
-				return (i);
+			if(!CompareObjects(((tuple_object*) tuple)->list->items[i],obj))
+				return(i);
 		}
 		else
 		{
-			if ( !object_compare( ((kv_object*)((tuple_object *) tuple)->list->items[i])->value,obj))
-				return (i);
+			if(!CompareObjects(((kv_object*)((tuple_object*) tuple)->list->items[i])->value,obj))
+				return(i);
 		}
 	}
-	return (-1);
+	return(-1);
 }
 
 void ConvertToDict(object *tuple)
@@ -1498,14 +1495,129 @@ object *GetDictItemByName(object *tuple,char *name)
 
 object *GetAttribute(object *obj,object *key)
 {
-
-
+	object *r = NULL;
+	if(obj->type == TYPE_CODE)
+	{
+		r = GetDictItem(((code_object*)obj)->names,key);
+	}else if(obj->type == TYPE_CLASS)
+	{
+		r = GetDictItem(((class_object*)obj)->code->names,key);
+	}else if(obj->type == TYPE_CLASS_INSTANCE)
+	{
+		r = GetClassMethod(obj,key);
+		if(r!=NULL)
+		{	
+			method_object *mo = CreateMethodObject(r,obj);
+			gc_IncRefCount(r);
+			gc_IncRefCount(obj);
+			return(mo);
+		}
+		else
+		//if(r == NULL)
+			r = GetClassVar(obj,key);
+	}
+	else
+	{
+		#ifdef USE_DEBUGGING
+		debug_printf(DEBUG_ALL,"object type:%c has no attributes\n",obj->type);
+		DumpObject(obj,0);
+		#endif
+	}
+	return(r);
 }
 
-object *GetAttributeByName(object *obj,char *name)
+/*object *GetAttributeByName(object *obj,char *name)
 {
 
 
+}*/
+
+void SetAttribute(object *obj,object *key,object *value)
+{
+	if(obj->type == TYPE_CLASS_INSTANCE)
+	{
+		SetDictItem(((class_instance_object*)obj)->vars,key,value);
+	}
+
+/*
+	if(tos->type == TYPE_CODE)
+	{
+		INDEX index = GetItemIndexByName(((code_object*)tos)->names,((unicode_object*)name)->value);
+		if(index != -1)
+		{
+			SetDictItemByIndex(((code_object*)tos)->names,index,tos1);
+		}
+		else
+			AppendDictItem(((code_object*)tos)->names,name,tos1);
+		}else if(tos->type == TYPE_CLASS_INSTANCE)
+		{
+			INDEX index = GetItemIndexByName(((class_instance_object*)tos)->vars,((unicode_object*)name)->value);
+			if(index != -1)
+			{
+				SetDictItemByIndex(((class_instance_object*)tos)->vars,index,tos1);
+			}
+			else
+				AppendDictItem(((class_instance_object*)tos)->vars,name,tos1);
+	}
+*/
+}
+
+object *GetClassMethod(object *class,object *key)
+{
+	object *r = NULL;
+	if(class->type == TYPE_CLASS)
+	{
+		DumpObject(((class_object*)class)->code->names,0);
+		r = GetDictItem(((class_object*)class)->code->names,key);
+		if(r == NULL)
+		{	
+			tuple_object *bc = (tuple_object*)((class_object*)class)->base_classes;
+			for(INDEX i = 0;i<GetTupleLen(bc);i++)
+			{
+				r = GetClassMethod(bc->list->items[i],key);
+				if(r != NULL)
+					break;
+			}
+		}
+		DumpObject(r,0);
+	}
+	else
+	if(class->type == TYPE_CLASS_INSTANCE)
+	{
+		r = GetDictItem(((class_instance_object*)class)->methods,key);
+		if(r == NULL)
+		{
+			//DumpObject((object*)((class_instance_object*)class)->instance_of,0);						
+			//DumpObject((object*)((class_instance_object*)class)->instance_of->code,0);						
+			//DumpObject((object*)((class_instance_object*)class)->instance_of->code->names,0);
+			//DumpObject(key,0);
+			r = GetDictItem(((class_instance_object*)class)->instance_of->code->names,key);
+			tuple_object *bc = (tuple_object*)((class_instance_object*)class)->instance_of->base_classes;
+			for(INDEX i = 0;i<GetTupleLen(bc);i++)
+			{
+				r = GetClassMethod(bc->list->items[i],key);
+				if(r != NULL)
+					break;
+			}
+			//DumpObject(((class_instance_object*)class)->instance_of->base_classes,0);
+			//if(r==NULL)
+			//	r = GetDictItem(((class_instance_object*)class)->instance_of->code->names,key);
+			if(r==NULL)
+				printf("didnt find any method\n");
+		}
+	}
+	return(r);
+}
+
+object *GetClassVar(object *class,object *key)
+{
+	object *r = NULL;
+	if(class->type == TYPE_CLASS_INSTANCE)
+	{
+		DumpObject(((class_instance_object*)class)->vars,0);
+		r = GetDictItem(((class_instance_object*)class)->vars,key);
+	}
+	return(r);
 }
 
 void ResetIteration(object *tuple)
@@ -2159,3 +2271,4 @@ void WriteObjectPlus(object *obj,stream *f)
 		}
 	}
 }
+

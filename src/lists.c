@@ -109,11 +109,11 @@ void *ptr_Pop(ptr_list *list)
 
 BOOL ptr_Insert(ptr_list *list, INDEX index, void *ptr)
 {
-	if (index == 0 && !list->num)
+	if(index == 0 && !list->num)
 	{
 		ptr_Push(list, ptr);
 	}
-	else if (index < list->num - 1)
+	else if(index <= list->num - 1)
 	{
 		list->num++;
 		#ifdef USE_DEBUGGING
@@ -124,7 +124,7 @@ BOOL ptr_Insert(ptr_list *list, INDEX index, void *ptr)
 		// int len = (list->num-1) - index;
 		// if(len)
 		// {
-		for (NUM i = list->num - 2; i >= index; i--)
+		for(NUM i = list->num - 2; i >= index; i--)
 		{
 			ptr_MoveDown(list, i);
 			// memcpy(&list->items[index+1],&list->items[index],len *
@@ -133,10 +133,10 @@ BOOL ptr_Insert(ptr_list *list, INDEX index, void *ptr)
 		list->items[index] = ptr;
 		return (1);
 	}
-	else if (index >= list->num - 1)
+	else if(index > list->num - 1)
 		ptr_Push(list, ptr);
 
-	return (0);
+	return(0);
 }
 
 void ptr_MoveUp(ptr_list *list, INDEX index)

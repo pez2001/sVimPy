@@ -115,6 +115,7 @@ typedef struct _vm
 	//ptr_list *garbage;
 	//code_object *global;
 	ptr_list *globals;
+	ptr_list *classes;
 	object *(*interrupt_handler) (struct _vm *vm,stack *stack);
 	BOOL interrupt_vm;
 	object *(*import_module_handler) (struct _vm *vm,char *module_name);
@@ -188,6 +189,10 @@ object *vm_StartFunctionObject(vm *vm,function_object *fo,tuple_object *locals,t
 object *vm_StartCFunction(vm *vm,cfunction *cf,tuple_object *locals,tuple_object *kw_locals);
 
 object *vm_StartCFunctionObject(vm *vm,cfunction_object *cfo,tuple_object *locals,tuple_object *kw_locals);//run a python function object 
+
+object *vm_StartMethod(vm *vm,object *key,class_instance_object *cio,tuple_object *locals,tuple_object *kw_locals);
+
+object *vm_StartMethodObject(vm *vm,method_object *mo,tuple_object *locals,tuple_object *kw_locals);
 
 object *vm_Step(vm *vm);//single step vm //TODO rename to vm_Step
 

@@ -37,6 +37,8 @@ void gc_Close(void)
 	
 void gc_IncRefCount(object *obj)
 {
+	if(obj == NULL)
+		return;
 	obj->ref_count++;
 	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_GC) > 0)
@@ -86,12 +88,16 @@ void gc_DecRefCount(object *obj)
 
 BOOL gc_HasNoRefs(object *obj)
 {
-return(!obj->ref_count);
+	if(obj == NULL)
+		return(1);
+	return(!obj->ref_count);
 }
 
 BOOL gc_HasRefs(object *obj)
 {
-return(obj->ref_count);
+	if(obj == NULL)
+		return(0);
+	return(obj->ref_count);
 }
 
 void gc_FreeObject(object *obj)
@@ -239,6 +245,10 @@ void gc_FreeObject(object *obj)
 		gc_DecRefCount(((class_instance_object*)obj)->instance_of);
 		gc_DecRefCount(((class_instance_object*)obj)->methods);
 		gc_DecRefCount(((class_instance_object*)obj)->vars);
+		break;
+	case TYPE_METHOD:
+		gc_DecRefCount(((method_object*)obj)->func);
+		gc_DecRefCount(((method_object*)obj)->instance);
 		break;
 	}
 

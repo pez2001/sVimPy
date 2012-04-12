@@ -31,6 +31,14 @@ void ptr_tests(void)
 	printf("testing ptr list functions\n");
 	ptr_list *p = ptr_CreateList(0, 0);
 
+	ptr_Insert(p,0,(void*)2);
+	ptr_Insert(p,0,(void*)1);
+	for (NUM i = 0; i < p->num; i++)
+		printf("%d ", (int)p->items[i]);
+	ptr_Pop(p);
+	ptr_Pop(p);
+	printf("\n");
+		
 	ptr_Push(p, (void*)1);
 	ptr_Push(p, (void*)2);
 	ptr_Push(p, (void*)3);
@@ -675,8 +683,13 @@ void atomic_test(void)
 
 
 	//classes tests
-	AtomicOpenPYC("tests/test_class3.pyc");
-	//AtomicOpenPYC("tests/test_class2.pyc");
+	//AtomicOpenPYC("tests/test_class6.pyc");
+	//AtomicOpenPYC("tests/test_class5.pyc");
+	//return;
+	//AtomicOpenPYC("tests/test_class4.pyc");
+	//return;
+	//AtomicOpenPYC("tests/test_class3.pyc");
+	AtomicOpenPYC("tests/test_class2.pyc");
 	//AtomicOpenPYC("tests/test_class.pyc");
 	return;
 
@@ -847,6 +860,7 @@ void atomic_test(void)
 int main(int argc, char *argv[])
 {
 	//ptr_tests();
+	//return;
 	//stream_tests();
 	//brute_test();
 	atomic_test();

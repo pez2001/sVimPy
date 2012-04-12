@@ -1,1 +1,1 @@
-from test_class4 import * 
+from test_class6 import * 
