@@ -25,8 +25,8 @@
 
 /* keywords
 
-import
-from
+import		supported
+from			supported
 nonlocal
 as
 yield			supported
@@ -55,10 +55,10 @@ is				supported
 
 //classes and exceptions
 
-with
+with		supported
 try
 raise
-class
+class	supported
 finally
 except
 
@@ -163,6 +163,12 @@ void vm_FreeGlobals(vm *vm);
 void vm_AddGlobal(vm *vm, code_object * co);//add a global code object
 
 void vm_RemoveGlobal(vm *vm, code_object *co);//remove a global
+
+void vm_AddClass(vm *vm, class_object *co);
+
+void vm_RemoveClass(vm *vm, class_object *co);
+
+void vm_FreeClasses(vm *vm);
 
 void vm_SetInterrupt(vm*vm,object *(*interrupt_func) (struct _vm *vm,stack *stack)); //set interrupt handler function
 

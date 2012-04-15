@@ -689,8 +689,8 @@ void atomic_test(void)
 	//AtomicOpenPYC("tests/test_class4.pyc");
 	//return;
 	//AtomicOpenPYC("tests/test_class3.pyc");
-	AtomicOpenPYC("tests/test_class2.pyc");
-	//AtomicOpenPYC("tests/test_class.pyc");
+	//AtomicOpenPYC("tests/test_class2.pyc");
+	AtomicOpenPYC("tests/test_class.pyc");
 	return;
 
 	//fmod tests + classes as globals

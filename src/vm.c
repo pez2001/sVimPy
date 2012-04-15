@@ -486,13 +486,11 @@ block_object *vm_StartClassObject(vm *vm,class_object *co,tuple_object *locals)
 	{
 		((class_object*)bc->list->items[i])->code->co_flags ^= CO_SUB_CLASS_ROOT;
 		((class_object*)bc->list->items[i])->code->co_flags &= ~CO_CLASS_ROOT;
-		
 		vm_StartClassObject(vm,bc->list->items[i],NULL);
 	}
 	
 	return(bo);
 }
-
 
 object *vm_StartFunctionObject(vm *vm,function_object *fo,tuple_object *locals,tuple_object *kw_locals)
 {	
@@ -1157,7 +1155,8 @@ object *vm_Step(vm *vm)
 				
 			case OPCODE_RETURN_VALUE:
 				{
-					//stack_Dump(bo->stack);
+					printf("return stack\n");
+					stack_Dump(bo->stack);
 					object *ret = stack_Pop(bo->stack);
 					//stack_Dump(bo->stack);
 					#ifdef USE_DEBUGGING
@@ -1170,6 +1169,8 @@ object *vm_Step(vm *vm)
 					stack_Pop(vm->blocks);
 					if((bo->code->co_flags & CO_SUB_CLASS_ROOT) > 0)
 					{
+						bo->code->co_flags ^= CO_CLASS_ROOT;
+						bo->code->co_flags &= ~CO_SUB_CLASS_ROOT;
 						printf("return in sub class root\n");
 						gc_Clear();
 						return (NULL);
@@ -1208,13 +1209,15 @@ object *vm_Step(vm *vm)
 						{
 							block_object *parent = (block_object*)stack_Top(vm->blocks);
 							stack_Push(parent->stack,(object*)cio);
+							printf("parent stack\n");
+							stack_Dump(parent->stack);
 						}
 						
 						unicode_object *method_name = CreateUnicodeObject(str_Copy("__init__"));
 						vm_StartMethod(vm,method_name,cio,locals,NULL);
 						gc_IncRefCount(method_name);
 						gc_DecRefCount(method_name);
-						gc_Clear();
+						//gc_Clear();
 						//stack_Push(vm->blocks,
 					}
 					else
