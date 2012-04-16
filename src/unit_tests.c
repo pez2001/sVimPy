@@ -664,7 +664,7 @@ void atomic_test(void)
 	//debug_level |= DEBUG_STACK;
 	//debug_level |= DEBUG_LISTS;
 	//debug_level |= DEBUG_GC;
-	debug_level |= DEBUG_VERBOSE_STEP;
+	//debug_level |= DEBUG_VERBOSE_STEP;
 	//debug_level |= DEBUG_VM;
 	//debug_level |= DEBUG_FREEING;
 	//debug_level |= DEBUG_ALLOCS;
@@ -685,13 +685,10 @@ void atomic_test(void)
 	//classes tests
 	//AtomicOpenPYC("tests/test_class6.pyc");
 	//AtomicOpenPYC("tests/test_class5.pyc");
-	//return;
 	//AtomicOpenPYC("tests/test_class4.pyc");
-	//return;
 	//AtomicOpenPYC("tests/test_class3.pyc");
 	//AtomicOpenPYC("tests/test_class2.pyc");
-	AtomicOpenPYC("tests/test_class.pyc");
-	return;
+	//AtomicOpenPYC("tests/test_class.pyc");
 
 	//fmod tests + classes as globals
 	AtomicOpenPYC("tests/Play.pyc");
@@ -707,7 +704,6 @@ void atomic_test(void)
 	
 	//custom code + import_from + import_star opcodes
 	AtomicOpenPYC("tests/test_import.pyc");
-	//return;
 	AtomicOpenPYC("tests/test45.pyc");
 
 	//iters

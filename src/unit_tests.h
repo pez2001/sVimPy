@@ -35,6 +35,7 @@
 #include "arduino/test_pyc.h"
 //#include "arduino/blink.h"
 #include "arduino/io.h"
+#include "libraries/fmod_wrapper.h"
 
 
 #ifdef USE_DEBUGGING

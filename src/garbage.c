@@ -121,9 +121,9 @@ void gc_FreeObject(object *obj)
 		{
 			debug_printf(DEBUG_GC,"%x : %d (decreasing due FreeObject)\n",obj,obj->ref_count);
 		}
+		debug_printf(DEBUG_ALL,"Impossible\n");
 		#endif
 		//gc_DecRefCount(obj);
-		printf("Impossible\n");
 		return;
 	}
 
@@ -238,17 +238,17 @@ void gc_FreeObject(object *obj)
 			free(((class_object*)obj)->name);
 			#endif
 		}
-		gc_DecRefCount(((class_object*)obj)->code);
+		gc_DecRefCount((object*)((class_object*)obj)->code);
 		gc_DecRefCount(((class_object*)obj)->base_classes);
 		break;
 	case TYPE_CLASS_INSTANCE:
-		gc_DecRefCount(((class_instance_object*)obj)->instance_of);
+		gc_DecRefCount((object*)((class_instance_object*)obj)->instance_of);
 		gc_DecRefCount(((class_instance_object*)obj)->methods);
 		gc_DecRefCount(((class_instance_object*)obj)->vars);
 		break;
 	case TYPE_METHOD:
 		gc_DecRefCount(((method_object*)obj)->func);
-		gc_DecRefCount(((method_object*)obj)->instance);
+		gc_DecRefCount((object*)((method_object*)obj)->instance);
 		break;
 	}
 

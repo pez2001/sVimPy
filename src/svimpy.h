@@ -33,7 +33,11 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <strings.h>
+#include <ctype.h>
 #include <sys/types.h>
+
+int strcasecmp(const char *s1, const char *s2);
 
 #ifdef USE_DEBUGGING
 const char *svimpy_helpmsg = "Usage: svimpy [OPTION]... [INPUT FILE]\n\

@@ -56,12 +56,12 @@ void mem_Close(void)
 			printf("leaked chunk: %s (%d) @%x : ", mem_chunk_items[i]->description, mem_chunk_items[i]->size, mem_chunk_items[i]->ptr);
 			for (int ix = 0; ix < mem_chunk_items[i]->size; ix++)
 			{
-				printf("%x ", *((unsigned char *)(mem_chunk_items[i]->ptr + ix)));
+				printf("%x ", *((unsigned char *)((unsigned char*)mem_chunk_items[i]->ptr + ix)));
 			}
 			printf("  ");
 			for (int ix = 0; ix < mem_chunk_items[i]->size; ix++)
 			{
-				printf("%c  ",*((unsigned char *)(mem_chunk_items[i]->ptr + ix)));
+				printf("%c  ",*((unsigned char *)((unsigned char*)mem_chunk_items[i]->ptr + ix)));
 			}
 			printf("\n");
 

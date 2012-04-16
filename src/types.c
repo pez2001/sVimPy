@@ -21,3 +21,15 @@
  */
 
 #include "types.h"
+
+#ifdef USE_DEBUGGING
+void DumpTypes(void)
+{
+	printf("Dumping types and sizes\n");
+	//TODO print them
+
+
+
+}
+
+#endif

@@ -1507,10 +1507,10 @@ object *GetAttribute(object *obj,object *key)
 		r = GetClassMethod(obj,key);
 		if(r!=NULL)
 		{	
-			method_object *mo = CreateMethodObject(r,obj);
+			method_object *mo = CreateMethodObject(r,(class_instance_object*)obj);
 			gc_IncRefCount(r);
 			gc_IncRefCount(obj);
-			return(mo);
+			return((object*)mo);
 		}
 		else
 		//if(r == NULL)
@@ -1567,19 +1567,19 @@ object *GetClassMethod(object *class,object *key)
 	object *r = NULL;
 	if(class->type == TYPE_CLASS)
 	{
-		DumpObject(((class_object*)class)->code->names,0);
+		//DumpObject(((class_object*)class)->code->names,0);
 		r = GetDictItem(((class_object*)class)->code->names,key);
 		if(r == NULL)
 		{	
 			tuple_object *bc = (tuple_object*)((class_object*)class)->base_classes;
-			for(INDEX i = 0;i<GetTupleLen(bc);i++)
+			for(INDEX i = 0;i<GetTupleLen((object*)bc);i++)
 			{
 				r = GetClassMethod(bc->list->items[i],key);
 				if(r != NULL)
 					break;
 			}
 		}
-		DumpObject(r,0);
+		//DumpObject(r,0);
 	}
 	else
 	if(class->type == TYPE_CLASS_INSTANCE)
@@ -1593,7 +1593,7 @@ object *GetClassMethod(object *class,object *key)
 			//DumpObject(key,0);
 			r = GetDictItem(((class_instance_object*)class)->instance_of->code->names,key);
 			tuple_object *bc = (tuple_object*)((class_instance_object*)class)->instance_of->base_classes;
-			for(INDEX i = 0;i<GetTupleLen(bc);i++)
+			for(INDEX i = 0;i<GetTupleLen((object*)bc);i++)
 			{
 				r = GetClassMethod(bc->list->items[i],key);
 				if(r != NULL)
@@ -1602,8 +1602,8 @@ object *GetClassMethod(object *class,object *key)
 			//DumpObject(((class_instance_object*)class)->instance_of->base_classes,0);
 			//if(r==NULL)
 			//	r = GetDictItem(((class_instance_object*)class)->instance_of->code->names,key);
-			if(r==NULL)
-				printf("didnt find any method\n");
+			//if(r==NULL)
+			//	printf("didnt find any method\n");
 		}
 	}
 	return(r);
@@ -1614,7 +1614,7 @@ object *GetClassVar(object *class,object *key)
 	object *r = NULL;
 	if(class->type == TYPE_CLASS_INSTANCE)
 	{
-		DumpObject(((class_instance_object*)class)->vars,0);
+		//DumpObject(((class_instance_object*)class)->vars,0);
 		r = GetDictItem(((class_instance_object*)class)->vars,key);
 	}
 	return(r);

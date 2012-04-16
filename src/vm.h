@@ -140,6 +140,10 @@ void FreeCFunction(cfunction *cf);
 
 BOOL vm_ObjectExists(vm *vm, object  *obj);
 
+#ifdef USE_DEBUGGING
+void vm_DumpStackTree(vm *vm);
+#endif
+
 cfunction *CreateCFunction(object *(*func) (vm *vm,tuple_object *locals,tuple_object *kw_locals), char *name);//TODO add keyword parameters
 
 int vm_AddFunction(vm *vm, cfunction *fo);
@@ -197,6 +201,8 @@ object *vm_StartCFunction(vm *vm,cfunction *cf,tuple_object *locals,tuple_object
 object *vm_StartCFunctionObject(vm *vm,cfunction_object *cfo,tuple_object *locals,tuple_object *kw_locals);//run a python function object 
 
 object *vm_StartMethod(vm *vm,object *key,class_instance_object *cio,tuple_object *locals,tuple_object *kw_locals);
+
+object *vm_RunMethod(vm *vm,object *key,class_instance_object *cio,tuple_object *locals,tuple_object *kw_locals);
 
 object *vm_StartMethodObject(vm *vm,method_object *mo,tuple_object *locals,tuple_object *kw_locals);
 

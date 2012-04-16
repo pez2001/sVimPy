@@ -23,6 +23,9 @@
 
 #ifndef TYPES_H
 #define TYPES_H
+
+#include <stdio.h>
+
 #include "features.h"
 
 #define OBJECT_TYPE char
@@ -62,5 +65,10 @@
 //used for boolean comparisons
 #define BOOL unsigned char
 
+#ifdef USE_DEBUGGING
+
+void DumpTypes(void);
+
+#endif
 
 #endif

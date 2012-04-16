@@ -131,7 +131,9 @@ struct _stream_type *streams_GetStreamType(STREAM_TYPE_ID id)
 			return(stream_types->items[i]);
 		i++;
 	}while(i < stream_types->num);
-	printf("stream type not defined:%c\n",id);
+	#ifdef USE_DEBUGGING
+	debug_printf(DEBUG_ALL,"stream type not defined:%c\n",id);
+	#endif
 	return(NULL);
 }
 
