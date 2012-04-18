@@ -916,6 +916,211 @@ void DumpObject(object * obj, char level)
 }
 #endif
 
+void FullDumpObject(object * obj, char level)
+{
+	if (obj == NULL)
+		return;
+	for (char i = 0; i < level; i++)
+		printf("\t");
+	printf("(%d)(%x)",obj->ref_count,obj);
+	switch (obj->type)
+	{
+	case TYPE_BLOCK:
+		printf("block object\n");
+		for (char i = 0; i < level; i++)
+		printf("\t");
+		printf("stack @%x\n",((block_object*)obj)->stack);
+		for (char i = 0; i < level; i++)
+		printf("\t");
+		printf("code @%x\n",((block_object*)obj)->code);
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("start: %d\n",((block_object*)obj)->start);
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("len: %d\n",((block_object*)obj)->len);
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("ip: %d\n",((block_object*)obj)->ip);
+		for (char i = 0; i < level; i++)
+				printf("\t");
+		printf("-- block object\n");
+		break;
+	case TYPE_ITER:
+			printf("iter object\n");
+			printf("iter tag:\n");
+			FullDumpObject((object*)((iter_object*)obj)->tag,level + 1);
+			printf("iter block stack:\n");
+			stack_Dump(((iter_object*)obj)->block_stack);
+			break;
+	case TYPE_REF:
+		printf("ref object\n");
+		FullDumpObject(((ref_object*)obj)->ref,level+1);
+		break;
+	case TYPE_ELLIPSIS:
+		printf("ellipsis	 object\n");
+		break;
+	case TYPE_TRUE:
+		printf("true object\n");
+		break;
+	case TYPE_FALSE:
+		printf("false object\n");
+		break;
+	case TYPE_NULL:
+		printf("NULL object\n");
+		break;
+	case TYPE_NONE:
+		printf("NONE object\n");
+		break;
+	case TYPE_BINARY_FLOAT:
+		printf("float object: %7g\n", ((float_object*)obj)->value);
+		break;
+	case TYPE_INT:
+		printf("int object: %d\n", ((int_object*)obj)->value);
+		break;
+	case TYPE_KV:
+		printf("kv object\n");
+		DumpObject(((kv_object*)obj)->key,level);
+		DumpObject(((kv_object*)obj)->value,level + 1);
+		break;
+	case TYPE_FUNCTION:
+			printf("function object: %s\n",((function_object*)obj)->func->name);
+			for (char i = 0; i < level; i++)
+				printf("\t");
+			printf("Python function\n");
+			for (char i = 0; i < level; i++)
+				printf("\t");
+			printf("code:\n");
+			FullDumpObject((object*)((function_object*)obj)->func,level + 1);
+			for (char i = 0; i < level; i++)
+				printf("\t");
+			printf("defaults:\n");
+			FullDumpObject((object*)((function_object*)obj)->defaults,level + 1);
+			for (char i = 0; i < level; i++)
+				printf("\t");
+			printf("kw_defaults:\n");
+			FullDumpObject((object*)((function_object*)obj)->kw_defaults,level + 1);
+			for (char i = 0; i < level; i++)
+				printf("\t");
+			printf("closure:\n");
+			FullDumpObject((object*)((function_object*)obj)->closure,level + 1);
+		break;
+	case TYPE_CFUNCTION:
+			printf("cfunction object: %x\n",((cfunction_object*)obj)->func);
+		break;
+	case TYPE_UNICODE:
+		printf("unicode object: %s\n", ((unicode_object*)obj)->value);
+		break;
+	case TYPE_STRING:
+		printf("string object: ");
+		for (NUM i = 0; i < ((string_object *) obj)->len; i++)
+			printf("%02x ", (unsigned char)((string_object *) obj)->content[i]);
+		printf("\n");
+		break;
+	case TYPE_TUPLE:
+		printf("tuple object");
+		if (((tuple_object *) obj)->list != NULL && ((tuple_object *) obj)->list->num > 0)
+		{
+			printf(" contains %d items\n", ((tuple_object *) obj)->list->num);
+			for (NUM i = 0; i < ((tuple_object *) obj)->list->num; i++)
+			{
+				if (((tuple_object*) obj)->list->items[i] != NULL)
+				{
+
+					if ( i == ((tuple_object*)obj)->ptr)
+						printf("%d->",i);
+					else
+						printf("%d  ",i);
+					FullDumpObject((object*)((tuple_object*) obj)->list->items[i], level + 1);
+				}
+			}
+		}
+		else
+		{
+			printf("\n");
+			for (char i = 0; i < level; i++)
+				printf("\t");
+			printf("empty tuple\n");
+		}
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("-- tuple object\n");
+		break;
+	case TYPE_CODE:
+		printf("code object\n");
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("name: %s\n", ((code_object *) obj)->name);
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("nlocals:%d\n",((code_object *) obj)->nlocals);
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("argcount:%d\n",((code_object *) obj)->argcount);
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("kwonlyargcount:%d\n",((code_object *) obj)->kwonlyargcount);
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("code:\n");
+		FullDumpObject(((code_object *) obj)->code, level + 1);
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("consts:\n");
+		FullDumpObject(((code_object *) obj)->consts, level + 1);
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("names:\n");
+		FullDumpObject(((code_object *) obj)->names, level + 1);
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("varnames:\n");
+		FullDumpObject(((code_object *) obj)->varnames, level + 1);
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("freevars:\n");
+		FullDumpObject(((code_object *) obj)->freevars, level + 1);
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("cellvars:\n");
+		FullDumpObject(((code_object *) obj)->cellvars, level + 1);
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("-- code object\n");
+		break;
+	case TYPE_CLASS_INSTANCE:
+		printf("class_instance object:\n");
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("-- class_instance object\n");
+		break;
+	case TYPE_CLASS:
+		printf("class object\n");
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("-- class object\n");
+		break;
+	case TYPE_METHOD:
+		printf("method object\n");
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("-- method object\n");
+		break;
+	case TYPE_TAG:
+		printf("tag object\n");
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("tag: %x\n",((tag_object*)obj)->tag);
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("-- tag object\n");
+		break;
+	default:
+		printf("object type is unknown:%c\n", obj->type);
+	}
+}
+
+
 #ifdef USE_DEBUGGING
 char *DumpObjectXml(object * obj, char level)
 {

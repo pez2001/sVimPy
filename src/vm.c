@@ -1167,6 +1167,13 @@ object *vm_RunObject(vm *vm, object *obj, tuple_object *locals)
 {
 		if(obj->type != TYPE_CODE)
 			return(CreateEmptyObject(TYPE_NONE));
+		unicode_object *var_name = CreateUnicodeObject(str_Copy("__name__"));
+		gc_IncRefCount(var_name);
+		unicode_object *module_name = CreateUnicodeObject(str_Copy("__main__"));
+		SetDictItem(((code_object*)obj)->names,var_name,module_name);
+		//DumpObject(file_tag,0);
+		gc_DecRefCount(var_name);
+		//DumpObject(((code_object*)obj)->names,0);
 		vm_StartCodeObject(vm,(code_object*)obj,locals);
 		object *ret = NULL;
 		while(ret == NULL)
@@ -1726,6 +1733,8 @@ object *vm_Step(vm *vm)
 			case OPCODE_FOR_ITER:
 				{
 					object *next =  NULL;
+					//stack_Dump(bo->stack);
+					//FullDumpObject(bo->code,0);
 					if(stack_Top(bo->stack)->type == TYPE_ITER)
 						next = iter_NextNow((iter_object*)stack_Top(bo->stack),vm);
 					if (next != NULL && next->type == TYPE_NONE)
@@ -1996,6 +2005,9 @@ object *vm_Step(vm *vm)
 					{
 						bo->ip = arg;
 					}
+					else
+						stack_Push(bo->stack,tos);
+					
 				}
 				break;
 				
@@ -2005,6 +2017,9 @@ object *vm_Step(vm *vm)
 					{
 						bo->ip = arg;
 					}
+					else
+						stack_Push(bo->stack,tos);
+
 				}
 				break;
 			case OPCODE_WITH_CLEANUP:

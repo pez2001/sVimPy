@@ -1,1 +1,1 @@
-from test_class6 import * 
+from queens2 import * 

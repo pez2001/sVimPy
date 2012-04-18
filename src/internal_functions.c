@@ -564,7 +564,7 @@ object *if_file_close(struct _vm *vm,tuple_object *locals,tuple_object *kw_local
 	//DumpObject(((class_object*)((class_instance_object*)self)->instance_of)->code->names,0);
 	unicode_object *file_name = CreateUnicodeObject(str_Copy("__file__"));
 	object *file_tag = GetAttribute(self,file_name);
-	DumpObject(file_tag,0);
+	//DumpObject(file_tag,0);
 	gc_IncRefCount(file_name);
 	gc_DecRefCount(file_name);
 	if(file_tag->type == TYPE_TAG && ((tag_object*)file_tag)->tag != NULL);
@@ -584,7 +584,7 @@ object *if_file_readline(struct _vm *vm,tuple_object *locals,tuple_object *kw_lo
 	//DumpObject(((class_object*)((class_instance_object*)self)->instance_of)->code->names,0);
 	unicode_object *file_name = CreateUnicodeObject(str_Copy("__file__"));
 	object *file_tag = GetAttribute(self,file_name);
-	DumpObject(file_tag,0);
+	//DumpObject(file_tag,0);
 	gc_IncRefCount(file_name);
 	gc_DecRefCount(file_name);
 	char buf[512];

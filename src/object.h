@@ -449,6 +449,8 @@ iter_object *CreateIterObject(void);//OBJECT_FLAGS flags);
 
 void PrintObject(object *obj);
 
+void FullDumpObject(object * obj, char level);
+
 #ifdef USE_DEBUGGING
 void DumpObject(object *obj, char level);
 
