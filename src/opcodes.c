@@ -144,7 +144,7 @@ followed by explicit keyword and positional arguments.", 1, 1}, // SUPPORTED
 or whether the function returns, and continues with the outer-next block.", 0, 1},
 {OPCODE_LOAD_BUILD_CLASS, "LOAD_BUILD_CLASS", "Pushes builtins.__build_class__() onto the stack. It is later called by CALL_FUNCTION to construct a class.", 0, 1},
 {OPCODE_BUILD_CLASS, "BUILD_CLASS", "Creates a new class object. TOS is the methods dictionary,\n\
-TOS1 the tuple of the names of the base classes, and TOS2 the class name.", 0, 0},
+TOS1 the tuple of the names of the base classes, and TOS2 the class name.", 0, 1},
 {OPCODE_RAISE_VARARGS, "RAISE_VARARGS", "Raises an exception. /argc/ indicates the number of parameters to the raise statement,\n\
 ranging from 0 to 3. The handler will find the traceback as TOS2, the parameter as TOS1, and the exception as TOS.", 1, 0},
 {OPCODE_IMPORT_FROM, "IMPORT_FROM", "Loads the attribute co_names[/namei/] from the module found in TOS.\n\

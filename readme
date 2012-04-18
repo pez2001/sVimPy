@@ -60,13 +60,14 @@ Features include:
 			an indexing bug with the opcodes 
 			after SETUP_WITH (not many)
 	0.73	add attributes to some degree
-	0.74 add classes support
+	0.74  add classes support
 			+ class inheritance
-	0.75 add missing opcodes
-		   + basic exceptions support
+	0.75  add missing opcodes
+		    + basic exceptions support
 	0.76	add support for file operations
 	0.77  stream printing + sd-fat support
-	0.78 add missing internal functions used by classes
+	0.78  add missing internal functions used by classes
+	0.79  remove redundancies and manual stuff in external code + more management functions
 	0.8    vm feature complete 
                 (except classes ,exceptions and some builtin functions)
 	0.9    memory optimizations including object locking mechanism 

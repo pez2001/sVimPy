@@ -23,9 +23,11 @@
 #include "garbage.h"
 
 ptr_list *garbage;
+struct _vm *garbage_vm;
 
-void gc_Init(void)
+void gc_Init(struct _vm *vm)
 {
+	garbage_vm = vm;
 	garbage = ptr_CreateList(0,0);
 }
 
@@ -33,6 +35,7 @@ void gc_Close(void)
 {
 	gc_Clear();
 	ptr_CloseList(garbage);
+	garbage_vm = NULL;
 }
 	
 void gc_IncRefCount(object *obj)
@@ -230,6 +233,7 @@ void gc_FreeObject(object *obj)
 		gc_DecRefCount(((code_object*)obj)->cellvars);
 		break;
 	case TYPE_CLASS:
+	
 		if(((class_object*)obj)->name != NULL)
 		{
 			#ifdef USE_DEBUGGING
@@ -242,13 +246,27 @@ void gc_FreeObject(object *obj)
 		gc_DecRefCount(((class_object*)obj)->base_classes);
 		break;
 	case TYPE_CLASS_INSTANCE:
-		gc_DecRefCount((object*)((class_instance_object*)obj)->instance_of);
-		gc_DecRefCount(((class_instance_object*)obj)->methods);
-		gc_DecRefCount(((class_instance_object*)obj)->vars);
+		{
+			unicode_object *method_name = CreateUnicodeObject(str_Copy("__del__"));
+			if(garbage_vm != NULL)
+			{
+				object *rmr = vm_RunMethod(garbage_vm,(object*)method_name,obj,NULL,NULL);
+				gc_IncRefCount(rmr);
+				gc_DecRefCount(rmr);
+				gc_IncRefCount((object*)method_name);
+				gc_DecRefCount((object*)method_name);
+			}
+			gc_DecRefCount((object*)((class_instance_object*)obj)->instance_of);
+			gc_DecRefCount(((class_instance_object*)obj)->methods);
+			gc_DecRefCount(((class_instance_object*)obj)->vars);
+		}
 		break;
 	case TYPE_METHOD:
 		gc_DecRefCount(((method_object*)obj)->func);
 		gc_DecRefCount((object*)((method_object*)obj)->instance);
+		break;
+
+	case TYPE_TAG:
 		break;
 	}
 

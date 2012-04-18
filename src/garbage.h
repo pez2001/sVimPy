@@ -29,7 +29,6 @@
 #include "lists.h"
 #include "object.h"
 #include "debug.h"
-
 //#include "vm.h"
 
 #ifdef __cplusplus
@@ -37,6 +36,8 @@ extern "C"  {
 #endif
 
 struct _object;
+
+struct _vm;
 
 void gc_FreeObject(struct _object *obj);
 
@@ -48,7 +49,7 @@ BOOL gc_HasNoRefs(struct _object *obj);
 
 BOOL gc_HasRefs(struct _object *obj);
 
-void gc_Init(void);
+void gc_Init(struct _vm *vm);
 
 void gc_Close(void);
 

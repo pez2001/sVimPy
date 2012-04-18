@@ -37,6 +37,12 @@ iter_object *iter_CreateIter(object *iteration,struct _vm *vm)//,struct _vm *vm
 		iter_InitCFGenerator(iter,vm,(cfunction_object*)iteration);	
 		return(iter);
 	}
+	else	if(iteration->type == TYPE_METHOD)
+	{
+		iter_object *iter = CreateIterObject();
+		iter_InitMGenerator(iter,vm,(method_object*)iteration);	
+		return(iter);
+	}
 	else if(iteration->type == TYPE_ITER)
 	{
 		//printf("iteration already created\n");
@@ -213,7 +219,8 @@ object *iter_NextNow(iter_object *iter,struct _vm *vm)
 			ret = vm_Step(vm);
 			//block_object *n = (block_object*)stack_Top(vm->blocks);
 			//debug_printf(DEBUG_ALL,"iter_NextNow() - step thru\n");
-			if(!stack_Contains(vm->blocks,(object*)bo)) //via normal return
+			if(!stack_Contains(vm->blocks,(object*)bo)) //via normal return 
+			//TODO switch to integer comparison to block stack num with the block stack num at the beginning
 			{
 				//debug_printf(DEBUG_ALL,"block executed\n");
 				//stack_Dump(n->stack);
@@ -338,6 +345,21 @@ void iter_InitCFGenerator(iter_object *iter,struct _vm *vm,cfunction_object *cfo
 	iter->iter_func = &iter_CFGenerator;
 }
 
+object *iter_MGenerator(iter_object *iter,struct _vm *vm)
+{
+	method_object *mo = (method_object*)iter->tag;
+	object *r = vm_StartMethodObject(vm,mo,NULL,NULL);
+	gc_IncRefCount(r);
+	return(r);
+}
+
+void iter_InitMGenerator(iter_object *iter,struct _vm *vm,method_object *mo)
+{
+	iter->tag = (object*)mo;
+	gc_IncRefCount((object*)mo);
+	iter->block_stack = stack_Init();
+	iter->iter_func = &iter_MGenerator;
+}
 
 object *iter_Iteration(iter_object *iter,struct _vm *vm)
 {

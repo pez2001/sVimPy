@@ -470,33 +470,62 @@ block_object *vm_StartCodeObject(vm *vm,code_object *co,tuple_object *locals)
 
 block_object *vm_StartClassObject(vm *vm,class_object *co,tuple_object *locals)
 {
-	
-	string_object *bytecodes = (string_object*) co->code->code;
-	block_object *bo = AllocBlockObject();
-	#ifdef USE_DEBUGGING
-	debug_printf(DEBUG_VERBOSE_STEP,"sclo Creating new execution block: %x\n",bo);
-	#endif
-	bo->type = TYPE_BLOCK;
-	bo->code = co->code;
-	gc_IncRefCount((object*)bo->code);
-	bo->ip = 0;
-	bo->start = 0;
-	bo->len = bytecodes->len;
-	bo->ref_count = 0;
-	bo->stack = stack_Init();		// co->stacksize
-	stack_Push(vm->blocks,(object*)bo);
-	stack_Push(bo->stack,(object*)co);
+	block_object *bo = NULL;
+	if(co->code->code != NULL)
+	{
+		string_object *bytecodes = (string_object*) co->code->code;
+		bo = AllocBlockObject();
+		#ifdef USE_DEBUGGING
+		debug_printf(DEBUG_VERBOSE_STEP,"sclo Creating new execution block: %x\n",bo);
+		#endif
+		bo->type = TYPE_BLOCK;
+		bo->code = co->code;
+		gc_IncRefCount((object*)bo->code);
+		bo->ip = 0;
+		bo->start = 0;
+		bo->len = bytecodes->len;
+		bo->ref_count = 0;
+		bo->stack = stack_Init();		// co->stacksize
+		stack_Push(vm->blocks,(object*)bo);
+		stack_Push(bo->stack,(object*)co);
+		if (locals != NULL)
+		{
+			SetDictItemByIndex((object*)co->code->varnames,0,(object*)locals);
+			//DumpObject((object*)co->code->varnames,0);
+		}
+	}
+	else
+	{
+		//no code defined
+		//push class instance
+		class_instance_object *cio = AllocClassInstanceObject();
+		cio->type = TYPE_CLASS_INSTANCE;
+		cio->ref_count = 0;
+		cio->instance_of = co;
+		gc_IncRefCount((object*)co);
+		cio->methods = (object*)CreateTuple(0);
+		gc_IncRefCount((object*)cio->methods);
+		cio->vars = (object*)CreateTuple(0);
+		gc_IncRefCount((object*)cio->vars);
+		if(!stack_IsEmpty(vm->blocks))
+		{
+			block_object *actual = (block_object*)stack_Top(vm->blocks);
+			stack_Push(actual->stack,(object*)cio);
+		}
+		unicode_object *method_name = CreateUnicodeObject(str_Copy("__init__"));
+		object *rmr = vm_RunMethod(vm,(object*)method_name,cio,(tuple_object*)locals,NULL);
+		gc_IncRefCount(rmr);
+		gc_DecRefCount(rmr);
+		gc_IncRefCount((object*)method_name);
+		gc_DecRefCount((object*)method_name);
+		gc_Clear();
+	}
 	//printf("sc bo:\n");
 	//DumpObject((object*)bo,0);
 	//printf("sc varnames:\n");
 	//DumpObject(co->code->varnames,0);
 	
 	
-	if (locals != NULL)
-	{
-		SetDictItemByIndex((object*)co->code->varnames,0,(object*)locals);
-		//DumpObject((object*)co->code->varnames,0);
-	}
 	
 	tuple_object *bc = (tuple_object*)co->base_classes;
 	for(INDEX i = 0;i<GetTupleLen((object*)bc);i++)
@@ -671,11 +700,12 @@ object *vm_StartCFunctionObject(vm *vm,cfunction_object *cfo,tuple_object *local
 	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_VERBOSE_STEP,"executing C function object\n");
 	#endif
-	return ((*cfo->func) (vm,locals,kw_locals));
+	return((*cfo->func) (vm,locals,kw_locals));
 }
 
-object *vm_RunMethod(vm *vm,object *key,class_instance_object *cio,tuple_object *locals,tuple_object *kw_locals)
+object *vm_RunMethod(vm *vm,object *key,class_instance_object *cio,tuple_object *locals,tuple_object *kw_locals)//,BOOL pop_ret)
 {
+	tuple_object *l = locals;
 	object *m = GetClassMethod((object*)cio,key);
 	if(m == NULL)
 	{
@@ -689,9 +719,12 @@ object *vm_RunMethod(vm *vm,object *key,class_instance_object *cio,tuple_object 
 	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_VERBOSE_STEP,"running method\n");
 	#endif
-	if(locals == NULL)
-		locals = CreateTuple(0);
-	InsertItem((object*)locals,0,(object*)cio);
+	if(l == NULL)
+	{
+		l = CreateTuple(0);
+		gc_IncRefCount(l);
+	}
+	InsertItem((object*)l,0,(object*)cio);
 	//AppendItem(locals,cio);
 	//AppendItem(locals,CreateUnicodeObject(str_Copy("hi")));
 	//printf("sm mo:\n");
@@ -701,16 +734,25 @@ object *vm_RunMethod(vm *vm,object *key,class_instance_object *cio,tuple_object 
 	//gc_IncRefCount(locals);
 	NUM s = vm->blocks->list->num;
 	NUM n = 0;
-	vm_StartFunctionObject(vm,(function_object*)m,locals,kw_locals);
-	//gc_DecRefCount(locals);
+	//vm_StartFunctionObject(vm,(function_object*)m,locals,kw_locals);
 	object *ret = NULL;
-	while(ret == NULL && s != n) //TODO replace this construct with a more streamlined version without the need to call step in a loop
+	if(m->type == TYPE_FUNCTION)
 	{
-		//printf("s:%d,n:%d\n",s,n);
-		ret = vm_Step(vm);
-		n = vm->blocks->list->num;
+		ret = vm_StartFunctionObject(vm,(function_object*)m,l,kw_locals);
+		while(ret == NULL && s != n) //TODO replace this construct with a more streamlined version without the need to call step in a loop
+		{
+			//printf("s:%d,n:%d\n",s,n);
+			ret = vm_Step(vm);
+			n = vm->blocks->list->num;
+		}
+		ret = stack_Pop(((block_object*)stack_Top(vm->blocks))->stack);//needed during construction of class killing the NONE object returned by __init__
+    }else if(m->type == TYPE_CFUNCTION)
+	{
+		ret = vm_StartCFunctionObject(vm,(cfunction_object*)m,l,kw_locals);//gc_DecRefCount(locals);
 	}
-	stack_Pop(((block_object*)stack_Top(vm->blocks))->stack);
+	if(locals == NULL)
+		gc_DecRefCount(l);
+	//if(pop_ret 
 	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_VERBOSE_STEP,"method thru\n");
 	#endif
@@ -719,6 +761,7 @@ object *vm_RunMethod(vm *vm,object *key,class_instance_object *cio,tuple_object 
 
 object *vm_StartMethod(vm *vm,object *key,class_instance_object *cio,tuple_object *locals,tuple_object *kw_locals)
 {
+	tuple_object *l = locals;
 	object *m = GetClassMethod((object*)cio,key);
 	if(m == NULL)
 	{
@@ -731,9 +774,12 @@ object *vm_StartMethod(vm *vm,object *key,class_instance_object *cio,tuple_objec
 	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_VERBOSE_STEP,"starting method\n");
 	#endif
-	if(locals == NULL)
-		locals = CreateTuple(0);
-	InsertItem((object*)locals,0,(object*)cio);
+	if(l == NULL)
+	{
+		l = CreateTuple(0);
+		gc_IncRefCount(l);
+	}
+	InsertItem((object*)l,0,(object*)cio);
 	//AppendItem(locals,cio);
 	//AppendItem(locals,CreateUnicodeObject(str_Copy("hi")));
 	//printf("sm mo:\n");
@@ -741,19 +787,38 @@ object *vm_StartMethod(vm *vm,object *key,class_instance_object *cio,tuple_objec
 	//printf("sm locals:\n");
 	//DumpObject(locals,0);
 	//gc_IncRefCount(locals);
-	object *r = vm_StartFunctionObject(vm,(function_object*)m,locals,kw_locals);
+	//object *r = vm_StartFunctionObject(vm,(function_object*)m,locals,kw_locals);
 	//gc_DecRefCount(locals);
+	object *r = NULL;
+	if(m->type == TYPE_FUNCTION)
+		r = vm_StartFunctionObject(vm,(function_object*)m,l,kw_locals);
+	else if(m->type == TYPE_CFUNCTION)
+		r = vm_StartCFunctionObject(vm,(cfunction_object*)m,l,kw_locals);
+	if(locals == NULL)
+		gc_DecRefCount(l);
+
 	return(r);
 }
 
 object *vm_StartMethodObject(vm *vm,method_object *mo,tuple_object *locals,tuple_object *kw_locals)
 {
-	if(locals == NULL)
-		locals = CreateTuple(0);
-	InsertItem((object*)locals,0,(object*)mo->instance);
+	tuple_object *l = locals;
+	if(l == NULL)
+	{
+		l = CreateTuple(0);
+		gc_IncRefCount(l);
+	}
+	InsertItem((object*)l,0,(object*)mo->instance);
 	//printf("smo locals:\n");
 	//DumpObject(locals,0);
-	object *r = vm_StartFunctionObject(vm,(function_object*)mo->func,locals,kw_locals);//TODO add support for cfunction members
+	object *r = NULL;
+	if(mo->func->type == TYPE_FUNCTION)
+		r = vm_StartFunctionObject(vm,(function_object*)mo->func,l,kw_locals);
+	else if(mo->func->type == TYPE_CFUNCTION)
+		r = vm_StartCFunctionObject(vm,(cfunction_object*)mo->func,l,kw_locals);
+	if(locals == NULL)
+		gc_DecRefCount(l);
+	//if(r != NULL && r->type )
 	return(r);
 }
 
@@ -1290,7 +1355,9 @@ object *vm_Step(vm *vm)
 						}
 						
 						unicode_object *method_name = CreateUnicodeObject(str_Copy("__init__"));
-						vm_RunMethod(vm,(object*)method_name,cio,(tuple_object*)locals,NULL);
+						object *rmr = vm_RunMethod(vm,(object*)method_name,cio,(tuple_object*)locals,NULL);
+						gc_IncRefCount(rmr);
+						gc_DecRefCount(rmr);
 						gc_IncRefCount((object*)method_name);
 						gc_DecRefCount((object*)method_name);
 						//gc_Clear();
@@ -1471,7 +1538,6 @@ object *vm_Step(vm *vm)
 			case OPCODE_MAKE_CLOSURE:
 			case OPCODE_LOAD_CLOSURE:
 			case OPCODE_PRINT_EXPR:
-			case OPCODE_BUILD_CLASS:
 			case OPCODE_COMPARE_OP:
 			case OPCODE_IMPORT_FROM:
 			case OPCODE_IMPORT_NAME:
@@ -1591,6 +1657,7 @@ object *vm_Step(vm *vm)
 
 			case OPCODE_STORE_SUBSCR:
 			case OPCODE_STORE_MAP:
+			case OPCODE_BUILD_CLASS:
 				{
 					tos = stack_Pop(bo->stack);
 					tos1 = stack_Pop(bo->stack);
@@ -1615,6 +1682,13 @@ object *vm_Step(vm *vm)
 			switch (op)
 			{
 
+			case OPCODE_BUILD_CLASS:
+				{
+				//Creates a new class object. TOS is the methods dictionary, TOS1 the tuple of the names of the base classes, and TOS2 the class name.
+				
+				}
+				break;
+			
 			case OPCODE_STORE_LOCALS:
 				{
 					//Pops TOS from the stack and stores it as the current frame’s f_locals. This is used in class construction.
@@ -1734,6 +1808,18 @@ object *vm_Step(vm *vm)
 					}
 					if(found)
 						break;
+					for(int i=0;i<vm->classes->num;i++)
+					{	
+						if(!strcmp(((class_object*)vm->classes->items[i])->name,((unicode_object*)name)->value))
+						{
+							stack_Push(bo->stack,vm->classes->items[i]);
+							//vm_AddGlobal(vm, (code_object*)vm->globals->items[i]);
+							//gc_DecRefCount(vm->globals->items[i]);
+							found = 1;
+						}
+					}
+					if(found)
+						break;
 					if(vm->import_module_handler != NULL)
 					{
 						object *module = vm->import_module_handler(vm,((unicode_object*)name)->value);
@@ -1772,20 +1858,24 @@ object *vm_Step(vm *vm)
 					object *lgo = NULL;
 					//stack_Dump(bo->stack);
 					//DumpObject(tos,0);
-					INDEX index = GetItemIndexByName(((code_object*)tos)->names,((unicode_object*)name)->value);
-					if(index != -1)
+					if(tos->type == TYPE_CODE)
 					{
-						lgo = GetItem(((code_object*)tos)->names,index);
-					}
+						INDEX index = GetItemIndexByName(((code_object*)tos)->names,((unicode_object*)name)->value);
+						if(index != -1)
+						{
+							lgo = GetItem(((code_object*)tos)->names,index);
+						}
+						if(lgo != NULL) //push the imported function on stack
+							stack_Push(bo->stack, lgo);
+						else
+						{
+							#ifdef USE_DEBUGGING
+							debug_printf(DEBUG_ALL,"warning import function was not found\n");
+							#endif
+						}
+					}else if(tos->type == TYPE_CLASS)
+						stack_Push(bo->stack, tos);
 					//DumpObject(lgo,0);
-					if(lgo != NULL) //push the imported function on stack
-						stack_Push(bo->stack, lgo);
-					else
-					{
-						#ifdef USE_DEBUGGING
-						debug_printf(DEBUG_ALL,"warning import function was not found\n");
-						#endif
-					}
 				}
 				break;
 				
@@ -2648,8 +2738,13 @@ object *vm_Step(vm *vm)
 						#ifdef USE_DEBUGGING
 						debug_printf(DEBUG_VERBOSE_STEP,"executing method\n");
 						#endif
-						vm_StartMethodObject(vm,(method_object*)rf,call,NULL);
-					
+						object *rmo = vm_StartMethodObject(vm,(method_object*)rf,call,NULL);
+						//if(rmo != NULL && rmo->type != TYPE_BLOCK)
+						if (rmo != NULL)
+						{
+							stack_Push(bo->stack, rmo);
+						}
+	
 					}else if(rf != NULL && rf->type == TYPE_CLASS)
 					{
 						#ifdef USE_DEBUGGING 

@@ -28,12 +28,12 @@ int debug_level = 0;
 
 void ExecutePYC(char *filename)
 {
-	gc_Init();
-	streams_Init();
 	//printf("executing object:%s\n", filename);
 	vm *vm = vm_Init(NULL);
+	gc_Init(vm);
+	streams_Init();
 	AddInternalFunctions(vm);
-	fmod_Init(vm);
+	//fmod_Init(vm);
 
 	long pyc_magic = MAGIC;
 	stream *f = stream_CreateFromFile(filename,"rb");
@@ -58,20 +58,21 @@ void ExecutePYC(char *filename)
 	vm_RemoveGlobal(vm,(code_object*)obj);
 	gc_DecRefCount(obj);
 	stream_Free(f);
+	gc_Clear();
 	vm_Close(vm);
-	fmod_Close();
+	//fmod_Close();
 	streams_Close();
 	gc_Close();
 }
 
 void ExecuteRPYC(char *filename)
 {
-	gc_Init();
-	streams_Init();
 	//printf("executing object:%s\n", filename);
 	vm *vm = vm_Init(NULL);
+	gc_Init(vm);
+	streams_Init();
 	AddInternalFunctions(vm);
-	fmod_Init(vm);
+	//fmod_Init(vm);
 	stream *f = stream_CreateFromFile(filename,"rb");
 	if (!stream_Open(f))
 		return;
@@ -90,20 +91,21 @@ void ExecuteRPYC(char *filename)
 	vm_RemoveGlobal(vm,(code_object*)obj);
 	gc_DecRefCount(obj);
 	stream_Free(f);
+	gc_Clear();
 	vm_Close(vm);
-	fmod_Close();
+	//fmod_Close();
 	streams_Close();
 	gc_Close();
 }
 
 void ExecuteRPYC_PLUS(char *filename)
 {
-	gc_Init();
-	streams_Init();
 	//printf("executing object:%s\n", filename);
 	vm *vm = vm_Init(NULL);
+	gc_Init(vm);
+	streams_Init();
 	AddInternalFunctions(vm);
-	fmod_Init(vm);
+	//fmod_Init(vm);
 
 	stream *f = stream_CreateFromFile(filename,"rb");
 	if (!stream_Open(f))
@@ -123,8 +125,9 @@ void ExecuteRPYC_PLUS(char *filename)
 	vm_RemoveGlobal(vm,(code_object*)obj);
 	gc_DecRefCount(obj);
 	stream_Free(f);
+	gc_Clear();
 	vm_Close(vm);
-	fmod_Close();
+	//fmod_Close();
 	streams_Close();
 	gc_Close();
 }
@@ -200,7 +203,7 @@ int main(int argc, char** argv)
 		#ifdef USE_DEBUGGING	
 		debug_level |= DEBUG_FULL_DUMP;
 		#endif
-		gc_Init();
+		gc_Init(NULL);
 		streams_Init();
 		long pyc_magic = MAGIC;
 		stream *f = stream_CreateFromFile(filename,"rb");
@@ -218,6 +221,8 @@ int main(int argc, char** argv)
 		#else
 		PrintObject(obj);
 		#endif
+		gc_DecRefCount(obj);
+		gc_Clear();
 		stream_Free(f);
 		streams_Close();
 		gc_Close();

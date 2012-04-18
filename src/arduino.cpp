@@ -148,8 +148,8 @@ int __attribute__((OS_main)) main(void)
 	fdev_setup_stream (&uartout, uart_putchar, NULL, _FDEV_SETUP_WRITE);
 	stdout = &uartout;
 	printf("in:%4d\n",get_free_memory());
-	gc_Init();
 	vm *vm = vm_Init(NULL);
+	gc_Init(vm);
 
 	//setup(vm);
 	

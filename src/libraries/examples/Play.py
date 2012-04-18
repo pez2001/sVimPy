@@ -5,8 +5,8 @@
   This example code is in the public domain.
   
 """
-import fmod
-
-playSound("test.mp3","")
-Sleep(154000)              
+from fmod import fmod
+f = fmod()
+f.playSound("test.mp3","")
+f.Sleep(154000)              
 print("playing done");

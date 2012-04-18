@@ -57,6 +57,10 @@ object *iter_CFGenerator(iter_object *iter,struct _vm *vm);
 
 void iter_InitCFGenerator(iter_object *iter,struct _vm *vm,cfunction_object *cfo);
 
+object *iter_MGenerator(iter_object *iter,struct _vm *vm);
+
+void iter_InitMGenerator(iter_object *iter,struct _vm *vm,method_object *mo);
+
 object *iter_Iteration(iter_object *iter,struct _vm *vm);
 
 void iter_InitIteration(iter_object *iter,struct _vm *vm,tuple_object *to);

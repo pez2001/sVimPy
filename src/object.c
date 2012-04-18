@@ -140,6 +140,15 @@ ref_object *AllocRefObject(void)
 	#endif
 }
 
+tag_object *AllocTagObject(void)
+{
+	#ifdef USE_DEBUGGING
+    return((tag_object*)mem_malloc(sizeof(tag_object), "AllocTagObject() return")); 
+	#else
+    return((tag_object*)malloc(sizeof(tag_object))); 
+	#endif
+}
+
 int_object *AllocIntObject(void) 
 {
 	#ifdef USE_DEBUGGING
@@ -271,7 +280,24 @@ ref_object *CreateRefObject(object *ref_to)//,OBJECT_FLAGS flags)
 	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
-		debug_printf(DEBUG_CREATION,"created object\n");
+		debug_printf(DEBUG_CREATION,"created ref object\n");
+		DumpObject((object*)r,0);
+	}
+	#endif
+	return(r);
+}
+
+tag_object *CreateTagObject(void *tag)
+{
+	tag_object *r = AllocTagObject();
+	r->type = TYPE_TAG;
+	//r->flags = flags;
+	r->ref_count = 0;
+	r->tag = tag;
+	#ifdef USE_DEBUGGING
+	if((debug_level & DEBUG_CREATION) > 0)
+	{
+		debug_printf(DEBUG_CREATION,"created tag object\n");
 		DumpObject((object*)r,0);
 	}
 	#endif
@@ -863,12 +889,26 @@ void DumpObject(object * obj, char level)
 			debug_printf(DEBUG_ALL,"\t");
 		debug_printf(DEBUG_ALL,"-- class_instance object\n");
 		break;
-
 	case TYPE_CLASS:
 		debug_printf(DEBUG_ALL,"class object\n");
 		for (char i = 0; i < level; i++)
 			debug_printf(DEBUG_ALL,"\t");
 		debug_printf(DEBUG_ALL,"-- class object\n");
+		break;
+	case TYPE_METHOD:
+		debug_printf(DEBUG_ALL,"method object\n");
+		for (char i = 0; i < level; i++)
+			debug_printf(DEBUG_ALL,"\t");
+		debug_printf(DEBUG_ALL,"-- method object\n");
+		break;
+	case TYPE_TAG:
+		debug_printf(DEBUG_ALL,"tag object\n");
+		for (char i = 0; i < level; i++)
+			debug_printf(DEBUG_ALL,"\t");
+		debug_printf(DEBUG_ALL,"tag: %x\n",((tag_object*)obj)->tag);
+		for (char i = 0; i < level; i++)
+			debug_printf(DEBUG_ALL,"\t");
+		debug_printf(DEBUG_ALL,"-- tag object\n");
 		break;
 	default:
 		debug_printf(DEBUG_ALL,"object type is unknown:%c\n", obj->type);
@@ -1376,23 +1416,25 @@ INDEX GetDictItemIndex(object *tuple,object *key)
 		return (-1);
 	 //printf("checking in %d tuple items for\n",((tuple_object*)tuple->ptr)->list->num);
 	//printf("getdictitemindex\n");
+	//printf("key\n");
 	//DumpObject(key,0);
+	//printf("tuple:%d\n",((tuple_object*)tuple)->list->num);
 	//DumpObject(tuple,0);
-	for(NUM i = 0; i < ((tuple_object *) tuple)->list->num; i++)
+	for(NUM i = 0; i < ((tuple_object*)tuple)->list->num; i++)
 	{
 		 //printf("checking tuple:%d\n",i);
 		// if(((tuple_object*)tuple->ptr)->items[i]->type == TYPE_UNICODE)
 		 
 		 //printf("checking against:\n");
 		 //%s\n",name,(char*)((tuple_object*)tuple->ptr)->items[i]->ptr);
-		if(((tuple_object *) tuple)->list->items[i] != NULL && ((object*)((tuple_object *) tuple)->list->items[i])->type != TYPE_KV)
+		if(((tuple_object*)tuple)->list->items[i] != NULL && ((object*)((tuple_object*)tuple)->list->items[i])->type != TYPE_KV)
 		{
-			if ( !CompareObjects(((tuple_object*) tuple)->list->items[i],key))
+			if(!CompareObjects(((tuple_object*)tuple)->list->items[i],key))
 				return (i);
 		}
-		else
+		else if(((tuple_object*)tuple)->list->items[i] != NULL)
 		{
-			if ( !CompareObjects(((kv_object*)((tuple_object*) tuple)->list->items[i])->key,key))
+			if(!CompareObjects(((kv_object*)((tuple_object*)tuple)->list->items[i])->key,key))
 				return (i);
 		}
 	}
@@ -1495,6 +1537,8 @@ object *GetDictItemByName(object *tuple,char *name)
 
 object *GetAttribute(object *obj,object *key)
 {
+	if(obj == NULL || key == NULL)
+		return(NULL);
 	object *r = NULL;
 	if(obj->type == TYPE_CODE)
 	{
@@ -1504,17 +1548,20 @@ object *GetAttribute(object *obj,object *key)
 		r = GetDictItem(((class_object*)obj)->code->names,key);
 	}else if(obj->type == TYPE_CLASS_INSTANCE)
 	{
-		r = GetClassMethod(obj,key);
-		if(r!=NULL)
-		{	
-			method_object *mo = CreateMethodObject(r,(class_instance_object*)obj);
-			gc_IncRefCount(r);
-			gc_IncRefCount(obj);
-			return((object*)mo);
+		r = GetClassVar(obj,key);
+		if(r == NULL)
+		{
+			r = GetClassMethod(obj,key);
+			if(r!=NULL)
+			{	
+				method_object *mo = CreateMethodObject(r,(class_instance_object*)obj);
+				gc_IncRefCount(r);
+				gc_IncRefCount(obj);
+				return((object*)mo);
+			}
 		}
-		else
-		//if(r == NULL)
-			r = GetClassVar(obj,key);
+		if(r == NULL)
+			r = GetAttribute(((class_instance_object*)obj)->instance_of,key);
 	}
 	else
 	{
@@ -1538,6 +1585,8 @@ void SetAttribute(object *obj,object *key,object *value)
 	{
 		SetDictItem(((class_instance_object*)obj)->vars,key,value);
 	}
+//TODO search base_classes before adding a new dict item
+//TODO if attribute is a function type add as method
 
 /*
 	if(tos->type == TYPE_CODE)
@@ -1569,6 +1618,8 @@ object *GetClassMethod(object *class,object *key)
 	{
 		//DumpObject(((class_object*)class)->code->names,0);
 		r = GetDictItem(((class_object*)class)->code->names,key);
+		if(r!= NULL && !(r->type == TYPE_FUNCTION || r->type == TYPE_CFUNCTION))
+			r = NULL;
 		if(r == NULL)
 		{	
 			tuple_object *bc = (tuple_object*)((class_object*)class)->base_classes;
@@ -1591,7 +1642,10 @@ object *GetClassMethod(object *class,object *key)
 			//DumpObject((object*)((class_instance_object*)class)->instance_of->code,0);						
 			//DumpObject((object*)((class_instance_object*)class)->instance_of->code->names,0);
 			//DumpObject(key,0);
-			r = GetDictItem(((class_instance_object*)class)->instance_of->code->names,key);
+			//r = GetDictItem(((class_instance_object*)class)->instance_of->code->names,key);
+			if(r == NULL)
+				r = GetClassMethod(((class_instance_object*)class)->instance_of,key);
+			/*
 			tuple_object *bc = (tuple_object*)((class_instance_object*)class)->instance_of->base_classes;
 			for(INDEX i = 0;i<GetTupleLen((object*)bc);i++)
 			{
@@ -1599,6 +1653,7 @@ object *GetClassMethod(object *class,object *key)
 				if(r != NULL)
 					break;
 			}
+			*/
 			//DumpObject(((class_instance_object*)class)->instance_of->base_classes,0);
 			//if(r==NULL)
 			//	r = GetDictItem(((class_instance_object*)class)->instance_of->code->names,key);
@@ -1616,6 +1671,8 @@ object *GetClassVar(object *class,object *key)
 	{
 		//DumpObject(((class_instance_object*)class)->vars,0);
 		r = GetDictItem(((class_instance_object*)class)->vars,key);
+		//if(r == NULL)
+		//	r = GetAttribute(((class_instance_object*)class)->instance_of,key);
 	}
 	return(r);
 }

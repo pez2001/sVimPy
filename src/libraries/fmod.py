@@ -2,7 +2,7 @@
  * sVimPy - small Virtual interpreting machine for Python
  * (c) 2012 by Tim Theede aka Pez2001 <pez2001@voyagerproject.de> / vp
  *
- * python arduino api wrapper
+ * python fmod api wrapper
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,5 +21,6 @@
  * THIS SOFTWARE IS SUPPLIED AS IT IS WITHOUT ANY WARRANTY!
  *
 """
-
-def playSound(filename,mode):pass
+class fmod():
+	def playSound(self,filename,mode):pass
+	def Sleep(self,ms):pass

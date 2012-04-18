@@ -85,6 +85,7 @@ extern "C"  {
 #define TYPE_CLASS '&'
 #define TYPE_EXCEPTION 'E'
 #define TYPE_METHOD 'M'
+#define TYPE_TAG 't'
 
 //code flags
 #define CO_OPTIMIZED	0x0001
@@ -134,6 +135,14 @@ typedef struct _ref_object
 	OBJECT_REF_COUNT ref_count;
 	object *ref;
 } ref_object;
+
+typedef struct _tag_object
+{
+	OBJECT_TYPE type;
+	//OBJECT_FLAGS flags;
+	OBJECT_REF_COUNT ref_count;
+	void *tag;
+} tag_object;
 
 
 typedef struct _int_object
@@ -323,6 +332,8 @@ kv_object *AllocKVObject(void);
 
 ref_object *AllocRefObject(void);
 
+tag_object *AllocTagObject(void);
+
 string_object *AllocStringObject(void);
 
 tuple_object *AllocTupleObject(void);
@@ -407,6 +418,8 @@ void WriteObjectPlus(object *obj,stream *f);
 object *DissolveRef(object *obj);
 
 ref_object *CreateRefObject(object *ref_to);//,OBJECT_FLAGS flags);
+
+tag_object *CreateTagObject(void *tag);
 
 int_object *CreateIntObject(INT value);//,OBJECT_FLAGS flags);
 

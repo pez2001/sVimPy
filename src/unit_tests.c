@@ -253,15 +253,15 @@ void brute_test(void)
 	//debug_level |= DEBUG_COUNT_OBJECTS;
 	mem_Init();
 	#endif
-	gc_Init();
-	//debug_printf(DEBUG_ALL,"hi:%s\n","hi");
-
-	//ptr_tests();
-	streams_Init();
 	//printf("streams initiated\n");
 	//stream_tests();
 	
 	vm *vm = vm_Init(NULL);
+	gc_Init(vm);
+	//debug_printf(DEBUG_ALL,"hi:%s\n","hi");
+
+	//ptr_tests();
+	streams_Init();
 	AddInternalFunctions(vm);
 	//#ifdef USE_ARDUINO_FUNCTIONS
 	//AddArduinoFunctions(vm);
@@ -435,6 +435,7 @@ void brute_test(void)
 	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_VERBOSE_TESTS,"closing vm\n");
 	#endif
+	gc_Clear();
 	vm_Close(vm);
 	streams_Close();
 	gc_Close();
@@ -525,15 +526,15 @@ void AtomicOpenPYC(char *filename)
 	//debug_level |= DEBUG_COUNT_OBJECTS;
 	mem_Init();
 	#endif
-	gc_Init();
-	streams_Init();
 	printf("executing object:%s\n", filename);
 	printf("sVimPy Python Output\n{\n");
 
 	vm *vm = vm_Init(NULL);
+	gc_Init(vm);
+	streams_Init();
 	vm->import_module_handler = &ImportModule;
 	AddInternalFunctions(vm);
-	fmod_Init(vm);
+	//fmod_Init(vm);
 	AddFmodGlobals(vm);
 	long pyc_magic = MAGIC;
 	stream *f = stream_CreateFromFile(filename,"rb");
@@ -617,7 +618,8 @@ void AtomicOpenPYC(char *filename)
 	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_VERBOSE_TESTS,"closing vm\n");
 	#endif
-	fmod_Close();
+	//fmod_Close();
+	gc_Clear();
 	vm_Close(vm);
 	streams_Close();
 	gc_Close();
@@ -664,7 +666,7 @@ void atomic_test(void)
 	//debug_level |= DEBUG_STACK;
 	//debug_level |= DEBUG_LISTS;
 	//debug_level |= DEBUG_GC;
-	//debug_level |= DEBUG_VERBOSE_STEP;
+	debug_level |= DEBUG_VERBOSE_STEP;
 	//debug_level |= DEBUG_VM;
 	//debug_level |= DEBUG_FREEING;
 	//debug_level |= DEBUG_ALLOCS;
@@ -691,8 +693,9 @@ void atomic_test(void)
 	//AtomicOpenPYC("tests/test_class.pyc");
 
 	//fmod tests + classes as globals
-	AtomicOpenPYC("tests/Play.pyc");
-
+	//AtomicOpenPYC("tests/Play.pyc");//old version without class support
+	AtomicOpenPYC("tests/PlayNew.pyc");
+	//return;
 	//open file test + if_iter with sentinel
 	AtomicOpenPYC("tests/test_open.pyc");
 	return;

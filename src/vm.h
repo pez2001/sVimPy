@@ -71,9 +71,9 @@ except
 #include "numops.h"
 #include "lists.h"
 #include "stream.h"
-#include "garbage.h"
 #include "iterators.h"
 #include "internal_functions.h"
+#include "garbage.h"
 
 #include "debug.h"
 
@@ -202,7 +202,7 @@ object *vm_StartCFunctionObject(vm *vm,cfunction_object *cfo,tuple_object *local
 
 object *vm_StartMethod(vm *vm,object *key,class_instance_object *cio,tuple_object *locals,tuple_object *kw_locals);
 
-object *vm_RunMethod(vm *vm,object *key,class_instance_object *cio,tuple_object *locals,tuple_object *kw_locals);
+object *vm_RunMethod(vm *vm,object *key,class_instance_object *cio,tuple_object *locals,tuple_object *kw_locals);//,BOOL pop_ret);
 
 object *vm_StartMethodObject(vm *vm,method_object *mo,tuple_object *locals,tuple_object *kw_locals);
 
