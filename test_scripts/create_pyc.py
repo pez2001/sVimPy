@@ -1,1 +1,1 @@
-from queens2 import * 
+from queens2b import * 

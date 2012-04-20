@@ -265,7 +265,7 @@ object *iter_Sequence(iter_object *iter,struct _vm *vm)
 	int_object *step = (int_object*)GetItem((object*)seq,1);
 	int_object *end = (int_object*)GetItem((object*)seq,0);
 
-	if(pos->value < end->value)
+	if(pos->value != end->value)
 	{
 		int_object *r = CreateIntObject(pos->value);
 		pos->value+=step->value;
