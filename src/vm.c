@@ -1417,6 +1417,13 @@ object *vm_Step(vm *vm)
 
 			case OPCODE_POP_TOP:
 				{
+					//if(stack_IsEmpty(bo->stack))
+					//	printf("ERROR Stack underrun!\n");
+					//if(stack_Top(bo->stack)->type != TYPE_NONE)
+					//{
+					//	printf("popping non none object\n");
+					//}
+					//DumpObject(stack_Top(bo->stack),0);
 					stack_Pop(bo->stack);
 					op_thru = 1;
 				}
@@ -1682,6 +1689,8 @@ object *vm_Step(vm *vm)
 				break;
 			}
 
+			//if(stack_IsEmpty(bo->stack))
+			//	printf("warning empty stack\n");
 			#ifdef USE_DEBUGGING
 			debug_printf(DEBUG_VERBOSE_STEP,"executing main ops\n");
 			#endif
@@ -1740,6 +1749,7 @@ object *vm_Step(vm *vm)
 					if (next != NULL && next->type == TYPE_NONE)
 					{
 						stack_Pop(bo->stack);
+						//printf("iter thru\n");
 						//stack_Push(bo->stack, next);
 						gc_DecRefCount(next);
 						bo->ip = bo->ip + arg;
@@ -2001,13 +2011,18 @@ object *vm_Step(vm *vm)
 				
 			case OPCODE_JUMP_IF_FALSE:
 				{
+					//printf("before jump\n");
+					//stack_Dump(bo->stack);
+					//DumpObject(tos,0);
 					if (tos->type == TYPE_FALSE)
 					{
+						stack_Push(bo->stack,tos);
 						bo->ip = arg;
 					}
-					else
-						stack_Push(bo->stack,tos);
+					//else
 					
+					//printf("after jump cmp\n");
+					//stack_Dump(bo->stack);
 				}
 				break;
 				
@@ -2016,9 +2031,9 @@ object *vm_Step(vm *vm)
 					if (tos->type == TYPE_TRUE)
 					{
 						bo->ip = arg;
-					}
-					else
 						stack_Push(bo->stack,tos);
+					}
+					//else
 
 				}
 				break;
@@ -2520,6 +2535,8 @@ object *vm_Step(vm *vm)
 					}
 					if (tos1->type == TYPE_TUPLE)
 					{
+					if(ssa<0)
+						printf("ssa:%d\n",ssa);
 					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"ssa: %d\n",ssa);
 					#endif
@@ -2541,10 +2558,13 @@ object *vm_Step(vm *vm)
 					if (tos->type == TYPE_INT)
 					{
 						bsa = (NUM) ((int_object*)tos)->value;
+						
 					}
 				
 					if (tos1->type == TYPE_TUPLE)
 					{
+						if(bsa<0)
+							printf("bsa:%d\n",bsa);
 						#ifdef USE_DEBUGGING
 						if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 						{
@@ -2615,19 +2635,23 @@ object *vm_Step(vm *vm)
 
 			case OPCODE_UNARY_NOT:
 				{
+					//printf("unary not :%c\n",tos->type);
 					if (tos->type == TYPE_INT)
 					{
-						object *up = CreateEmptyObject(((int_object*)tos)->value > 0 ? TYPE_TRUE : TYPE_FALSE);
+						//printf("int:%d\n",((int_object*)tos)->value);
+						//object *up = CreateEmptyObject(((int_object*)tos)->value > 0 ? TYPE_TRUE : TYPE_FALSE);
+						object *up = CreateEmptyObject(((int_object*)tos)->value == 0 ? TYPE_TRUE : TYPE_FALSE);
 						stack_Push(bo->stack, up);
+						//DumpObject(up,0);
 					}
 					else if (tos->type == TYPE_TRUE || tos->type == TYPE_FALSE)
 					{
-						object *up = CreateEmptyObject(tos->type == TYPE_TRUE ? TYPE_TRUE : TYPE_FALSE);
+						object *up = CreateEmptyObject(tos->type == TYPE_TRUE ? TYPE_FALSE : TYPE_TRUE);
 						stack_Push(bo->stack, up);
 					}
 					else if (tos->type == TYPE_NONE || tos->type == TYPE_NULL)
 					{
-						object *up = CreateEmptyObject( TYPE_FALSE);
+						object *up = CreateEmptyObject( TYPE_TRUE);//TYPE_FALSE
 						stack_Push(bo->stack, up);
 					}
 				}

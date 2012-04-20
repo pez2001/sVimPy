@@ -33,6 +33,29 @@ object *StringAdd(object *a,object *b)
 	return((object*)r);
 }
 
+object *StringMultiply(object *a,object *b)
+{
+	char *as;
+	NUM bi;
+	as = ((unicode_object *)a)->value;
+	bi = ((int_object *)b)->value;
+
+	#ifdef USE_DEBUGGING
+	char *tmp = (char *)mem_malloc((strlen(as)*bi) + 1, "str_Cat() return");
+	#else
+	char *tmp = (char *)malloc((strlen(as)*bi) + 1);
+	#endif
+
+	memset(tmp, 0, (strlen(as)*bi) + 1);
+
+	for(INDEX i = 0;i< bi;i++)
+	{
+		memcpy(tmp+(i*strlen(as)), as, strlen(as));
+	}
+	unicode_object *r = CreateUnicodeObject(tmp);
+	return((object*)r);
+}
+
 object *StringCompare(object *a,object *b)
 {
 	char *as;
@@ -54,6 +77,11 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 		return(StringAdd(tos1,tos));
 	}
 	
+	if (tos->type == TYPE_INT && tos1->type == TYPE_UNICODE && op == OPCODE_BINARY_MULTIPLY) //unicode multiply -> returns unicode
+	{
+		//printf("string multiply\n");
+		return(StringMultiply(tos1,tos));
+	}
 	if (tos->type == TYPE_INT && tos1->type == TYPE_TUPLE && op == OPCODE_BINARY_MULTIPLY) //tuple multiply -> returns tuple
 	{
 		NUM a =(NUM) ((int_object*)tos)->value;
@@ -80,20 +108,28 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 		//printf("float ret\n");
 		
 		if (tos->type == TYPE_INT)
+		//if (tos1->type == TYPE_INT)
 		{
 			af = (FLOAT) ((int_object*)tos)->value;
+			//af = (FLOAT) ((int_object*)tos1)->value;
 		}	
 		if (tos1->type == TYPE_INT)
+		//if (tos->type == TYPE_INT)
 		{
 			bf = (FLOAT) ((int_object*)tos1)->value;
+			//bf = (FLOAT) ((int_object*)tos)->value;
 		}	
 		if (tos->type == TYPE_BINARY_FLOAT)
+		//if (tos1->type == TYPE_BINARY_FLOAT)
 		{
 			af = ((float_object*)tos)->value;
+			//af = ((float_object*)tos1)->value;
 		}	
 		if (tos1->type == TYPE_BINARY_FLOAT)
+		//if (tos->type == TYPE_BINARY_FLOAT)
 		{
 			bf = ((float_object*)tos1)->value;
+			//bf = ((float_object*)tos)->value;
 		}	
 		new_tos = (object*)CreateFloatObject(0);
 		switch(op)
@@ -214,6 +250,8 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 		INT b = 0;
 		a = ((int_object*)tos)->value;
 		b = ((int_object*)tos1)->value;
+		//a = ((int_object*)tos1)->value;
+		//b = ((int_object*)tos)->value;
 		new_tos = (object*)CreateIntObject(0);
 		switch(op)
 		{
@@ -733,6 +771,11 @@ object *if_print(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
 	BOOL printed_something = 0;
 	INDEX i = 0; 
+	//DumpObject(kw_locals,0);
+	unicode_object *end = CreateUnicodeObject(str_Copy("end"));
+	gc_IncRefCount(end);
+	object *endval = GetDictItem(kw_locals,end);
+	gc_DecRefCount(end);
 	while(i < locals->list->num)
 	{
 		object *t = GetItem((object *)locals,i);//TODO maybe move this into PrintObject() as case ITER:	
@@ -759,6 +802,9 @@ object *if_print(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 		printed_something = 1;
 		i++;
 	}
+	if(printed_something && endval!=NULL && endval->type == TYPE_UNICODE)
+		printf("%s",((unicode_object*)endval)->value);
+	else
 	if(printed_something)
 		printf("\n");
 	object *tmp =CreateEmptyObject(TYPE_NONE);

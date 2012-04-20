@@ -1893,14 +1893,15 @@ void SetItem(object *tuple, INDEX index, object * obj)
 {
 	if (tuple == NULL || tuple->type != TYPE_TUPLE)
 		return;
-	if (index >= ((tuple_object*) tuple)->list->num || index < 0)
+	if (index >= ((tuple_object*) tuple)->list->num)
 		return;
+	if(index < 0)
+		index = index + GetTupleLen(tuple);
 	object *old = ((tuple_object*) tuple)->list->items[index];	
 	if(obj!=NULL)
 	{
 		((tuple_object*) tuple)->list->items[index] = obj;
 		gc_IncRefCount(obj);
-	// obj->flags ^= OFLAG_ON_STACK;
 	}
 	else
 		((tuple_object*) tuple)->list->items[index] = NULL;
@@ -1915,22 +1916,25 @@ void DeleteItem(object *tuple, INDEX index)
 {
 	if (tuple == NULL || tuple->type != TYPE_TUPLE)
 		return;
-	if (index >= ((tuple_object*) tuple)->list->num || index < 0)
+	if (index >= ((tuple_object*) tuple)->list->num)
 		return;
+	if(index < 0)
+		index = index + GetTupleLen(tuple);
 	if (((tuple_object*) tuple)->list->items[index] == NULL)
 		return;
-	//if (!(((object*)((tuple_object *) tuple)->list->items[index])->type & OFLAG_ON_STACK))
-		gc_DecRefCount((object*)(((tuple_object*) tuple)->list->items[index]));
+	gc_DecRefCount((object*)(((tuple_object*) tuple)->list->items[index]));
 	((tuple_object*) tuple)->list->items[index] = NULL;
 }
 
 object *GetItem(object *tuple, INDEX index)
 {
-	if (tuple == NULL || tuple->type != TYPE_TUPLE)
+	if(tuple == NULL || tuple->type != TYPE_TUPLE)
 		return (NULL);
-	if (index >= ((tuple_object *) tuple)->list->num || index < 0)
+	if(index >= ((tuple_object *) tuple)->list->num)
 		return (NULL);
-	return (((tuple_object *) tuple)->list->items[index]);
+	if(index < 0)
+		index = index + GetTupleLen(tuple);
+	return(((tuple_object*)tuple)->list->items[index]);
 }
 
 object *GetNextItem(object * tuple) //TODO move to tuples
