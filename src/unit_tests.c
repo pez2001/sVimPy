@@ -694,7 +694,7 @@ void atomic_test(void)
 
 	//fmod tests + classes as globals
 	//AtomicOpenPYC("tests/Play.pyc");//old version without class support
-	AtomicOpenPYC("tests/Queens2.pyc");
+	AtomicOpenPYC("tests/Queens4.pyc");
 	//AtomicOpenPYC("tests/Queens2.pyc");
 	return;
 	AtomicOpenPYC("tests/PlayNew.pyc");

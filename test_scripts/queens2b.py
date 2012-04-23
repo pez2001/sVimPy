@@ -30,6 +30,7 @@ class Queens:
             print("x:",x,",y:",y)
             if self.safe(x, y):
                 self.place(x, y)
+                print("safe x:",x,",y:",y)
                 if x+1 == self.n:
                     self.display()
                 else:
@@ -37,6 +38,10 @@ class Queens:
                 self.remove(x, y)
 
     def safe(self, x, y):
+        a = not self.row[y]
+        b = not self.up[x-y]
+        c = not self.down[x+y]
+        print("a:",a,",b:",b,",c:",c)
         return not self.row[y] and not self.up[x-y] and not self.down[x+y]
 
     def place(self, x, y):
