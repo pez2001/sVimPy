@@ -2535,8 +2535,8 @@ object *vm_Step(vm *vm)
 					}
 					if (tos1->type == TYPE_TUPLE)
 					{
-					if(ssa<0)
-						printf("ssa:%d\n",ssa);
+					//if(ssa<0)
+					//	printf("ssa:%d\n",ssa);
 					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"ssa: %d\n",ssa);
 					#endif
@@ -2563,8 +2563,8 @@ object *vm_Step(vm *vm)
 				
 					if (tos1->type == TYPE_TUPLE)
 					{
-						if(bsa<0)
-							printf("bsa:%d\n",bsa);
+						//if(bsa<0)
+						//	printf("bsa:%d\n",bsa);
 						#ifdef USE_DEBUGGING
 						if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 						{

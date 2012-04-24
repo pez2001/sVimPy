@@ -62,9 +62,9 @@ Features include:
 	0.73	add attributes to some degree
 	0.74  add classes support
 			+ class inheritance
-	0.75  add missing opcodes
+	0.75	add support for file operations
+	0.76  add missing opcodes
 		    + basic exceptions support
-	0.76	add support for file operations
 	0.77  stream printing + sd-fat support
 	0.78  add missing internal functions used by classes
 	0.79  remove redundancies and manual stuff in external code + more management functions

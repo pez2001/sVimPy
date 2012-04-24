@@ -596,7 +596,7 @@ object *if_build_class(struct _vm *vm,tuple_object *locals,tuple_object *kw_loca
 }
 object *if_file_close(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
-	printf("file close called\n");
+	//printf("file close called\n");
 	object *self = GetItem((object*)locals,0);
 	//DumpObject(self,0);
 	//DumpObject(((class_object*)((class_instance_object*)self)->instance_of)->code->names,0);
@@ -607,7 +607,7 @@ object *if_file_close(struct _vm *vm,tuple_object *locals,tuple_object *kw_local
 	gc_DecRefCount(file_name);
 	if(file_tag->type == TYPE_TAG && ((tag_object*)file_tag)->tag != NULL);
 	{
-		printf("stream @ %x\n",((tag_object*)file_tag)->tag);
+		//printf("stream @ %x\n",((tag_object*)file_tag)->tag);
 		stream_Free(((tag_object*)file_tag)->tag);
 	}
 	object *tmp =CreateEmptyObject(TYPE_NONE);
@@ -616,7 +616,7 @@ object *if_file_close(struct _vm *vm,tuple_object *locals,tuple_object *kw_local
 
 object *if_file_readline(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
-	printf("readline called\n");
+	//printf("readline called\n");
 	object *self = GetItem((object*)locals,0);
 	//DumpObject(self,0);
 	//DumpObject(((class_object*)((class_instance_object*)self)->instance_of)->code->names,0);
@@ -625,13 +625,35 @@ object *if_file_readline(struct _vm *vm,tuple_object *locals,tuple_object *kw_lo
 	//DumpObject(file_tag,0);
 	gc_IncRefCount(file_name);
 	gc_DecRefCount(file_name);
-	char buf[512];
 	if(file_tag->type == TYPE_TAG && ((tag_object*)file_tag)->tag != NULL);
 	{
-		printf("stream @ %x\n",((tag_object*)file_tag)->tag);
-		stream_Read(((tag_object*)file_tag)->tag,&buf,512);
-		printf("read bytes:[%s]\n",&buf);
+		//printf("stream @ %x\n",((tag_object*)file_tag)->tag);
+		char buf[512];
+		INDEX i = 0;
+		while(i<512)
+		{
+			if(!stream_Read(((tag_object*)file_tag)->tag,&buf[i],1))
+			{
+				//printf("eof\n");
+				break;
+			}
+			if(buf[i] == '\n')
+			{
+				//printf("eol\n");
+				break;
+			}
+			i++;
+		}
+		//printf("line len:%d\n",i);
+		if(i>0)
+		{
+			buf[i] = 0;
+			//printf("readline(%d):%s\n",i,&buf);
+			unicode_object *line = CreateUnicodeObject(str_Copy(&buf));
+			return(line);
+		}
 	}	
+	
 	object *tmp =CreateEmptyObject(TYPE_NONE);
 	return (tmp);
 }
@@ -662,9 +684,9 @@ object *if_open(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 	
 	stream *fs = stream_CreateFromFile(((unicode_object*)x)->value,"rb");
 	stream_Open(fs);
-	printf("stream @ %x\n",fs);
+	//printf("stream @ %x\n",fs);
 	tag_object *file_tag = CreateTagObject(fs);
-	printf("stream tag @ %x\n",file_tag);
+	//printf("stream tag @ %x\n",file_tag);
 	
 	unicode_object *file_name = CreateUnicodeObject(str_Copy("__file__"));
 	kv_object *kvfile = CreateKVObject((object*)file_name,(object*) file_tag);

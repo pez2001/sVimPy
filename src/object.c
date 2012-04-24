@@ -643,6 +643,12 @@ void PrintObject(object *obj)
 		case TYPE_ELLIPSIS:
 			printf("Ellipsis");
 			break;
+		case TYPE_TRUE:
+			printf("True");
+			break;
+		case TYPE_FALSE:
+			printf("False");
+			break;
 		case TYPE_NONE:
 			printf("None");
 			break;

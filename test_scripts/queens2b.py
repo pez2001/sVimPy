@@ -36,6 +36,7 @@ class Queens:
                 else:
                     self.solve(x+1)
                 self.remove(x, y)
+        print("eos")
 
     def safe(self, x, y):
         a = not self.row[y]

@@ -666,7 +666,7 @@ void atomic_test(void)
 	//debug_level |= DEBUG_STACK;
 	//debug_level |= DEBUG_LISTS;
 	//debug_level |= DEBUG_GC;
-	debug_level |= DEBUG_VERBOSE_STEP;
+	//debug_level |= DEBUG_VERBOSE_STEP;
 	//debug_level |= DEBUG_VM;
 	//debug_level |= DEBUG_FREEING;
 	//debug_level |= DEBUG_ALLOCS;
@@ -692,6 +692,7 @@ void atomic_test(void)
 	//AtomicOpenPYC("tests/test_class2.pyc");
 	//AtomicOpenPYC("tests/test_class.pyc");
 
+
 	//fmod tests + classes as globals
 	//AtomicOpenPYC("tests/Play.pyc");//old version without class support
 	AtomicOpenPYC("tests/Queens4.pyc");
@@ -699,9 +700,9 @@ void atomic_test(void)
 	return;
 	AtomicOpenPYC("tests/PlayNew.pyc");
 	//return;
+
 	//open file test + if_iter with sentinel
 	AtomicOpenPYC("tests/test_open.pyc");
-	return;
 
 	//module name set test
 	AtomicOpenPYC("tests/test_main.pyc");
