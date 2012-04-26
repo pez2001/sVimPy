@@ -1,1 +1,1 @@
-from queens2b import * 
+from test_sep_func import * 

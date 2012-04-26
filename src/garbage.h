@@ -39,6 +39,12 @@ struct _object;
 
 struct _vm;
 
+struct _tuple_object;
+
+struct _class_instance_object;
+
+struct _object *vm_RunMethod(struct _vm *vm,struct _object *key,struct _class_instance_object *cio,struct _tuple_object *locals,struct _tuple_object *kw_locals);
+
 void gc_FreeObject(struct _object *obj);
 
 void gc_IncRefCount(struct _object *obj);

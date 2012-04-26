@@ -188,11 +188,11 @@ void OpenPYC(stream *f, vm *vm)
 	object *ret = NULL;
 	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_INTERACTIVE) > 0)
-		ret = vm_InteractiveRunObject(vm, obj, NULL);	// ,obj
+		ret = vm_InteractiveRunObject(vm, obj, NULL,NULL);	
 	else
-		ret = vm_RunObject(vm, obj, NULL);	// ,obj
+		ret = vm_RunObject(vm, obj, NULL,NULL);
 	#else
-	ret = vm_RunObject(vm, obj, NULL);	// ,obj
+	ret = vm_RunObject(vm, obj, NULL,NULL);	
 	#endif
 	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_ALL,"\n");
@@ -573,11 +573,11 @@ void AtomicOpenPYC(char *filename)
 	object *ret = NULL;
 	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_INTERACTIVE) > 0)
-		ret = vm_InteractiveRunObject(vm, obj, NULL);	// ,obj
+		ret = vm_InteractiveRunObject(vm, obj, NULL,NULL);
 	else
-		ret = vm_RunObject(vm, obj, NULL);	// ,obj
+		ret = vm_RunObject(vm, obj, NULL,NULL);
 	#else
-	ret = vm_RunObject(vm, obj, NULL);	// ,obj
+	ret = vm_RunObject(vm, obj, NULL,NULL);
 	#endif
 	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_ALL,"\n");
@@ -695,6 +695,8 @@ void atomic_test(void)
 
 	//fmod tests + classes as globals
 	//AtomicOpenPYC("tests/Play.pyc");//old version without class support
+	AtomicOpenPYC("tests/test_sep_func.pyc");
+	//AtomicOpenPYC("tests/test_assert.pyc");
 	AtomicOpenPYC("tests/Queens4.pyc");
 	//AtomicOpenPYC("tests/Queens2.pyc");
 	return;

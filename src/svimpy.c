@@ -46,7 +46,7 @@ void ExecutePYC(char *filename)
 	object *obj = ReadObject(f);
 	vm_AddGlobal(vm, (code_object*)obj);
 	object *ret = NULL;
-	ret = vm_RunObject(vm, obj, NULL);	// ,obj
+	ret = vm_RunObject(vm, obj, NULL,NULL);
 	if (ret != NULL)
 	{
 		#ifdef USE_DEBUGGING
@@ -79,7 +79,7 @@ void ExecuteRPYC(char *filename)
 	object *obj = ReadObject(f);
 	vm_AddGlobal(vm, (code_object*)obj);
 	object *ret = NULL;
-	ret = vm_RunObject(vm, obj, NULL);	// ,obj
+	ret = vm_RunObject(vm, obj, NULL,NULL);	
 	if (ret != NULL)
 	{
 		#ifdef USE_DEBUGGING
@@ -113,7 +113,7 @@ void ExecuteRPYC_PLUS(char *filename)
 	object *obj = ReadObjectPlus(f);
 	vm_AddGlobal(vm, (code_object*)obj);
 	object *ret = NULL;
-	ret = vm_RunObject(vm, obj, NULL);	// ,obj
+	ret = vm_RunObject(vm, obj, NULL,NULL);	
 	if (ret != NULL)
 	{
 		#ifdef USE_DEBUGGING

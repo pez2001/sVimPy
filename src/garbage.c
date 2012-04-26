@@ -250,7 +250,7 @@ void gc_FreeObject(object *obj)
 			unicode_object *method_name = CreateUnicodeObject(str_Copy("__del__"));
 			if(garbage_vm != NULL)
 			{
-				object *rmr = vm_RunMethod(garbage_vm,(object*)method_name,obj,NULL,NULL);
+				object *rmr = vm_RunMethod(garbage_vm,(object*)method_name,(class_instance_object*)obj,NULL,NULL);
 				gc_IncRefCount(rmr);
 				gc_DecRefCount(rmr);
 				gc_IncRefCount((object*)method_name);

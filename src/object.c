@@ -262,13 +262,6 @@ iter_object *AsIterObject(object *obj)
 }
 */
 
-object *DissolveRef(object *obj)
-{
-if(obj->type == TYPE_REF)
-	return(((ref_object*)obj)->ref);
-return(obj);
-}
-
 ref_object *CreateRefObject(object *ref_to)//,OBJECT_FLAGS flags)
 {
 	ref_object *r = AllocRefObject();
@@ -391,7 +384,7 @@ string_object *CreateStringObject(char *bytes,NUM len)//,OBJECT_FLAGS flags)
 	return(r);
 }
 
-kv_object *CreateKVObject(object *key,object *value)//,OBJECT_FLAGS flags)
+kv_object *CreateKVObject(object *key,object *value)
 {
 	kv_object *r = AllocKVObject();
 	r->type = TYPE_KV;
@@ -412,7 +405,7 @@ kv_object *CreateKVObject(object *key,object *value)//,OBJECT_FLAGS flags)
 	return(r);
 }
 
-object *CreateEmptyObject(char type)//,OBJECT_FLAGS flags)
+object *CreateEmptyObject(char type)
 {
 	object *r = AllocObject();
 	r->type = type;
@@ -428,7 +421,7 @@ object *CreateEmptyObject(char type)//,OBJECT_FLAGS flags)
 	return(r);
 }
 
-function_object *CreateFunctionObject_MAKE_FUNCTION(code_object *function_code,tuple_object *defaults,tuple_object *kw_defaults)//,OBJECT_FLAGS flags)
+function_object *CreateFunctionObject_MAKE_FUNCTION(code_object *function_code,tuple_object *defaults,tuple_object *kw_defaults)
 {
 	function_object *r = AllocFunctionObject();
 	r->type = TYPE_FUNCTION;
@@ -464,7 +457,7 @@ function_object *CreateFunctionObject_MAKE_FUNCTION(code_object *function_code,t
 	return(r);
 }
 
-function_object *CreateFunctionObject_MAKE_CLOSURE(code_object *function_code,tuple_object *closure,tuple_object *defaults,tuple_object *kw_defaults)//,OBJECT_FLAGS flags)
+function_object *CreateFunctionObject_MAKE_CLOSURE(code_object *function_code,tuple_object *closure,tuple_object *defaults,tuple_object *kw_defaults)
 {
 	function_object *r = AllocFunctionObject();
 	r->type = TYPE_FUNCTION;
@@ -501,7 +494,7 @@ function_object *CreateFunctionObject_MAKE_CLOSURE(code_object *function_code,tu
 	return(r);
 }
 
-function_object *CreateFunctionObject(code_object *co)//unsigned char func_type);//,OBJECT_FLAGS flags)
+function_object *CreateFunctionObject(code_object *co)
 {
 	function_object *r = AllocFunctionObject();
 	r->type = TYPE_FUNCTION;
@@ -511,6 +504,7 @@ function_object *CreateFunctionObject(code_object *co)//unsigned char func_type)
 	r->closure = NULL;
 	//r->func.func = NULL;
 	r->func = co;
+	gc_IncRefCount(co);
 	//r->name = NULL;
 	r->ref_count = 0;
 	//r->func_type = func_type;
@@ -557,7 +551,7 @@ cfunction_object *CreateCFunctionObject(struct _object* (*func) (struct _vm *vm,
 	return(r);
 }
 
-method_object *CreateMethodObject(object *func,class_instance_object *instance)//char *name,
+method_object *CreateMethodObject(object *func,class_instance_object *instance)
 {
 	method_object *r = AllocMethodObject();
 	r->type = TYPE_METHOD;
@@ -577,7 +571,47 @@ method_object *CreateMethodObject(object *func,class_instance_object *instance)/
 	return(r);
 }
 
-iter_object *CreateIterObject(void)//OBJECT_FLAGS flags)
+class_object *CreateClassObject(char *name,code_object *code,object *base_classes)
+{
+	class_object *r = AllocClassObject();
+	r->type = TYPE_CLASS;
+	r->code = code;
+	r->name = str_Copy(name);
+	r->ref_count = 0;
+	r->base_classes = base_classes;
+	gc_IncRefCount((object*)code);
+	gc_IncRefCount(base_classes);
+	
+	#ifdef USE_DEBUGGING
+	if((debug_level & DEBUG_CREATION) > 0)
+	{
+		debug_printf(DEBUG_CREATION,"created class object\n");
+		//DumpObject(r,0);
+	}
+	#endif
+	return(r);
+}
+
+class_instance_object *CreateClassInstanceObject(class_object *instance_of)
+{
+	class_instance_object *r = AllocClassInstanceObject();
+	r->type = TYPE_CLASS_INSTANCE;
+	r->instance_of = instance_of;
+	r->ref_count = 0;
+	gc_IncRefCount((object*)instance_of);
+	
+	#ifdef USE_DEBUGGING
+	if((debug_level & DEBUG_CREATION) > 0)
+	{
+		debug_printf(DEBUG_CREATION,"created class instance object\n");
+		//DumpObject(r,0);
+	}
+	#endif
+	return(r);
+}
+
+
+iter_object *CreateIterObject(void)
 {
 	iter_object *r = AllocIterObject();
 	r->type = TYPE_ITER;
@@ -600,6 +634,24 @@ long objects_num = 0;
 long objects_max = 0;
 long objects_header_total = 0;
 #endif
+
+object *LockObject(object *obj)
+{
+	return(obj);
+}
+
+void UnlockObject(object *obj)
+{
+
+
+}
+
+object *DissolveRef(object *obj)
+{
+if(obj->type == TYPE_REF)
+	return(((ref_object*)obj)->ref);
+return(obj);
+}
 
 kv_object *ConvertToKVObject(object *obj)
 {
@@ -1375,71 +1427,108 @@ object *CopyObject(object *obj)
 	#endif
 	if (obj == NULL)
 		return(NULL);
-
+	//printf("copying object :%x (%c)\n",obj,obj->type);
 	
 	switch (obj->type)
 	{
-	case TYPE_NULL:
-	case TYPE_NONE:
-		{	
-		object *r = AllocObject();
-		r->type = obj->type;
-		r->ref_count  = 0;
-		//r->flags = obj->flags;
-		return(r);
-		}
-		break;
-	case TYPE_INT:
-		{
-		int_object *r = AllocIntObject();
-		r->type = obj->type;
-		r->ref_count  = 0;
-		//r->flags = obj->flags;
-		r->value = ((int_object*)obj)->value;
-		return((object*)r);
-		}
-		break;
-	case TYPE_BINARY_FLOAT:
-		{
-		float_object *r = AllocFloatObject();
-		r->type = obj->type;
-		r->ref_count  = 0;
-		//r->flags = obj->flags;
-		r->value = ((float_object*)obj)->value;
-		return((object*)r);
-		}
-		break;
-	case TYPE_UNICODE:
-	   {
-		unicode_object *r = AllocUnicodeObject();
-		r->type = obj->type;
-		r->ref_count  = 0;
-		//r->flags = obj->flags;
-		r->value = str_Copy(((unicode_object*)obj)->value);
-		return((object*)r);
-		}
-		break;
-	case TYPE_STRING:
-		//ret->ptr = mem_malloc(
-		break;
-	case TYPE_TUPLE:
-		break;
-	case TYPE_CODE:
-		//add reference object to decrease memory usage for code objects
-		//reference objects refs need no freeing
-		return((object*)CreateRefObject(obj));//,obj->flags));
-		break;
-
-	case TYPE_FUNCTION:
-		//add reference object to decrease memory usage for code objects
-		//reference objects refs need no freeing
-		return((object*)CreateRefObject(obj));//,obj->flags));
-		break;
-/*	case TYPE_CFUNCTION:
-		//add reference object to decrease memory usage for code objects
-		//reference objects refs need no freeing
-		return((object*)CreateRefObject(obj));//,obj->flags));
-		break;*/
+		case TYPE_TRUE:
+		case TYPE_FALSE:
+		case TYPE_NULL:
+		case TYPE_NONE:
+			return(CreateEmptyObject(obj->type));
+		case TYPE_INT:
+			return((object*)CreateIntObject(((int_object*)obj)->value));
+		case TYPE_BINARY_FLOAT:
+			return((object*)CreateFloatObject(((float_object*)obj)->value));
+		case TYPE_UNICODE:
+			return((object*)CreateUnicodeObject(str_Copy(((unicode_object*)obj)->value)));
+		case TYPE_STRING:
+			{
+				#ifdef USE_DEBUGGING
+				char *tmp = (char*)mem_malloc(((string_object*)obj)->len, "CopyObject(string) return");
+				#else
+				char *tmp = (char*)malloc(((string_object*)obj)->len);
+				#endif
+				memset(tmp,0,((string_object*)obj)->len);
+				memcpy(tmp, ((string_object*)obj)->content, ((string_object*)obj)->len);
+				object *r = (object*)CreateStringObject(tmp,((string_object*)obj)->len);
+				return(r);
+			}
+		case TYPE_KV:
+			return((object*)CreateKVObject(CopyObject(((kv_object*)obj)->key),CopyObject(((kv_object*)obj)->value)));
+		case TYPE_REF:
+			return((object*)CreateRefObject(((ref_object*)obj)->ref));
+		case TYPE_TAG:
+			return((object*)CreateTagObject(((tag_object*)obj)->tag));
+		case TYPE_CFUNCTION:
+			return(obj);
+			return((object*)CreateCFunctionObject(((cfunction_object*)obj)->func,((cfunction_object*)obj)->defaults,((cfunction_object*)obj)->kw_defaults));
+			//return((object*)CreateCFunctionObject(((cfunction_object*)obj)->func),(tuple_object*)CopyObject((object*)((cfunction_object*)obj)->defaults),(tuple_object*)CopyObject((object*)((cfunction_object*)obj)->kw_defaults));
+		case TYPE_CLASS:
+			return((object*)CreateClassObject(((class_object*)obj)->name,(code_object*)CopyObject((object*)((class_object*)obj)->code),((class_object*)obj)->base_classes));
+		case TYPE_CLASS_INSTANCE:
+			return((object*)CreateClassInstanceObject(((class_instance_object*)obj)->instance_of));
+		case TYPE_TUPLE:
+			{
+				tuple_object *t = CreateTuple(GetTupleLen(obj));
+				for(INDEX i = 0;i<GetTupleLen(obj);i++)
+					SetItem((object*)t,i,CopyObject(GetItem(obj,i)));
+				return((object*)t);
+			}
+			break;
+		case TYPE_CODE:
+			{
+				code_object *c = AllocCodeObject();
+				c->type = TYPE_CODE;
+				c->ref_count = 0;
+				c->name = str_Copy(((code_object*)obj)->name);
+				c->argcount = ((code_object*)obj)->argcount;
+				c->kwonlyargcount = ((code_object*)obj)->kwonlyargcount;
+				c->nlocals = ((code_object*)obj)->nlocals;
+				c->stacksize = ((code_object*)obj)->stacksize;	
+				c->co_flags = ((code_object*)obj)->co_flags;
+				c->code = CopyObject(((code_object*)obj)->code);
+				gc_IncRefCount(c->code);
+				c->consts = CopyObject(((code_object*)obj)->consts);
+				gc_IncRefCount(c->consts);
+				c->varnames = CopyObject(((code_object*)obj)->varnames);
+				gc_IncRefCount(c->varnames);
+				c->freevars = CopyObject(((code_object*)obj)->freevars);
+				gc_IncRefCount(c->freevars);
+				c->cellvars = CopyObject(((code_object*)obj)->cellvars);
+				gc_IncRefCount(c->cellvars);
+				c->names = CopyObject(((code_object*)obj)->names);
+				gc_IncRefCount(c->names);
+				return((object*)c);
+			}
+			break;
+		case TYPE_FUNCTION:
+			{
+				function_object *f = CreateFunctionObject((code_object*)CopyObject((object*)((function_object*)obj)->func));
+				//f->defaults = (tuple_object*)CopyObject((object*)((function_object*)obj)->defaults);
+				//f->kw_defaults = (tuple_object*)CopyObject((object*)((function_object*)obj)->kw_defaults);
+				//f->closure = (tuple_object*)CopyObject((object*)((function_object*)obj)->closure);
+				f->defaults = ((function_object*)obj)->defaults;
+				gc_IncRefCount((object*)f->defaults);
+				f->kw_defaults = ((function_object*)obj)->kw_defaults;
+				gc_IncRefCount((object*)f->kw_defaults);
+				f->closure = ((function_object*)obj)->closure;
+				gc_IncRefCount((object*)f->closure);
+				return((object*)f);
+			}
+			break;
+		case TYPE_BLOCK:
+			{
+			}
+			break;
+		case TYPE_ITER:
+			{
+			}
+			break;
+		case TYPE_METHOD:
+			{
+			}
+			break;
 	}
   return(NULL);
 }
@@ -1772,7 +1861,7 @@ object *GetAttribute(object *obj,object *key)
 			}
 		}
 		if(r == NULL)
-			r = GetAttribute(((class_instance_object*)obj)->instance_of,key);
+			r = GetAttribute((object*)((class_instance_object*)obj)->instance_of,key);
 	}
 	else
 	{
@@ -1855,7 +1944,7 @@ object *GetClassMethod(object *class,object *key)
 			//DumpObject(key,0);
 			//r = GetDictItem(((class_instance_object*)class)->instance_of->code->names,key);
 			if(r == NULL)
-				r = GetClassMethod(((class_instance_object*)class)->instance_of,key);
+				r = GetClassMethod((object*)((class_instance_object*)class)->instance_of,key);
 			/*
 			tuple_object *bc = (tuple_object*)((class_instance_object*)class)->instance_of->base_classes;
 			for(INDEX i = 0;i<GetTupleLen((object*)bc);i++)

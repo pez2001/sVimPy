@@ -274,7 +274,7 @@ typedef struct _cfunction_object
 	OBJECT_TYPE type;
 	//OBJECT_FLAGS flags;
 	OBJECT_REF_COUNT ref_count;
-	tuple_object *defaults;//set to default values in MAKE_FUNCTION opcode
+	tuple_object *defaults;//set to default values in MAKE_FUNCTION opcode //TODO check if really needed
 	tuple_object *kw_defaults;//set to default keyword values in MAKE_FUNCTION opcode
 	struct _object* (*func) (struct _vm *vm,struct _tuple_object *locals,struct _tuple_object *kw_locals);
 } cfunction_object;
@@ -395,6 +395,11 @@ int IsRefObject(object * obj);
 int IsIterObject(object * obj);
 */
 
+object *LockObject(object *obj);
+
+void UnlockObject(object *obj);
+
+
 long ReadLong(stream *f);
 
 FLOAT ReadFloat(stream *f);
@@ -417,35 +422,40 @@ void WriteObjectPlus(object *obj,stream *f);
 
 object *DissolveRef(object *obj);
 
-ref_object *CreateRefObject(object *ref_to);//,OBJECT_FLAGS flags);
+ref_object *CreateRefObject(object *ref_to);
 
 tag_object *CreateTagObject(void *tag);
 
-int_object *CreateIntObject(INT value);//,OBJECT_FLAGS flags);
+int_object *CreateIntObject(INT value);
 
-float_object *CreateFloatObject(FLOAT value);//,OBJECT_FLAGS flags);
+float_object *CreateFloatObject(FLOAT value);
 
-unicode_object *CreateUnicodeObject(char *value);//,OBJECT_FLAGS flags);
+unicode_object *CreateUnicodeObject(char *value);
 
-tuple_object *CreateTuple(NUM num);//,OBJECT_FLAGS flags);
+tuple_object *CreateTuple(NUM num);
 
-string_object *CreateStringObject(char *bytes,NUM len);//,OBJECT_FLAGS flags);
+string_object *CreateStringObject(char *bytes,NUM len);
 
-kv_object *CreateKVObject(object *key,object *value);//,OBJECT_FLAGS flags);
+kv_object *CreateKVObject(object *key,object *value);
 
-object *CreateEmptyObject(char type);//,OBJECT_FLAGS flags);
+object *CreateEmptyObject(char type);
 
-function_object *CreateFunctionObject_MAKE_FUNCTION(code_object *function_code,tuple_object *defaults,tuple_object *kw_defaults);//,OBJECT_FLAGS flags);
+function_object *CreateFunctionObject_MAKE_FUNCTION(code_object *function_code,tuple_object *defaults,tuple_object *kw_defaults);
 
-function_object *CreateFunctionObject_MAKE_CLOSURE(code_object *function_code,tuple_object *closure,tuple_object *defaults,tuple_object *kw_defaults);//,OBJECT_FLAGS flags);
+function_object *CreateFunctionObject_MAKE_CLOSURE(code_object *function_code,tuple_object *closure,tuple_object *defaults,tuple_object *kw_defaults);
 
-function_object *CreateFunctionObject(code_object *co);//unsigned char func_type);//,OBJECT_FLAGS flags);
+function_object *CreateFunctionObject(code_object *co);
 
-cfunction_object *CreateCFunctionObject(struct _object* (*func) (struct _vm *vm,struct _tuple_object *locals,struct _tuple_object *kw_locals),tuple_object *defaults,tuple_object *kw_defaults);//,OBJECT_FLAGS flags); //used for in python storage of external calls
+cfunction_object *CreateCFunctionObject(struct _object* (*func) (struct _vm *vm,struct _tuple_object *locals,struct _tuple_object *kw_locals),tuple_object *defaults,tuple_object *kw_defaults);//used for in-python storage of external calls
 
-method_object *CreateMethodObject(object *func,class_instance_object *instance);//char *name,
+method_object *CreateMethodObject(object *func,class_instance_object *instance);
 
-iter_object *CreateIterObject(void);//OBJECT_FLAGS flags);
+class_object *CreateClassObject(char *name,code_object *code,object *base_classes);
+
+class_instance_object *CreateClassInstanceObject(class_object *instance_of);
+
+
+iter_object *CreateIterObject(void);
 
 void PrintObject(object *obj);
 

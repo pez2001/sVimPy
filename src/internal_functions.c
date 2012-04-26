@@ -41,12 +41,12 @@ object *StringMultiply(object *a,object *b)
 	bi = ((int_object *)b)->value;
 
 	#ifdef USE_DEBUGGING
-	char *tmp = (char *)mem_malloc((strlen(as)*bi) + 1, "str_Cat() return");
+	char *tmp = (char*)mem_malloc((strlen(as)*bi) + 1, "str_Cat() return");
 	#else
-	char *tmp = (char *)malloc((strlen(as)*bi) + 1);
+	char *tmp = (char*)malloc((strlen(as)*bi) + 1);
 	#endif
 
-	memset(tmp, 0, (strlen(as)*bi) + 1);
+	memset(tmp,0,(strlen(as)*bi) + 1);
 
 	for(INDEX i = 0;i< bi;i++)
 	{
@@ -561,10 +561,24 @@ object *custom_code(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 	return(BinaryOp(a,b,OPCODE_BINARY_ADD));
 }
 
+object *if_assert(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+{
+	object *bool = GetItem((object*)locals,0);
+	unicode_object *message = (unicode_object*)GetItem((object*)locals,1);
+	if(bool->type == TYPE_FALSE)
+	{
+		printf("Assertion failed:\n");
+		PrintObject((object*)message);
+		vm_Interrupt(vm,NULL);
+	}
+	object *tmp =CreateEmptyObject(TYPE_NONE);
+	return (tmp);
+}
+
 object *if_build_class(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
-	//printf("build_class called\n");
-	//DumpObject(locals,0);
+	printf("build_class called\n");
+	DumpObject(locals,0);
 
 	function_object *class_function_object = (function_object*)GetItem((object*)locals,0);
 	unicode_object *class_name = (unicode_object*)GetItem((object*)locals,1);
@@ -594,6 +608,7 @@ object *if_build_class(struct _vm *vm,tuple_object *locals,tuple_object *kw_loca
 	//object *tmp =CreateEmptyObject(TYPE_NONE);
 	//return (tmp);
 }
+
 object *if_file_close(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
 	//printf("file close called\n");
@@ -601,10 +616,10 @@ object *if_file_close(struct _vm *vm,tuple_object *locals,tuple_object *kw_local
 	//DumpObject(self,0);
 	//DumpObject(((class_object*)((class_instance_object*)self)->instance_of)->code->names,0);
 	unicode_object *file_name = CreateUnicodeObject(str_Copy("__file__"));
-	object *file_tag = GetAttribute(self,file_name);
+	object *file_tag = GetAttribute(self,(object*)file_name);
 	//DumpObject(file_tag,0);
-	gc_IncRefCount(file_name);
-	gc_DecRefCount(file_name);
+	gc_IncRefCount((object*)file_name);
+	gc_DecRefCount((object*)file_name);
 	if(file_tag->type == TYPE_TAG && ((tag_object*)file_tag)->tag != NULL);
 	{
 		//printf("stream @ %x\n",((tag_object*)file_tag)->tag);
@@ -621,10 +636,10 @@ object *if_file_readline(struct _vm *vm,tuple_object *locals,tuple_object *kw_lo
 	//DumpObject(self,0);
 	//DumpObject(((class_object*)((class_instance_object*)self)->instance_of)->code->names,0);
 	unicode_object *file_name = CreateUnicodeObject(str_Copy("__file__"));
-	object *file_tag = GetAttribute(self,file_name);
+	object *file_tag = GetAttribute(self,(object*)file_name);
 	//DumpObject(file_tag,0);
-	gc_IncRefCount(file_name);
-	gc_DecRefCount(file_name);
+	gc_IncRefCount((object*)file_name);
+	gc_DecRefCount((object*)file_name);
 	if(file_tag->type == TYPE_TAG && ((tag_object*)file_tag)->tag != NULL);
 	{
 		//printf("stream @ %x\n",((tag_object*)file_tag)->tag);
@@ -649,8 +664,8 @@ object *if_file_readline(struct _vm *vm,tuple_object *locals,tuple_object *kw_lo
 		{
 			buf[i] = 0;
 			//printf("readline(%d):%s\n",i,&buf);
-			unicode_object *line = CreateUnicodeObject(str_Copy(&buf));
-			return(line);
+			unicode_object *line = CreateUnicodeObject(str_Copy((char*)&buf));
+			return((object*)line);
 		}
 	}	
 	
@@ -708,7 +723,7 @@ object *if_open(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 	file_class->name = str_Copy("file");
 	file_class->base_classes = NULL;
 	file_class->code = file;
-	gc_IncRefCount(file);
+	gc_IncRefCount((object*)file);
 	file_class->code->co_flags ^= CO_CLASS_ROOT;
 	file_class->ref_count = 0;
 	
@@ -716,11 +731,11 @@ object *if_open(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 	file_instance->type = TYPE_CLASS_INSTANCE;
 	file_instance->ref_count = 0;
 	file_instance->instance_of = file_class;
-	gc_IncRefCount(file_class);
-	file_instance->methods = CreateTuple(0);
-	gc_IncRefCount(file_instance->methods);
-	file_instance->vars = CreateTuple(0);
-	gc_IncRefCount(file_instance->vars);
+	gc_IncRefCount((object*)file_class);
+	file_instance->methods = (object*)CreateTuple(0);
+	gc_IncRefCount((object*)file_instance->methods);
+	file_instance->vars = (object*)CreateTuple(0);
+	gc_IncRefCount((object*)file_instance->vars);
 	
 	
 	return((object*)file_instance);
@@ -795,9 +810,9 @@ object *if_print(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 	INDEX i = 0; 
 	//DumpObject(kw_locals,0);
 	unicode_object *end = CreateUnicodeObject(str_Copy("end"));
-	gc_IncRefCount(end);
-	object *endval = GetDictItem(kw_locals,end);
-	gc_DecRefCount(end);
+	gc_IncRefCount((object*)end);
+	object *endval = GetDictItem((object*)kw_locals,(object*)end);
+	gc_DecRefCount((object*)end);
 	while(i < locals->list->num)
 	{
 		object *t = GetItem((object *)locals,i);//TODO maybe move this into PrintObject() as case ITER:	

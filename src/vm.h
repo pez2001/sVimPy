@@ -184,15 +184,27 @@ void vm_Exit(vm *vm); //exit vm
 
 void vm_Stop(vm *vm); //pause vm execution
 
-object *vm_CallFunction(vm *vm,char *name, tuple_object *locals);//call a python function from C
+object *vm_Step(vm *vm);//single step vm //TODO rename to vm_Step
 
 object *vm_RunPYC(vm *vm,stream *f,BOOL free_object);
 
-object *vm_RunObject(vm *vm, object *obj, tuple_object *locals);//run a python code object
+object *vm_CallFunction(vm *vm,char *name, tuple_object *locals,tuple_object *kw_locals);//call a python function from C
 
-object *vm_InteractiveRunObject(vm *vm, object *obj,  tuple_object *locals);
+object *vm_RunObject(vm *vm, object *obj, tuple_object *locals,tuple_object *kw_locals);//run a python object if possible
 
-block_object *vm_StartCodeObject(vm *vm,code_object *co, tuple_object *locals);
+object *vm_InteractiveRunObject(vm *vm, object *obj,  tuple_object *locals,tuple_object *kw_locals);
+
+object *vm_StartMethod(vm *vm,object *key,class_instance_object *cio,tuple_object *locals,tuple_object *kw_locals);
+
+object *vm_RunMethod(vm *vm,object *key,class_instance_object *cio,tuple_object *locals,tuple_object *kw_locals);
+
+object *vm_StartObject(vm *vm,object *obj, tuple_object *locals,tuple_object *kw_locals);
+
+object *vm_StartObjectCopy(vm *vm,object *o, tuple_object *locals,tuple_object *kw_locals);
+
+block_object *vm_StartCodeObject(vm *vm,code_object *co, tuple_object *locals,tuple_object *kw_locals);
+
+block_object *vm_StartClassObject(vm *vm,class_object *co,tuple_object *locals,tuple_object *kw_locals);
 
 object *vm_StartFunctionObject(vm *vm,function_object *fo,tuple_object *locals,tuple_object *kw_locals);//run a python function object 
 
@@ -200,13 +212,8 @@ object *vm_StartCFunction(vm *vm,cfunction *cf,tuple_object *locals,tuple_object
 
 object *vm_StartCFunctionObject(vm *vm,cfunction_object *cfo,tuple_object *locals,tuple_object *kw_locals);//run a python function object 
 
-object *vm_StartMethod(vm *vm,object *key,class_instance_object *cio,tuple_object *locals,tuple_object *kw_locals);
-
-object *vm_RunMethod(vm *vm,object *key,class_instance_object *cio,tuple_object *locals,tuple_object *kw_locals);//,BOOL pop_ret);
-
 object *vm_StartMethodObject(vm *vm,method_object *mo,tuple_object *locals,tuple_object *kw_locals);
 
-object *vm_Step(vm *vm);//single step vm //TODO rename to vm_Step
 
 #ifdef USE_DEBUGGING
 void vm_DumpCode(vm *vm,BOOL dump_descriptions,BOOL from_start);//dump human readable code of the vm's actual running block 
