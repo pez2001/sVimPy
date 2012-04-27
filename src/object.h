@@ -263,7 +263,7 @@ typedef struct _function_object
 	OBJECT_TYPE type;
 	//OBJECT_FLAGS flags;
 	OBJECT_REF_COUNT ref_count;
-	tuple_object *defaults;//set to default values in MAKE_FUNCTION opcode
+	tuple_object *defaults;//set to default values in MAKE_FUNCTION opcode //TODO REMOVE THESE ... redundant with new function calling style(each function gets its own copy before execution > move this into the make_function opcode)
 	tuple_object *kw_defaults;//set to default keyword values in MAKE_FUNCTION opcode
 	tuple_object *closure;
 	struct _code_object *func;

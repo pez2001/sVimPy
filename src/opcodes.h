@@ -81,7 +81,7 @@
 #define OPCODE_YIELD_VALUE 						0x56
 #define OPCODE_POP_BLOCK 						0x57
 #define OPCODE_END_FINALLY 						0x58
-#define OPCODE_BUILD_CLASS						0x59
+#define OPCODE_POP_EXCEPT						0x59
 #define OPCODE_STORE_NAME 						0x5a
 #define OPCODE_DELETE_NAME 					0x5b
 #define OPCODE_UNPACK_SEQUENCE 			0x5c

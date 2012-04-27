@@ -557,16 +557,15 @@ method_object *CreateMethodObject(object *func,class_instance_object *instance)
 	method_object *r = AllocMethodObject();
 	r->type = TYPE_METHOD;
 	r->func = func;
-	//r->name = str_Copy(name);//TODO maybe not needed and can reduce memory usage
+	gc_IncRefCount((object*)r->func);
 	r->ref_count = 0;
-	r->instance = instance;//TODO gc_IncRef(instance);
-	
+	r->instance = instance;
+	gc_IncRefCount((object*)r->instance);
 
 	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
 		debug_printf(DEBUG_CREATION,"created method object\n");
-		//DumpObject(r,0);
 	}
 	#endif
 	return(r);
@@ -577,7 +576,7 @@ class_object *CreateClassObject(char *name,code_object *code,object *base_classe
 	class_object *r = AllocClassObject();
 	r->type = TYPE_CLASS;
 	r->code = code;
-	r->name = str_Copy(name);
+	r->name = name;//str_Copy(name);
 	r->ref_count = 0;
 	r->base_classes = base_classes;
 	gc_IncRefCount((object*)code);
@@ -1461,12 +1460,14 @@ object *CopyObject(object *obj)
 			return((object*)CreateRefObject(((ref_object*)obj)->ref));
 		case TYPE_TAG:
 			return((object*)CreateTagObject(((tag_object*)obj)->tag));
+		case TYPE_METHOD:
+				return((object*)CreateMethodObject(CopyObject(((method_object*)obj)->func),((method_object*)obj)->instance));
 		case TYPE_CFUNCTION:
-			return(obj);
+			//return(obj);
 			return((object*)CreateCFunctionObject(((cfunction_object*)obj)->func,((cfunction_object*)obj)->defaults,((cfunction_object*)obj)->kw_defaults));
 			//return((object*)CreateCFunctionObject(((cfunction_object*)obj)->func),(tuple_object*)CopyObject((object*)((cfunction_object*)obj)->defaults),(tuple_object*)CopyObject((object*)((cfunction_object*)obj)->kw_defaults));
 		case TYPE_CLASS:
-			return((object*)CreateClassObject(((class_object*)obj)->name,(code_object*)CopyObject((object*)((class_object*)obj)->code),((class_object*)obj)->base_classes));
+			return((object*)CreateClassObject(str_Copy(((class_object*)obj)->name),(code_object*)CopyObject((object*)((class_object*)obj)->code),((class_object*)obj)->base_classes));
 		case TYPE_CLASS_INSTANCE:
 			return((object*)CreateClassInstanceObject(((class_instance_object*)obj)->instance_of));
 		case TYPE_TUPLE:
@@ -1524,15 +1525,6 @@ object *CopyObject(object *obj)
 			break;
 		case TYPE_ITER:
 			{
-			}
-			break;
-		case TYPE_METHOD:
-			{
-				gc_IncRefCount((object*)((method_object*)obj)->instance);
-				return((object*)CreateMethodObject(CopyObject(((method_object*)obj)->func),((method_object*)obj)->instance));
-				//object *func;
-				//class_instance_object *instance;
-
 			}
 			break;
 	}

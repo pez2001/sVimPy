@@ -661,12 +661,12 @@ void atomic_test(void)
 	debug_level = 0;
 	//debug_level |= DEBUG_INTERACTIVE;
 	debug_level |= DEBUG_MEMORY;
-	debug_level |= DEBUG_SHOW_OPCODES;
+	//debug_level |= DEBUG_SHOW_OPCODES;
 	//debug_level |= DEBUG_FULL_DUMP;
 	//debug_level |= DEBUG_STACK;
 	//debug_level |= DEBUG_LISTS;
 	//debug_level |= DEBUG_GC;
-	debug_level |= DEBUG_VERBOSE_STEP;
+	//debug_level |= DEBUG_VERBOSE_STEP;
 	//debug_level |= DEBUG_VM;
 	//debug_level |= DEBUG_FREEING;
 	//debug_level |= DEBUG_ALLOCS;
@@ -692,16 +692,19 @@ void atomic_test(void)
 	//AtomicOpenPYC("tests/test_class2.pyc");
 	//AtomicOpenPYC("tests/test_class.pyc");
 
+	AtomicOpenPYC("tests/test_sep_method.pyc");
+	return;
+	AtomicOpenPYC("tests/test_assert.pyc");
+	return;
+	//testing seperated function var spaces
+	AtomicOpenPYC("tests/test_sep_func.pyc");
+	//AtomicOpenPYC("tests/Queens4.pyc");
+	AtomicOpenPYC("tests/Queens2a.pyc");
+	//return;
 
 	//fmod tests + classes as globals
 	//AtomicOpenPYC("tests/Play.pyc");//old version without class support
-	AtomicOpenPYC("tests/test_sep_func.pyc");
-	//AtomicOpenPYC("tests/test_assert.pyc");
-	AtomicOpenPYC("tests/Queens4.pyc");
-	//AtomicOpenPYC("tests/Queens2.pyc");
-	return;
 	AtomicOpenPYC("tests/PlayNew.pyc");
-	//return;
 
 	//open file test + if_iter with sentinel
 	AtomicOpenPYC("tests/test_open.pyc");

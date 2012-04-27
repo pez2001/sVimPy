@@ -1793,7 +1793,7 @@ object *vm_Step(vm *vm)
 
 			case OPCODE_STORE_SUBSCR:
 			case OPCODE_STORE_MAP:
-			case OPCODE_BUILD_CLASS:
+			//case OPCODE_BUILD_CLASS:
 				{
 					tos = stack_Pop(bo->stack);
 					tos1 = stack_Pop(bo->stack);
@@ -1819,14 +1819,14 @@ object *vm_Step(vm *vm)
 			// execute remaining ops here
 			switch (op)
 			{
-
+			/*
 			case OPCODE_BUILD_CLASS:
 				{
 				//Creates a new class object. TOS is the methods dictionary, TOS1 the tuple of the names of the base classes, and TOS2 the class name.
-				
+				//TODO check if this opcode is deprecated
 				}
 				break;
-			
+			*/
 			case OPCODE_STORE_LOCALS:
 				{
 					//Pops TOS from the stack and stores it as the current frame’s f_locals. This is used in class construction.

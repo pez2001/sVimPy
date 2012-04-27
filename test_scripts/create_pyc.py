@@ -1,1 +1,1 @@
-from test_sep_func import * 
+from test_sep_method import * 

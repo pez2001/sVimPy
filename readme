@@ -18,12 +18,15 @@ Features include:
  * an interactive debugging console
  * dictionaries and tuples
  * iterations 
- * compares
+ * generators
+ * compares & binary ops
+ * classes & inheritance
  * VM single stepping (game loop usage is possible)
  * calling Pyton functions from C and Python itself
  * calling C functions from C and Python,
  * a small memory footprint
  * fast performance
+ * many builtin functions
  * the ability to be used as a library in other projects
  * simple API + code
  * it's easy to add new functions to be called from python
@@ -62,7 +65,8 @@ Features include:
 	0.73	add attributes to some degree
 	0.74  add classes support
 			+ class inheritance
-	0.75	add support for file operations
+			+ fixed function calling (now each function call uses its own space in memory)
+	0.75	add basic support for file operations
 	0.76  add missing opcodes
 		    + basic exceptions support
 	0.77  stream printing + sd-fat support
