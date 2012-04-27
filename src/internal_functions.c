@@ -577,8 +577,8 @@ object *if_assert(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 
 object *if_build_class(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
-	printf("build_class called\n");
-	DumpObject(locals,0);
+	//printf("build_class called\n");
+	//DumpObject(locals,0);
 
 	function_object *class_function_object = (function_object*)GetItem((object*)locals,0);
 	unicode_object *class_name = (unicode_object*)GetItem((object*)locals,1);

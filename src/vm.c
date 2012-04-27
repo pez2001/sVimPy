@@ -291,10 +291,11 @@ object *vm_ExecuteCFunctionByName(vm *vm, char *name,tuple_object *locals,tuple_
 
 object *vm_ExecuteCFunction(vm *vm, cfunction *cf, tuple_object *locals,tuple_object *kw_locals)
 {
-	DumpObject(cf,0);
 	if (cf != NULL)
 	{	
 		//PrintObject(locals);
+		//DumpObject(locals,0);
+		//DumpObject(kw_locals,0);
 		return((*cf->func) (vm,locals,kw_locals));
 	}
 	return(NULL);
@@ -431,6 +432,10 @@ void vm_Stop(vm *vm)
 
 object *vm_StartObjectCopy(vm *vm,object *obj, tuple_object *locals,tuple_object *kw_locals)
 {
+	if(obj == NULL)
+		return(NULL);
+
+	//printf("StartObjectCopy(%x:%c)\n",obj,obj->type);
 	if(obj->type == TYPE_UNICODE)
 	{
 		cfunction *f = vm_FindFunction(vm, ((unicode_object*)obj)->value);
@@ -458,6 +463,7 @@ object *vm_StartObjectCopy(vm *vm,object *obj, tuple_object *locals,tuple_object
 				//printf("copied caller func Object\n");
 				gc_IncRefCount(c);
 				object *cr = vm_StartObject(vm,c,locals,kw_locals);
+				//object *cr = vm_StartObject(vm,obj,locals,kw_locals);
 				gc_DecRefCount(c);
 				return(cr);
 			}
@@ -465,13 +471,15 @@ object *vm_StartObjectCopy(vm *vm,object *obj, tuple_object *locals,tuple_object
 	}else
 	{
 		object *c = CopyObject(obj);
+		gc_IncRefCount(c);
+		//gc_DecRefCount(c);
 		//printf("copied Object\n");
 		//FullDumpObject(c,0);
 		//printf("original:\n");
 		//FullDumpObject(obj,0);
-		gc_IncRefCount(c);
+		//gc_IncRefCount(c);
 		object *r = vm_StartObject(vm,c,locals,kw_locals);
-		//gc_DecRefCount(c);
+		gc_DecRefCount(c);
 		return(r);
 		//return(vm_StartObject(vm,obj,locals,kw_locals));
 	}
@@ -482,6 +490,8 @@ object *vm_StartObject(vm *vm,object *obj, tuple_object *locals,tuple_object *kw
 {
 	if(obj == NULL)
 		return(NULL);
+
+	//printf("StartObject(%x:%c)\n",obj,obj->type);
 	switch(obj->type)
 	{
 		case TYPE_METHOD:
@@ -507,7 +517,7 @@ object *vm_StartObject(vm *vm,object *obj, tuple_object *locals,tuple_object *kw
 			}
 		case TYPE_CFUNCTION:
 			{
-				object *pret = vm_StartCFunction(vm,(cfunction*)obj, locals,kw_locals);
+				object *pret = vm_StartCFunctionObject(vm,(cfunction_object*)obj, locals,kw_locals);
 				return(pret);
 			}
 		case TYPE_UNICODE:
@@ -515,6 +525,7 @@ object *vm_StartObject(vm *vm,object *obj, tuple_object *locals,tuple_object *kw
 				cfunction *f = vm_FindFunction(vm, ((unicode_object*)obj)->value);
 				if(f != NULL)
 				{
+					//printf("calling c function:%s\n",((unicode_object*)obj)->value);
 					object *uret = vm_StartCFunction(vm,f, locals,kw_locals);
 					return(uret);
 				}
@@ -664,7 +675,7 @@ object *vm_StartFunctionObject(vm *vm,function_object *fo,tuple_object *locals,t
 		#ifdef USE_DEBUGGING
 		debug_printf(DEBUG_VERBOSE_STEP,"executing python function: %s\n",  fo->func->name);
 		#endif
-		printf("executing python function: %s\n",  fo->func->name);
+		//printf("executing python function: %s\n",  fo->func->name);
 	
 		//code_object *co = (code_object*)fo->code;
 		//tuple_object *defaults = fo->defaults;
@@ -2884,6 +2895,7 @@ object *vm_Step(vm *vm)
 						rf = ((kv_object*)rf)->value;
 					rf = DissolveRef(rf);
 					object *ret = vm_StartObjectCopy(vm,rf,call,kw_call);
+					//object *ret = vm_StartObject(vm,rf,call,kw_call);
 					if (ret != NULL)
 					{
 						stack_Push(bo->stack, ret);

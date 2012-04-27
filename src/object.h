@@ -286,7 +286,7 @@ typedef struct _iter_object
 	OBJECT_TYPE type;
 	//OBJECT_FLAGS flags;
 	OBJECT_REF_COUNT ref_count;
-	object *tag;//used for storage of iter options and actual ptr
+	object *tag;//used for storage of iter options and index ptr
 	object *(*iter_func)(struct _iter_object *iter,struct _vm *vm);
 	struct _stack *block_stack;//iters will save blocks on stack when yielding
 } iter_object;

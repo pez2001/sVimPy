@@ -270,6 +270,7 @@ ref_object *CreateRefObject(object *ref_to)//,OBJECT_FLAGS flags)
 	r->ref_count = 0;
 	r->ref = ref_to;
 	gc_IncRefCount(ref_to);
+	printf("created ref object\n");
 	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
@@ -450,7 +451,7 @@ function_object *CreateFunctionObject_MAKE_FUNCTION(code_object *function_code,t
 	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
-		debug_printf(DEBUG_CREATION,"created object\n");
+		debug_printf(DEBUG_CREATION,"created function object - MAKE_FUNCTION\n");
 		DumpObject((object*)r,0);
 	}
 	#endif
@@ -487,7 +488,7 @@ function_object *CreateFunctionObject_MAKE_CLOSURE(code_object *function_code,tu
 	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
-		debug_printf(DEBUG_CREATION,"created object\n");
+		debug_printf(DEBUG_CREATION,"created function object - MAKE_CLOSURE\n");
 		DumpObject((object*)r,0);
 	}
 	#endif
@@ -504,7 +505,7 @@ function_object *CreateFunctionObject(code_object *co)
 	r->closure = NULL;
 	//r->func.func = NULL;
 	r->func = co;
-	gc_IncRefCount(co);
+	gc_IncRefCount((object*)co);
 	//r->name = NULL;
 	r->ref_count = 0;
 	//r->func_type = func_type;
@@ -1008,8 +1009,8 @@ void FullDumpObject(object * obj, char level)
 			printf("iter object\n");
 			printf("iter tag:\n");
 			FullDumpObject((object*)((iter_object*)obj)->tag,level + 1);
-			printf("iter block stack:\n");
-			stack_Dump(((iter_object*)obj)->block_stack);
+			//printf("iter block stack:\n");
+			//stack_Dump(((iter_object*)obj)->block_stack);
 			break;
 	case TYPE_REF:
 		printf("ref object\n");
@@ -1038,8 +1039,8 @@ void FullDumpObject(object * obj, char level)
 		break;
 	case TYPE_KV:
 		printf("kv object\n");
-		DumpObject(((kv_object*)obj)->key,level);
-		DumpObject(((kv_object*)obj)->value,level + 1);
+		FullDumpObject(((kv_object*)obj)->key,level);
+		FullDumpObject(((kv_object*)obj)->value,level + 1);
 		break;
 	case TYPE_FUNCTION:
 			printf("function object: %s\n",((function_object*)obj)->func->name);
@@ -1527,6 +1528,11 @@ object *CopyObject(object *obj)
 			break;
 		case TYPE_METHOD:
 			{
+				gc_IncRefCount((object*)((method_object*)obj)->instance);
+				return((object*)CreateMethodObject(CopyObject(((method_object*)obj)->func),((method_object*)obj)->instance));
+				//object *func;
+				//class_instance_object *instance;
+
 			}
 			break;
 	}

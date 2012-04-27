@@ -666,7 +666,7 @@ void atomic_test(void)
 	//debug_level |= DEBUG_STACK;
 	//debug_level |= DEBUG_LISTS;
 	//debug_level |= DEBUG_GC;
-	//debug_level |= DEBUG_VERBOSE_STEP;
+	debug_level |= DEBUG_VERBOSE_STEP;
 	//debug_level |= DEBUG_VM;
 	//debug_level |= DEBUG_FREEING;
 	//debug_level |= DEBUG_ALLOCS;
