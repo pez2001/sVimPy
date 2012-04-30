@@ -661,12 +661,12 @@ void atomic_test(void)
 	debug_level = 0;
 	//debug_level |= DEBUG_INTERACTIVE;
 	debug_level |= DEBUG_MEMORY;
-	//debug_level |= DEBUG_SHOW_OPCODES;
+	debug_level |= DEBUG_SHOW_OPCODES;
 	//debug_level |= DEBUG_FULL_DUMP;
 	//debug_level |= DEBUG_STACK;
 	//debug_level |= DEBUG_LISTS;
-	//debug_level |= DEBUG_GC;
-	//debug_level |= DEBUG_VERBOSE_STEP;
+	debug_level |= DEBUG_GC;
+	debug_level |= DEBUG_VERBOSE_STEP;
 	//debug_level |= DEBUG_VM;
 	//debug_level |= DEBUG_FREEING;
 	//debug_level |= DEBUG_ALLOCS;

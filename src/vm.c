@@ -473,8 +473,8 @@ object *vm_StartObjectCopy(vm *vm,object *obj, tuple_object *locals,tuple_object
 		object *c = CopyObject(obj);
 		gc_IncRefCount(c);
 		//gc_DecRefCount(c);
-		//printf("copied Object\n");
-		//FullDumpObject(c,0);
+		printf("copied Object\n");
+		FullDumpObject(c,0);
 		//printf("original:\n");
 		//FullDumpObject(obj,0);
 		//gc_IncRefCount(c);
