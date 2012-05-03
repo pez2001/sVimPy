@@ -529,10 +529,22 @@ void AtomicOpenPYC(char *filename)
 	printf("executing object:%s\n", filename);
 	printf("sVimPy Python Output\n{\n");
 
+	#ifdef USE_DEBUGGING
+	debug_printf(DEBUG_VERBOSE_TESTS,"vm_Init\n");
+	#endif
 	vm *vm = vm_Init(NULL);
+	#ifdef USE_DEBUGGING
+	debug_printf(DEBUG_VERBOSE_TESTS,"gc_Init\n");
+	#endif
 	gc_Init(vm);
+	#ifdef USE_DEBUGGING
+	debug_printf(DEBUG_VERBOSE_TESTS,"streams_Init\n");
+	#endif
 	streams_Init();
 	vm->import_module_handler = &ImportModule;
+	#ifdef USE_DEBUGGING
+	debug_printf(DEBUG_VERBOSE_TESTS,"AddInternalFunctions\n");
+	#endif
 	AddInternalFunctions(vm);
 	//fmod_Init(vm);
 	AddFmodGlobals(vm);
@@ -615,13 +627,22 @@ void AtomicOpenPYC(char *filename)
 	debug_printf(DEBUG_VERBOSE_TESTS,"pyc executed\n");
 	#endif
 
+	//fmod_Close();
+	#ifdef USE_DEBUGGING
+	debug_printf(DEBUG_VERBOSE_TESTS,"cleaning gc\n");
+	#endif
+	gc_Clear();
 	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_VERBOSE_TESTS,"closing vm\n");
 	#endif
-	//fmod_Close();
-	gc_Clear();
 	vm_Close(vm);
+	#ifdef USE_DEBUGGING
+	debug_printf(DEBUG_VERBOSE_TESTS,"closing streams\n");
+	#endif
 	streams_Close();
+	#ifdef USE_DEBUGGING
+	debug_printf(DEBUG_VERBOSE_TESTS,"closing gc\n");
+	#endif
 	gc_Close();
 
 	// printf("objects headers total size : %d\n",objects_header_total);
@@ -661,12 +682,12 @@ void atomic_test(void)
 	debug_level = 0;
 	//debug_level |= DEBUG_INTERACTIVE;
 	debug_level |= DEBUG_MEMORY;
-	debug_level |= DEBUG_SHOW_OPCODES;
+	//debug_level |= DEBUG_SHOW_OPCODES;
 	//debug_level |= DEBUG_FULL_DUMP;
 	//debug_level |= DEBUG_STACK;
 	//debug_level |= DEBUG_LISTS;
-	debug_level |= DEBUG_GC;
-	debug_level |= DEBUG_VERBOSE_STEP;
+	//debug_level |= DEBUG_GC;
+	//debug_level |= DEBUG_VERBOSE_STEP;
 	//debug_level |= DEBUG_VM;
 	//debug_level |= DEBUG_FREEING;
 	//debug_level |= DEBUG_ALLOCS;
@@ -683,28 +704,41 @@ void atomic_test(void)
 	printf("Atomic Tests Version : %d.%d-%d\n",MAJOR_VERSION,MINOR_VERSION,BUILD+1);
 	#endif
 
+	//exceptions
+	//AtomicOpenPYC("tests/test_assert.pyc");
+	//return;
+	//AtomicOpenPYC("tests/test57.pyc");
+	//return;
+
 
 	//classes tests
-	//AtomicOpenPYC("tests/test_class6.pyc");
-	//AtomicOpenPYC("tests/test_class5.pyc");
-	//AtomicOpenPYC("tests/test_class4.pyc");
-	//AtomicOpenPYC("tests/test_class3.pyc");
-	//AtomicOpenPYC("tests/test_class2.pyc");
-	//AtomicOpenPYC("tests/test_class.pyc");
+	//AtomicOpenPYC("tests/test_class7.pyc");
+	AtomicOpenPYC("tests/test_class11.pyc");
+	//AtomicOpenPYC("tests/test_class10.pyc");
+	//AtomicOpenPYC("tests/test_class9.pyc");
+	//AtomicOpenPYC("tests/test_class8.pyc");
+	return;
+	AtomicOpenPYC("tests/test_class5.pyc");
+	//AtomicOpenPYC("tests/test_sep_method.pyc");
+	return;
+	AtomicOpenPYC("tests/test_class6.pyc");
+	AtomicOpenPYC("tests/test_class4.pyc");
+	AtomicOpenPYC("tests/test_class3.pyc");
+	AtomicOpenPYC("tests/test_class2.pyc");
+	AtomicOpenPYC("tests/test_class.pyc");
+	AtomicOpenPYC("tests/test_sep_method2.pyc");
 
-	AtomicOpenPYC("tests/test_sep_method.pyc");
-	return;
-	AtomicOpenPYC("tests/test_assert.pyc");
-	return;
 	//testing seperated function var spaces
 	AtomicOpenPYC("tests/test_sep_func.pyc");
+
+	//brute recursion queens test
+	//AtomicOpenPYC("tests/Queens2a.pyc");
 	//AtomicOpenPYC("tests/Queens4.pyc");
-	AtomicOpenPYC("tests/Queens2a.pyc");
 	//return;
 
 	//fmod tests + classes as globals
 	//AtomicOpenPYC("tests/Play.pyc");//old version without class support
-	AtomicOpenPYC("tests/PlayNew.pyc");
+	//AtomicOpenPYC("tests/PlayNew.pyc");
 
 	//open file test + if_iter with sentinel
 	AtomicOpenPYC("tests/test_open.pyc");

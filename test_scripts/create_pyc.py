@@ -1,1 +1,1 @@
-from test_sep_method import * 
+from test_class11 import * 

@@ -96,11 +96,11 @@ extern "C"  {
 #define MAGIC (3180 | ((long)'\r'<<16) | ((long)'\n'<<24))
 
 //function types
-#define FUNC_PYTHON 'p'
+/*#define FUNC_PYTHON 'p'
 #define FUNC_C 'c'
 #define FUNC_C_OBJ 'o'
 #define FUNC_NOT_FOUND 'n'
-
+*/
 
 #ifndef USE_ARDUINO_FUNCTIONS
 #pragma pack(push)				/* push current alignment to stack */
@@ -112,8 +112,6 @@ typedef struct _vm
 	stack *blocks;
 	stack *exceptions;
 	ptr_list *functions;
-	//ptr_list *garbage;
-	//code_object *global;
 	ptr_list *globals;
 	ptr_list *classes;
 	object *(*interrupt_handler) (struct _vm *vm,stack *stack);

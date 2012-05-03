@@ -1423,7 +1423,7 @@ return(-1);
 object *CopyObject(object *obj)
 {
 	#ifdef USE_DEBUGGING
-	assert(obj != NULL);
+	//assert(obj != NULL);
 	#endif
 	if (obj == NULL)
 		return(NULL);
@@ -1853,8 +1853,8 @@ object *GetAttribute(object *obj,object *key)
 			if(r!=NULL)
 			{	
 				method_object *mo = CreateMethodObject(r,(class_instance_object*)obj);
-				gc_IncRefCount(r);
-				gc_IncRefCount(obj);
+				//gc_IncRefCount(r);
+				//gc_IncRefCount(obj);
 				return((object*)mo);
 			}
 		}

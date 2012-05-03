@@ -78,6 +78,8 @@ void gc_DecRefCount(object *obj)
 	else
 	{
 			#ifdef USE_DEBUGGING
+			debug_printf(DEBUG_ALL,"possibly freed object is still be referenced by objects: %x\n",obj);
+			FullDumpObject(obj,0);
 			if((debug_level & DEBUG_GC) > 0)
 			{
 				debug_printf(DEBUG_GC,"possibly freed object is still be referenced by objects: %x\n",obj);
@@ -247,14 +249,17 @@ void gc_FreeObject(object *obj)
 		break;
 	case TYPE_CLASS_INSTANCE:
 		{
-			unicode_object *method_name = CreateUnicodeObject(str_Copy("__del__"));
 			if(garbage_vm != NULL)
 			{
+				
+				unicode_object *method_name = CreateUnicodeObject(str_Copy("__del__"));
 				object *rmr = vm_RunMethod(garbage_vm,(object*)method_name,(class_instance_object*)obj,NULL,NULL);
 				gc_IncRefCount(rmr);
 				gc_DecRefCount(rmr);
-				gc_IncRefCount((object*)method_name);
-				gc_DecRefCount((object*)method_name);
+				//gc_IncRefCount((object*)method_name);
+				//gc_DecRefCount((object*)method_name);
+				gc_FreeObject(method_name);
+				
 			}
 			gc_DecRefCount((object*)((class_instance_object*)obj)->instance_of);
 			gc_DecRefCount(((class_instance_object*)obj)->methods);

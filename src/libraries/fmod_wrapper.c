@@ -143,7 +143,7 @@ void AddFmodGlobals(vm *vm)
 	fmod_global->code = a_globals;
 	gc_IncRefCount(a_globals);
 	fmod_global->code->co_flags ^= CO_CLASS_ROOT;
-	fmod_global->ref_count = 1;
+	fmod_global->ref_count = 0;
 	vm_AddClass(vm,fmod_global);
 }
 

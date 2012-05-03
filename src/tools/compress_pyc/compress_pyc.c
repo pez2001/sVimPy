@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
 	{
 		printf("input pyc filename:%s\n",input_filename);
 		printf("output filename:%s\n",output_filename);
-		gc_Init();
+		gc_Init(NULL);
 		streams_Init();
 		long pyc_magic = MAGIC;
 		stream *f = stream_CreateFromFile(input_filename,"rb");

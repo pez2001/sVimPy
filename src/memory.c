@@ -83,6 +83,7 @@ void mem_Push(void *x, long size, char *description)
 	mem_chunk_items[mem_chunks_top]->size = size;
 	mem_chunk_items[mem_chunks_top]->description = description;
 	mem_chunk_items[mem_chunks_top]->is_freed = 0;
+	//printf("memory pushed:%d(%d)\n",mem_chunks_top,size);
 	mem_chunks_top++;
 	mem_chunk_items = (mem_chunk**) realloc(mem_chunk_items,(mem_chunks_top +1) * sizeof(mem_chunk*));
 	
@@ -120,6 +121,7 @@ void *mem_realloc(void *ptr, size_t size)
 		{
 			if (mem_chunk_items[i]->ptr == ptr && !mem_chunk_items[i]->is_freed)
 			{	
+				//printf("memory changed:%d(%d)\n",i,size);
 				void *s =ptr;
 				//s-=BOUNDS_LEN;
 				//printf("realloc:%x,%d,%d\n",s,size,mem_chunk_items[i]->size);
@@ -196,6 +198,7 @@ int mem_free(void *ptr)
 		if (mem_chunk_items[i]->ptr == p && !mem_chunk_items[i]->is_freed)
 		{
 			f = 1;
+			//printf("memory freed:%d(%d)\n",i,mem_chunk_items[i]->size);
 			mem_chunk_items[i]->is_freed = 1;
 			//memset(ptr,255,mem_chunk_items[i]->size+(BOUNDS_LEN*2));
 			memset(ptr,255,mem_chunk_items[i]->size);

@@ -363,18 +363,18 @@ void vm_Close(vm *vm)
 void vm_AddGlobal(vm *vm, code_object *co)
 {
 	ptr_Push(vm->globals,co);
-	//gc_IncRefCount(co);
+	gc_IncRefCount(co);
 }
 
 void vm_RemoveGlobal(vm *vm, code_object *co)
 {
 	ptr_RemoveItem(vm->globals,co);
-	//gc_DecRefCount(co);
+	gc_DecRefCount(co);
 }
 
 void vm_FreeGlobals(vm *vm)
 {
-	for(int i=0;i<vm->globals->num;i++)
+	for(INDEX i=0;i<vm->globals->num;i++)
 	{	
 			gc_DecRefCount((object*)vm->globals->items[i]);
 	}
@@ -382,19 +382,24 @@ void vm_FreeGlobals(vm *vm)
 
 void vm_AddClass(vm *vm, class_object *co)
 {
-	ptr_Push(vm->classes,co);
-	//gc_IncRefCount(co);
+	if(!ptr_Contains(vm->classes,co))
+	{
+		printf("adding class\n");
+		FullDumpObject(co,0);
+		ptr_Push(vm->classes,co);
+		gc_IncRefCount(co);
+	}
 }
 
 void vm_RemoveClass(vm *vm, class_object *co)
 {
 	ptr_RemoveItem(vm->classes,co);
-	//gc_DecRefCount(co);
+	gc_DecRefCount(co);
 }
 
 void vm_FreeClasses(vm *vm)
 {
-	for(int i=0;i<vm->classes->num;i++)
+	for(INDEX i=0;i<vm->classes->num;i++)
 	{	
 			gc_DecRefCount((object*)vm->classes->items[i]);
 	}
@@ -468,13 +473,30 @@ object *vm_StartObjectCopy(vm *vm,object *obj, tuple_object *locals,tuple_object
 				return(cr);
 			}
 		}
-	}else
+	}else if(obj->type == TYPE_CFUNCTION)
+	{
+		object *r = vm_StartObject(vm,obj,locals,kw_locals);
+		return(r);
+	}/*else if(obj->type == TYPE_METHOD)
+	{
+		object *c = CopyObject(((method_object*)obj)->func);
+		//gc_IncRefCount(c);
+		object *mc = CreateMethodObject(c,((method_object*)obj)->instance);
+		gc_IncRefCount(mc);
+		object *r = vm_StartObject(vm,mc,locals,kw_locals);
+		gc_DecRefCount(mc);
+		return(r);
+	}*//*else if(obj->type == TYPE_CLASS)
+	{
+		object *r = vm_StartObject(vm,obj,locals,kw_locals);
+		return(r);
+	}*/else
 	{
 		object *c = CopyObject(obj);
 		gc_IncRefCount(c);
 		//gc_DecRefCount(c);
-		printf("copied Object\n");
-		FullDumpObject(c,0);
+		//printf("copied Object\n");
+		//FullDumpObject(c,0);
 		//printf("original:\n");
 		//FullDumpObject(obj,0);
 		//gc_IncRefCount(c);
@@ -619,7 +641,7 @@ block_object *vm_StartClassObject(vm *vm,class_object *co,tuple_object *locals,t
 		bo->ref_count = 0;
 		bo->stack = stack_Init();		// co->stacksize
 		stack_Push(vm->blocks,(object*)bo);
-		stack_Push(bo->stack,(object*)co);
+		stack_Push(bo->stack,(object*)co);//push class to be retrieved later by OPCODE_RETURN_VALUE
 		if (locals != NULL)
 		{
 			SetDictItemByIndex((object*)co->code->varnames,0,(object*)locals);
@@ -874,7 +896,7 @@ object *vm_RunMethod(vm *vm,object *key,class_instance_object *cio,tuple_object 
 		ret = vm_StartFunctionObject(vm,(function_object*)m,l,kw_locals);
 		while(ret == NULL && s != n) //TODO replace this construct with a more streamlined version without the need to call step in a loop
 		{
-			//printf("s:%d,n:%d\n",s,n);
+			printf("s:%d,n:%d\n",s,n);
 			ret = vm_Step(vm);
 			n = vm->blocks->list->num;
 		}
@@ -1465,7 +1487,8 @@ object *vm_Step(vm *vm)
 						//cio->vars = NULL;
 						cio->vars = (object*)CreateTuple(0);
 						gc_IncRefCount((object*)cio->vars);
-						//DumpObject(c->code->varnames,0);
+						//FullDumpObject(c,0);
+						//FullDumpObject(c->code->varnames,0);
 						unicode_object *locals_name = CreateUnicodeObject(str_Copy("__locals__"));
 						object *locals = GetDictItem(c->code->varnames,(object*)locals_name);
 						SetDictItem(c->code->varnames,(object*)locals_name,NULL);
@@ -1484,11 +1507,12 @@ object *vm_Step(vm *vm)
 						}
 						
 						unicode_object *method_name = CreateUnicodeObject(str_Copy("__init__"));
+						gc_IncRefCount((object*)method_name);
 						object *rmr = vm_RunMethod(vm,(object*)method_name,cio,(tuple_object*)locals,NULL);
 						gc_IncRefCount(rmr);
 						gc_DecRefCount(rmr);
-						gc_IncRefCount((object*)method_name);
 						gc_DecRefCount((object*)method_name);
+						
 						//gc_Clear();
 						//stack_Push(vm->blocks,
 					} else if((bo->code->co_flags & CO_MODULE_ROOT) > 0)
