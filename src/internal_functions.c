@@ -587,8 +587,8 @@ object *if_build_class(struct _vm *vm,tuple_object *locals,tuple_object *kw_loca
 	class->name = str_Copy(class_name->value);
 	class->code = class_function_object->func;
 	class->code->co_flags ^= CO_CLASS_ROOT;
-	if(class->code != NULL)
-		gc_IncRefCount((object*)class->code);
+	//if(class->code != NULL)
+	gc_IncRefCount((object*)class->code);
 	class->ref_count = 0;
 
 	if(locals->list->num> 2)

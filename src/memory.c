@@ -32,7 +32,6 @@ long mem_chunks_top = 0;
 
 #define BOUNDS_LEN 1
 
-
 void mem_Init(void)
 {
 	if((debug_level & DEBUG_MEMORY) > 0)
@@ -151,8 +150,6 @@ void *mem_realloc(void *ptr, size_t size)
 		return(realloc(ptr, size));
 	}
 }
-
-
 
 void *mem_malloc(size_t size, char *description)
 {

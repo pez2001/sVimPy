@@ -830,6 +830,9 @@ void DumpObject(object * obj, char level)
 				debug_printf(DEBUG_ALL,"\t");
 			debug_printf(DEBUG_ALL,"closure:\n");
 			DumpObject((object*)((function_object*)obj)->closure,level + 1);
+			for (char i = 0; i < level; i++)
+				debug_printf(DEBUG_ALL,"\t");
+			debug_printf(DEBUG_ALL,"-- function object\n");
 		//}
 		/*else
 		if(((function_object*)obj)->func_type == FUNC_C)
@@ -1154,6 +1157,10 @@ void FullDumpObject(object * obj, char level)
 		break;
 	case TYPE_CLASS:
 		printf("class object\n");
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("code:\n");
+		FullDumpObject(((class_object*)obj)->code, level + 1);
 		for (char i = 0; i < level; i++)
 			printf("\t");
 		printf("-- class object\n");
@@ -1489,9 +1496,11 @@ object *CopyObject(object *obj)
 				c->nlocals = ((code_object*)obj)->nlocals;
 				c->stacksize = ((code_object*)obj)->stacksize;	
 				c->co_flags = ((code_object*)obj)->co_flags;
-				c->code = CopyObject(((code_object*)obj)->code);
+				//c->code = CopyObject(((code_object*)obj)->code);
+				c->code = ((code_object*)obj)->code;
 				gc_IncRefCount(c->code);
-				c->consts = CopyObject(((code_object*)obj)->consts);
+				//c->consts = CopyObject(((code_object*)obj)->consts);
+				c->consts = ((code_object*)obj)->consts;
 				gc_IncRefCount(c->consts);
 				c->varnames = CopyObject(((code_object*)obj)->varnames);
 				gc_IncRefCount(c->varnames);

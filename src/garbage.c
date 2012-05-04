@@ -138,7 +138,9 @@ void gc_FreeObject(object *obj)
 		#ifdef USE_DEBUGGING
 		debug_printf(DEBUG_VERBOSE_FREEING,"Freeing block object %x\n",obj);
 		#endif
+		//printf("freeing block object:%x\n",obj);
 		gc_DecRefCount((object*)((block_object*)obj)->code);
+		//DumpObject((object*)((block_object*)obj)->code,0);
 		if(((block_object*)obj)->stack != NULL)
 			stack_Close(((block_object*)obj)->stack,1);
 		break;

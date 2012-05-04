@@ -682,12 +682,12 @@ void atomic_test(void)
 	debug_level = 0;
 	//debug_level |= DEBUG_INTERACTIVE;
 	debug_level |= DEBUG_MEMORY;
-	//debug_level |= DEBUG_SHOW_OPCODES;
+	debug_level |= DEBUG_SHOW_OPCODES;
 	//debug_level |= DEBUG_FULL_DUMP;
 	//debug_level |= DEBUG_STACK;
 	//debug_level |= DEBUG_LISTS;
 	//debug_level |= DEBUG_GC;
-	//debug_level |= DEBUG_VERBOSE_STEP;
+	debug_level |= DEBUG_VERBOSE_STEP;
 	//debug_level |= DEBUG_VM;
 	//debug_level |= DEBUG_FREEING;
 	//debug_level |= DEBUG_ALLOCS;
@@ -705,28 +705,32 @@ void atomic_test(void)
 	#endif
 
 	//exceptions
-	//AtomicOpenPYC("tests/test_assert.pyc");
-	//return;
-	//AtomicOpenPYC("tests/test57.pyc");
+	AtomicOpenPYC("tests/test_assert.pyc");
+	
+	//AtomicOpenPYC("tests/Queens2a.pyc");
 	//return;
 
+	//custom code + import_from + import_star opcodes
+	AtomicOpenPYC("tests/test_import.pyc");
+
+	//brute prime
+	AtomicOpenPYC("tests/e20.pyc");
+	AtomicOpenPYC("tests/e_small.pyc");	
 
 	//classes tests
-	//AtomicOpenPYC("tests/test_class7.pyc");
+	AtomicOpenPYC("tests/test_class7.pyc");
 	AtomicOpenPYC("tests/test_class11.pyc");
-	//AtomicOpenPYC("tests/test_class10.pyc");
-	//AtomicOpenPYC("tests/test_class9.pyc");
-	//AtomicOpenPYC("tests/test_class8.pyc");
-	return;
+	AtomicOpenPYC("tests/test_class10.pyc");
+	AtomicOpenPYC("tests/test_class9.pyc");
+	AtomicOpenPYC("tests/test_class8.pyc");
 	AtomicOpenPYC("tests/test_class5.pyc");
-	//AtomicOpenPYC("tests/test_sep_method.pyc");
-	return;
 	AtomicOpenPYC("tests/test_class6.pyc");
 	AtomicOpenPYC("tests/test_class4.pyc");
 	AtomicOpenPYC("tests/test_class3.pyc");
 	AtomicOpenPYC("tests/test_class2.pyc");
 	AtomicOpenPYC("tests/test_class.pyc");
 	AtomicOpenPYC("tests/test_sep_method2.pyc");
+	AtomicOpenPYC("tests/test_sep_method.pyc");
 
 	//testing seperated function var spaces
 	AtomicOpenPYC("tests/test_sep_func.pyc");
@@ -738,7 +742,7 @@ void atomic_test(void)
 
 	//fmod tests + classes as globals
 	//AtomicOpenPYC("tests/Play.pyc");//old version without class support
-	//AtomicOpenPYC("tests/PlayNew.pyc");
+	AtomicOpenPYC("tests/PlayNew.pyc");
 
 	//open file test + if_iter with sentinel
 	AtomicOpenPYC("tests/test_open.pyc");
@@ -751,8 +755,6 @@ void atomic_test(void)
 	
 	AtomicOpenPYC("tests/test_yield.pyc");
 	
-	//custom code + import_from + import_star opcodes
-	AtomicOpenPYC("tests/test_import.pyc");
 	AtomicOpenPYC("tests/test45.pyc");
 
 	//iters
@@ -774,6 +776,7 @@ void atomic_test(void)
 	
 
 	//simple stuff
+	AtomicOpenPYC("tests/test57.pyc");
 	AtomicOpenPYC("tests/test16.pyc");
 	AtomicOpenPYC("tests/test15.pyc");
 	AtomicOpenPYC("tests/test1.pyc");
@@ -808,7 +811,6 @@ void atomic_test(void)
 
 	//brute ops + closures
 	//AtomicOpenPYC("tests/test32.pyc");
-
 	//function parameters
 	AtomicOpenPYC("tests/test_functions.pyc");
 	AtomicOpenPYC("tests/test50.pyc");//with keywords unordered

@@ -264,12 +264,13 @@ object *iter_Sequence(iter_object *iter,struct _vm *vm)
 	int_object *pos = (int_object*)GetItem((object*)seq,2);
 	int_object *step = (int_object*)GetItem((object*)seq,1);
 	int_object *end = (int_object*)GetItem((object*)seq,0);
-
-	if(pos->value != end->value)
+	//printf("p:%d,s:%d,e:%d\n",pos->value,step->value,end->value);
+	if((step->value>0  && pos->value < end->value) || (step->value<0  && pos->value > end->value) ) //absolute compare
+	//if(pos->value != end->value)
 	{
 		int_object *r = CreateIntObject(pos->value);
 		pos->value+=step->value;
-		//printf("created sq:%x\n",r);
+		//printf("created sq:%x : %d\n",r,r->value);
 		gc_IncRefCount((object*)r);
 		return((object*)r);
 	}
