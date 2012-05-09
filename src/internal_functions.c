@@ -780,24 +780,29 @@ object *if_range(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 		#endif
 		return (tmp);
 	}
+	//FullDumpObject(locals,0);
 	iter_object *iter = CreateIterObject();
 	object *s = GetItem((object*)locals,0);
-	object *e =  NULL;
+	object *e =  obj_NULL;
 	if (locals->list->num > 0)
 		e = GetItem((object*)locals,1);
-	object *st = NULL;
+	object *st = obj_NULL;
 	if (locals->list->num > 1)
 		st = GetItem((object*)locals,2);
 
-	if (st == NULL && e == NULL && s->type == TYPE_INT)
+	//DumpObject(s,0);
+	//DumpObject(st,0);
+	//DumpObject(e,0);
+		
+	if (st == obj_NULL && e == obj_NULL && s->type == TYPE_INT)
 	{
-		iter_InitSequence(iter,vm,0,((int_object*)s)->value,1);
+		iter_InitSequence(iter,vm,0,((int_object*)s)->value,1);//zero to s by 1
 	}
-	else if (st == NULL && s->type == TYPE_INT && e->type == TYPE_INT)
+	else if (st == obj_NULL && s->type == TYPE_INT && e->type == TYPE_INT)
 	{
 		iter_InitSequence(iter,vm,((int_object*)s)->value,((int_object*)e)->value,1);
 	}
-	else if (st != NULL && s->type == TYPE_INT && e->type == TYPE_INT && st->type == TYPE_INT)
+	else if (s->type == TYPE_INT && e->type == TYPE_INT && st->type == TYPE_INT)
 	{
 		iter_InitSequence(iter,vm,((int_object*)s)->value,((int_object*)e)->value,((int_object*)st)->value);
 	}

@@ -31,6 +31,7 @@ void ExecutePYC(char *filename)
 	//printf("executing object:%s\n", filename);
 	vm *vm = vm_Init(NULL);
 	gc_Init(vm);
+	obj_Init();
 	streams_Init();
 	AddInternalFunctions(vm);
 	//fmod_Init(vm);
@@ -62,6 +63,7 @@ void ExecutePYC(char *filename)
 	vm_Close(vm);
 	//fmod_Close();
 	streams_Close();
+	obj_Close();
 	gc_Close();
 }
 
@@ -70,6 +72,7 @@ void ExecuteRPYC(char *filename)
 	//printf("executing object:%s\n", filename);
 	vm *vm = vm_Init(NULL);
 	gc_Init(vm);
+	obj_Init();
 	streams_Init();
 	AddInternalFunctions(vm);
 	//fmod_Init(vm);
@@ -95,6 +98,7 @@ void ExecuteRPYC(char *filename)
 	vm_Close(vm);
 	//fmod_Close();
 	streams_Close();
+	obj_Close();
 	gc_Close();
 }
 
@@ -103,6 +107,7 @@ void ExecuteRPYC_PLUS(char *filename)
 	//printf("executing object:%s\n", filename);
 	vm *vm = vm_Init(NULL);
 	gc_Init(vm);
+	obj_Init();
 	streams_Init();
 	AddInternalFunctions(vm);
 	//fmod_Init(vm);
@@ -129,6 +134,7 @@ void ExecuteRPYC_PLUS(char *filename)
 	vm_Close(vm);
 	//fmod_Close();
 	streams_Close();
+	obj_Close();
 	gc_Close();
 }
 
@@ -204,6 +210,7 @@ int main(int argc, char** argv)
 		debug_level |= DEBUG_FULL_DUMP;
 		#endif
 		gc_Init(NULL);
+		obj_Init();
 		streams_Init();
 		long pyc_magic = MAGIC;
 		stream *f = stream_CreateFromFile(filename,"rb");
@@ -225,6 +232,7 @@ int main(int argc, char** argv)
 		gc_Clear();
 		stream_Free(f);
 		streams_Close();
+		obj_Close();
 		gc_Close();
 		return (0);
 	}else

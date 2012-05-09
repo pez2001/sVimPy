@@ -23,6 +23,59 @@
 
 #include "object.h"
 
+//global non value objects 
+object *obj_NULL = NULL;
+object *obj_NONE = NULL;
+object *obj_TRUE = NULL;
+object *obj_FALSE = NULL;
+object *obj_ELLIPSIS = NULL;
+object *obj_UNKNOWN = NULL;
+
+
+void obj_Init(void)
+{
+	obj_NULL = AllocObject();
+	obj_NULL->type = TYPE_NULL;
+	obj_NULL->ref_count = 0;
+	obj_NONE = AllocObject();
+	obj_NONE->type = TYPE_NONE;
+	obj_NONE->ref_count = 0;
+	obj_TRUE = AllocObject();
+	obj_TRUE->type = TYPE_TRUE;
+	obj_TRUE->ref_count = 0;
+	obj_FALSE = AllocObject();
+	obj_FALSE->type = TYPE_FALSE;
+	obj_FALSE->ref_count = 0;
+	obj_ELLIPSIS = AllocObject();
+	obj_ELLIPSIS->type = TYPE_ELLIPSIS;
+	obj_ELLIPSIS->ref_count = 0;
+	obj_UNKNOWN = AllocObject();
+	obj_UNKNOWN->type = TYPE_UNKNOWN;
+	obj_UNKNOWN->ref_count = 0;
+	gc_IncRefCount(obj_NULL);
+	gc_IncRefCount(obj_NONE);
+	gc_IncRefCount(obj_TRUE);
+	gc_IncRefCount(obj_FALSE);
+	gc_IncRefCount(obj_ELLIPSIS);
+	gc_IncRefCount(obj_UNKNOWN);
+}
+
+void obj_Close(void)
+{
+	DumpObject(obj_NULL,0);
+	DumpObject(obj_NONE,0);
+	DumpObject(obj_TRUE,0);
+	DumpObject(obj_FALSE,0);
+	DumpObject(obj_ELLIPSIS,0);
+	DumpObject(obj_UNKNOWN,0);
+	gc_DecRefCount(obj_NULL);
+	gc_DecRefCount(obj_NONE);
+	gc_DecRefCount(obj_TRUE);
+	gc_DecRefCount(obj_FALSE);
+	gc_DecRefCount(obj_ELLIPSIS);	
+	gc_DecRefCount(obj_UNKNOWN);
+}
+
 block_object *AllocBlockObject(void)
 {	
 	#ifdef USE_DEBUGGING
@@ -56,6 +109,15 @@ code_object *AllocCodeObject(void)
 	return((code_object*) mem_malloc(sizeof(code_object), "AllocCodeObject() return"));
 	#else
 	return((code_object*) malloc(sizeof(code_object)));
+	#endif
+}
+
+exception_object *AllocExceptionObject(void)
+{
+	#ifdef USE_DEBUGGING
+	return((exception_object*)mem_malloc(sizeof(exception_object), "AllocExceptionObject() return"));
+	#else
+	return((exception_object*)malloc(sizeof(exception_object)));
 	#endif
 }
 
@@ -408,6 +470,30 @@ kv_object *CreateKVObject(object *key,object *value)
 
 object *CreateEmptyObject(char type)
 {
+	//printf("creating empty object reference:%c\n",type);
+	switch(type)
+	{
+		case TYPE_NONE:
+			//printf("ref count:%d\n",obj_NONE->ref_count);
+			return(obj_NONE);
+		case TYPE_NULL:
+			//printf("ref count:%d\n",obj_NULL->ref_count);
+			return(obj_NULL);
+		case TYPE_TRUE:
+			//printf("ref count:%d\n",obj_TRUE->ref_count);
+			return(obj_TRUE);
+		case TYPE_FALSE:
+			//printf("ref count:%d\n",obj_FALSE->ref_count);
+			return(obj_FALSE);
+		case TYPE_ELLIPSIS:
+			//printf("ref count:%d\n",obj_ELLIPSIS->ref_count);
+			return(obj_ELLIPSIS);
+		case TYPE_UNKNOWN:
+			//printf("ref count:%d\n",obj_UNKNOWN->ref_count);
+			return(obj_UNKNOWN);
+	}
+	return(obj_UNKNOWN);
+	/*
 	object *r = AllocObject();
 	r->type = type;
 	//r->flags = flags;
@@ -420,6 +506,7 @@ object *CreateEmptyObject(char type)
 	}
 	#endif
 	return(r);
+	*/
 }
 
 function_object *CreateFunctionObject_MAKE_FUNCTION(code_object *function_code,tuple_object *defaults,tuple_object *kw_defaults)
@@ -610,7 +697,6 @@ class_instance_object *CreateClassInstanceObject(class_object *instance_of)
 	return(r);
 }
 
-
 iter_object *CreateIterObject(void)
 {
 	iter_object *r = AllocIterObject();
@@ -618,6 +704,8 @@ iter_object *CreateIterObject(void)
 	//r->flags = flags;
 	//r->iter_func = iter_func;
 	//r->tag = tag;
+	r->block_stack = NULL;
+	r->tag = NULL;
 	r->ref_count = 0;
 	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_CREATION) > 0)
@@ -648,9 +736,11 @@ void UnlockObject(object *obj)
 
 object *DissolveRef(object *obj)
 {
-if(obj->type == TYPE_REF)
-	return(((ref_object*)obj)->ref);
-return(obj);
+	if(obj == NULL)
+		return(NULL);		
+	if(obj->type == TYPE_REF)
+		return(((ref_object*)obj)->ref);
+	return(obj);
 }
 
 kv_object *ConvertToKVObject(object *obj)
@@ -749,9 +839,10 @@ void DumpObject(object * obj, char level)
 		for (char i = 0; i < level; i++)
 		debug_printf(DEBUG_ALL,"\t");
 		debug_printf(DEBUG_ALL,"stack @%x\n",((block_object*)obj)->stack);
-		for (char i = 0; i < level; i++)
-		debug_printf(DEBUG_ALL,"\t");
-		debug_printf(DEBUG_ALL,"code @%x\n",((block_object*)obj)->code);
+		//for (char i = 0; i < level; i++)
+		//debug_printf(DEBUG_ALL,"\t");
+		//debug_printf(DEBUG_ALL,"code @%x\n",((block_object*)obj)->code);
+		DumpObject(((block_object*)obj)->code,0);
 		//debug_printf(DEBUG_ALL,"iter @%x\n",((block_object*)obj)->iter);
 		for (char i = 0; i < level; i++)
 		debug_printf(DEBUG_ALL,"\t");
@@ -802,8 +893,8 @@ void DumpObject(object * obj, char level)
 		break;
 	case TYPE_KV:
 		debug_printf(DEBUG_ALL,"kv object\n");
-		DumpObject(((kv_object*)obj)->key,level);
-		DumpObject(((kv_object*)obj)->value,level + 1);
+		DumpObject(((kv_object*)obj)->key,level + 1);
+		DumpObject(((kv_object*)obj)->value,level + 2);
 		break;
 	case TYPE_FUNCTION:
 		//if(((function_object*)obj)->func_type == FUNC_C || ((function_object*)obj)->func_type == FUNC_C_OBJ)
@@ -1184,7 +1275,6 @@ void FullDumpObject(object * obj, char level)
 		printf("object type is unknown:%c\n", obj->type);
 	}
 }
-
 
 #ifdef USE_DEBUGGING
 char *DumpObjectXml(object * obj, char level)
@@ -1674,14 +1764,15 @@ void ClearDictValues(object *tuple)
 		return;
 	//DumpObject(tuple,0);
 	//printf("clear dict values\n");
-	for (NUM i = 0; i < ((tuple_object *) tuple)->list->num; i++)
+	for (INDEX i = 0; i < ((tuple_object*) tuple)->list->num; i++)
 	{
-		if (((tuple_object *) tuple)->list->items[i] != NULL && ((object*)((tuple_object *) tuple)->list->items[i])->type != TYPE_KV)
+		if (  ((tuple_object*) tuple)->list->items[i] == NULL || (((tuple_object*) tuple)->list->items[i] != NULL && ((object*)((tuple_object *) tuple)->list->items[i])->type != TYPE_KV)  )
 			continue;
 		else
 		{
-			kv_object *kv = (kv_object*)((tuple_object *) tuple)->list->items[i];
-			((tuple_object *) tuple)->list->items[i] = kv->key;
+			//FullDumpObject(((tuple_object*)tuple)->list->items[i],0);
+			kv_object *kv = (kv_object*)((tuple_object*)tuple)->list->items[i];
+			((tuple_object*) tuple)->list->items[i] = kv->key;
 			gc_IncRefCount(kv->key);
 			gc_DecRefCount((object*)kv);
 		}
@@ -1693,7 +1784,7 @@ void ClearDictValues(object *tuple)
 object *GetDictItemByIndex(object *tuple,INDEX index)
 {
 	if (tuple == NULL || tuple->type != TYPE_TUPLE || ((tuple_object *) tuple)->list == NULL || index >= ((tuple_object *) tuple)->list->num || index < 0)
-		return(NULL);
+		return(obj_NULL);
 	return(((kv_object*)GetItem(tuple,index))->value);
 }
 
@@ -1711,10 +1802,10 @@ object *GetDictItem(object *tuple,object *key)
 		{
 			object *kv = GetItem(tuple,index);
 			if(kv->type != TYPE_KV)
-				return(NULL);
+				return(obj_NULL);
 			return(((kv_object*)kv)->value);
 		}
-	return(NULL);
+	return(obj_NULL);
 }
 
 INDEX GetDictItemIndex(object *tuple,object *key)
@@ -1727,7 +1818,7 @@ INDEX GetDictItemIndex(object *tuple,object *key)
 	//DumpObject(key,0);
 	//printf("tuple:%d\n",((tuple_object*)tuple)->list->num);
 	//DumpObject(tuple,0);
-	for(NUM i = 0; i < ((tuple_object*)tuple)->list->num; i++)
+	for(INDEX i = 0; i < ((tuple_object*)tuple)->list->num; i++)
 	{
 		 //printf("checking tuple:%d\n",i);
 		// if(((tuple_object*)tuple->ptr)->items[i]->type == TYPE_UNICODE)
@@ -1753,7 +1844,7 @@ INDEX GetItemIndex(object *tuple,object *obj)
 	if(tuple == NULL || tuple->type != TYPE_TUPLE || ((tuple_object *) tuple)->list == NULL || obj == NULL)
 		return(-1);
 
-	for(NUM i = 0; i < ((tuple_object *) tuple)->list->num; i++)
+	for(INDEX i = 0; i < ((tuple_object*) tuple)->list->num; i++)
 	{
 		if(((tuple_object *) tuple)->list->items[i] != NULL && ((object*)((tuple_object *) tuple)->list->items[i])->type != TYPE_KV)
 		{
@@ -1822,10 +1913,10 @@ INDEX GetItemIndexByName(object *tuple, char *name)
 object *GetDictItemByName(object *tuple,char *name)
 {
 	if (tuple == NULL || tuple->type != TYPE_TUPLE || ((tuple_object *) tuple)->list == NULL)
-		return (NULL);
-	for (NUM i = 0; i < ((tuple_object *) tuple)->list->num; i++)
+		return (obj_NULL);
+	for (INDEX i = 0; i < ((tuple_object *) tuple)->list->num; i++)
 	{		
-		if (((tuple_object *) tuple)->list->items[i] == NULL)
+		if (((tuple_object*) tuple)->list->items[i] == NULL)
 			continue;
 		object *item = (object*)((tuple_object *) tuple)->list->items[i];
 		if(item->type == TYPE_KV)
@@ -1833,19 +1924,19 @@ object *GetDictItemByName(object *tuple,char *name)
 			object *key = (object*)((kv_object*)item)->key;
 			object *value = (object*)((kv_object*)item)->value;
 
-			if (key->type == TYPE_UNICODE	&& !strcmp(((unicode_object*)key)->value, name)) 
+			if (key->type == TYPE_UNICODE && !strcmp(((unicode_object*)key)->value, name)) 
 			{
 				return (value);
 			}
 		}
 	}
-	return (NULL);
+	return (obj_NULL);
 }
 
 object *GetAttribute(object *obj,object *key)
 {
 	if(obj == NULL || key == NULL)
-		return(NULL);
+		return(obj_NULL);
 	object *r = NULL;
 	if(obj->type == TYPE_CODE)
 	{
@@ -1856,10 +1947,10 @@ object *GetAttribute(object *obj,object *key)
 	}else if(obj->type == TYPE_CLASS_INSTANCE)
 	{
 		r = GetClassVar(obj,key);
-		if(r == NULL)
+		if(r == NULL || r == obj_NULL)
 		{
 			r = GetClassMethod(obj,key);
-			if(r!=NULL)
+			if(r != NULL && r != obj_NULL)
 			{	
 				method_object *mo = CreateMethodObject(r,(class_instance_object*)obj);
 				//gc_IncRefCount(r);
@@ -1867,7 +1958,7 @@ object *GetAttribute(object *obj,object *key)
 				return((object*)mo);
 			}
 		}
-		if(r == NULL)
+		if(r == NULL || r == obj_NULL)
 			r = GetAttribute((object*)((class_instance_object*)obj)->instance_of,key);
 	}
 	else
@@ -1925,15 +2016,15 @@ object *GetClassMethod(object *class,object *key)
 	{
 		//DumpObject(((class_object*)class)->code->names,0);
 		r = GetDictItem(((class_object*)class)->code->names,key);
-		if(r!= NULL && !(r->type == TYPE_FUNCTION || r->type == TYPE_CFUNCTION))
+		if(r!= NULL && r != obj_NULL && !(r->type == TYPE_FUNCTION || r->type == TYPE_CFUNCTION))
 			r = NULL;
-		if(r == NULL)
+		if(r == NULL || r == obj_NULL)
 		{	
 			tuple_object *bc = (tuple_object*)((class_object*)class)->base_classes;
 			for(INDEX i = 0;i<GetTupleLen((object*)bc);i++)
 			{
 				r = GetClassMethod(bc->list->items[i],key);
-				if(r != NULL)
+				if(r != NULL && r != obj_NULL)
 					break;
 			}
 		}
@@ -1943,14 +2034,14 @@ object *GetClassMethod(object *class,object *key)
 	if(class->type == TYPE_CLASS_INSTANCE)
 	{
 		r = GetDictItem(((class_instance_object*)class)->methods,key);
-		if(r == NULL)
+		if(r == NULL || r == obj_NULL)
 		{
 			//DumpObject((object*)((class_instance_object*)class)->instance_of,0);						
 			//DumpObject((object*)((class_instance_object*)class)->instance_of->code,0);						
 			//DumpObject((object*)((class_instance_object*)class)->instance_of->code->names,0);
 			//DumpObject(key,0);
 			//r = GetDictItem(((class_instance_object*)class)->instance_of->code->names,key);
-			if(r == NULL)
+			if(r == NULL || obj_NULL)
 				r = GetClassMethod((object*)((class_instance_object*)class)->instance_of,key);
 			/*
 			tuple_object *bc = (tuple_object*)((class_instance_object*)class)->instance_of->base_classes;
@@ -1973,7 +2064,7 @@ object *GetClassMethod(object *class,object *key)
 
 object *GetClassVar(object *class,object *key)
 {
-	object *r = NULL;
+	object *r = obj_NULL;
 	if(class->type == TYPE_CLASS_INSTANCE)
 	{
 		//DumpObject(((class_instance_object*)class)->vars,0);
@@ -2006,8 +2097,10 @@ void SetItem(object *tuple, INDEX index, object * obj)
 		gc_IncRefCount(obj);
 	}
 	else
-		((tuple_object*) tuple)->list->items[index] = NULL;
-
+	{
+		((tuple_object*) tuple)->list->items[index] = obj_NULL;
+		gc_IncRefCount(obj_NULL);
+	}
 	if(old != NULL)
 	{
 		gc_DecRefCount(old);
@@ -2025,15 +2118,16 @@ void DeleteItem(object *tuple, INDEX index)
 	if (((tuple_object*) tuple)->list->items[index] == NULL)
 		return;
 	gc_DecRefCount((object*)(((tuple_object*) tuple)->list->items[index]));
-	((tuple_object*) tuple)->list->items[index] = NULL;
+	((tuple_object*) tuple)->list->items[index] = obj_NULL;
+	gc_IncRefCount(obj_NULL);
 }
 
 object *GetItem(object *tuple, INDEX index)
 {
 	if(tuple == NULL || tuple->type != TYPE_TUPLE)
-		return (NULL);
+		return (obj_NULL);
 	if(index >= ((tuple_object *) tuple)->list->num)
-		return (NULL);
+		return (obj_NULL);
 	if(index < 0)
 		index = index + GetTupleLen(tuple);
 	return(((tuple_object*)tuple)->list->items[index]);
@@ -2042,7 +2136,7 @@ object *GetItem(object *tuple, INDEX index)
 object *GetNextItem(object * tuple) //TODO move to tuples
 {
 	if(tuple == NULL || tuple->type != TYPE_TUPLE)
-		return (NULL);
+		return (obj_NULL);
 
 	//if(((tuple_object*)tuple)->ptr == -1)
 	//{
@@ -2058,7 +2152,7 @@ object *GetNextItem(object * tuple) //TODO move to tuples
 	else
 	{	
 		((tuple_object*)tuple)->ptr = 0;
-		return (NULL);
+		return (obj_NULL);
 	}
 }
 
@@ -2116,12 +2210,16 @@ object *ReadObject(stream *f)
 		case TYPE_FALSE:
 		case TYPE_ELLIPSIS:
 		{
+		/*
 		// printf("allocating empty object\n");
 		object *obj = AllocObject();
 		obj->type = type;
 		//obj->flags = 0;
 		obj->ref_count = 1;
 		// printf("allocated empty object @%x\n",obj);
+		*/
+		object *obj = CreateEmptyObject(type);
+		gc_IncRefCount(obj);
 		return (obj);
 		}
 	case TYPE_CODE:
@@ -2278,6 +2376,7 @@ object *ReadObject(stream *f)
 		break;
 	default:
 		{
+		/*
 		object *obj = AllocObject();
 		obj->ref_count = 1;
 		obj->type = TYPE_UNKNOWN;
@@ -2285,6 +2384,10 @@ object *ReadObject(stream *f)
 		debug_printf(DEBUG_ALL,"unknown chunk type:%c\n", type);
 		#endif
 		return(obj);
+		*/
+		object *obj = CreateEmptyObject(TYPE_UNKNOWN);
+		gc_IncRefCount(obj);
+		return (obj);
 		}
 	}
 	// printf("read object\r\n"); 
@@ -2415,9 +2518,13 @@ object *ReadObjectPlus(stream *f)
 		case TYPE_FALSE:
 		case TYPE_ELLIPSIS:
 		{
+		/*
 		object *obj = AllocObject();
 		obj->type = type;
 		obj->ref_count = 1;
+		*/
+		object *obj = CreateEmptyObject(type);
+		gc_IncRefCount(obj);
 		return (obj);
 		}
 	case TYPE_CODE:
@@ -2534,6 +2641,7 @@ object *ReadObjectPlus(stream *f)
 		break;
 	default:
 		{
+		/*
 		object *obj = AllocObject();
 		obj->ref_count = 1;
 		obj->type = TYPE_UNKNOWN;
@@ -2541,6 +2649,10 @@ object *ReadObjectPlus(stream *f)
 		debug_printf(DEBUG_ALL,"unknown chunk type:%c\n", type);
 		#endif
 		return(obj);
+		*/
+		object *obj = CreateEmptyObject(TYPE_UNKNOWN);
+		gc_IncRefCount(obj);
+		return (obj);
 		}
 	}
 	return (NULL);

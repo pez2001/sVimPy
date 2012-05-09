@@ -196,6 +196,8 @@ object *iter_NextNow(iter_object *iter,struct _vm *vm)
 {
 	//printf("nextNow()\n");
 	object *next = iter->iter_func(iter,vm);
+	//DumpObject(iter,0);
+	//DumpObject(next,0);
 	//printf("iter executed:%x\n",iter);
 	if(next->type == TYPE_BLOCK) //used only to differentiate between an object to return and a generator not finished
 	{
@@ -251,7 +253,7 @@ object *iter_NextNow(iter_object *iter,struct _vm *vm)
 		//DumpObject(ret,0);
 		return(ret);
 	}
-	//printf("iter thru next:\n");
+	//printf("iter thru nextNow:\n");
 	//DumpObject(next,0);
 	gc_DecRefCount(next);
 	//IncRefCount(next);
@@ -301,6 +303,9 @@ void iter_InitSequence(iter_object *iter,struct _vm *vm,INDEX start,NUM end,NUM 
 	gc_IncRefCount((object*)seq);
 	iter->block_stack = NULL;
 	iter->iter_func = &iter_Sequence;
+	//printf("seq initiated\n");
+	//DumpObject(iter,0);
+	//getch();
 }
 
 object *iter_Generator(iter_object *iter,struct _vm *vm)
@@ -366,11 +371,11 @@ object *iter_Iteration(iter_object *iter,struct _vm *vm)
 {
 	tuple_object *it = (tuple_object*)iter->tag;
 	object *next = GetNextItem((object*)it);
-	if(next == NULL || next->type == TYPE_NONE)
+	if(next == NULL || next->type == TYPE_NONE || next == obj_NULL)
 	{
 		//printf("tuple iterated thru\n");
 		ResetIteration((object*)it);
-		if(next == NULL)
+		if(next == obj_NULL)
 		{
 			object *r = CreateEmptyObject( TYPE_NONE);
 			gc_IncRefCount(r);

@@ -915,6 +915,7 @@ object *vm_RunMethod(vm *vm,object *key,class_instance_object *cio,tuple_object 
 		}
 		ret = stack_Pop(((block_object*)stack_Top(vm->blocks))->stack);//needed during construction of class killing the NONE object returned by __init__
 		SetItem(((function_object*)m)->func->varnames,0,NULL);
+		
     }else if(m->type == TYPE_CFUNCTION)
 	{
 		ret = vm_StartCFunctionObject(vm,(cfunction_object*)m,l,kw_locals);//gc_DecRefCount(locals);
@@ -1363,6 +1364,7 @@ object *vm_Step(vm *vm)
 	if(obj->type != TYPE_CODE)
 	{
 		printf("stepping non code:%c(%x)\n",obj->type,obj);
+		return(CreateEmptyObject(TYPE_NONE));
 	}
 	if (obj->type == TYPE_CODE)
 	{
@@ -1601,13 +1603,6 @@ object *vm_Step(vm *vm)
 
 			case OPCODE_POP_TOP:
 				{
-					//if(stack_IsEmpty(bo->stack))
-					//	printf("ERROR Stack underrun!\n");
-					//if(stack_Top(bo->stack)->type != TYPE_NONE)
-					//{
-					//	printf("popping non none object\n");
-					//}
-					//DumpObject(stack_Top(bo->stack),0);
 					stack_Pop(bo->stack);
 					op_thru = 1;
 				}
@@ -1855,7 +1850,7 @@ object *vm_Step(vm *vm)
 
 			case OPCODE_STORE_SUBSCR:
 			case OPCODE_STORE_MAP:
-			//case OPCODE_BUILD_CLASS:
+			//case OPCODE_RAISE_VARARGS:
 				{
 					tos = stack_Pop(bo->stack);
 					tos1 = stack_Pop(bo->stack);
@@ -1873,22 +1868,20 @@ object *vm_Step(vm *vm)
 				break;
 			}
 
-			//if(stack_IsEmpty(bo->stack))
-			//	printf("warning empty stack\n");
 			#ifdef USE_DEBUGGING
 			debug_printf(DEBUG_VERBOSE_STEP,"executing main ops\n");
 			#endif
 			// execute remaining ops here
 			switch (op)
 			{
-			/*
-			case OPCODE_BUILD_CLASS:
+			
+			case OPCODE_RAISE_VARARGS:
 				{
-				//Creates a new class object. TOS is the methods dictionary, TOS1 the tuple of the names of the base classes, and TOS2 the class name.
-				//TODO check if this opcode is deprecated
+					printf("RAISE_VARARGS\n");
+					stack_Dump(bo->stack);
 				}
 				break;
-			*/
+				
 			case OPCODE_STORE_LOCALS:
 				{
 					//Pops TOS from the stack and stores it as the current frame’s f_locals. This is used in class construction.
@@ -1930,17 +1923,25 @@ object *vm_Step(vm *vm)
 					//FullDumpObject(bo->code,0);
 					if(stack_Top(bo->stack)->type == TYPE_ITER)
 						next = iter_NextNow((iter_object*)stack_Top(bo->stack),vm);
-					if (next != NULL && next->type == TYPE_NONE)
+					if (next->type == TYPE_NONE)
 					{
 						stack_Pop(bo->stack);
-						//printf("iter thru\n");
+						#ifdef USE_DEBUGGING
+						debug_printf(DEBUG_VERBOSE_STEP,"for iter thru \n");
+						if((debug_level & DEBUG_VERBOSE_STEP) > 0)
+							DumpObject(next,1);
+						#endif
 						//stack_Push(bo->stack, next);
-						gc_DecRefCount(next);
+						//gc_DecRefCount(next);
 						bo->ip = bo->ip + arg;
 					}
 					else
-					if (next != NULL && next->type != TYPE_NONE)
 					{
+						#ifdef USE_DEBUGGING
+						debug_printf(DEBUG_VERBOSE_STEP,"for iter next \n");
+						if((debug_level & DEBUG_VERBOSE_STEP) > 0)
+							DumpObject(next,1);
+						#endif
 						stack_Push(bo->stack, next);
 					}
 				}
@@ -2180,6 +2181,7 @@ object *vm_Step(vm *vm)
 				
 			case OPCODE_POP_JUMP_IF_TRUE:
 				{
+					DumpObject(tos,0);
 					if (tos->type == TYPE_TRUE)
 					{
 						bo->ip = arg;
@@ -2340,7 +2342,7 @@ object *vm_Step(vm *vm)
 					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"searching for:%s\n", name);
 					#endif
-					object *lgo = NULL;
+					object *lgo = obj_NULL;
 
 					for(int i=0;i<vm->globals->num;i++)
 					{	
@@ -2606,6 +2608,7 @@ object *vm_Step(vm *vm)
 					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 						DumpObject(tos,1);
 					#endif
+					//printf("stored name\n");
 				}
 				break;
 
@@ -2714,29 +2717,32 @@ object *vm_Step(vm *vm)
 			case OPCODE_STORE_SUBSCR:
 				{
 					NUM ssa = 0;
-					#ifdef USE_DEBUGGING
-					debug_printf(DEBUG_VERBOSE_STEP,"tos:%c\n",tos->type);
-					debug_printf(DEBUG_VERBOSE_STEP,"tos1:%c\n",tos1->type);
-					#endif
 					 
 					if (tos->type == TYPE_INT)
 					{
 						ssa = (NUM) ((int_object*)tos)->value;
+						#ifdef USE_DEBUGGING
+						debug_printf(DEBUG_VERBOSE_STEP,"ssa: %d\n",ssa);
+						#endif
 					}
 					if (tos1->type == TYPE_TUPLE)
 					{
 					//if(ssa<0)
 					//	printf("ssa:%d\n",ssa);
-					#ifdef USE_DEBUGGING
-					debug_printf(DEBUG_VERBOSE_STEP,"ssa: %d\n",ssa);
-					#endif
 					if (tos->type == TYPE_INT)
 						SetItem(tos1, ssa, tos2);
 					else
 						SetDictItem(tos1,tos,tos2);
 					#ifdef USE_DEBUGGING
 					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
-						 DumpObject(tos1,0);
+					 {
+						debug_printf(DEBUG_VERBOSE_STEP,"tos:%c\n",tos->type);
+						DumpObject(tos,0);
+						debug_printf(DEBUG_VERBOSE_STEP,"tos1:%c\n",tos1->type);
+						DumpObject(tos1,0);
+						debug_printf(DEBUG_VERBOSE_STEP,"tos2:%c\n",tos2->type);
+						DumpObject(tos2,0);
+					}
 					#endif
 					}
 				}

@@ -42,6 +42,8 @@ void gc_IncRefCount(object *obj)
 {
 	if(obj == NULL)
 		return;
+	//if(obj->type == TYPE_NONE)
+	//	printf("global NONE object ref_count:%d about to be incremented\n",obj->ref_count);
 	obj->ref_count++;
 	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_GC) > 0)
@@ -55,6 +57,10 @@ void gc_DecRefCount(object *obj)
 {
 	if(obj == NULL)
 		return;
+	if(obj->type == TYPE_NONE && obj->ref_count == 1)
+		printf("WARNING global object ref_count reached 1\n");
+	//if(obj->type == TYPE_NONE)
+	//	printf("global NONE object ref_count:%d about to be decremented\n",obj->ref_count);
 	if(obj->ref_count == 1)
 	 {
 		obj->ref_count--;
@@ -289,14 +295,18 @@ void gc_FreeObject(object *obj)
 void gc_Clear(void)
 {
 	#ifdef USE_DEBUGGING
-	debug_printf(DEBUG_GC,"gc_Clear();\n");
+	//debug_printf(DEBUG_ALL,"gc_Clear(%d);\n",garbage->num);
+	debug_printf(DEBUG_GC,"gc_Clear(%d);\n",garbage->num);
 	#endif
 	while(garbage->num)
 	{
 		object *g = ptr_Pop(garbage);
 		if(gc_HasNoRefs(g))
 		{
-			//FreeObject(g);
+			//printf("killing object\n");
+			//DumpObject(g,0);
+			//printf("-- killing object\n");
+				//FreeObject(g);
 			#ifdef USE_DEBUGGING
 			if((debug_level & DEBUG_GC) > 0)
 			{

@@ -33,6 +33,8 @@
 extern "C"  {
 #endif
 
+extern object *obj_NULL;
+
 void iter_Expand(iter_object *iter,struct _vm *vm,stack *stack);
 
 void iter_ExpandTuple(iter_object *iter,struct _vm *vm,tuple_object *to);

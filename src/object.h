@@ -310,7 +310,9 @@ typedef struct _exception_object
 	OBJECT_REF_COUNT ref_count;
 	char *name;
 	char *description;
-	struct _block_object *block;//block in which the exception occured 
+	//struct _block_object *block;//block in which the exception occured 
+	struct _stack *traceback;
+	struct _object *exception;//
 } exception_object;
 
 
@@ -320,11 +322,18 @@ typedef struct _exception_object
 #pragma pack(pop)				/* restore original alignment from stack */
 #endif
 
+void obj_Init(void);
+
+void obj_Close(void);
+
+
 kv_object *ConvertToKVObject(object *key);
 
 kv_object *ConvertToKVObjectValued(object *key,object *value);
 
 object *AllocObject(void);
+
+exception_object *AllocExceptionObject(void);
 
 block_object *AllocBlockObject(void);
 
@@ -454,6 +463,7 @@ class_object *CreateClassObject(char *name,code_object *code,object *base_classe
 
 class_instance_object *CreateClassInstanceObject(class_object *instance_of);
 
+exception_object *CreateExceptionObject(char *name,char *description,struct _stack *blocks,struct _object *exception);
 
 iter_object *CreateIterObject(void);
 

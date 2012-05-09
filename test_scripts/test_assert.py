@@ -1,4 +1,4 @@
 def main():
 	x = True
-	assert(x,"error x not True")
+	assert x == False,"error x not True"
 main()

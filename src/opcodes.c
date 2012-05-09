@@ -145,7 +145,7 @@ or whether the function returns, and continues with the outer-next block.", 0, 1
 {OPCODE_LOAD_BUILD_CLASS, "LOAD_BUILD_CLASS", "Pushes builtins.__build_class__() onto the stack. It is later called by CALL_FUNCTION to construct a class.", 0, 1},
 {OPCODE_POP_EXCEPT, "POP_EXCEPT", "No Description.", 0, 0},
 {OPCODE_RAISE_VARARGS, "RAISE_VARARGS", "Raises an exception. /argc/ indicates the number of parameters to the raise statement,\n\
-ranging from 0 to 3. The handler will find the traceback as TOS2, the parameter as TOS1, and the exception as TOS.", 1, 0},
+ranging from 0 to 3. The handler will find the traceback as TOS2, the parameter as TOS1, and the exception as TOS.", 1, 1},
 {OPCODE_IMPORT_FROM, "IMPORT_FROM", "Loads the attribute co_names[/namei/] from the module found in TOS.\n\
 The resulting object is pushed onto the stack, to be subsequently stored by a STORE_FAST instruction.", 1, 1},
 {OPCODE_IMPORT_STAR, "IMPORT_STAR", "Loads all symbols not starting with \"_\" directly from the module TOS to the local namespace.\n\
