@@ -531,6 +531,11 @@ void DeleteItem(object *tuple, INDEX index);
 
 void DeleteDictItem(object *tuple,object *key);
 
+void AddCodeFunction(object *co,char *name,object *function);
+
+void AddCodeCFunction(object *co,char *name,	struct _object* (*func) (struct _vm *vm,struct _tuple_object *locals,struct _tuple_object *kw_locals));
+
+
 #ifdef __cplusplus
 } 
 #endif

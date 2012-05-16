@@ -2168,6 +2168,24 @@ object *GetClassVar(object *class,object *key)
 	return(r);
 }
 
+void AddCodeFunction(object *co,char *name,object *function)
+{
+	a_globals->nlocals = 4;
+	a_globals->names = (object*)CreateTuple(4);
+	gc_IncRefCount(a_globals->names);
+
+	unicode_object *sleep = CreateUnicodeObject(str_Copy("Sleep"));
+	kv_object *kvsleep = CreateKVObject((object*)sleep,(object*) sleep_cfo);
+	SetItem(a_globals->names,0,(object*)kvsleep);
+
+}
+
+void AddCodeCFunction(object *co,char *name,	struct _object* (*func) (struct _vm *vm,struct _tuple_object *locals,struct _tuple_object *kw_locals))
+{
+	cfunction_object *cfo = CreateCFunctionObject(func);
+	AddCodeFunction(co,name,cfo);
+}
+
 void ResetIteration(object *tuple)
 {
 	if (tuple == NULL || tuple->type != TYPE_TUPLE)

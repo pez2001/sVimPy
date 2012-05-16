@@ -104,7 +104,7 @@ void AddFmodGlobals(vm *vm)
 	gc_IncRefCount(a_globals->names);
 	//a_globals->varnames = (object*)CreateTuple(0);
 	//gc_IncRefCount(a_globals->varnames);
-
+	AddCodeCFunction((object*)a_globals,"Sleep",&fmod_Sleep);
 	cfunction_object *sleep_cfo = CreateCFunctionObject(&fmod_Sleep);
 	unicode_object *sleep = CreateUnicodeObject(str_Copy("Sleep"));
 	kv_object *kvsleep = CreateKVObject((object*)sleep,(object*) sleep_cfo);

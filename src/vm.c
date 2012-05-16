@@ -373,7 +373,6 @@ void vm_FreeGlobals(vm *vm)
 	}
 }
 
-
 void vm_AddGlobal(vm *vm,object *key,object *global)//add a global object
 {
 	AppendDictItem((object*)vm->globals,key,global);
