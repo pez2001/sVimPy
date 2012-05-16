@@ -29,8 +29,8 @@
 MAJOR_VERSION = 0
 MINOR_VERSION = 74
 #builds are counted since version 0.5 roughly
-BUILD = 235
-DEBUG_BUILD = 846
+BUILD = 241
+DEBUG_BUILD = 971
 
 CFLAGS= -Ilibraries/fmod -W -w -O2 -std=c99 -DBUILD=$(BUILD) -DMAJOR_VERSION=$(MAJOR_VERSION) -DMINOR_VERSION=$(MINOR_VERSION)
 DEBUG_CFLAGS = -m32 -g3 -O0 -Wall -pedantic -Wstrict-prototypes -std=c99 -fbounds-check -Wuninitialized -DUSE_DEBUGGING -DBUILD=$(BUILD) -DMAJOR_VERSION=$(MAJOR_VERSION) -DMINOR_VERSION=$(MINOR_VERSION) -DDEBUG_BUILD=$(DEBUG_BUILD)
@@ -96,10 +96,10 @@ ARDUINO_LIB_CXX_OBJ = $(ARDUINO_LIB_DIR)/WMath.aopp $(ARDUINO_LIB_DIR)/WString.a
 ARDUINO_VM_OBJ = vm.ao strops.ao numops.ao opcodes.ao object.ao memory.ao stack.ao lists.ao internal_functions.ao stream.ao garbage.ao debug.ao iterators.ao
 
 
-VM_FILES = vm.c strops.c numops.c opcodes.c object.c memory.c stack.c lists.c internal_functions.c stream.c garbage.c debug.c iterators.c types.c
-VM_INCLUDES = vm.h strops.h numops.h opcodes.h object.h memory.h stack.h lists.h internal_functions.h stream.h garbage.h debug.h iterators.h types.h
-VM_OBJ = vm.o strops.o numops.o opcodes.o object.o memory.o stack.o lists.o internal_functions.o stream.o garbage.o debug.o iterators.o types.o
-VM_DEBUG_OBJ = vm.do strops.do numops.do opcodes.do object.do memory.do stack.do lists.do internal_functions.do stream.do garbage.do debug.do iterators.do types.do
+VM_FILES = vm.c strops.c numops.c opcodes.c object.c memory.c stack.c lists.c internal_functions.c internal_classes.c stream.c garbage.c debug.c iterators.c types.c
+VM_INCLUDES = vm.h strops.h numops.h opcodes.h object.h memory.h stack.h lists.h internal_functions.h internal_classes.h stream.h garbage.h debug.h iterators.h types.h
+VM_OBJ = vm.o strops.o numops.o opcodes.o object.o memory.o stack.o lists.o internal_functions.o internal_classes.o stream.o garbage.o debug.o iterators.o types.o
+VM_DEBUG_OBJ = vm.do strops.do numops.do opcodes.do object.do memory.do stack.do lists.do internal_functions.do internal_classes.do stream.do garbage.do debug.do iterators.do types.do
 UT_FILES = unit_tests.c libraries/fmod_wrapper.c
 UT_OBJ = unit_tests.o libraries/fmod_wrapper.o
 UT_DEBUG_OBJ = unit_tests.do libraries/fmod_wrapper.do

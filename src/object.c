@@ -36,38 +36,34 @@ void obj_Init(void)
 {
 	obj_NULL = AllocObject();
 	obj_NULL->type = TYPE_NULL;
-	obj_NULL->ref_count = 0;
+	obj_NULL->ref_count = 1;
 	obj_NONE = AllocObject();
 	obj_NONE->type = TYPE_NONE;
-	obj_NONE->ref_count = 0;
+	obj_NONE->ref_count = 1;
 	obj_TRUE = AllocObject();
 	obj_TRUE->type = TYPE_TRUE;
-	obj_TRUE->ref_count = 0;
+	obj_TRUE->ref_count = 1;
 	obj_FALSE = AllocObject();
 	obj_FALSE->type = TYPE_FALSE;
-	obj_FALSE->ref_count = 0;
+	obj_FALSE->ref_count = 1;
 	obj_ELLIPSIS = AllocObject();
 	obj_ELLIPSIS->type = TYPE_ELLIPSIS;
-	obj_ELLIPSIS->ref_count = 0;
+	obj_ELLIPSIS->ref_count = 1;
 	obj_UNKNOWN = AllocObject();
 	obj_UNKNOWN->type = TYPE_UNKNOWN;
-	obj_UNKNOWN->ref_count = 0;
-	gc_IncRefCount(obj_NULL);
-	gc_IncRefCount(obj_NONE);
-	gc_IncRefCount(obj_TRUE);
-	gc_IncRefCount(obj_FALSE);
-	gc_IncRefCount(obj_ELLIPSIS);
-	gc_IncRefCount(obj_UNKNOWN);
+	obj_UNKNOWN->ref_count = 1;
 }
 
 void obj_Close(void)
 {
+	#ifdef USE_DEBUGGING
 	DumpObject(obj_NULL,0);
 	DumpObject(obj_NONE,0);
 	DumpObject(obj_TRUE,0);
 	DumpObject(obj_FALSE,0);
 	DumpObject(obj_ELLIPSIS,0);
 	DumpObject(obj_UNKNOWN,0);
+	#endif
 	gc_DecRefCount(obj_NULL);
 	gc_DecRefCount(obj_NONE);
 	gc_DecRefCount(obj_TRUE);
@@ -513,14 +509,40 @@ function_object *CreateFunctionObject_MAKE_FUNCTION(code_object *function_code,t
 {
 	function_object *r = AllocFunctionObject();
 	r->type = TYPE_FUNCTION;
-	//r->flags = flags;
 	r->ref_count = 0;
-	//r->func.code = function_code;
 	r->func = function_code;
-	//r->func_type = FUNC_PYTHON;
-	r->closure = NULL;
-	//r->name = function_code->name;
 	gc_IncRefCount((object*)function_code);
+	
+	if(GetTupleLen(function_code->varnames) > 0)
+	{
+		ClearDictValues(function_code->varnames);
+		if(defaults!=NULL)
+		{
+			//printf("loading defaults\n");
+			NUM locals_num = function_code->argcount;
+			for(NUM i = 0;i < defaults->list->num; i++) //load default values
+			{
+				if(GetItem(function_code->varnames,(locals_num-1) - i)->type != TYPE_KV)
+				{
+					SetItem(function_code->varnames,(locals_num-1) - i,(object*)ConvertToKVObjectValued(GetItem(function_code->varnames,(locals_num-1) - i),GetItem((object*)defaults,i)));
+				}		
+				else
+				{
+					SetDictItemByIndex(function_code->varnames,(locals_num-1) - i,GetItem((object*)defaults,i));
+				}
+			}
+		}
+		if(kw_defaults != NULL)
+		{
+			//printf("loading kw defaults\n");
+			for(NUM i = 0;i < kw_defaults->list->num; i++) //load default keyword values
+			{
+				kv_object *kv = (kv_object*)GetItem((object*)kw_defaults,i);
+				SetDictItem(function_code->varnames,kv->key,kv->value);
+			}
+		}
+	}
+/*
 	if(defaults != NULL)
 	{
 		r->defaults = defaults;
@@ -535,6 +557,7 @@ function_object *CreateFunctionObject_MAKE_FUNCTION(code_object *function_code,t
 	}
 	else
 		r->kw_defaults = NULL;
+		*/
 	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
@@ -549,16 +572,64 @@ function_object *CreateFunctionObject_MAKE_CLOSURE(code_object *function_code,tu
 {
 	function_object *r = AllocFunctionObject();
 	r->type = TYPE_FUNCTION;
-	//r->flags = flags;
 	r->ref_count = 0;
-	//r->func.code = function_code;
 	r->func = function_code;
-	r->closure = closure;
-	gc_IncRefCount((object*)closure);
+	gc_IncRefCount((object*)function_code);
+	
+	if(GetTupleLen(function_code->varnames) > 0)
+	{
+		ClearDictValues(function_code->varnames);
+		if(defaults!=NULL)
+		{
+			//printf("loading defaults\n");
+			NUM locals_num = function_code->argcount;
+			for(NUM i = 0;i < defaults->list->num; i++) //load default values
+			{
+				if(GetItem(function_code->varnames,(locals_num-1) - i)->type != TYPE_KV)
+				{
+					SetItem(function_code->varnames,(locals_num-1) - i,(object*)ConvertToKVObjectValued(GetItem(function_code->varnames,(locals_num-1) - i),GetItem((object*)defaults,i)));
+				}		
+				else
+				{
+					SetDictItemByIndex(function_code->varnames,(locals_num-1) - i,GetItem((object*)defaults,i));
+				}
+			}
+		}
+		if(kw_defaults != NULL)
+		{
+			//printf("loading kw defaults\n");
+			for(NUM i = 0;i < kw_defaults->list->num; i++) //load default keyword values
+			{
+				kv_object *kv = (kv_object*)GetItem((object*)kw_defaults,i);
+				SetDictItem(function_code->varnames,kv->key,kv->value);
+			}
+		}
+	}
+	if(closure != NULL)
+	{
+		//printf("loading closure defaults\n");
+		for (NUM i = 0; i < GetTupleLen((object*)closure); i++)
+		{
+			object *local = GetItem((object*)closure,i);
+			if(local->type == TYPE_KV)
+				local = ((kv_object*)local)->value;
+			if(GetItem(function_code->freevars,i)->type != TYPE_KV)
+			{
+				SetItem(function_code->freevars,i,(object*)ConvertToKVObjectValued(GetItem(function_code->freevars,i),local));
+			}
+			else
+			{
+				SetDictItemByIndex(function_code->freevars,i,local);
+			}
+		}
+	}
+
+	
+	//r->closure = closure;
+	//gc_IncRefCount((object*)closure);
 	//r->func_type = FUNC_PYTHON;
 	//r->name = function_code->name;
-	gc_IncRefCount((object*)function_code);
-	if(defaults != NULL)
+	/*if(defaults != NULL)
 	{
 		r->defaults = defaults;
 		gc_IncRefCount((object*)defaults);
@@ -572,6 +643,7 @@ function_object *CreateFunctionObject_MAKE_CLOSURE(code_object *function_code,tu
 	}
 	else
 		r->kw_defaults = NULL;
+	*/
 	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
@@ -587,9 +659,9 @@ function_object *CreateFunctionObject(code_object *co)
 	function_object *r = AllocFunctionObject();
 	r->type = TYPE_FUNCTION;
 	//r->flags = flags;
-	r->defaults = NULL;
-	r->kw_defaults = NULL;
-	r->closure = NULL;
+	//r->defaults = NULL;
+	//r->kw_defaults = NULL;
+	//r->closure = NULL;
 	//r->func.func = NULL;
 	r->func = co;
 	gc_IncRefCount((object*)co);
@@ -606,7 +678,7 @@ function_object *CreateFunctionObject(code_object *co)
 	return(r);
 }
 
-cfunction_object *CreateCFunctionObject(struct _object* (*func) (struct _vm *vm,struct _tuple_object *locals,struct _tuple_object *kw_locals),tuple_object *defaults,tuple_object *kw_defaults)
+cfunction_object *CreateCFunctionObject(struct _object* (*func) (struct _vm *vm,struct _tuple_object *locals,struct _tuple_object *kw_locals))//,tuple_object *defaults,tuple_object *kw_defaults)
 {
 	cfunction_object *r = AllocCFunctionObject();
 	r->type = TYPE_CFUNCTION;
@@ -615,7 +687,7 @@ cfunction_object *CreateCFunctionObject(struct _object* (*func) (struct _vm *vm,
 	r->func = func;
 	//r->name = NULL;
 	r->ref_count = 0;
-	if(defaults != NULL)
+	/*if(defaults != NULL)
 	{
 		r->defaults = defaults;
 		gc_IncRefCount((object*)defaults);
@@ -629,6 +701,7 @@ cfunction_object *CreateCFunctionObject(struct _object* (*func) (struct _vm *vm,
 	}
 	else
 		r->kw_defaults = NULL;
+		*/
 	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
@@ -658,16 +731,18 @@ method_object *CreateMethodObject(object *func,class_instance_object *instance)
 	return(r);
 }
 
-class_object *CreateClassObject(char *name,code_object *code,object *base_classes)
+class_object *CreateClassObject(code_object *code,object *base_classes)//char *name,
 {
 	class_object *r = AllocClassObject();
 	r->type = TYPE_CLASS;
 	r->code = code;
-	r->name = name;//str_Copy(name);
+	//r->name = name;//str_Copy(name);
 	r->ref_count = 0;
 	r->base_classes = base_classes;
 	gc_IncRefCount((object*)code);
 	gc_IncRefCount(base_classes);
+	//if((code->co_flags & CO_CLASS_ROOT) == 0)
+	code->co_flags |= CO_CLASS_ROOT;
 	
 	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_CREATION) > 0)
@@ -679,6 +754,26 @@ class_object *CreateClassObject(char *name,code_object *code,object *base_classe
 	return(r);
 }
 
+code_object *CreateCodeObject(char *name)
+{
+	code_object *obj = AllocCodeObject();
+	obj->type = TYPE_CODE;
+	obj->name = name;
+	obj->argcount = 0;
+	obj->kwonlyargcount = 0;
+	obj->nlocals = 0;
+	obj->stacksize = 0;
+	obj->co_flags = 0;
+	obj->code = NULL;
+	obj->consts = NULL;
+	obj->varnames = NULL;
+	obj->freevars = NULL;
+	obj->cellvars = NULL;
+	obj->names = NULL;
+	obj->ref_count = 0;
+	return(obj);
+}
+
 class_instance_object *CreateClassInstanceObject(class_object *instance_of)
 {
 	class_instance_object *r = AllocClassInstanceObject();
@@ -686,6 +781,11 @@ class_instance_object *CreateClassInstanceObject(class_object *instance_of)
 	r->instance_of = instance_of;
 	r->ref_count = 0;
 	gc_IncRefCount((object*)instance_of);
+
+	r->methods = (object*)CreateTuple(0);//this is a kv list of cfunctions or functions ->key is an unicode object with the methods name as value
+	gc_IncRefCount((object*)r->methods);
+	r->vars = (object*)CreateTuple(0);
+	gc_IncRefCount((object*)r->vars);
 	
 	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_CREATION) > 0)
@@ -842,7 +942,7 @@ void DumpObject(object * obj, char level)
 		//for (char i = 0; i < level; i++)
 		//debug_printf(DEBUG_ALL,"\t");
 		//debug_printf(DEBUG_ALL,"code @%x\n",((block_object*)obj)->code);
-		DumpObject(((block_object*)obj)->code,0);
+		DumpObject((object*)((block_object*)obj)->code,0);
 		//debug_printf(DEBUG_ALL,"iter @%x\n",((block_object*)obj)->iter);
 		for (char i = 0; i < level; i++)
 		debug_printf(DEBUG_ALL,"\t");
@@ -909,7 +1009,7 @@ void DumpObject(object * obj, char level)
 				debug_printf(DEBUG_ALL,"\t");
 			debug_printf(DEBUG_ALL,"code:\n");
 			DumpObject((object*)((function_object*)obj)->func,level + 1);
-			for (char i = 0; i < level; i++)
+			/*for (char i = 0; i < level; i++)
 				debug_printf(DEBUG_ALL,"\t");
 			debug_printf(DEBUG_ALL,"defaults:\n");
 			DumpObject((object*)((function_object*)obj)->defaults,level + 1);
@@ -920,7 +1020,7 @@ void DumpObject(object * obj, char level)
 			for (char i = 0; i < level; i++)
 				debug_printf(DEBUG_ALL,"\t");
 			debug_printf(DEBUG_ALL,"closure:\n");
-			DumpObject((object*)((function_object*)obj)->closure,level + 1);
+			DumpObject((object*)((function_object*)obj)->closure,level + 1);*/
 			for (char i = 0; i < level; i++)
 				debug_printf(DEBUG_ALL,"\t");
 			debug_printf(DEBUG_ALL,"-- function object\n");
@@ -1144,18 +1244,6 @@ void FullDumpObject(object * obj, char level)
 				printf("\t");
 			printf("code:\n");
 			FullDumpObject((object*)((function_object*)obj)->func,level + 1);
-			for (char i = 0; i < level; i++)
-				printf("\t");
-			printf("defaults:\n");
-			FullDumpObject((object*)((function_object*)obj)->defaults,level + 1);
-			for (char i = 0; i < level; i++)
-				printf("\t");
-			printf("kw_defaults:\n");
-			FullDumpObject((object*)((function_object*)obj)->kw_defaults,level + 1);
-			for (char i = 0; i < level; i++)
-				printf("\t");
-			printf("closure:\n");
-			FullDumpObject((object*)((function_object*)obj)->closure,level + 1);
 		break;
 	case TYPE_CFUNCTION:
 			printf("cfunction object: %x\n",((cfunction_object*)obj)->func);
@@ -1211,6 +1299,9 @@ void FullDumpObject(object * obj, char level)
 		printf("argcount:%d\n",((code_object *) obj)->argcount);
 		for (char i = 0; i < level; i++)
 			printf("\t");
+		printf("co_flags:%d\n",((code_object *) obj)->co_flags);
+		for (char i = 0; i < level; i++)
+			printf("\t");
 		printf("kwonlyargcount:%d\n",((code_object *) obj)->kwonlyargcount);
 		for (char i = 0; i < level; i++)
 			printf("\t");
@@ -1251,7 +1342,7 @@ void FullDumpObject(object * obj, char level)
 		for (char i = 0; i < level; i++)
 			printf("\t");
 		printf("code:\n");
-		FullDumpObject(((class_object*)obj)->code, level + 1);
+		FullDumpObject((object*)((class_object*)obj)->code, level + 1);
 		for (char i = 0; i < level; i++)
 			printf("\t");
 		printf("-- class object\n");
@@ -1340,7 +1431,7 @@ char *DumpObjectXml(object * obj, char level)
 				printf("\t");
 			printf("code:\n");
 			DumpObject((object*)((function_object*)obj)->func,level + 1);
-			for (char i = 0; i < level; i++)
+			/*for (char i = 0; i < level; i++)
 				printf("\t");
 			printf("defaults:\n");
 			DumpObject((object*)((function_object*)obj)->defaults,level + 1);
@@ -1351,7 +1442,7 @@ char *DumpObjectXml(object * obj, char level)
 			for (char i = 0; i < level; i++)
 				printf("\t");
 			printf("closure:\n");
-			DumpObject((object*)((function_object*)obj)->closure,level + 1);
+			DumpObject((object*)((function_object*)obj)->closure,level + 1);*/
 		break;
 /*	case TYPE_CFUNCTION:
 		printf("cfunction object: %s\n",((cfunction_object*)obj)->name);
@@ -1561,10 +1652,11 @@ object *CopyObject(object *obj)
 				return((object*)CreateMethodObject(CopyObject(((method_object*)obj)->func),((method_object*)obj)->instance));
 		case TYPE_CFUNCTION:
 			//return(obj);
-			return((object*)CreateCFunctionObject(((cfunction_object*)obj)->func,((cfunction_object*)obj)->defaults,((cfunction_object*)obj)->kw_defaults));
+			return((object*)CreateCFunctionObject(((cfunction_object*)obj)->func));
 			//return((object*)CreateCFunctionObject(((cfunction_object*)obj)->func),(tuple_object*)CopyObject((object*)((cfunction_object*)obj)->defaults),(tuple_object*)CopyObject((object*)((cfunction_object*)obj)->kw_defaults));
 		case TYPE_CLASS:
-			return((object*)CreateClassObject(str_Copy(((class_object*)obj)->name),(code_object*)CopyObject((object*)((class_object*)obj)->code),((class_object*)obj)->base_classes));
+			//return((object*)CreateClassObject(str_Copy(((class_object*)obj)->name),(code_object*)CopyObject((object*)((class_object*)obj)->code),((class_object*)obj)->base_classes));
+			return((object*)CreateClassObject((code_object*)CopyObject((object*)((class_object*)obj)->code),((class_object*)obj)->base_classes));//TODO maybe copy base classes too
 		case TYPE_CLASS_INSTANCE:
 			return((object*)CreateClassInstanceObject(((class_instance_object*)obj)->instance_of));
 		case TYPE_TUPLE:
@@ -1586,6 +1678,7 @@ object *CopyObject(object *obj)
 				c->nlocals = ((code_object*)obj)->nlocals;
 				c->stacksize = ((code_object*)obj)->stacksize;	
 				c->co_flags = ((code_object*)obj)->co_flags;
+				//printf("copied flags:%d\n",c->co_flags);
 				//c->code = CopyObject(((code_object*)obj)->code);
 				c->code = ((code_object*)obj)->code;
 				gc_IncRefCount(c->code);
@@ -1609,12 +1702,12 @@ object *CopyObject(object *obj)
 				//f->defaults = (tuple_object*)CopyObject((object*)((function_object*)obj)->defaults);
 				//f->kw_defaults = (tuple_object*)CopyObject((object*)((function_object*)obj)->kw_defaults);
 				//f->closure = (tuple_object*)CopyObject((object*)((function_object*)obj)->closure);
-				f->defaults = ((function_object*)obj)->defaults;
-				gc_IncRefCount((object*)f->defaults);
-				f->kw_defaults = ((function_object*)obj)->kw_defaults;
-				gc_IncRefCount((object*)f->kw_defaults);
-				f->closure = ((function_object*)obj)->closure;
-				gc_IncRefCount((object*)f->closure);
+				//f->defaults = ((function_object*)obj)->defaults;
+				//gc_IncRefCount((object*)f->defaults);
+				//f->kw_defaults = ((function_object*)obj)->kw_defaults;
+				//gc_IncRefCount((object*)f->kw_defaults);
+				//f->closure = ((function_object*)obj)->closure;
+				//gc_IncRefCount((object*)f->closure);
 				return((object*)f);
 			}
 			break;
@@ -1699,7 +1792,7 @@ void SetDictItem(object *tuple,object *key,object *value)
 			if(k->type == TYPE_KV)
 			{
 				object *old =((kv_object*) k)->value;
-				if(value != NULL)
+				if(value != NULL && value != obj_NULL)
 				{
 					((kv_object*) k)->value = value;
 					gc_IncRefCount(value);
@@ -2011,13 +2104,13 @@ void SetAttribute(object *obj,object *key,object *value)
 
 object *GetClassMethod(object *class,object *key)
 {
-	object *r = NULL;
+	object *r = obj_NULL;
 	if(class->type == TYPE_CLASS)
 	{
 		//DumpObject(((class_object*)class)->code->names,0);
 		r = GetDictItem(((class_object*)class)->code->names,key);
 		if(r!= NULL && r != obj_NULL && !(r->type == TYPE_FUNCTION || r->type == TYPE_CFUNCTION))
-			r = NULL;
+			r = obj_NULL;
 		if(r == NULL || r == obj_NULL)
 		{	
 			tuple_object *bc = (tuple_object*)((class_object*)class)->base_classes;
@@ -2091,7 +2184,7 @@ void SetItem(object *tuple, INDEX index, object * obj)
 	if(index < 0)
 		index = index + GetTupleLen(tuple);
 	object *old = ((tuple_object*) tuple)->list->items[index];	
-	if(obj!=NULL)
+	if(obj!=NULL && obj != obj_NULL)
 	{
 		((tuple_object*) tuple)->list->items[index] = obj;
 		gc_IncRefCount(obj);
@@ -2120,6 +2213,17 @@ void DeleteItem(object *tuple, INDEX index)
 	gc_DecRefCount((object*)(((tuple_object*) tuple)->list->items[index]));
 	((tuple_object*) tuple)->list->items[index] = obj_NULL;
 	gc_IncRefCount(obj_NULL);
+}
+
+void DeleteDictItem(object *tuple,object *key)
+{
+	if (tuple == NULL || tuple->type != TYPE_TUPLE || key == NULL)
+		return;
+	INDEX index = GetDictItemIndex(tuple,key);
+	if(index != -1)
+	{
+		DeleteItem(tuple,index);
+	}
 }
 
 object *GetItem(object *tuple, INDEX index)

@@ -61,9 +61,9 @@ object *fmod_playSound(vm *vm,tuple_object *locals,tuple_object *kw_locals)
 	object *filename = GetItem((object*)locals,1);
 	object *mode = GetItem((object*)locals,2);
 	unicode_object *sys_name = CreateUnicodeObject(str_Copy("__fmod_sys__"));
-	object *sys = GetAttribute(self,sys_name);
-	gc_IncRefCount(sys_name);
-	gc_DecRefCount(sys_name);
+	object *sys = GetAttribute(self,(object*)sys_name);
+	gc_IncRefCount((object*)sys_name);
+	gc_DecRefCount((object*)sys_name);
 	//printf("playSound\n");
 	//TODO only a temp solution
 	if(filename->type == TYPE_KV)
@@ -82,14 +82,15 @@ object *fmod_playSound(vm *vm,tuple_object *locals,tuple_object *kw_locals)
 object *fmod_Sleep(vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
 	//printf("sleep\n");
-	object *self = GetItem((object*)locals,0);
+	//object *self = GetItem((object*)locals,0);
 	object *delay = GetItem((object*)locals,1);
 	if(delay->type == TYPE_KV)
 		delay = (object*)((kv_object*)delay)->value;
 	if(delay->type == TYPE_INT)
 	{
 		printf("sleeping:%d \n",((int_object*)delay)->value);
-		Sleep(((int_object*)delay)->value);
+		//Sleep(((int_object*)delay)->value);
+		Sleep(5000);
 	}
 	object *tmp =CreateEmptyObject(TYPE_NONE);
 	return (tmp);	
@@ -97,57 +98,38 @@ object *fmod_Sleep(vm *vm,tuple_object *locals,tuple_object *kw_locals)
 
 void AddFmodGlobals(vm *vm)
 {
-	code_object *a_globals = AllocCodeObject();
-	a_globals->type = TYPE_CODE;
-	a_globals->ref_count = 0;
-	a_globals->name = str_Copy("fmod");
-	a_globals->argcount = 0;
-	a_globals->kwonlyargcount = 0;
-	a_globals->nlocals = 0;
-	a_globals->stacksize = 0;
-	a_globals->co_flags = 0;
-	a_globals->code = NULL;
-	a_globals->consts = NULL;
-	a_globals->varnames = NULL;
-	a_globals->freevars = NULL;
-	a_globals->cellvars = NULL;
-
+	code_object *a_globals = CreateCodeObject(str_Copy("fmod_code"));
+	a_globals->nlocals = 4;
 	a_globals->names = (object*)CreateTuple(4);
 	gc_IncRefCount(a_globals->names);
+	//a_globals->varnames = (object*)CreateTuple(0);
+	//gc_IncRefCount(a_globals->varnames);
 
-
-	cfunction_object *sleep_cfo = CreateCFunctionObject(&fmod_Sleep,NULL,NULL);
+	cfunction_object *sleep_cfo = CreateCFunctionObject(&fmod_Sleep);
 	unicode_object *sleep = CreateUnicodeObject(str_Copy("Sleep"));
 	kv_object *kvsleep = CreateKVObject((object*)sleep,(object*) sleep_cfo);
 	SetItem(a_globals->names,0,(object*)kvsleep);
 
-	cfunction_object *play_cfo = CreateCFunctionObject(&fmod_playSound,NULL,NULL);
+	cfunction_object *play_cfo = CreateCFunctionObject(&fmod_playSound);
 	unicode_object *play = CreateUnicodeObject(str_Copy("playSound"));
 	kv_object *kvplay = CreateKVObject((object*)play,(object*) play_cfo);
 	SetItem(a_globals->names,1,(object*)kvplay);
 
-	cfunction_object *init_cfo = CreateCFunctionObject(&fmod_Init,NULL,NULL);
+	cfunction_object *init_cfo = CreateCFunctionObject(&fmod_Init);
 	unicode_object *init = CreateUnicodeObject(str_Copy("__init__"));
 	kv_object *kvinit = CreateKVObject((object*)init,(object*) init_cfo);
 	SetItem(a_globals->names,2,(object*)kvinit);
 
-	cfunction_object *del_cfo = CreateCFunctionObject(&fmod_Close,NULL,NULL);
+	cfunction_object *del_cfo = CreateCFunctionObject(&fmod_Close);
 	unicode_object *del = CreateUnicodeObject(str_Copy("__del__"));
 	kv_object *kvdel = CreateKVObject((object*)del,(object*) del_cfo);
 	SetItem(a_globals->names,3,(object*)kvdel);
 
-	class_object *fmod_global = AllocClassObject();
-	fmod_global->type = TYPE_CLASS;
-	fmod_global->name = str_Copy("fmod");
-	fmod_global->base_classes = NULL;
-	fmod_global->code = a_globals;
-	gc_IncRefCount(a_globals);
-	fmod_global->code->co_flags ^= CO_CLASS_ROOT;
-	fmod_global->ref_count = 0;
-	vm_AddClass(vm,fmod_global);
+	class_object *fmod_global = CreateClassObject(a_globals,NULL);
+	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy("fmod")),fmod_global);
 }
 
-void fmod_Init(vm *vm,tuple_object *locals,tuple_object *kw_locals)
+object *fmod_Init(vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
 	object *self = GetItem((object*)locals,0);
 	unsigned int version;
@@ -175,8 +157,7 @@ void fmod_Init(vm *vm,tuple_object *locals,tuple_object *kw_locals)
 	return (tmp);	
 }
 
-
-void fmod_Close(vm *vm,tuple_object *locals,tuple_object *kw_locals)
+object *fmod_Close(vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
 	object *self = GetItem((object*)locals,0);
 	unicode_object *sys_name = CreateUnicodeObject(str_Copy("__fmod_sys__"));

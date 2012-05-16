@@ -582,14 +582,7 @@ object *if_build_class(struct _vm *vm,tuple_object *locals,tuple_object *kw_loca
 
 	function_object *class_function_object = (function_object*)GetItem((object*)locals,0);
 	unicode_object *class_name = (unicode_object*)GetItem((object*)locals,1);
-	class_object *class = AllocClassObject();
-	class->type = TYPE_CLASS;
-	class->name = str_Copy(class_name->value);
-	class->code = class_function_object->func;
-	class->code->co_flags ^= CO_CLASS_ROOT;
-	//if(class->code != NULL)
-	gc_IncRefCount((object*)class->code);
-	class->ref_count = 0;
+	class_object *class = CreateClassObject(class_function_object->func,NULL);
 
 	if(locals->list->num> 2)
 	{
@@ -604,73 +597,13 @@ object *if_build_class(struct _vm *vm,tuple_object *locals,tuple_object *kw_loca
 	else
 		class->base_classes = NULL;
 	
+	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy(class_name->value)),(object*)class);
+	//DumpObject(vm->globals,0);
+	//printf("returning class\n");
+	//FullDumpObject(class,0);
 	return((object*)class);
 	//object *tmp =CreateEmptyObject(TYPE_NONE);
 	//return (tmp);
-}
-
-object *if_file_close(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
-{
-	//printf("file close called\n");
-	object *self = GetItem((object*)locals,0);
-	//DumpObject(self,0);
-	//DumpObject(((class_object*)((class_instance_object*)self)->instance_of)->code->names,0);
-	unicode_object *file_name = CreateUnicodeObject(str_Copy("__file__"));
-	object *file_tag = GetAttribute(self,(object*)file_name);
-	//DumpObject(file_tag,0);
-	gc_IncRefCount((object*)file_name);
-	gc_DecRefCount((object*)file_name);
-	if(file_tag->type == TYPE_TAG && ((tag_object*)file_tag)->tag != NULL);
-	{
-		//printf("stream @ %x\n",((tag_object*)file_tag)->tag);
-		stream_Free(((tag_object*)file_tag)->tag);
-	}
-	object *tmp =CreateEmptyObject(TYPE_NONE);
-	return (tmp);
-}
-
-object *if_file_readline(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
-{
-	//printf("readline called\n");
-	object *self = GetItem((object*)locals,0);
-	//DumpObject(self,0);
-	//DumpObject(((class_object*)((class_instance_object*)self)->instance_of)->code->names,0);
-	unicode_object *file_name = CreateUnicodeObject(str_Copy("__file__"));
-	object *file_tag = GetAttribute(self,(object*)file_name);
-	//DumpObject(file_tag,0);
-	gc_IncRefCount((object*)file_name);
-	gc_DecRefCount((object*)file_name);
-	if(file_tag->type == TYPE_TAG && ((tag_object*)file_tag)->tag != NULL);
-	{
-		//printf("stream @ %x\n",((tag_object*)file_tag)->tag);
-		char buf[512];
-		INDEX i = 0;
-		while(i<512)
-		{
-			if(!stream_Read(((tag_object*)file_tag)->tag,&buf[i],1))
-			{
-				//printf("eof\n");
-				break;
-			}
-			if(buf[i] == '\n')
-			{
-				//printf("eol\n");
-				break;
-			}
-			i++;
-		}
-		//printf("line len:%d\n",i);
-		if(i>0)
-		{
-			buf[i] = 0;
-			//printf("readline(%d):%s\n",i,&buf);
-			unicode_object *line = CreateUnicodeObject(str_Copy((char*)&buf));
-			return((object*)line);
-		}
-	}	
-	
-	object *tmp =CreateEmptyObject(TYPE_NONE);
-	return (tmp);
 }
 
 object *if_open(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
@@ -678,66 +611,17 @@ object *if_open(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 	object *x = GetItem((object*)locals,0);
 	if(x->type == TYPE_UNICODE)
 		printf("opening file:%s\n",((unicode_object*)x)->value);
-		
-	code_object *file = AllocCodeObject();
-	file->type = TYPE_CODE;
-	file->name = str_Copy(((unicode_object*)x)->value);
-	file->argcount = 0;
-	file->kwonlyargcount = 0;
-	file->nlocals = 2;
-	file->stacksize = 0;
-	file->co_flags = 0;
-	file->code = NULL;
-	file->consts = NULL;
-	file->varnames = NULL;
-	file->freevars = NULL;
-	file->cellvars = NULL;
-	file->names = (object*)CreateTuple(3);
-	gc_IncRefCount(file->names);
-	file->ref_count = 0;
 	
-	
+	unicode_object *file_class_key = CreateUnicodeObject(str_Copy("file_class"));
+	class_object *file_class = (class_object*)vm_GetGlobal(vm,(object*)file_class_key);
+	gc_IncRefCount((object*)file_class_key);
+	gc_DecRefCount((object*)file_class_key);
 	stream *fs = stream_CreateFromFile(((unicode_object*)x)->value,"rb");
 	stream_Open(fs);
-	//printf("stream @ %x\n",fs);
 	tag_object *file_tag = CreateTagObject(fs);
-	//printf("stream tag @ %x\n",file_tag);
-	
 	unicode_object *file_name = CreateUnicodeObject(str_Copy("__file__"));
-	kv_object *kvfile = CreateKVObject((object*)file_name,(object*) file_tag);
-	SetItem(file->names,0,(object*)kvfile);
-
-	cfunction_object *readline_cfo = CreateCFunctionObject(&if_file_readline,NULL,NULL);
-	unicode_object *readline = CreateUnicodeObject(str_Copy("readline"));
-	kv_object *kvreadline = CreateKVObject((object*)readline,(object*) readline_cfo);
-	SetItem(file->names,1,(object*)kvreadline);
-
-	cfunction_object *close_cfo = CreateCFunctionObject(&if_file_close,NULL,NULL);
-	unicode_object *close = CreateUnicodeObject(str_Copy("__del__"));
-	kv_object *kvclose = CreateKVObject((object*)close,(object*) close_cfo);
-	SetItem(file->names,2,(object*)kvclose);
-
-	
-	class_object *file_class = AllocClassObject();
-	file_class->type = TYPE_CLASS;
-	file_class->name = str_Copy("file");
-	file_class->base_classes = NULL;
-	file_class->code = file;
-	gc_IncRefCount((object*)file);
-	file_class->code->co_flags ^= CO_CLASS_ROOT;
-	file_class->ref_count = 0;
-	
-	class_instance_object *file_instance = AllocClassInstanceObject();
-	file_instance->type = TYPE_CLASS_INSTANCE;
-	file_instance->ref_count = 0;
-	file_instance->instance_of = file_class;
-	gc_IncRefCount((object*)file_class);
-	file_instance->methods = (object*)CreateTuple(0);
-	gc_IncRefCount((object*)file_instance->methods);
-	file_instance->vars = (object*)CreateTuple(0);
-	gc_IncRefCount((object*)file_instance->vars);
-	
-	
+	class_instance_object *file_instance = CreateClassInstanceObject(file_class);	
+	SetAttribute((object*)file_instance,(object*)file_name,(object*)file_tag);	
 	return((object*)file_instance);
 		
 	//object *tmp =CreateEmptyObject(TYPE_NONE);
@@ -1197,23 +1081,13 @@ object *if_map(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 
 void AddInternalFunctions(struct _vm *vm)
 {
-	cfunction *list = CreateCFunction(&if_list, "list");
-	vm_AddFunction(vm, list);
-	cfunction *range = CreateCFunction(&if_range, "range");
-	vm_AddFunction(vm, range);
-	cfunction *print = CreateCFunction(&if_print, "print");
-	vm_AddFunction(vm, print);
-	cfunction *sum = CreateCFunction(&if_sum, "sum");
-	vm_AddFunction(vm, sum);
-	cfunction *next = CreateCFunction(&if_next, "next");
-	vm_AddFunction(vm, next);
-	cfunction *open = CreateCFunction(&if_open, "open");
-	vm_AddFunction(vm, open);
-	cfunction *iter = CreateCFunction(&if_iter, "iter");
-	vm_AddFunction(vm, iter);
-
-	cfunction *cc = CreateCFunction(&custom_code, "custom_code");
-	vm_AddFunction(vm, cc);
-
+	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy("list")),(object*)CreateCFunctionObject(&if_list));
+	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy("range")),(object*)CreateCFunctionObject(&if_range));
+	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy("print")),(object*)CreateCFunctionObject(&if_print));
+	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy("sum")),(object*)CreateCFunctionObject(&if_sum));
+	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy("next")),(object*)CreateCFunctionObject(&if_next));
+	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy("open")),(object*)CreateCFunctionObject(&if_open));
+	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy("iter")),(object*)CreateCFunctionObject(&if_iter));
+	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy("custom_code")),(object*)CreateCFunctionObject(&custom_code));
 }
 

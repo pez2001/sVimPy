@@ -49,8 +49,8 @@ void __stdcall Sleep(unsigned long);
 
 object *fmod_playSound(vm *vm,tuple_object *locals,tuple_object *kw_locals); //(filename,mode); - returns id object used in other functions
 object *fmod_Sleep(vm *vm,tuple_object *locals,tuple_object *kw_locals);
-void fmod_Init(vm *vm,tuple_object *locals,tuple_object *kw_locals);
-void fmod_Close(vm *vm,tuple_object *locals,tuple_object *kw_locals);
+object *fmod_Init(vm *vm,tuple_object *locals,tuple_object *kw_locals);
+object *fmod_Close(vm *vm,tuple_object *locals,tuple_object *kw_locals);
 
 void AddFmodGlobals(vm *vm);
 

@@ -180,7 +180,8 @@ void OpenPYC(stream *f, vm *vm)
 	// printf("objects num: %d\n",objects_num);
 	// printf("max objects : %d\n",objects_max);
 	// printf("objects headers total size : %d\n",objects_header_total);
-	vm_AddGlobal(vm, (code_object*)obj);
+	object *global_key = (object*)CreateUnicodeObject(str_Copy(((code_object*)obj)->name));
+	vm_AddGlobal(vm, global_key,obj);
 	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_DUMP_OBJECT) > 0)
 		DumpObject(obj, 0);
@@ -216,7 +217,7 @@ void OpenPYC(stream *f, vm *vm)
 	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_VERBOSE_TESTS,"removing object from globals\n");
 	#endif
-	vm_RemoveGlobal(vm,(code_object*)obj);
+	vm_RemoveGlobal(vm,global_key);
 	//printf("freeing stream\n");
 	stream_Free(f);
 	gc_Clear();
@@ -264,6 +265,8 @@ void brute_test(void)
 	//ptr_tests();
 	streams_Init();
 	AddInternalFunctions(vm);
+	AddInternalClasses(vm);
+
 	//#ifdef USE_ARDUINO_FUNCTIONS
 	//AddArduinoFunctions(vm);
 	//AddArduinoGlobals(vm);
@@ -552,6 +555,7 @@ void AtomicOpenPYC(char *filename)
 	debug_printf(DEBUG_VERBOSE_TESTS,"AddInternalFunctions\n");
 	#endif
 	AddInternalFunctions(vm);
+	AddInternalClasses(vm);
 	//fmod_Init(vm);
 	AddFmodGlobals(vm);
 	long pyc_magic = MAGIC;
@@ -583,7 +587,8 @@ void AtomicOpenPYC(char *filename)
 	// printf("objects num: %d\n",objects_num);
 	// printf("max objects : %d\n",objects_max);
 	// printf("objects headers total size : %d\n",objects_header_total);
-	vm_AddGlobal(vm, (code_object*)obj);
+	object *global_key = (object*)CreateUnicodeObject(str_Copy(((code_object*)obj)->name));
+	vm_AddGlobal(vm, global_key,obj);
 	//FullDumpObject(obj, 0);
 	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_DUMP_OBJECT) > 0)
@@ -619,7 +624,7 @@ void AtomicOpenPYC(char *filename)
 	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_VERBOSE_TESTS,"removing object from globals\n");
 	#endif
-	vm_RemoveGlobal(vm,(code_object*)obj);
+	vm_RemoveGlobal(vm,global_key);
 
 	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_VERBOSE_TESTS,"freeing object now\n");
@@ -693,12 +698,12 @@ void atomic_test(void)
 	debug_level = 0;
 	//debug_level |= DEBUG_INTERACTIVE;
 	debug_level |= DEBUG_MEMORY;
-	debug_level |= DEBUG_SHOW_OPCODES;
+	//debug_level |= DEBUG_SHOW_OPCODES;
 	//debug_level |= DEBUG_FULL_DUMP;
 	//debug_level |= DEBUG_STACK;
 	//debug_level |= DEBUG_LISTS;
 	//debug_level |= DEBUG_GC;
-	debug_level |= DEBUG_VERBOSE_STEP;
+	//debug_level |= DEBUG_VERBOSE_STEP;
 	//debug_level |= DEBUG_VM;
 	//debug_level |= DEBUG_FREEING;
 	//debug_level |= DEBUG_ALLOCS;
@@ -715,16 +720,30 @@ void atomic_test(void)
 	printf("Atomic Tests Version : %d.%d-%d\n",MAJOR_VERSION,MINOR_VERSION,BUILD+1);
 	#endif
 
-	
+AtomicOpenPYC("tests/PlayNew.pyc");
+		//testing seperated function var spaces
+	//AtomicOpenPYC("tests/test_sep_method.pyc");
+	//return;
+	//AtomicOpenPYC("tests/test_print.pyc");
+	//AtomicOpenPYC("tests/test_sep_func.pyc");
+		//open file test + if_iter with sentinel
+	//AtomicOpenPYC("tests/test_open.pyc");	
+		AtomicOpenPYC("tests/test_class11.pyc");
+	//AtomicOpenPYC("tests/test_class6.pyc");
+	//AtomicOpenPYC("tests/test_import.pyc");
+//AtomicOpenPYC("tests/test_import.pyc");
+	//return;
+
+
 	//exceptions
-	AtomicOpenPYC("tests/test_assert.pyc");
-	return;
+	//AtomicOpenPYC("tests/test_assert.pyc");
+	//return;
 	
 	//AtomicOpenPYC("tests/Queens2a.pyc");
 	//return;
 
 	//custom code + import_from + import_star opcodes
-	AtomicOpenPYC("tests/test_import.pyc");
+	//AtomicOpenPYC("tests/test_import.pyc");
 
 	//classes tests
 	AtomicOpenPYC("tests/test_class7.pyc");
@@ -749,9 +768,9 @@ void atomic_test(void)
 	AtomicOpenPYC("tests/e_small.pyc");	
 
 	//brute recursion queens test
-	AtomicOpenPYC("tests/Queens2a.pyc");
+	//AtomicOpenPYC("tests/Queens2a.pyc");
 	//AtomicOpenPYC("tests/Queens4.pyc");
-	return;
+	//return;
 
 	//fmod tests + classes as globals
 	//AtomicOpenPYC("tests/Play.pyc");//old version without class support

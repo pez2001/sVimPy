@@ -57,8 +57,10 @@ void gc_DecRefCount(object *obj)
 {
 	if(obj == NULL)
 		return;
+	#ifdef USE_DEBUGGING
 	if(obj->type == TYPE_NONE && obj->ref_count == 1)
-		printf("WARNING global object ref_count reached 1\n");
+		debug_printf(DEBUG_VERBOSE_TESTS,"WARNING global object ref_count reached 1\n");
+	#endif
 	//if(obj->type == TYPE_NONE)
 	//	printf("global NONE object ref_count:%d about to be decremented\n",obj->ref_count);
 	if(obj->ref_count == 1)
@@ -181,14 +183,14 @@ void gc_FreeObject(object *obj)
 		gc_DecRefCount(((kv_object*)obj)->value);
 		break;
 	case TYPE_FUNCTION:
-		gc_DecRefCount((object*)((function_object*)obj)->defaults);
-		gc_DecRefCount((object*)((function_object*)obj)->kw_defaults);
-		gc_DecRefCount((object*)((function_object*)obj)->closure);
+		//gc_DecRefCount((object*)((function_object*)obj)->defaults);
+		//gc_DecRefCount((object*)((function_object*)obj)->kw_defaults);
+		//gc_DecRefCount((object*)((function_object*)obj)->closure);
 		gc_DecRefCount((object*)((function_object*)obj)->func);
 		break;
 	case TYPE_CFUNCTION:
-		gc_DecRefCount((object*)((function_object*)obj)->defaults);
-		gc_DecRefCount((object*)((function_object*)obj)->kw_defaults);
+		//gc_DecRefCount((object*)((function_object*)obj)->defaults);
+		//gc_DecRefCount((object*)((function_object*)obj)->kw_defaults);
 		break;
 	case TYPE_UNICODE:
 	   if(((unicode_object*)obj)->value != NULL)
@@ -227,6 +229,7 @@ void gc_FreeObject(object *obj)
 		}
 		break;
 	case TYPE_CODE:
+		//FullDumpObject(obj,0);
 		if(((code_object*)obj)->name != NULL)
 		{
 			#ifdef USE_DEBUGGING
@@ -243,7 +246,7 @@ void gc_FreeObject(object *obj)
 		gc_DecRefCount(((code_object*)obj)->cellvars);
 		break;
 	case TYPE_CLASS:
-	
+		/*
 		if(((class_object*)obj)->name != NULL)
 		{
 			#ifdef USE_DEBUGGING
@@ -252,22 +255,42 @@ void gc_FreeObject(object *obj)
 			free(((class_object*)obj)->name);
 			#endif
 		}
+		*/
 		gc_DecRefCount((object*)((class_object*)obj)->code);
 		gc_DecRefCount(((class_object*)obj)->base_classes);
 		break;
 	case TYPE_CLASS_INSTANCE:
 		{
 			if(garbage_vm != NULL)
-			{
+			{	
+				//printf("freeing :%x\n",obj);
+				//ptr_Push(garbage,obj);
 				
 				unicode_object *method_name = CreateUnicodeObject(str_Copy("__del__"));
-				object *rmr = vm_RunMethod(garbage_vm,(object*)method_name,(class_instance_object*)obj,NULL,NULL);
+				//obj->ref_count = 1;
+				//gc_IncRefCount(obj);
+				tuple_object *locals = CreateTuple(0);
+				gc_IncRefCount((object*)locals);
+				object *rmr = vm_RunMethod(garbage_vm,(object*)method_name,(class_instance_object*)obj,locals,NULL);
+				//printf("del executed\n");
+				//RemoveItem(locals,0);
+				if(GetTupleLen((object*)locals)>0)
+				{
+				locals->list->items[0] = CreateEmptyObject(TYPE_NULL);
+				gc_IncRefCount(locals->list->items[0]);
+				}
+				gc_DecRefCount((object*)locals);
+				//if(ptr_Contains(garbage,obj))
+				//	printf("obj readded\n");
+				//obj->ref_count = 0;
 				gc_IncRefCount(rmr);
 				gc_DecRefCount(rmr);
+				//gc_FreeObject(rmr);
 				//gc_IncRefCount((object*)method_name);
 				//gc_DecRefCount((object*)method_name);
-				gc_FreeObject(method_name);
-				
+				gc_FreeObject((object*)method_name);
+				//ptr_Remove(garbage,obj);
+				//obj->ref_count--;
 			}
 			gc_DecRefCount((object*)((class_instance_object*)obj)->instance_of);
 			gc_DecRefCount(((class_instance_object*)obj)->methods);

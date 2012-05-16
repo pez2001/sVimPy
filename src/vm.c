@@ -75,7 +75,7 @@ r :\n\
 \n";
 
 #endif
-
+/*
 cfunction *AllocCFunction(void)
 {
 	#ifdef USE_DEBUGGING
@@ -93,7 +93,8 @@ void FreeCFunction(cfunction *cf)
 	free(cf);
 	#endif
 }
-
+*/
+/*
 BOOL vm_SearchObject(object *obj,object *needle)
 {
 	if (obj != NULL)
@@ -221,7 +222,7 @@ BOOL vm_ObjectExists(vm *vm, object  *obj)
 	}	
 	return(0);
 }
-
+*/
 #ifdef USE_DEBUGGING
 void vm_DumpStackTree(vm *vm)
 {
@@ -232,7 +233,7 @@ void vm_DumpStackTree(vm *vm)
 	}
 }
 #endif
-
+/*
 cfunction *CreateCFunction(object *(*func) (vm *vm,tuple_object *locals,tuple_object *kw_locals), char *name)
 {	
 	cfunction *fo = AllocCFunction();
@@ -310,7 +311,7 @@ cfunction *vm_FindFunction(vm *vm, char *name)
 	}
 	return(NULL);
 }
-
+*/
 vm *vm_Init(code_object *co)
 {
 	#ifdef USE_DEBUGGING
@@ -319,11 +320,13 @@ vm *vm_Init(code_object *co)
 	vm *tmp = (vm *)malloc(sizeof(vm));
 	#endif
 
-	tmp->functions = ptr_CreateList(0, 0);
+	//tmp->functions = ptr_CreateList(0, 0);
 	tmp->blocks = stack_Init();
-	tmp->exceptions = stack_Init();
-	tmp->globals = ptr_CreateList(0,0);
-	tmp->classes = ptr_CreateList(0,0);
+	//tmp->exceptions = stack_Init();
+	//tmp->globals = ptr_CreateList(0,0);
+	tmp->globals = CreateTuple(0);
+	gc_IncRefCount((object*)tmp->globals);
+	//tmp->classes = ptr_CreateList(0,0);
 	tmp->running = 0;
 	tmp->interrupt_vm = 0;
 	tmp->interrupt_handler = NULL;
@@ -331,28 +334,30 @@ vm *vm_Init(code_object *co)
 	tmp->import_module_handler = NULL;
 	if (co != NULL)
 	{
-		vm_AddGlobal(tmp,co);
+		vm_AddGlobal(tmp,(object*)CreateUnicodeObject(str_Copy("__main__")),(object*)co);
 	}
 	return (tmp);
 }
 
 void vm_Close(vm *vm)
 {
+	/*
 	if (vm->functions->num)
 	{
 		for (NUM i = 0; i < vm->functions->num; i++)
 			FreeCFunction((cfunction*)vm->functions->items[i]);
 	}
 	ptr_CloseList(vm->functions);
-
+	*/
 	//for(NUM i = 0;i<vm->blocks->list->num;i++)
 	//		FreeObject((object*)vm->blocks->list->items[i]);
 	stack_Close(vm->blocks, 1);
-	stack_Close(vm->exceptions,1);
-	vm_FreeGlobals(vm);
-	ptr_CloseList(vm->globals);
-	vm_FreeClasses(vm);
-	ptr_CloseList(vm->classes);
+	//stack_Close(vm->exceptions,1);
+	//vm_FreeGlobals(vm);
+	//ptr_CloseList(vm->globals);
+	gc_DecRefCount((object*)vm->globals);
+	//vm_FreeClasses(vm);
+	//ptr_CloseList(vm->classes);
 	#ifdef USE_DEBUGGING
 	assert(mem_free(vm));
 	#else
@@ -360,6 +365,31 @@ void vm_Close(vm *vm)
 	#endif
 }
 
+void vm_FreeGlobals(vm *vm)
+{
+	for(INDEX i=0;i<vm->globals->list->num;i++)
+	{	
+			gc_DecRefCount((object*)vm->globals->list->items[i]);
+	}
+}
+
+
+void vm_AddGlobal(vm *vm,object *key,object *global)//add a global object
+{
+	AppendDictItem((object*)vm->globals,key,global);
+}
+
+void vm_RemoveGlobal(vm *vm, object *key)//remove a global object
+{
+	DeleteDictItem((object*)vm->globals,key);
+}
+
+object *vm_GetGlobal(vm *vm, object *key)//retrieve a global object
+{
+	return(GetDictItem((object*)vm->globals,key));
+}
+
+/*
 void vm_AddGlobal(vm *vm, code_object *co)
 {
 	if(!ptr_Contains(vm->globals,co))
@@ -386,7 +416,8 @@ void vm_FreeGlobals(vm *vm)
 			gc_DecRefCount((object*)vm->globals->items[i]);
 	}
 }
-
+*/
+/*
 void vm_AddClass(vm *vm, class_object *co)
 {
 	if(!ptr_Contains(vm->classes,co))
@@ -413,7 +444,7 @@ void vm_FreeClasses(vm *vm)
 			gc_DecRefCount((object*)vm->classes->items[i]);
 	}
 }
-
+*/
 void vm_Interrupt(vm *vm,object *(*interrupt) (struct _vm *vm,stack *stack))
 {
 	vm->interrupt_handler = interrupt;
@@ -452,12 +483,18 @@ object *vm_StartObjectCopy(vm *vm,object *obj, tuple_object *locals,tuple_object
 	//printf("StartObjectCopy(%x:%c)\n",obj,obj->type);
 	if(obj->type == TYPE_UNICODE)
 	{
-		cfunction *f = vm_FindFunction(vm, ((unicode_object*)obj)->value);
-		if(f != NULL)
+		//printf("executing function:");
+		//PrintObject(obj);
+		//printf("\n");
+		object *f = vm_GetGlobal(vm,obj);
+		if(f != obj_NULL)
 		{
-			object *uret = vm_StartCFunction(vm,f, locals,kw_locals);
+			//printf("found function\n");
+			//FullDumpObject(f,0);
+			object *uret = vm_StartObjectCopy(vm,f, locals,kw_locals);
 			return(uret);
 		}
+		/*
 		else
 		{
 			object *caller_func = NULL;
@@ -482,6 +519,7 @@ object *vm_StartObjectCopy(vm *vm,object *obj, tuple_object *locals,tuple_object
 				return(cr);
 			}
 		}
+		*/
 	}else if(obj->type == TYPE_CFUNCTION)
 	{
 		object *r = vm_StartObject(vm,obj,locals,kw_locals);
@@ -539,6 +577,7 @@ object *vm_StartObject(vm *vm,object *obj, tuple_object *locals,tuple_object *kw
 				#ifdef USE_DEBUGGING 
 				debug_printf(DEBUG_VERBOSE_STEP,"executing class initializer -> returning finalized class instance\n");
 				#endif
+				//printf("start object class co_flags:%d\n",((class_object*)obj)->code->co_flags);
 				vm_StartClassObject(vm,(class_object*)obj,locals,kw_locals);
 				return(NULL);
 			}
@@ -554,6 +593,14 @@ object *vm_StartObject(vm *vm,object *obj, tuple_object *locals,tuple_object *kw
 			}
 		case TYPE_UNICODE:
 			{
+				object *f = vm_GetGlobal(vm,(object*) ((unicode_object*)obj)->value);
+				if(f != NULL)
+				{
+					object *pret = vm_StartObject(vm,f, locals,kw_locals);
+					return(pret);
+				}
+				
+				/*
 				cfunction *f = vm_FindFunction(vm, ((unicode_object*)obj)->value);
 				if(f != NULL)
 				{
@@ -580,6 +627,7 @@ object *vm_StartObject(vm *vm,object *obj, tuple_object *locals,tuple_object *kw
 						return(cr);
 					}
 				}
+				*/
 			}
 		case TYPE_FUNCTION:
 			{
@@ -647,6 +695,7 @@ block_object *vm_StartClassObject(vm *vm,class_object *co,tuple_object *locals,t
 		bo->type = TYPE_BLOCK;
 		bo->code = co->code;
 		gc_IncRefCount((object*)bo->code);
+		//printf("sclo cof:%d\n",bo->code->co_flags);
 		bo->ip = 0;
 		bo->start = 0;
 		bo->len = bytecodes->len;
@@ -654,6 +703,7 @@ block_object *vm_StartClassObject(vm *vm,class_object *co,tuple_object *locals,t
 		bo->stack = stack_Init();		// co->stacksize
 		stack_Push(vm->blocks,(object*)bo);
 		stack_Push(bo->stack,(object*)co);//push class to be retrieved later by OPCODE_RETURN_VALUE
+		//stack_Dump(bo->stack);
 		if (locals != NULL)
 		{
 			SetDictItemByIndex((object*)co->code->varnames,0,(object*)locals);
@@ -664,15 +714,7 @@ block_object *vm_StartClassObject(vm *vm,class_object *co,tuple_object *locals,t
 	{
 		//no code defined
 		//push class instance
-		class_instance_object *cio = AllocClassInstanceObject();
-		cio->type = TYPE_CLASS_INSTANCE;
-		cio->ref_count = 0;
-		cio->instance_of = co;
-		gc_IncRefCount((object*)co);
-		cio->methods = (object*)CreateTuple(0);
-		gc_IncRefCount((object*)cio->methods);
-		cio->vars = (object*)CreateTuple(0);
-		gc_IncRefCount((object*)cio->vars);
+		class_instance_object *cio = CreateClassInstanceObject(co);
 		if(!stack_IsEmpty(vm->blocks))
 		{
 			block_object *actual = (block_object*)stack_Top(vm->blocks);
@@ -686,14 +728,10 @@ block_object *vm_StartClassObject(vm *vm,class_object *co,tuple_object *locals,t
 		gc_DecRefCount((object*)method_name);
 		gc_Clear();
 	}
-	//printf("sc bo:\n");
-	//DumpObject((object*)bo,0);
-	//printf("sc varnames:\n");
-	//DumpObject(co->code->varnames,0);
 	tuple_object *bc = (tuple_object*)co->base_classes;
 	for(INDEX i = 0;i<GetTupleLen((object*)bc);i++)
 	{
-		((class_object*)bc->list->items[i])->code->co_flags ^= CO_SUB_CLASS_ROOT;
+		((class_object*)bc->list->items[i])->code->co_flags |= CO_SUB_CLASS_ROOT;
 		((class_object*)bc->list->items[i])->code->co_flags &= ~CO_CLASS_ROOT;
 		vm_StartClassObject(vm,bc->list->items[i],locals,kw_locals);//TODO check if this makes actually sense (var passing to base classes)
 	}
@@ -705,70 +743,26 @@ object *vm_StartFunctionObject(vm *vm,function_object *fo,tuple_object *locals,t
 		#ifdef USE_DEBUGGING
 		debug_printf(DEBUG_VERBOSE_STEP,"executing python function: %s\n",  fo->func->name);
 		#endif
-		//printf("executing python function: %s\n",  fo->func->name);
-	
-		//code_object *co = (code_object*)fo->code;
-		//tuple_object *defaults = fo->defaults;
 		block_object *bo = AllocBlockObject();
-		//printf("sfo Creating new execution block: %x for code: %x\n",bo,fo->func);
 		#ifdef USE_DEBUGGING
 		debug_printf(DEBUG_VERBOSE_STEP,"sfo Creating new execution block: %x\n",bo);
 		#endif
 		bo->type = TYPE_BLOCK;
 		bo->ip = 0;
-		//bo->iter = NULL;
 		bo->start = 0;
 		bo->ref_count = 0;
 		bo->stack = stack_Init();		// co->stacksize
-		//bo->initiated_locals = 1;
 		string_object *bytecodes = (string_object *) fo->func->code;
 		bo->code = fo->func;
 		gc_IncRefCount((object*)bo->code);
 		bo->len = bytecodes->len;
-		if(((tuple_object*)fo->func->varnames)->list != NULL)
-		{
-			ClearDictValues(fo->func->varnames);
-			//DumpObject(fo->func->varnames,0);
-			//printf("setting defaults\n");
-			//int locals_num = ((tuple_object*)fo->func.code->varnames)->list->num;
-			if(fo->defaults!=NULL)
-			{
-				//NUM locals_num = fo->defaults->list->num;
-				NUM locals_num = fo->func->argcount;
-				//NUM locals_num = ((tuple_object*)fo->func->varnames)->list->num;
-				//printf("locals num:%d\n",locals_num);
-				//printf("loading default values\n");
-				//printf("defaults num:%d\n",fo->defaults->list->num);
-				for(NUM i = 0;i < fo->defaults->list->num; i++) //load default values
-				{
-					if(GetItem(fo->func->varnames,(locals_num-1) - i)->type != TYPE_KV)
-					{
-						SetItem(fo->func->varnames,(locals_num-1) - i,(object*)ConvertToKVObjectValued(GetItem(fo->func->varnames,(locals_num-1) - i),GetItem((object*)fo->defaults,i)));
-					}		
-					else
-					{
-						SetDictItemByIndex(fo->func->varnames,(locals_num-1) - i,GetItem((object*)fo->defaults,i));
-					}
-				}
-				//DumpObject(fo->func->varnames,0);
-			}
-			if(fo->kw_defaults != NULL)
-			{
-				//printf("loading kw defaults\n");
-				for(NUM i = 0;i < fo->kw_defaults->list->num; i++) //load default keyword values
-				{
-					kv_object *kv = (kv_object*)GetItem((object*)fo->kw_defaults,i);
-					SetDictItem(fo->func->varnames,kv->key,kv->value);
-				}
-			}
-		}
+			
 		//printf("loading arguments\n");
 		if (locals != NULL)
 		{
 			NUM oarg = locals->list->num;
 			if(oarg > fo->func->argcount)
 				oarg = fo->func->argcount;
-			//printf("oarg:%d,locals:%d\n",oarg,stack_Pointer(locals));
 			for (NUM i = 0; i < oarg; i++)
 			{
 				object *local = GetItem((object*)locals,i);
@@ -785,7 +779,6 @@ object *vm_StartFunctionObject(vm *vm,function_object *fo,tuple_object *locals,t
 			if(locals->list->num > fo->func->argcount)
 			{
 				NUM narg = locals->list->num - fo->func->argcount;
-				//printf("more locals than argcount:%d\n",narg);
 				tuple_object *nt = CreateTuple(0); //creating tuple from the rest of the arguments
 				for (NUM i = 0; i < narg; i++)
 				{
@@ -793,10 +786,8 @@ object *vm_StartFunctionObject(vm *vm,function_object *fo,tuple_object *locals,t
 					t = DissolveRef(t);
 					if(t->type == TYPE_KV)
 						t = ((kv_object*)t)->value;
-					//DumpObject(t,0);
 					AppendItem((object*)nt,t);
 				}
-				//DumpObject(nt,0);
 				SetDictItemByIndex(fo->func->varnames,fo->func->argcount+fo->func->kwonlyargcount,(object*)nt);
 			}		
 		}
@@ -806,49 +797,22 @@ object *vm_StartFunctionObject(vm *vm,function_object *fo,tuple_object *locals,t
 			//printf("loading keyword arguments\n");
 			for(NUM i = 0;i<kw_locals->list->num;i++)
 			{
-				//object *kw_local = GetItem(kw_locals,i);
-				//SetItem(fo->func->varnames,kw_local,i);
 				kv_object *kw_local = (kv_object*)GetItem((object*)kw_locals,i);
 				SetDictItem(fo->func->varnames,kw_local->key,kw_local->value);
 			}
-			//DumpObject(fo->func->varnames,0);
 		}
-			
-		if (fo->closure != NULL)
-		{
-			for (NUM i = 0; i < GetTupleLen((object*)fo->closure); i++)
-			{
-				object *local = GetItem((object*)fo->closure,i);
-				if(local->type == TYPE_KV)
-					local = ((kv_object*)local)->value;
-				if(GetItem(fo->func->freevars,i)->type != TYPE_KV)
-				{
-					SetItem(fo->func->freevars,i,(object*)ConvertToKVObjectValued(GetItem(fo->func->freevars,i),local));
-				}
-				else
-				{
-					SetDictItemByIndex(fo->func->freevars,i,local);
-				}
-			}
-		}
-		// ((fo->func->co_flags & CO_NESTED)>0 || 
+
 		if((fo->func->co_flags & CO_GENERATOR)>0 )
 		{
-			//if((fo->func.code->co_flags & CO_GENERATOR) >0)
-			//	printf("function is a generator\n");
-			//else
-			//	printf("function is nested\n");
 			iter_object *iter = CreateIterObject();
 			iter_InitGenerator(iter,vm,bo);
 			return((object*)iter);
 		}
-		//DumpObject(fo->func->varnames,0);
 		//normal functions get pushed on the block stack
 		stack_Push(vm->blocks, (object*)bo);
-		//printf("pushed block:%x\n",bo);
 		return(NULL);//got nothing to return now
 }
-
+/*
 object *vm_StartCFunction(vm *vm,cfunction *cf,tuple_object *locals,tuple_object *kw_locals)
 {
 	#ifdef USE_DEBUGGING
@@ -858,7 +822,7 @@ object *vm_StartCFunction(vm *vm,cfunction *cf,tuple_object *locals,tuple_object
 	object *tmp = vm_ExecuteCFunction(vm, cf,locals,kw_locals);
 	return(tmp);
 }
-
+*/
 object *vm_StartCFunctionObject(vm *vm,cfunction_object *cfo,tuple_object *locals,tuple_object *kw_locals)
 {
 	#ifdef USE_DEBUGGING
@@ -871,12 +835,14 @@ object *vm_RunMethod(vm *vm,object *key,class_instance_object *cio,tuple_object 
 {
 	tuple_object *l = locals;
 	//printf("method instance:%x\n",cio);
-	//DumpObject(cio,0);
+	//FullDumpObject(cio,0);
+	//FullDumpObject(cio->instance_of->code,0);
 	//printf("method locals start:%x\n",l);
 	//DumpObject(l,0);
-
+	//FullDumpObject(key,0);
 	object *m = GetClassMethod((object*)cio,key);
-	if(m == NULL)
+	if(m == NULL || m == obj_NULL)
+	//if(m == NULL )
 	{
 		#ifdef USE_DEBUGGING
 		debug_printf(DEBUG_VERBOSE_STEP,"method not found\n");
@@ -888,7 +854,7 @@ object *vm_RunMethod(vm *vm,object *key,class_instance_object *cio,tuple_object 
 	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_VERBOSE_STEP,"running method\n");
 	#endif
-	if(l == NULL)
+	if(l == NULL || (object*)l == obj_NULL)
 	{
 		l = CreateTuple(0);
 		gc_IncRefCount((object*)l);
@@ -910,17 +876,22 @@ object *vm_RunMethod(vm *vm,object *key,class_instance_object *cio,tuple_object 
 		ret = vm_StartFunctionObject(vm,(function_object*)m,l,kw_locals);
 		while(ret == NULL && s != n) //TODO replace this construct with a more streamlined version without the need to call step in a loop
 		{
-		ret = vm_Step(vm);
+			ret = vm_Step(vm);
 			n = vm->blocks->list->num;
 		}
-		ret = stack_Pop(((block_object*)stack_Top(vm->blocks))->stack);//needed during construction of class killing the NONE object returned by __init__
-		SetItem(((function_object*)m)->func->varnames,0,NULL);
+		ret = stack_Pop(((block_object*)stack_Top(vm->blocks))->stack);//needed because method returns to value to the parent block stack
+		SetItem(((function_object*)m)->func->varnames,0,NULL);//remove loop reference
 		
     }else if(m->type == TYPE_CFUNCTION)
 	{
 		ret = vm_StartCFunctionObject(vm,(cfunction_object*)m,l,kw_locals);//gc_DecRefCount(locals);
 	}
-	if(locals == NULL)
+
+	//printf("method instance:%x\n",cio);
+	//FullDumpObject(cio,0);
+	//FullDumpObject(cio->instance_of->code,0);
+
+	if(locals == NULL || (object*)locals == obj_NULL)
 	{
 		gc_DecRefCount((object*)l);
 	}
@@ -1263,12 +1234,13 @@ object *vm_InteractiveRunObject(vm *vm, object *obj, tuple_object *locals,tuple_
 }
 #endif
 
-object *vm_CallFunction(vm *vm,char *name,tuple_object *locals,tuple_object *kw_locals)
+object *vm_RunFunction(vm *vm,char *name,tuple_object *locals,tuple_object *kw_locals)
 {
 	object *f = NULL;
-	for(int i=0;i<vm->globals->num;i++)
+	for(int i=0;i<vm->globals->list->num;i++)
 	{	
-			f = GetDictItemByName(((code_object*)vm->globals->items[i])->names,name);
+			if(((object*)vm->globals->list->items[i])->type == TYPE_CODE)
+				f = GetDictItemByName(((code_object*)vm->globals->list->items[i])->names,name);
 			if(f != NULL)
 				break;
 	}
@@ -1314,7 +1286,8 @@ object *vm_RunPYC(vm *vm,stream *f ,BOOL free_object)
 	#if defined(USE_DEBUGGING)
 	//debug_printf(DEBUG_ALL,"read object\n");
 	#endif
-	vm_AddGlobal(vm, (code_object*)obj);
+	object *global_key = (object*)CreateUnicodeObject(str_Copy("__main__"));
+	vm_AddGlobal(vm, global_key,obj);
 	#if defined(USE_DEBUGGING)
 	//debug_printf(DEBUG_ALL,"added global\n");
 	#endif
@@ -1330,7 +1303,7 @@ object *vm_RunPYC(vm *vm,stream *f ,BOOL free_object)
 	if(free_object)
 	{
 		gc_DecRefCount(obj);
-		vm_RemoveGlobal(vm,(code_object*)obj);
+		vm_RemoveGlobal(vm,global_key);
 		stream_Free(f);
 		return(NULL);
 	}
@@ -1462,11 +1435,7 @@ object *vm_Step(vm *vm)
 				
 			case OPCODE_RETURN_VALUE:
 				{
-					//printf("return stack of block:%x\n",bo);
-					//vm_DumpStackTree(vm);
-					//stack_Dump(bo->stack);
 					object *ret = stack_Pop(bo->stack);
-					//stack_Dump(bo->stack);
 					#ifdef USE_DEBUGGING
 					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 					{
@@ -1474,93 +1443,56 @@ object *vm_Step(vm *vm)
 						DumpObject(ret,0);
 					}
 					#endif
-					//stack_Pop(vm->blocks);
 					if(((bo->code->co_flags & CO_SUB_CLASS_ROOT) > 0) )// || (bo->code->co_flags & CO_CLASS_CONSTRUCTOR) > 0))
 					{
 						stack_Pop(vm->blocks);
-						bo->code->co_flags ^= CO_CLASS_ROOT;
+						bo->code->co_flags |= CO_CLASS_ROOT;
 						bo->code->co_flags &= ~CO_SUB_CLASS_ROOT;
-						//printf("return in sub class root\n");
 						gc_Clear();
-						//printf("return to block stack:%x\n",stack_Top(vm->blocks));
-						//vm_DumpStackTree(vm);
 						return (NULL);
 					}else	if((bo->code->co_flags & CO_CLASS_ROOT) > 0)
 					{
-						//stack_Pop(vm->blocks);
-						object *oldb = stack_Pop(vm->blocks);
-						//FullDumpObject(oldb,0);
-						//DumpObject(((block_object*)oldb)->code,0);
-						//we dont pop the block here and need to take precautions that step doesnt return an object during the next step with bo->ip bigger than bo->len
 						//printf("return in class root\n");
+						//printf("actual block:%x\n",stack_Top(vm->blocks));
+						//stack_Dump(bo->stack);
+						stack_Pop(vm->blocks);
 						class_object *c = (class_object*)stack_Pop(bo->stack);//this was initially pushed on stack by vm_StartClassObject();
-						//DumpObject(c->code,0);
-						vm_AddClass(vm,c);
-						//gc_IncRefCount(ret);
-						//vm_RemoveGlobal(vm,co);
-						//int od = debug_level;
-						//debug_level ^= DEBUG_FULL_DUMP;
-						//DumpObject(bo->code,0);
-						//debug_level =od;
-						class_instance_object *cio = AllocClassInstanceObject();
-						cio->type = TYPE_CLASS_INSTANCE;
-						cio->ref_count = 0;
-						cio->instance_of = c;//stack_Pop(bo->stack);
-						gc_IncRefCount((object*)c);
-						cio->methods = (object*)CreateTuple(0);//this is a kv list of cfunctions or functions ->key is an unicode object with the methods name as value
-						gc_IncRefCount((object*)cio->methods);
-						//cio->vars = NULL;
-						cio->vars = (object*)CreateTuple(0);
-						gc_IncRefCount((object*)cio->vars);
+						//vm_AddGlobal(vm,c);
 						//FullDumpObject(c,0);
-						//FullDumpObject(c->code->varnames,0);
+						class_instance_object *cio = CreateClassInstanceObject(c);
 						unicode_object *locals_name = CreateUnicodeObject(str_Copy("__locals__"));
 						gc_IncRefCount((object*)locals_name);
 						object *locals = GetDictItem(c->code->varnames,(object*)locals_name);
 						SetDictItem(c->code->varnames,(object*)locals_name,NULL);
 						gc_DecRefCount((object*)locals_name);
-						//printf("class instance:\n");
-						//DumpObject(cio,0);
-						//printf("return_value init method locals:%x\n",locals);
-						//DumpObject(locals,0);
 						gc_IncRefCount(locals);
 						if(!stack_IsEmpty(vm->blocks))
 						{
 							block_object *parent = (block_object*)stack_Top(vm->blocks);
-							//block_object *parent = (block_object*)stack_Second(vm->blocks);
 							stack_Push(parent->stack,(object*)cio);
-							//printf("parent stack\n");
-							//stack_Dump(parent->stack);
 						}
 						
 						unicode_object *method_name = CreateUnicodeObject(str_Copy("__init__"));
 						gc_IncRefCount((object*)method_name);
 						object *rmr = vm_RunMethod(vm,(object*)method_name,cio,(tuple_object*)locals,NULL);
-						//printf("rmr:\n");
-						//DumpObject(rmr,0);
 						gc_IncRefCount(rmr);
 						gc_DecRefCount(rmr);
 						gc_DecRefCount((object*)method_name);
 						gc_DecRefCount(locals);
-						
 						gc_Clear();
-						//printf("class code:\n");
-						//DumpObject(c->code,0);
-						//printf("class instance:\n");
-						//DumpObject(cio,0);
 						return(NULL);
-						//gc_Clear();
-						//stack_Push(vm->blocks,
 					} else if((bo->code->co_flags & CO_MODULE_ROOT) > 0)
 					{
 						stack_Pop(vm->blocks);
-						//printf("return in module root\n");
-						//gc_IncRefCount(ret);
-						vm_RemoveGlobal(vm,co);
-						//gc_Clear();
+						unicode_object *mkey = CreateUnicodeObject(str_Copy(co->name));
+						vm_RemoveGlobal(vm,(object*)mkey);
+						gc_IncRefCount((object*)mkey);
+						gc_DecRefCount((object*)mkey);
+						
 					} else
 					{
-						block_object *actual_block = (block_object*)stack_Pop(vm->blocks);
+						//block_object *actual_block = (block_object*)stack_Pop(vm->blocks);
+						stack_Pop(vm->blocks);
 						if(!stack_IsEmpty(vm->blocks))
 						{
 							block_object *parent = (block_object*)stack_Top(vm->blocks);
@@ -1577,20 +1509,12 @@ object *vm_Step(vm *vm)
 						}
 						else 
 						{
-							//printf("last stack items left:\n");
-							//stack_Dump(actual_block->stack);
 							gc_IncRefCount(ret);
 							gc_Clear();
-							//printf("no execution blocks left returning\n");
-							//DumpObject(ret,0);
-							//printf("return to block stack:%x\n",stack_Top(vm->blocks));
-							//vm_DumpStackTree(vm);
 							return(ret);
 						}
 					}					
 					gc_Clear();
-					//printf("return to block stack:%x\n",stack_Top(vm->blocks));
-					//vm_DumpStackTree(vm);
 					return (NULL);
 				}
 
@@ -1878,7 +1802,7 @@ object *vm_Step(vm *vm)
 			case OPCODE_RAISE_VARARGS:
 				{
 					printf("RAISE_VARARGS\n");
-					stack_Dump(bo->stack);
+					//stack_Dump(bo->stack);
 				}
 				break;
 				
@@ -1911,7 +1835,7 @@ object *vm_Step(vm *vm)
 
 			case OPCODE_LOAD_BUILD_CLASS:
 				{
-					cfunction_object *cfo = CreateCFunctionObject(&if_build_class,NULL,NULL);
+					cfunction_object *cfo = CreateCFunctionObject(&if_build_class);//TODO switch to get global
 					stack_Push(bo->stack,(object*)cfo);
 				}
 				break;
@@ -1919,8 +1843,6 @@ object *vm_Step(vm *vm)
 			case OPCODE_FOR_ITER:
 				{
 					object *next =  NULL;
-					//stack_Dump(bo->stack);
-					//FullDumpObject(bo->code,0);
 					if(stack_Top(bo->stack)->type == TYPE_ITER)
 						next = iter_NextNow((iter_object*)stack_Top(bo->stack),vm);
 					if (next->type == TYPE_NONE)
@@ -1931,8 +1853,6 @@ object *vm_Step(vm *vm)
 						if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 							DumpObject(next,1);
 						#endif
-						//stack_Push(bo->stack, next);
-						//gc_DecRefCount(next);
 						bo->ip = bo->ip + arg;
 					}
 					else
@@ -2000,6 +1920,13 @@ object *vm_Step(vm *vm)
 					#endif
 					//printf("importing: %s\n",((unicode_object*)name)->value);
 					//stack_Dump(bo->stack);
+					object *mc = vm_GetGlobal(vm,name);
+					if(mc != obj_NULL)
+					{
+						stack_Push(bo->stack,mc);
+						break;
+					}
+					/*
 					BOOL found = 0;
 					for(int i=0;i<vm->globals->num;i++)
 					{	
@@ -2025,6 +1952,7 @@ object *vm_Step(vm *vm)
 					}
 					if(found)
 						break;
+					*/
 					if(vm->import_module_handler != NULL)
 					{
 						object *module = vm->import_module_handler(vm,((unicode_object*)name)->value);
@@ -2032,7 +1960,8 @@ object *vm_Step(vm *vm)
 						if(module != NULL) // found the module push it on stack
 						{
 							stack_Push(bo->stack,module);
-							vm_AddGlobal(vm, (code_object*)module);
+							vm_AddGlobal(vm, name,module);
+							//FullDumpObject(vm->globals,0);
 							vm_StartCodeObject(vm,(code_object*)module,NULL,NULL);
 							//vm_RemoveGlobal(vm, (code_object*)module);
 							gc_DecRefCount(module);//TODO why leaks if removed ????
@@ -2087,8 +2016,8 @@ object *vm_Step(vm *vm)
 				
 			case OPCODE_IMPORT_STAR:
 				{
-							vm_AddGlobal(vm, (code_object*)tos);
-							//gc_IncRefCount(tos);
+					code_object *co = (code_object*)tos;
+					vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy(co->name)), tos);
 				}
 				break;
 				
@@ -2126,6 +2055,10 @@ object *vm_Step(vm *vm)
 					}
 					function_object *fo = CreateFunctionObject_MAKE_FUNCTION((code_object*)tos,defaults,kw_defaults);
 					stack_Push(bo->stack,(object*)fo);
+					gc_IncRefCount((object*)defaults);
+					gc_IncRefCount((object*)kw_defaults);
+					gc_DecRefCount((object*)defaults);
+					gc_DecRefCount((object*)kw_defaults);
 					//printf("created function object: %x (%x)\n",fo,tos);
 					//DumpObject(fo,0);
 					//printf("code\n");
@@ -2167,6 +2100,10 @@ object *vm_Step(vm *vm)
 					//DumpObject(tos1,0);
 					function_object *fo = CreateFunctionObject_MAKE_CLOSURE((code_object*)tos,(tuple_object*)tos1,defaults,kw_defaults);
 					stack_Push(bo->stack,(object*)fo);
+					gc_IncRefCount((object*)defaults);
+					gc_IncRefCount((object*)kw_defaults);
+					gc_DecRefCount((object*)defaults);
+					gc_DecRefCount((object*)kw_defaults);
 				}
 				break;
 				
@@ -2181,7 +2118,7 @@ object *vm_Step(vm *vm)
 				
 			case OPCODE_POP_JUMP_IF_TRUE:
 				{
-					DumpObject(tos,0);
+					//DumpObject(tos,0);
 					if (tos->type == TYPE_TRUE)
 					{
 						bo->ip = arg;
@@ -2229,6 +2166,7 @@ object *vm_Step(vm *vm)
 
 				}
 				break;
+
 			case OPCODE_WITH_CLEANUP:
 				{
 					stack_Clear(bo->stack,1);
@@ -2319,14 +2257,6 @@ object *vm_Step(vm *vm)
 					{
 						stack_Pop(bo->stack);
 					}
-					//IncRefCount((object*)blcall);
-					//IncRefCount((object*)blca);
-					//object *tmp = vm_ExecuteCFunction(vm, "list", blcall,NULL);
-					//if (tmp != NULL)
-					//{
-					//	stack_Push(bo->stack, tmp);
-					//}
-					//FreeObject((object*)blcall);
 					stack_Push(bo->stack,(object*)blcall);
 				}
 				break;
@@ -2334,134 +2264,79 @@ object *vm_Step(vm *vm)
 			case OPCODE_LOAD_GLOBAL:
 				{
 					tuple_object *co_names = (tuple_object *) co->names;
-					char *name = NULL;
+					object *name = obj_NULL;
 					if(((object*)co_names->list->items[arg])->type == TYPE_KV)
-						name = ((unicode_object*)((kv_object*)co_names->list->items[arg])->key)->value;
+						name = ((kv_object*)co_names->list->items[arg])->key;
 					else
-						name = ((unicode_object*)co_names->list->items[arg])->value;
-					#ifdef USE_DEBUGGING
-					debug_printf(DEBUG_VERBOSE_STEP,"searching for:%s\n", name);
-					#endif
+						name = co_names->list->items[arg];
 					object *lgo = obj_NULL;
-
-					for(int i=0;i<vm->globals->num;i++)
-					{	
-						
-						INDEX index = GetItemIndexByName(((code_object*)vm->globals->items[i])->names,name);
-						if(index != -1)
-						{
-							lgo = GetItem(((code_object*)vm->globals->items[i])->names,index);
-						}
-						//if(lgo != NULL)
-						//	PrintObject(lgo);
-						if(lgo != NULL)
-							break;
-						index = GetItemIndexByName(((code_object*)vm->globals->items[i])->varnames,name);
-						if(index != -1)
-						{
-							lgo = GetItem(((code_object*)vm->globals->items[i])->varnames,index);
-						}
-						if(lgo != NULL)
-							break;
-					}
-					if(lgo == NULL) //push an unicode object as failsafe
+					lgo = vm_GetGlobal(vm,(object*)name);
+					
+					//printf("searching for global: ");
+					//PrintObject(name);
+					//printf("\n");
+					if(lgo == obj_NULL)
 					{
-						unicode_object *uso = NULL;
-					if(((object*)co_names->list->items[arg])->type == TYPE_KV)
-						uso = (unicode_object*)((kv_object*)co_names->list->items[arg])->key;
-					else
-						uso = (unicode_object*)co_names->list->items[arg];
-					stack_Push(bo->stack,(object*)uso);	
-					//printf("pu:%s\n",uso->value);
-					}else
-					{
-						//printf("lgo:%s\n",name);
-						//DumpObject(lgo,0);
-					}
-					/*	
-					if (lgo == NULL)
-					{
-						lgo =(object*) vm_FindFunction(vm, name);
-						if (lgo  == NULL)
-						{
-							#ifdef USE_DEBUGGING
-							debug_printf(DEBUG_VERBOSE_STEP,"global not found\n");
-							#endif
-							break;
+						//printf("searching code objects\n");
+						for(INDEX i=0;i<GetTupleLen((object*)vm->globals);i++)
+						{	
+							//printf("i:%d\n",i);
+							code_object *co = (code_object*)GetDictItemByIndex((object*)vm->globals,i);
+							if(co->type == TYPE_CODE)
+							{
+								//FullDumpObject(co,0);
+								INDEX index = GetItemIndexByName(co->names,((unicode_object*)name)->value);
+								if(index != -1)
+								{
+									lgo = GetItem(co->names,index);
+								}
+								if(lgo != obj_NULL)
+									break;
+								index = GetItemIndexByName(co->varnames,((unicode_object*)name)->value);
+								if(index != -1)
+								{
+									lgo = GetItem(co->varnames,index);
+								}
+								if(lgo != obj_NULL)
+									break;
+							}
 						}
 					}
-				
-					*/
 					stack_Push(bo->stack, lgo);
 					#ifdef USE_DEBUGGING
 					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 						DumpObject(lgo,1);
 					#endif
-					// stack_Dump(bo->stack);
 				}
 				break;
 
 			case OPCODE_STORE_GLOBAL:
 				{
 					tuple_object *co_names = (tuple_object *) co->names;
-					char *name = NULL;
+					object *name = obj_NULL;
 					if(((object*)co_names->list->items[arg])->type == TYPE_KV)
-						name = ((unicode_object*)((kv_object*)co_names->list->items[arg])->key)->value;
+						name = ((kv_object*)co_names->list->items[arg])->key;
 					else
-						name = ((unicode_object*)co_names->list->items[arg])->value;
-					#ifdef USE_DEBUGGING
-					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
-					{
-						debug_printf(DEBUG_VERBOSE_STEP,"name:%s\n",name);
-						DumpObject(tos,0);
-					}
-					#endif
-					for(int i=0;i<vm->globals->num;i++)
+						name = co_names->list->items[arg];
+					for(INDEX i=0;i<GetTupleLen((object*)vm->globals);i++)
 					{	
-						INDEX index = GetItemIndexByName(((code_object*)vm->globals->items[i])->names,name);
-						if(index != -1)
+						code_object *co = (code_object*)GetDictItemByIndex((object*)vm->globals,i);
+						if(co->type == TYPE_CODE)
 						{
-							SetDictItemByIndex(((code_object*)vm->globals->items[i])->names,index,tos);
-							/*
-							if((((tuple_object*)global->names)->list->items[index])->type != TYPE_KV)
+							INDEX index = GetItemIndexByName(co->names,((unicode_object*)name)->value);
+							if(index != -1)
 							{
-								((tuple_object*)global->names)->list->items[index] = ConvertToKVObjectValued(((tuple_object*)global->names)->list->items[index],tos);
-								DecRefCountGC(((kv_object*)((tuple_object*)global->names)->list->items[index])->key,vm->garbage);
-								IncRefCount(((tuple_object*)global->names)->list->items[index]);
+								SetDictItemByIndex(co->names,index,tos);
+								break;		
 							}
-							else	
+							index = GetItemIndexByName(co->varnames,((unicode_object*)name)->value);
+							if(index != -1)
 							{
-								if(((kv_object*)((tuple_object*)global->names)->list->items[index])->value != NULL)
-									DecRefCountGC(((kv_object*)((tuple_object*)global->names)->list->items[index])->value,vm->garbage);
-								((kv_object*)((tuple_object*)global->names)->list->items[index])->value = tos;
-								IncRefCount(tos);
-							}*/
-							break;		
-						}
-						index = GetItemIndexByName(((code_object*)vm->globals->items[i])->varnames,name);
-						if(index != -1)
-						{
-							SetDictItemByIndex(((code_object*)vm->globals->items[i])->varnames,index,tos);
-							/*
-							if(((object*)((tuple_object*)global->varnames)->list->items[index])->type != TYPE_KV)
-							{
-								((tuple_object*)global->varnames)->list->items[index] = ConvertToKVObjectValued(((tuple_object*)global->varnames)->list->items[index],tos);
-								DecRefCountGC(((kv_object*)((tuple_object*)global->names)->list->items[index])->key,vm->garbage);
-								IncRefCount(((tuple_object*)global->varnames)->list->items[index]);
+								SetDictItemByIndex(co->varnames,index,tos);
+								break;
 							}
-							else
-							{
-								((kv_object*)((tuple_object*)global->varnames)->list->items[index])->value = tos;
-								if(((kv_object*)((tuple_object*)global->varnames)->list->items[index])->value != NULL)
-									DecRefCountGC(((kv_object*)((tuple_object*)global->varnames)->list->items[index])->value,vm->garbage);
-								IncRefCount(tos);
-							}*/
-							break;
 						}
 					}
-				//#ifdef USE_DEBUGGING
-				//debug_printf(DEBUG_VERBOSE_STEP,"global not found\n");
-				//#endif
 				}
 				break;
 
@@ -2469,26 +2344,28 @@ object *vm_Step(vm *vm)
 				{
 					//TODO needs to be TYPE_KV aware and has to remove unneeded objects
 					tuple_object *co_names = (tuple_object *) co->names;
-					char *name = NULL;
+					object *name = obj_NULL;
 					if(((object*)co_names->list->items[arg])->type == TYPE_KV)
-						name = ((unicode_object*)((kv_object*)co_names->list->items[arg])->key)->value;
+						name = ((kv_object*)co_names->list->items[arg])->key;
 					else
-						name = ((unicode_object*)co_names->list->items[arg])->value;
+						name = co_names->list->items[arg];
 
-					for(int i=0;i<vm->globals->num;i++)
+					for(INDEX i=0;i<GetTupleLen((object*)vm->globals);i++)
 					{	
-						INDEX index = GetItemIndexByName(((code_object*)vm->globals->items[i])->names,name);
-						if(index != -1)
+						code_object *co = (code_object*)GetDictItemByIndex((object*)vm->globals,i);
+						if(co->type == TYPE_CODE)
 						{
-							SetDictItemByIndex(((code_object*)vm->globals->items[i])->names,index,NULL);
-							//DeleteItem(global->names, index);
-							break;
-						}
-						index = GetItemIndexByName(((code_object*)vm->globals->items[i])->varnames,name);
-						if(index != -1)
-						{
-							SetDictItemByIndex(((code_object*)vm->globals->items[i])->varnames,index,NULL);
-							//DeleteItem(global->varnames, index);
+							INDEX index = GetItemIndexByName(co->names,((unicode_object*)name)->value);
+							if(index != -1)
+							{
+								SetDictItemByIndex(co->names,index,NULL);
+								break;
+							}
+							index = GetItemIndexByName(co->varnames,((unicode_object*)name)->value);
+							if(index != -1)
+							{
+								SetDictItemByIndex(co->varnames,index,NULL);
+							}
 						}
 					}
 				}
@@ -2969,7 +2846,6 @@ object *vm_Step(vm *vm)
 						rf = ((kv_object*)rf)->value;
 					rf = DissolveRef(rf);
 					object *ret = vm_StartObjectCopy(vm,rf,call,kw_call);
-					//object *ret = vm_StartObject(vm,rf,call,kw_call);
 					if (ret != NULL)
 					{
 						stack_Push(bo->stack, ret);
@@ -2988,10 +2864,12 @@ object *vm_Step(vm *vm)
 				}
 				#endif
 				break;
-				
 			}
-
 			gc_Clear();
+			if(vm->step_handler != NULL)
+			{
+				vm->step_handler(vm);
+			}
 			return(NULL);
 		} //END OF STEP
 		#ifdef USE_DEBUGGING

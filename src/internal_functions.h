@@ -88,8 +88,6 @@ object *if_iter(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
 
 object *if_map(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
 
-
-
 object *if_next(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
 
 

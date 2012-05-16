@@ -73,6 +73,8 @@ except
 #include "stream.h"
 #include "iterators.h"
 #include "internal_functions.h"
+#include "internal_classes.h"
+
 #include "garbage.h"
 
 #include "debug.h"
@@ -104,39 +106,41 @@ extern "C"  {
 typedef struct _vm
 {
 	stack *blocks; //execution frame stack
-	stack *exceptions;
-	ptr_list *functions;
-	ptr_list *globals;
-	ptr_list *classes;
+	//ptr_list *functions;
+	//ptr_list *globals;
+	//ptr_list *classes;
+	tuple_object *globals;//dictionary of globals
 	object *(*interrupt_handler) (struct _vm *vm,stack *stack);
-	BOOL interrupt_vm;
 	object *(*import_module_handler) (struct _vm *vm,char *module_name);
 	object *(*exception_handler) (struct _vm *vm,struct _exception_object *exception);
-	BOOL running;
 	object *(*step_handler) (struct _vm *vm);//TODO implement step handler to execute external work functions
+	BOOL interrupt_vm;
+	BOOL running;
 } vm;
 
+/*
 typedef struct _cfunction
 {
 	char *name;//used quickly find functions by name
 	struct _object* (*func) (struct _vm *vm,struct _tuple_object *locals,struct _tuple_object *kw_locals);
 } cfunction;
-
+*/
 
 #ifndef USE_ARDUINO_FUNCTIONS
 #pragma pack(pop)				/* restore original alignment from stack */
 #endif
 
+/*
 cfunction *AllocCFunction(void);
 
 void FreeCFunction(cfunction *cf);
-
-BOOL vm_ObjectExists(vm *vm, object  *obj);
+*/
+//BOOL vm_ObjectExists(vm *vm, object  *obj);
 
 #ifdef USE_DEBUGGING
 void vm_DumpStackTree(vm *vm);
 #endif
-
+/*
 cfunction *CreateCFunction(object *(*func) (vm *vm,tuple_object *locals,tuple_object *kw_locals), char *name);//TODO add keyword parameters
 
 int vm_AddFunction(vm *vm, cfunction *fo);
@@ -144,12 +148,12 @@ int vm_AddFunction(vm *vm, cfunction *fo);
 void vm_RemoveFunctionByName(vm *vm, char *name);
 
 void vm_RemoveFunction(vm *vm, cfunction *fo);
-
+*/
 object *vm_ExecuteCFunctionByName(vm *vm, char *name, tuple_object *locals,tuple_object *kw_locals);
 
-object *vm_ExecuteCFunction(vm *vm, cfunction *cf, tuple_object *locals,tuple_object *kw_locals);
+//object *vm_ExecuteCFunction(vm *vm, cfunction *cf, tuple_object *locals,tuple_object *kw_locals);
 
-cfunction *vm_FindFunction(vm *vm, char *name);
+//cfunction *vm_FindFunction(vm *vm, char *name);
 
 vm *vm_Init(code_object *co);//init vm and set global object if given
 
@@ -157,15 +161,21 @@ void vm_Close(vm *vm);//close vm and free all of its used memory
 
 void vm_FreeGlobals(vm *vm);
 
-void vm_AddGlobal(vm *vm, code_object * co);//add a global code object
+void vm_AddGlobal(vm *vm,object *key,object *global);//add a global object
 
-void vm_RemoveGlobal(vm *vm, code_object *co);//remove a global
+void vm_RemoveGlobal(vm *vm, object *key);//remove a global object
 
-void vm_AddClass(vm *vm, class_object *co);
+object *vm_GetGlobal(vm *vm, object *key);//retrieve a global object
+
+//void vm_AddGlobal(vm *vm, code_object * co);//add a global code object
+
+//void vm_RemoveGlobal(vm *vm, code_object *co);//remove a global
+
+/*void vm_AddClass(vm *vm, class_object *co);
 
 void vm_RemoveClass(vm *vm, class_object *co);
 
-void vm_FreeClasses(vm *vm);
+void vm_FreeClasses(vm *vm);*/
 
 void vm_SetInterrupt(vm*vm,object *(*interrupt_func) (struct _vm *vm,stack *stack)); //set interrupt handler function
 
@@ -181,7 +191,7 @@ object *vm_Step(vm *vm);//single step vm //TODO rename to vm_Step
 
 object *vm_RunPYC(vm *vm,stream *f,BOOL free_object);
 
-object *vm_CallFunction(vm *vm,char *name, tuple_object *locals,tuple_object *kw_locals);//call a python function from C
+object *vm_RunFunction(vm *vm,char *name, tuple_object *locals,tuple_object *kw_locals);//call a python function from C
 
 object *vm_RunObject(vm *vm, object *obj, tuple_object *locals,tuple_object *kw_locals);//run a python object if possible
 
@@ -201,7 +211,7 @@ block_object *vm_StartClassObject(vm *vm,class_object *co,tuple_object *locals,t
 
 object *vm_StartFunctionObject(vm *vm,function_object *fo,tuple_object *locals,tuple_object *kw_locals);//run a python function object 
 
-object *vm_StartCFunction(vm *vm,cfunction *cf,tuple_object *locals,tuple_object *kw_locals);
+//object *vm_StartCFunction(vm *vm,cfunction *cf,tuple_object *locals,tuple_object *kw_locals);
 
 object *vm_StartCFunctionObject(vm *vm,cfunction_object *cfo,tuple_object *locals,tuple_object *kw_locals);//run a python function object 
 

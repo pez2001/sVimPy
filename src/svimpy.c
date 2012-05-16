@@ -34,6 +34,8 @@ void ExecutePYC(char *filename)
 	obj_Init();
 	streams_Init();
 	AddInternalFunctions(vm);
+	AddInternalClasses(vm);
+
 	//fmod_Init(vm);
 
 	long pyc_magic = MAGIC;
@@ -45,7 +47,8 @@ void ExecutePYC(char *filename)
 		return;
 	ReadLong(f);//skip time
 	object *obj = ReadObject(f);
-	vm_AddGlobal(vm, (code_object*)obj);
+	object *global_key = (object*)CreateUnicodeObject(str_Copy(((code_object*)obj)->name));
+	vm_AddGlobal(vm, global_key,obj);
 	object *ret = NULL;
 	ret = vm_RunObject(vm, obj, NULL,NULL);
 	if (ret != NULL)
@@ -56,7 +59,7 @@ void ExecutePYC(char *filename)
 		#endif
 		gc_DecRefCount(ret);
 	}
-	vm_RemoveGlobal(vm,(code_object*)obj);
+	vm_RemoveGlobal(vm,global_key);
 	gc_DecRefCount(obj);
 	stream_Free(f);
 	gc_Clear();
@@ -75,12 +78,15 @@ void ExecuteRPYC(char *filename)
 	obj_Init();
 	streams_Init();
 	AddInternalFunctions(vm);
+	AddInternalClasses(vm);
+
 	//fmod_Init(vm);
 	stream *f = stream_CreateFromFile(filename,"rb");
 	if (!stream_Open(f))
 		return;
 	object *obj = ReadObject(f);
-	vm_AddGlobal(vm, (code_object*)obj);
+	object *global_key = (object*)CreateUnicodeObject(str_Copy(((code_object*)obj)->name));
+	vm_AddGlobal(vm, global_key,obj);
 	object *ret = NULL;
 	ret = vm_RunObject(vm, obj, NULL,NULL);	
 	if (ret != NULL)
@@ -91,7 +97,7 @@ void ExecuteRPYC(char *filename)
 		#endif
 		gc_DecRefCount(ret);
 	}
-	vm_RemoveGlobal(vm,(code_object*)obj);
+	vm_RemoveGlobal(vm,global_key);
 	gc_DecRefCount(obj);
 	stream_Free(f);
 	gc_Clear();
@@ -110,13 +116,15 @@ void ExecuteRPYC_PLUS(char *filename)
 	obj_Init();
 	streams_Init();
 	AddInternalFunctions(vm);
+	AddInternalClasses(vm);
 	//fmod_Init(vm);
 
 	stream *f = stream_CreateFromFile(filename,"rb");
 	if (!stream_Open(f))
 		return;
 	object *obj = ReadObjectPlus(f);
-	vm_AddGlobal(vm, (code_object*)obj);
+	object *global_key = (object*)CreateUnicodeObject(str_Copy(((code_object*)obj)->name));
+	vm_AddGlobal(vm, global_key,obj);
 	object *ret = NULL;
 	ret = vm_RunObject(vm, obj, NULL,NULL);	
 	if (ret != NULL)
@@ -127,7 +135,7 @@ void ExecuteRPYC_PLUS(char *filename)
 		#endif
 		gc_DecRefCount(ret);
 	}
-	vm_RemoveGlobal(vm,(code_object*)obj);
+	vm_RemoveGlobal(vm, global_key);
 	gc_DecRefCount(obj);
 	stream_Free(f);
 	gc_Clear();

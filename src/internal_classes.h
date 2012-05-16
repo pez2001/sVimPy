@@ -44,5 +44,6 @@ struct _vm;
 } 
 #endif
 
+void AddInternalClasses(struct _vm *vm);
 
 #endif

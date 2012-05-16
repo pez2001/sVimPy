@@ -107,14 +107,14 @@ struct _stack;
 struct _object;
 struct _tuple_object;
 struct _code_object;
-
+/*
 typedef	union _object_func
 {
 	struct _object* (*func) (struct _vm *vm,struct _tuple_object *locals,struct _tuple_object *kw_locals);
 	struct _object* (*func_obj) (struct _vm *vm,struct _object *object);
 	struct _code_object *code;
 } object_func;
-
+*/
 
 #ifndef USE_ARDUINO_FUNCTIONS
 #pragma pack(push)				/* push current alignment to stack */
@@ -208,7 +208,7 @@ typedef struct _class_object
 	OBJECT_TYPE type;
 	//OBJECT_FLAGS flags;
 	OBJECT_REF_COUNT ref_count;
-	char *name;//TODO remove
+	//char *name;//TODO remove
 	code_object *code;
 	object *base_classes;
 } class_object;
@@ -263,9 +263,9 @@ typedef struct _function_object
 	OBJECT_TYPE type;
 	//OBJECT_FLAGS flags;
 	OBJECT_REF_COUNT ref_count;
-	tuple_object *defaults;//set to default values in MAKE_FUNCTION opcode //TODO REMOVE THESE ... redundant with new function calling style(each function gets its own copy before execution > move this into the make_function opcode)
+	/*tuple_object *defaults;//set to default values in MAKE_FUNCTION opcode //TODO REMOVE THESE ... redundant with new function calling style(each function gets its own copy before execution > move this into the make_function opcode)
 	tuple_object *kw_defaults;//set to default keyword values in MAKE_FUNCTION opcode
-	tuple_object *closure;
+	tuple_object *closure;*/
 	struct _code_object *func;
 } function_object;
 
@@ -274,8 +274,8 @@ typedef struct _cfunction_object
 	OBJECT_TYPE type;
 	//OBJECT_FLAGS flags;
 	OBJECT_REF_COUNT ref_count;
-	tuple_object *defaults;//set to default values in MAKE_FUNCTION opcode //TODO check if really needed
-	tuple_object *kw_defaults;//set to default keyword values in MAKE_FUNCTION opcode
+	//tuple_object *defaults;//set to default values in MAKE_FUNCTION opcode //TODO check if really needed
+	//tuple_object *kw_defaults;//set to default keyword values in MAKE_FUNCTION opcode
 	struct _object* (*func) (struct _vm *vm,struct _tuple_object *locals,struct _tuple_object *kw_locals);
 } cfunction_object;
 
@@ -455,11 +455,13 @@ function_object *CreateFunctionObject_MAKE_CLOSURE(code_object *function_code,tu
 
 function_object *CreateFunctionObject(code_object *co);
 
-cfunction_object *CreateCFunctionObject(struct _object* (*func) (struct _vm *vm,struct _tuple_object *locals,struct _tuple_object *kw_locals),tuple_object *defaults,tuple_object *kw_defaults);//used for in-python storage of external calls
+cfunction_object *CreateCFunctionObject(struct _object* (*func) (struct _vm *vm,struct _tuple_object *locals,struct _tuple_object *kw_locals));//,tuple_object *defaults,tuple_object *kw_defaults);//used for in-python storage of external calls
 
 method_object *CreateMethodObject(object *func,class_instance_object *instance);
 
-class_object *CreateClassObject(char *name,code_object *code,object *base_classes);
+class_object *CreateClassObject(code_object *code,object *base_classes);//char *name,
+
+code_object *CreateCodeObject(char *name);
 
 class_instance_object *CreateClassInstanceObject(class_object *instance_of);
 
@@ -526,6 +528,8 @@ void InsertItem(object *tuple,INDEX index,object *value);
 void ClearDictValues(object *tuple);
 
 void DeleteItem(object *tuple, INDEX index);
+
+void DeleteDictItem(object *tuple,object *key);
 
 #ifdef __cplusplus
 } 

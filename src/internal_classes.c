@@ -23,7 +23,7 @@
 #include "internal_classes.h"
 
 
-object *if_file_close(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+object *ic_file_close(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
 	//printf("file close called\n");
 	object *self = GetItem((object*)locals,0);
@@ -43,7 +43,7 @@ object *if_file_close(struct _vm *vm,tuple_object *locals,tuple_object *kw_local
 	return (tmp);
 }
 
-object *if_file_readline(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+object *ic_file_readline(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
 	//printf("readline called\n");
 	object *self = GetItem((object*)locals,0);
@@ -87,79 +87,32 @@ object *if_file_readline(struct _vm *vm,tuple_object *locals,tuple_object *kw_lo
 	return (tmp);
 }
 
-object *if_open(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+class_object *ic_CreateFileClass(void)
 {
-	object *x = GetItem((object*)locals,0);
-	if(x->type == TYPE_UNICODE)
-		printf("opening file:%s\n",((unicode_object*)x)->value);
-		
-	code_object *file = AllocCodeObject();
-	file->type = TYPE_CODE;
-	file->name = str_Copy(((unicode_object*)x)->value);
-	file->argcount = 0;
-	file->kwonlyargcount = 0;
-	file->nlocals = 2;
-	file->stacksize = 0;
-	file->co_flags = 0;
-	file->code = NULL;
-	file->consts = NULL;
-	file->varnames = NULL;
-	file->freevars = NULL;
-	file->cellvars = NULL;
-	file->names = (object*)CreateTuple(3);
-	gc_IncRefCount(file->names);
-	file->ref_count = 0;
-	
-	
-	stream *fs = stream_CreateFromFile(((unicode_object*)x)->value,"rb");
-	stream_Open(fs);
-	//printf("stream @ %x\n",fs);
-	tag_object *file_tag = CreateTagObject(fs);
-	//printf("stream tag @ %x\n",file_tag);
-	
-	unicode_object *file_name = CreateUnicodeObject(str_Copy("__file__"));
-	kv_object *kvfile = CreateKVObject((object*)file_name,(object*) file_tag);
-	SetItem(file->names,0,(object*)kvfile);
 
-	cfunction_object *readline_cfo = CreateCFunctionObject(&if_file_readline,NULL,NULL);
+	code_object *file = CreateCodeObject(str_Copy("file_code"));
+	file->nlocals = 2;
+	file->names = (object*)CreateTuple(2);
+	gc_IncRefCount(file->names);
+	
+	cfunction_object *readline_cfo = CreateCFunctionObject(&ic_file_readline);
 	unicode_object *readline = CreateUnicodeObject(str_Copy("readline"));
 	kv_object *kvreadline = CreateKVObject((object*)readline,(object*) readline_cfo);
-	SetItem(file->names,1,(object*)kvreadline);
+	SetItem(file->names,0,(object*)kvreadline);
 
-	cfunction_object *close_cfo = CreateCFunctionObject(&if_file_close,NULL,NULL);
+	cfunction_object *close_cfo = CreateCFunctionObject(&ic_file_close);
 	unicode_object *close = CreateUnicodeObject(str_Copy("__del__"));
 	kv_object *kvclose = CreateKVObject((object*)close,(object*) close_cfo);
-	SetItem(file->names,2,(object*)kvclose);
+	SetItem(file->names,1,(object*)kvclose);
 
 	
-	class_object *file_class = AllocClassObject();
-	file_class->type = TYPE_CLASS;
-	file_class->name = str_Copy("file");
-	file_class->base_classes = NULL;
-	file_class->code = file;
-	gc_IncRefCount((object*)file);
-	file_class->code->co_flags ^= CO_CLASS_ROOT;
-	file_class->ref_count = 0;
-	
-	class_instance_object *file_instance = AllocClassInstanceObject();
-	file_instance->type = TYPE_CLASS_INSTANCE;
-	file_instance->ref_count = 0;
-	file_instance->instance_of = file_class;
-	gc_IncRefCount((object*)file_class);
-	file_instance->methods = (object*)CreateTuple(0);
-	gc_IncRefCount((object*)file_instance->methods);
-	file_instance->vars = (object*)CreateTuple(0);
-	gc_IncRefCount((object*)file_instance->vars);
-	
-	
-	return((object*)file_instance);
+	class_object *file_class = CreateClassObject(file,NULL);
 		
-	//object *tmp =CreateEmptyObject(TYPE_NONE);
-	//return (tmp);
+	return(file_class);
 }
 
 void AddInternalClasses(struct _vm *vm)
 {
-
+	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy("file_class")),(object*)ic_CreateFileClass());
 }
 
