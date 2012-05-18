@@ -30,6 +30,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/types.h>
+#include <getopt.h>
 
 const char *compress_pyc_helpmsg = "Usage: compress_pyc [OPTION]... [INPUT FILE] [OUTPUT FILE]\n\
 Compress Compiled Python Code Files.\n\
