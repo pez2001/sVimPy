@@ -99,31 +99,10 @@ object *fmod_Sleep(vm *vm,tuple_object *locals,tuple_object *kw_locals)
 void AddFmodGlobals(vm *vm)
 {
 	code_object *a_globals = CreateCodeObject(str_Copy("fmod_code"));
-	a_globals->nlocals = 4;
-	a_globals->names = (object*)CreateTuple(4);
-	gc_IncRefCount(a_globals->names);
-	//a_globals->varnames = (object*)CreateTuple(0);
-	//gc_IncRefCount(a_globals->varnames);
 	AddCodeCFunction((object*)a_globals,"Sleep",&fmod_Sleep);
-	cfunction_object *sleep_cfo = CreateCFunctionObject(&fmod_Sleep);
-	unicode_object *sleep = CreateUnicodeObject(str_Copy("Sleep"));
-	kv_object *kvsleep = CreateKVObject((object*)sleep,(object*) sleep_cfo);
-	SetItem(a_globals->names,0,(object*)kvsleep);
-
-	cfunction_object *play_cfo = CreateCFunctionObject(&fmod_playSound);
-	unicode_object *play = CreateUnicodeObject(str_Copy("playSound"));
-	kv_object *kvplay = CreateKVObject((object*)play,(object*) play_cfo);
-	SetItem(a_globals->names,1,(object*)kvplay);
-
-	cfunction_object *init_cfo = CreateCFunctionObject(&fmod_Init);
-	unicode_object *init = CreateUnicodeObject(str_Copy("__init__"));
-	kv_object *kvinit = CreateKVObject((object*)init,(object*) init_cfo);
-	SetItem(a_globals->names,2,(object*)kvinit);
-
-	cfunction_object *del_cfo = CreateCFunctionObject(&fmod_Close);
-	unicode_object *del = CreateUnicodeObject(str_Copy("__del__"));
-	kv_object *kvdel = CreateKVObject((object*)del,(object*) del_cfo);
-	SetItem(a_globals->names,3,(object*)kvdel);
+	AddCodeCFunction((object*)a_globals,"playSound",&fmod_playSound);
+	AddCodeCFunction((object*)a_globals,"__init__",&fmod_Init);
+	AddCodeCFunction((object*)a_globals,"__del__",&fmod_Close);
 
 	class_object *fmod_global = CreateClassObject(a_globals,NULL);
 	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy("fmod")),fmod_global);
