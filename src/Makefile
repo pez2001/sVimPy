@@ -155,14 +155,14 @@ all: build_inc svimpy unit_tests compress_pyc pack_pos debug
 
 unit_tests: vm_static $(UT_OBJ) 
 #	$(CC) $(UT_OBJ) vm.a libraries/libfmodex.a -o unit_tests 
-	$(CC) $(UT_OBJ) vm.a -o unit_tests 
+	$(CC) $(UT_OBJ) vm.a -lm -o unit_tests 
 
 unit_tests_debug: vm_static_debug $(UT_DEBUG_OBJ) 
 #	$(CC) $(UT_DEBUG_OBJ) vm.da libraries/libfmodex.a -o unit_tests_debug 
-	$(CC) $(UT_DEBUG_OBJ) vm.da -o unit_tests_debug 
+	$(CC) $(UT_DEBUG_OBJ) vm.da -lm -o unit_tests_debug 
 
 unit_tests_o: $(VM_OBJ) $(UT_OBJ)
-	$(CC) $(VM_OBJ) $(UT_OBJ)  -o unit_tests 
+	$(CC) $(VM_OBJ) $(UT_OBJ)  -lm -o unit_tests 
 
 build_inc: $(TOOLS_BUILD_INC_OBJ) 
 	$(CC) $(TOOLS_BUILD_INC_OBJ) -o build_inc
@@ -177,21 +177,21 @@ pack_pos_o: $(TOOLS_PACK_POS_OBJ)
 	$(CC) $(TOOLS_PACK_POS_OBJ) -o pack_pos 
 
 compress_pyc: vm_static $(TOOLS_COMPRESS_PYC_OBJ) 
-	$(CC) $(TOOLS_COMPRESS_PYC_OBJ) vm.a -o compress_pyc
+	$(CC) $(TOOLS_COMPRESS_PYC_OBJ) vm.a -lm -o compress_pyc
 
 compress_pyc_o: $(TOOLS_COMPRESS_PYC_OBJ)
 	$(CC) $(TOOLS_COMPRESS_PYC_OBJ) -o compress_pyc 
 
 svimpy: vm_static $(SVIMPY_OBJ) 
 #	$(CC) $(SVIMPY_OBJ) vm.a libraries/libfmodex.a -lkernel32 -o svimpy 
-	$(CC) $(SVIMPY_OBJ) vm.a -o svimpy 
+	$(CC) $(SVIMPY_OBJ) vm.a -lm -o svimpy 
 
 svimpy_debug: vm_static_debug $(SVIMPY_DEBUG_OBJ) 
 #	$(CC) $(SVIMPY_DEBUG_OBJ) vm.da libraries/libfmodex.a -o svimpy_debug 
-	$(CC) $(SVIMPY_DEBUG_OBJ) vm.da -o svimpy_debug 
+	$(CC) $(SVIMPY_DEBUG_OBJ) vm.da -lm -o svimpy_debug 
 
 svimpy_o: $(VM_OBJ) $(SVIMPY_OBJ)
-	$(CC) $(VM_OBJ) $(SVIMPY_OBJ)  -o svimpy 
+	$(CC) $(VM_OBJ) $(SVIMPY_OBJ)  -lm -o svimpy 
 	
 vm_static: $(VM_OBJ)
 	$(AR) -rs vm.a $(VM_OBJ)
