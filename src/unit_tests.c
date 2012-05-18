@@ -557,7 +557,7 @@ void AtomicOpenPYC(char *filename)
 	AddInternalFunctions(vm);
 	AddInternalClasses(vm);
 	//fmod_Init(vm);
-	AddFmodGlobals(vm);
+	//AddFmodGlobals(vm);
 	long pyc_magic = MAGIC;
 	stream *f = stream_CreateFromFile(filename,"rb");
 	if (!stream_Open(f))
@@ -720,7 +720,7 @@ void atomic_test(void)
 	printf("Atomic Tests Version : %d.%d-%d\n",MAJOR_VERSION,MINOR_VERSION,BUILD+1);
 	#endif
 
-AtomicOpenPYC("tests/PlayNew.pyc");
+//AtomicOpenPYC("tests/PlayNew.pyc");
 		//testing seperated function var spaces
 	//AtomicOpenPYC("tests/test_sep_method.pyc");
 	//return;
@@ -774,7 +774,7 @@ AtomicOpenPYC("tests/PlayNew.pyc");
 
 	//fmod tests + classes as globals
 	//AtomicOpenPYC("tests/Play.pyc");//old version without class support
-	AtomicOpenPYC("tests/PlayNew.pyc");
+	//AtomicOpenPYC("tests/PlayNew.pyc");
 
 	//open file test + if_iter with sentinel
 	AtomicOpenPYC("tests/test_open.pyc");
