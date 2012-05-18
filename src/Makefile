@@ -30,7 +30,7 @@ MAJOR_VERSION = 0
 MINOR_VERSION = 74
 #builds are counted since version 0.5 roughly
 BUILD = 245
-DEBUG_BUILD = 984
+DEBUG_BUILD = 985
 
 #CFLAGS= -Ilibraries/fmod -W -w -O2 -std=c99 -DBUILD=$(BUILD) -DMAJOR_VERSION=$(MAJOR_VERSION) -DMINOR_VERSION=$(MINOR_VERSION)
 CFLAGS= -W -w -O2 -std=c99 -DBUILD=$(BUILD) -DMAJOR_VERSION=$(MAJOR_VERSION) -DMINOR_VERSION=$(MINOR_VERSION) -lm
@@ -151,16 +151,16 @@ PLATFORM_EXT = .exe
 endif
 
 test: clean all
-	unit_tests$(PLATFORM_EXT)
+	./unit_tests$(PLATFORM_EXT)
 
 test_debug: debug
-	unit_tests_debug$(PLATFORM_EXT)
+	./unit_tests_debug$(PLATFORM_EXT)
 	
 debug: clean_debug build_inc svimpy_debug unit_tests_debug
-	build_inc$(PLATFORM_EXT) Makefile DEBUG_BUILD
+	./build_inc$(PLATFORM_EXT) Makefile DEBUG_BUILD
 
 all: build_inc svimpy unit_tests compress_pyc pack_pos debug
-	build_inc$(PLATFORM_EXT) Makefile BUILD
+	./build_inc$(PLATFORM_EXT) Makefile BUILD
 
 unit_tests: vm_static $(UT_OBJ) 
 #	$(CC) $(UT_OBJ) vm.a libraries/libfmodex.a -o unit_tests 
