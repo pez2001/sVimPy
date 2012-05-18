@@ -91,23 +91,9 @@ class_object *ic_CreateFileClass(void)
 {
 
 	code_object *file = CreateCodeObject(str_Copy("file_code"));
-	file->nlocals = 2;
-	file->names = (object*)CreateTuple(2);
-	gc_IncRefCount(file->names);
-	
-	cfunction_object *readline_cfo = CreateCFunctionObject(&ic_file_readline);
-	unicode_object *readline = CreateUnicodeObject(str_Copy("readline"));
-	kv_object *kvreadline = CreateKVObject((object*)readline,(object*) readline_cfo);
-	SetItem(file->names,0,(object*)kvreadline);
-
-	cfunction_object *close_cfo = CreateCFunctionObject(&ic_file_close);
-	unicode_object *close = CreateUnicodeObject(str_Copy("__del__"));
-	kv_object *kvclose = CreateKVObject((object*)close,(object*) close_cfo);
-	SetItem(file->names,1,(object*)kvclose);
-
-	
-	class_object *file_class = CreateClassObject(file,NULL);
-		
+	AddCodeCFunction((object*)file,"readline",&ic_file_readline);
+	AddCodeCFunction((object*)file,"__del__",&ic_file_close);
+	class_object *file_class = CreateClassObject(file,NULL);		
 	return(file_class);
 }
 
