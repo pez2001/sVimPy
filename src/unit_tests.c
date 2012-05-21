@@ -489,15 +489,18 @@ object *ImportModule(struct _vm *vm,char *module_name)
 object *CatchException(struct _vm *vm,struct _object *exception)
 {
 	printf("caught exception:");
-	object *msg_name = CreateUnicodeObject(str_Copy("message"));
+	object *msg_name = (object*)CreateUnicodeObject(str_Copy("message"));
 	gc_IncRefCount(msg_name);
-	object *message = GetAttribute(tos,msg_name);
+	object *message = GetAttribute(exception,msg_name);
 	gc_DecRefCount(msg_name);
 	PrintObject(message);
 	printf("\n");
-	vm_Close();
+
+	//vm_Close(vm);
+	vm_Exit(vm);
 	return(NULL);
-	return(CreateEmptyObject(TYPE_NONE));
+	//exit;
+	//return(CreateEmptyObject(TYPE_NONE));
 }
 
 void AtomicOpenPYC(char *filename)
@@ -606,12 +609,12 @@ void atomic_test(void)
 	debug_level = 0;
 	//debug_level |= DEBUG_INTERACTIVE;
 	debug_level |= DEBUG_MEMORY;
-	debug_level |= DEBUG_SHOW_OPCODES;
+	//debug_level |= DEBUG_SHOW_OPCODES;
 	//debug_level |= DEBUG_FULL_DUMP;
 	//debug_level |= DEBUG_STACK;
 	//debug_level |= DEBUG_LISTS;
 	//debug_level |= DEBUG_GC;
-	debug_level |= DEBUG_VERBOSE_STEP;
+	//debug_level |= DEBUG_VERBOSE_STEP;
 	//debug_level |= DEBUG_VM;
 	//debug_level |= DEBUG_FREEING;
 	//debug_level |= DEBUG_ALLOCS;
@@ -619,7 +622,7 @@ void atomic_test(void)
 	//debug_level |= DEBUG_DUMP_OBJECT;
 	//debug_level |= DEBUG_CREATION;
 	//debug_level |= DEBUG_VERBOSE_FREEING;
-	debug_level |= DEBUG_VERBOSE_TESTS;	
+	//debug_level |= DEBUG_VERBOSE_TESTS;	
 	//debug_level |= DEBUG_PTR_LISTS;
 	//debug_level |= DEBUG_INTERNAL_FUNCTIONS;
 	//debug_level |= DEBUG_COUNT_OBJECTS;
@@ -642,6 +645,8 @@ void atomic_test(void)
 //AtomicOpenPYC("tests/test_import.pyc");
 	//return;
 
+	AtomicOpenPYC("tests/test32b.pyc");
+	//return;
 
 	//exceptions
 	AtomicOpenPYC("tests/test_assert.pyc");
@@ -692,19 +697,13 @@ void atomic_test(void)
 	
 	//append ops + generators
 	//AtomicOpenPYC("tests/test53.pyc", vm);
-	
 	AtomicOpenPYC("tests/test_yield.pyc");
 	AtomicOpenPYC("tests/test45.pyc");
-	//return;
 
 	//iters
 	AtomicOpenPYC("tests/test61.pyc");
-	
 	AtomicOpenPYC("tests/test60.pyc");
-	
 
-
-	//AtomicOpenPYC("tests/test47.pyc");
 	
 	//pos + kw defaults
 	AtomicOpenPYC("tests/test55c.pyc");
@@ -751,7 +750,8 @@ void atomic_test(void)
 	AtomicOpenPYC("tests/test58.pyc");
 
 	//brute ops + closures
-	//AtomicOpenPYC("tests/test32.pyc");
+	AtomicOpenPYC("tests/test32.pyc");
+
 	//function parameters
 	AtomicOpenPYC("tests/test_functions.pyc");
 	AtomicOpenPYC("tests/test50.pyc");//with keywords unordered

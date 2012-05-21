@@ -59,7 +59,7 @@ void stack_Clear(stack *stack, BOOL free_objects)
 					//FreeObject((object**)&((object*)(ptr_Pop(stack->list))));
 					object *fo = (object*)ptr_Pop(stack->list);
 					gc_DecRefCount(fo);
-					printf("freed stack item: %x\n",fo);
+					//printf("freed stack item: %x\n",fo);
 			}
 			//printf("stack list num:%d\n",stack->list->num);
 		}

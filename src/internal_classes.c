@@ -103,7 +103,7 @@ object *ic_assertion_error_init(struct _vm *vm,tuple_object *locals,tuple_object
 	object *self = GetItem((object*)locals,0);
 	object *exception_message = GetItem((object*)locals,1);
 	//PrintObject(exception_message);
-	SetAttribute(self,CreateUnicodeObject(str_Copy("message")),exception_message);
+	SetAttribute(self,(object*)CreateUnicodeObject(str_Copy("message")),exception_message);
 	object *tmp =CreateEmptyObject(TYPE_NONE);
 	return (tmp);
 }

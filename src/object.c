@@ -611,16 +611,17 @@ function_object *CreateFunctionObject_MAKE_CLOSURE(code_object *function_code,tu
 		for (NUM i = 0; i < GetTupleLen((object*)closure); i++)
 		{
 			object *local = GetItem((object*)closure,i);
-			if(local->type == TYPE_KV)
-				local = ((kv_object*)local)->value;
-			if(GetItem(function_code->freevars,i)->type != TYPE_KV)
-			{
-				SetItem(function_code->freevars,i,(object*)ConvertToKVObjectValued(GetItem(function_code->freevars,i),local));
-			}
-			else
-			{
-				SetDictItemByIndex(function_code->freevars,i,local);
-			}
+			//if(local->type == TYPE_KV)
+			//	local = ((kv_object*)local)->value;
+			
+			//if(GetItem(function_code->freevars,i)->type != TYPE_KV)
+			//{
+			//	SetItem(function_code->freevars,i,(object*)ConvertToKVObjectValued(GetItem(function_code->freevars,i),local));
+			//}
+			//else
+			//{
+				SetItem(function_code->freevars,i,local);
+			//}
 		}
 	}
 
@@ -1687,9 +1688,11 @@ object *CopyObject(object *obj)
 				gc_IncRefCount(c->consts);
 				c->varnames = CopyObject(((code_object*)obj)->varnames);
 				gc_IncRefCount(c->varnames);
-				c->freevars = CopyObject(((code_object*)obj)->freevars);
+				//c->freevars = CopyObject(((code_object*)obj)->freevars);
+				c->freevars = ((code_object*)obj)->freevars;
 				gc_IncRefCount(c->freevars);
-				c->cellvars = CopyObject(((code_object*)obj)->cellvars);
+				//c->cellvars = CopyObject(((code_object*)obj)->cellvars);
+				c->cellvars = ((code_object*)obj)->cellvars;
 				gc_IncRefCount(c->cellvars);
 				c->names = CopyObject(((code_object*)obj)->names);
 				gc_IncRefCount(c->names);

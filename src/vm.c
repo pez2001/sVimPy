@@ -519,7 +519,10 @@ void vm_Continue(vm *vm)
 
 void vm_Exit(vm *vm)//just a placeholder for things i didnt consider right now
 {
-	vm_Close(vm);
+	vm->interrupt_vm = 0;
+	vm->running = 0;
+	//vm_Close(vm);
+	stack_Clear(vm->blocks,1);
 }
 
 void vm_Stop(vm *vm)
@@ -533,17 +536,11 @@ object *vm_StartObjectCopy(vm *vm,object *obj, tuple_object *locals,tuple_object
 	if(obj == NULL)
 		return(NULL);
 
-	//printf("StartObjectCopy(%x:%c)\n",obj,obj->type);
 	if(obj->type == TYPE_UNICODE)
 	{
-		//printf("executing function:");
-		//PrintObject(obj);
-		//printf("\n");
 		object *f = vm_GetGlobal(vm,obj);
 		if(f != obj_NULL)
 		{
-			//printf("found function\n");
-			//FullDumpObject(f,0);
 			object *uret = vm_StartObjectCopy(vm,f, locals,kw_locals);
 			return(uret);
 		}
@@ -595,16 +592,9 @@ object *vm_StartObjectCopy(vm *vm,object *obj, tuple_object *locals,tuple_object
 	{
 		object *c = CopyObject(obj);
 		gc_IncRefCount(c);
-		//gc_DecRefCount(c);
-		//printf("copied Object\n");
-		//FullDumpObject(c,0);
-		//printf("original:\n");
-		//FullDumpObject(obj,0);
-		//gc_IncRefCount(c);
 		object *r = vm_StartObject(vm,c,locals,kw_locals);
 		gc_DecRefCount(c);
 		return(r);
-		//return(vm_StartObject(vm,obj,locals,kw_locals));
 	}
 	return(NULL);
 }
@@ -1876,6 +1866,11 @@ object *vm_Step(vm *vm)
 					}
 					if(vm->exception_handler != NULL)
 						vm->exception_handler(vm,tos);
+					//gc_Clear();
+					object *o = CreateEmptyObject(TYPE_NONE);
+					//o->ref_count++;
+					gc_IncRefCount(o);
+					return(CreateEmptyObject(TYPE_NONE));
 				}
 				break;
 				
@@ -2331,6 +2326,10 @@ object *vm_Step(vm *vm)
 						stack_Pop(bo->stack);
 					}
 					stack_Push(bo->stack,(object*)blcall);
+					#ifdef USE_DEBUGGING
+					if(debug_level & DEBUG_VERBOSE_STEP)
+						FullDumpObject((object*)blcall,0);
+					#endif
 				}
 				break;
 				
@@ -2508,6 +2507,11 @@ object *vm_Step(vm *vm)
 							SetDictItemByIndex(co->freevars,arg - GetTupleLen(co->cellvars),tos);
 						}
 					}
+					//printf("cellvars:\n");
+					//FullDumpObject(co->cellvars,0);
+					//printf("freevars:\n");
+					//FullDumpObject(co->freevars,0);
+					
 					#ifdef USE_DEBUGGING
 					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 						DumpObject(tos,1);
@@ -2517,6 +2521,10 @@ object *vm_Step(vm *vm)
 
 			case OPCODE_LOAD_DEREF:
 				{
+					//printf("cellvars:\n");
+					//FullDumpObject(co->cellvars,0);
+					//printf("freevars:\n");
+					//FullDumpObject(co->freevars,0);
 					object *cell =  NULL;
 					if(arg < GetTupleLen(co->cellvars))
 						cell = GetItem(co->cellvars,arg);
@@ -2635,7 +2643,7 @@ object *vm_Step(vm *vm)
 				}
 				#ifdef USE_DEBUGGING
 				if((debug_level & DEBUG_VERBOSE_STEP) > 0)
-					DumpObject(tos,1);
+					FullDumpObject(tos,1);
 				#endif
 				}
 				break;
