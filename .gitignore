@@ -1,4 +1,10 @@
+﻿src/*.hex
+src/*.elf
 src/*.o
+src/*.ao
+src/*.do
+src/*.da
+src/*.aopp
 src/*.txt
 src/*.a
 src/*.dll

@@ -486,6 +486,20 @@ object *ImportModule(struct _vm *vm,char *module_name)
 	return(obj);
 }
 
+object *CatchException(struct _vm *vm,struct _object *exception)
+{
+	printf("caught exception:");
+	object *msg_name = CreateUnicodeObject(str_Copy("message"));
+	gc_IncRefCount(msg_name);
+	object *message = GetAttribute(tos,msg_name);
+	gc_DecRefCount(msg_name);
+	PrintObject(message);
+	printf("\n");
+	vm_Close();
+	return(NULL);
+	return(CreateEmptyObject(TYPE_NONE));
+}
+
 void AtomicOpenPYC(char *filename)
 {
 	printf("executing object:%s\n", filename);
@@ -496,6 +510,7 @@ void AtomicOpenPYC(char *filename)
 	#endif
 	vm *vm = vm_Init(NULL);
 	vm->import_module_handler = &ImportModule;
+	vm->exception_handler = &CatchException;
 	long pyc_magic = MAGIC;
 	stream *f = stream_CreateFromFile(filename,"rb");
 	if (!stream_Open(f))

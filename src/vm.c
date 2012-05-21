@@ -1854,7 +1854,7 @@ object *vm_Step(vm *vm)
 			
 			case OPCODE_RAISE_VARARGS:
 				{
-					printf("RAISE_VARARGS\n");
+					//printf("RAISE_VARARGS\n");
 					//stack_Dump(bo->stack);
 					tos = stack_Pop(bo->stack);
 					tos = DissolveRef(tos);
@@ -1874,12 +1874,6 @@ object *vm_Step(vm *vm)
 						if(tos2->type == TYPE_KV)
 							tos2 = ((kv_object*)tos2)->value;
 					}
-					object *msg_name = CreateUnicodeObject(str_Copy("message"));
-					gc_IncRefCount(msg_name);
-					object *message = GetAttribute(tos,msg_name);
-					gc_DecRefCount(msg_name);
-					PrintObject(message);
-					printf("\n");
 					if(vm->exception_handler != NULL)
 						vm->exception_handler(vm,tos);
 				}
