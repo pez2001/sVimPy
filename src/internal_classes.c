@@ -97,6 +97,16 @@ class_object *ic_CreateFileClass(void)
 	return(file_class);
 }
 
+class_object *ic_CreateAssertionErrorClass(void)
+{
+
+	code_object *assertion_error_code = CreateCodeObject(str_Copy("assertion_error_code"));
+	//AddCodeCFunction((object*)file,"readline",&ic_file_readline);
+	//AddCodeCFunction((object*)file,"__del__",&ic_file_close);
+	class_object *assert_class = CreateClassObject(assertion_error_code,NULL);		
+	return(assert_class);
+}
+
 void AddInternalClasses(struct _vm *vm)
 {
 	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy("file_class")),(object*)ic_CreateFileClass());
