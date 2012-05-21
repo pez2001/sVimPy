@@ -106,13 +106,10 @@ extern "C"  {
 typedef struct _vm
 {
 	stack *blocks; //execution frame stack
-	//ptr_list *functions;
-	//ptr_list *globals;
-	//ptr_list *classes;
 	tuple_object *globals;//dictionary of globals
 	object *(*interrupt_handler) (struct _vm *vm,stack *stack);
 	object *(*import_module_handler) (struct _vm *vm,char *module_name);
-	object *(*exception_handler) (struct _vm *vm,struct _exception_object *exception);
+	object *(*exception_handler) (struct _vm *vm,struct _object *exception);
 	object *(*step_handler) (struct _vm *vm);//TODO implement step handler to execute external work functions
 	BOOL interrupt_vm;
 	BOOL running;

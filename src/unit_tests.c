@@ -252,25 +252,10 @@ void brute_test(void)
 	//debug_level |= DEBUG_PTR_LISTS;
 	//debug_level |= DEBUG_INTERNAL_FUNCTIONS;
 	//debug_level |= DEBUG_COUNT_OBJECTS;
-	mem_Init();
 	#endif
-	//printf("streams initiated\n");
-	//stream_tests();
 	
 	vm *vm = vm_Init(NULL);
-	gc_Init(vm);
-	obj_Init();
-	//debug_printf(DEBUG_ALL,"hi:%s\n","hi");
 
-	//ptr_tests();
-	streams_Init();
-	AddInternalFunctions(vm);
-	AddInternalClasses(vm);
-
-	//#ifdef USE_ARDUINO_FUNCTIONS
-	//AddArduinoFunctions(vm);
-	//AddArduinoGlobals(vm);
-	//#endif
 	// printf("Calling all Unit Tests\n");
 
 	//stream *mb = stream_CreateFromBytes((char*)&blink,BLINK_LEN);
@@ -439,12 +424,7 @@ void brute_test(void)
 	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_VERBOSE_TESTS,"closing vm\n");
 	#endif
-	gc_Clear();
 	vm_Close(vm);
-	streams_Close();
-	obj_Close();
-	gc_Close();
-	// printf("objects headers total size : %d\n",objects_header_total);
 	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_DUMP_UNSUPPORTED) > 0)
 		DumpUnsupportedOpCodes();
@@ -508,29 +488,6 @@ object *ImportModule(struct _vm *vm,char *module_name)
 
 void AtomicOpenPYC(char *filename)
 {
-	#ifdef USE_DEBUGGING
-	//debug_level = 0;
-	//debug_level |= DEBUG_INTERACTIVE;
-	//debug_level |= DEBUG_MEMORY;
-	//debug_level |= DEBUG_SHOW_OPCODES;
-	//debug_level |= DEBUG_FULL_DUMP;
-	//debug_level |= DEBUG_STACK;
-	//debug_level |= DEBUG_LISTS;
-	//debug_level |= DEBUG_GC;
-	//debug_level |= DEBUG_VERBOSE_STEP;
-	//debug_level |= DEBUG_VM;
-	//debug_level |= DEBUG_FREEING;
-	//debug_level |= DEBUG_ALLOCS;
-	//debug_level |= DEBUG_DUMP_UNSUPPORTED;
-	//debug_level |= DEBUG_DUMP_OBJECT;
-	//debug_level |= DEBUG_CREATION;
-	//debug_level |= DEBUG_VERBOSE_FREEING;
-	//debug_level |= DEBUG_VERBOSE_TESTS;	
-	//debug_level |= DEBUG_PTR_LISTS;
-	//debug_level |= DEBUG_INTERNAL_FUNCTIONS;
-	//debug_level |= DEBUG_COUNT_OBJECTS;
-	mem_Init();
-	#endif
 	printf("executing object:%s\n", filename);
 	printf("sVimPy Python Output\n{\n");
 
@@ -538,58 +495,18 @@ void AtomicOpenPYC(char *filename)
 	debug_printf(DEBUG_VERBOSE_TESTS,"vm_Init\n");
 	#endif
 	vm *vm = vm_Init(NULL);
-	#ifdef USE_DEBUGGING
-	debug_printf(DEBUG_VERBOSE_TESTS,"gc_Init\n");
-	#endif
-	gc_Init(vm);
-	#ifdef USE_DEBUGGING
-	debug_printf(DEBUG_VERBOSE_TESTS,"obj_Init\n");
-	#endif	
-	obj_Init();
-	#ifdef USE_DEBUGGING
-	debug_printf(DEBUG_VERBOSE_TESTS,"streams_Init\n");
-	#endif	
-	streams_Init();
 	vm->import_module_handler = &ImportModule;
-	#ifdef USE_DEBUGGING
-	debug_printf(DEBUG_VERBOSE_TESTS,"AddInternalFunctions\n");
-	#endif
-	AddInternalFunctions(vm);
-	AddInternalClasses(vm);
-	//fmod_Init(vm);
-	//AddFmodGlobals(vm);
 	long pyc_magic = MAGIC;
 	stream *f = stream_CreateFromFile(filename,"rb");
 	if (!stream_Open(f))
 		return;
-	//#ifdef USE_DEBUGGING
-	//debug_printf(DEBUG_VERBOSE_TESTS,"executing object:%s\n", filename);
-	//#endif
-	// int r = fread(bh,4,1,f);
-	// if(!memcmp(bh,(char*)&pyc_magic,4))
 	long magic = ReadLong(f);
-
 	if (magic != pyc_magic)
 		return;
 	ReadLong(f);//skip time
-
-	/* struct tm *ti; //TO DECREASE MEMORY USAGE ti = localtime((void*)&time);
-	   char *bt = (char*)mem_malloc(100); strftime(bt,100,"%Y.%m.%d ",ti);
-	   printf("file date: %s\n", bt); strftime(bt,100,"%H:%M:%S \n",ti);
-	   printf("file time: %s\n", bt); mem_free(bt); //8 bytes into the file */
-	//printf("reading object\n");
 	object *obj = ReadObject(f);
-	//object *obj = NULL;
-	//return;
-	//printf("read pyc\n");
-	// printf("heap bytes used by objects:%d\n",mem_chunks_actual_size);
-	// printf("MAX HEAP USAGE:%d\n",mem_chunks_max_size);
-	// printf("objects num: %d\n",objects_num);
-	// printf("max objects : %d\n",objects_max);
-	// printf("objects headers total size : %d\n",objects_header_total);
 	object *global_key = (object*)CreateUnicodeObject(str_Copy(((code_object*)obj)->name));
 	vm_AddGlobal(vm, global_key,obj);
-	//FullDumpObject(obj, 0);
 	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_DUMP_OBJECT) > 0)
 		DumpObject(obj, 0);
@@ -638,30 +555,6 @@ void AtomicOpenPYC(char *filename)
 	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_VERBOSE_TESTS,"pyc executed\n");
 	#endif
-
-	//fmod_Close();
-	#ifdef USE_DEBUGGING
-	debug_printf(DEBUG_VERBOSE_TESTS,"cleaning gc\n");
-	#endif
-	gc_Clear();
-	#ifdef USE_DEBUGGING
-	debug_printf(DEBUG_VERBOSE_TESTS,"closing vm\n");
-	#endif
-	vm_Close(vm);
-	#ifdef USE_DEBUGGING
-	debug_printf(DEBUG_VERBOSE_TESTS,"closing streams\n");
-	#endif
-	streams_Close();	
-	#ifdef USE_DEBUGGING
-	debug_printf(DEBUG_VERBOSE_TESTS,"closing obj\n");
-	#endif
-	obj_Close();
-	#ifdef USE_DEBUGGING
-	debug_printf(DEBUG_VERBOSE_TESTS,"closing gc\n");
-	#endif
-	gc_Close();
-
-	// printf("objects headers total size : %d\n",objects_header_total);
 	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_DUMP_UNSUPPORTED) > 0)
 		DumpUnsupportedOpCodes();
@@ -686,7 +579,7 @@ void AtomicOpenPYC(char *filename)
 	free(py_cmdf);
 	#endif
 	*/
-	mem_Close();
+	vm_Close(vm);
 	if((debug_level & DEBUG_MEMORY)>0)
 		printf("%d memory chunks leaked\n", mem_chunks_num);
 	#endif
@@ -698,12 +591,12 @@ void atomic_test(void)
 	debug_level = 0;
 	//debug_level |= DEBUG_INTERACTIVE;
 	debug_level |= DEBUG_MEMORY;
-	//debug_level |= DEBUG_SHOW_OPCODES;
+	debug_level |= DEBUG_SHOW_OPCODES;
 	//debug_level |= DEBUG_FULL_DUMP;
 	//debug_level |= DEBUG_STACK;
 	//debug_level |= DEBUG_LISTS;
 	//debug_level |= DEBUG_GC;
-	//debug_level |= DEBUG_VERBOSE_STEP;
+	debug_level |= DEBUG_VERBOSE_STEP;
 	//debug_level |= DEBUG_VM;
 	//debug_level |= DEBUG_FREEING;
 	//debug_level |= DEBUG_ALLOCS;
@@ -728,7 +621,7 @@ void atomic_test(void)
 	//AtomicOpenPYC("tests/test_sep_func.pyc");
 		//open file test + if_iter with sentinel
 	//AtomicOpenPYC("tests/test_open.pyc");	
-		AtomicOpenPYC("tests/test_class11.pyc");
+	//	AtomicOpenPYC("tests/test_class11.pyc");
 	//AtomicOpenPYC("tests/test_class6.pyc");
 	//AtomicOpenPYC("tests/test_import.pyc");
 //AtomicOpenPYC("tests/test_import.pyc");
@@ -736,8 +629,8 @@ void atomic_test(void)
 
 
 	//exceptions
-	//AtomicOpenPYC("tests/test_assert.pyc");
-	//return;
+	AtomicOpenPYC("tests/test_assert.pyc");
+	return;
 	
 	//AtomicOpenPYC("tests/Queens2a.pyc");
 	//return;

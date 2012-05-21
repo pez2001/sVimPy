@@ -97,11 +97,22 @@ class_object *ic_CreateFileClass(void)
 	return(file_class);
 }
 
+object *ic_assertion_error_init(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+{
+	//printf("file close called\n");
+	object *self = GetItem((object*)locals,0);
+	object *exception_message = GetItem((object*)locals,1);
+	//PrintObject(exception_message);
+	SetAttribute(self,CreateUnicodeObject(str_Copy("message")),exception_message);
+	object *tmp =CreateEmptyObject(TYPE_NONE);
+	return (tmp);
+}
+
 class_object *ic_CreateAssertionErrorClass(void)
 {
 
 	code_object *assertion_error_code = CreateCodeObject(str_Copy("assertion_error_code"));
-	//AddCodeCFunction((object*)file,"readline",&ic_file_readline);
+	AddCodeCFunction((object*)assertion_error_code,"__init__",&ic_assertion_error_init);
 	//AddCodeCFunction((object*)file,"__del__",&ic_file_close);
 	class_object *assert_class = CreateClassObject(assertion_error_code,NULL);		
 	return(assert_class);
@@ -110,5 +121,6 @@ class_object *ic_CreateAssertionErrorClass(void)
 void AddInternalClasses(struct _vm *vm)
 {
 	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy("file_class")),(object*)ic_CreateFileClass());
+	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy("AssertionError")),(object*)ic_CreateAssertionErrorClass());
 }
 

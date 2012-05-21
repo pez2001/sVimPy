@@ -315,6 +315,7 @@ cfunction *vm_FindFunction(vm *vm, char *name)
 vm *vm_Init(code_object *co)
 {
 	#ifdef USE_DEBUGGING
+	mem_Init();
 	vm *tmp = (vm *) mem_malloc(sizeof(vm), "vm_Init() return");
 	#else
 	vm *tmp = (vm *)malloc(sizeof(vm));
@@ -330,17 +331,53 @@ vm *vm_Init(code_object *co)
 	tmp->running = 0;
 	tmp->interrupt_vm = 0;
 	tmp->interrupt_handler = NULL;
+	tmp->exception_handler = NULL;
 	tmp->step_handler = NULL;
 	tmp->import_module_handler = NULL;
+	
+	#ifdef USE_DEBUGGING
+	debug_printf(DEBUG_VERBOSE_TESTS,"gc_Init\n");
+	#endif
+	gc_Init(tmp);
+	#ifdef USE_DEBUGGING
+	debug_printf(DEBUG_VERBOSE_TESTS,"obj_Init\n");
+	#endif	
+	obj_Init();
+	#ifdef USE_DEBUGGING
+	debug_printf(DEBUG_VERBOSE_TESTS,"streams_Init\n");
+	#endif	
+	streams_Init();
+
+	#ifdef USE_DEBUGGING
+	debug_printf(DEBUG_VERBOSE_TESTS,"AddInternalFunctions\n");
+	#endif
+	AddInternalFunctions(tmp);
+	AddInternalClasses(tmp);
+	//#ifdef USE_ARDUINO_FUNCTIONS
+	//AddArduinoFunctions(vm);
+	//AddArduinoGlobals(vm);
+	//#endif
+
+	//AddFmodGlobals(vm);
+	
 	if (co != NULL)
 	{
 		vm_AddGlobal(tmp,(object*)CreateUnicodeObject(str_Copy("__main__")),(object*)co);
 	}
+	
 	return (tmp);
 }
 
 void vm_Close(vm *vm)
 {
+	#ifdef USE_DEBUGGING
+	debug_printf(DEBUG_VERBOSE_TESTS,"closing vm\n");
+	#endif
+	#ifdef USE_DEBUGGING
+	debug_printf(DEBUG_VERBOSE_TESTS,"cleaning gc\n");
+	#endif
+	gc_Clear();
+
 	/*
 	if (vm->functions->num)
 	{
@@ -362,6 +399,23 @@ void vm_Close(vm *vm)
 	assert(mem_free(vm));
 	#else
 	free(vm);
+	#endif
+	
+	#ifdef USE_DEBUGGING
+	debug_printf(DEBUG_VERBOSE_TESTS,"closing streams\n");
+	#endif
+	streams_Close();	
+	#ifdef USE_DEBUGGING
+	debug_printf(DEBUG_VERBOSE_TESTS,"closing obj\n");
+	#endif
+	obj_Close();
+	#ifdef USE_DEBUGGING
+	debug_printf(DEBUG_VERBOSE_TESTS,"closing gc\n");
+	#endif
+	gc_Close();
+
+	#ifdef USE_DEBUGGING
+	mem_Close();
 	#endif
 }
 
@@ -1802,6 +1856,32 @@ object *vm_Step(vm *vm)
 				{
 					printf("RAISE_VARARGS\n");
 					//stack_Dump(bo->stack);
+					tos = stack_Pop(bo->stack);
+					tos = DissolveRef(tos);
+					if(tos->type == TYPE_KV)
+						tos = ((kv_object*)tos)->value;
+					if(arg > 1) //parameter
+					{
+						tos1 = stack_Pop(bo->stack);
+						tos1 = DissolveRef(tos1);
+						if(tos1->type == TYPE_KV)
+							tos1 = ((kv_object*)tos1)->value;
+					}
+					if(arg > 2) //traceback
+					{
+						tos2 = stack_Pop(bo->stack);
+						tos2 = DissolveRef(tos2);
+						if(tos2->type == TYPE_KV)
+							tos2 = ((kv_object*)tos2)->value;
+					}
+					object *msg_name = CreateUnicodeObject(str_Copy("message"));
+					gc_IncRefCount(msg_name);
+					object *message = GetAttribute(tos,msg_name);
+					gc_DecRefCount(msg_name);
+					PrintObject(message);
+					printf("\n");
+					if(vm->exception_handler != NULL)
+						vm->exception_handler(vm,tos);
 				}
 				break;
 				
@@ -2270,9 +2350,12 @@ object *vm_Step(vm *vm)
 						name = co_names->list->items[arg];
 					object *lgo = obj_NULL;
 					lgo = vm_GetGlobal(vm,(object*)name);
-					
-					//printf("searching for global: ");
-					//PrintObject(name);
+					#ifdef USE_DEBUGGING
+					debug_printf(DEBUG_VERBOSE_STEP,"searching for global: ");
+					if(debug_level & DEBUG_VERBOSE_STEP)
+						PrintObject(name);
+					debug_printf(DEBUG_VERBOSE_STEP,"\n");
+					#endif
 					//printf("\n");
 					if(lgo == obj_NULL)
 					{
