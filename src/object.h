@@ -40,13 +40,6 @@
 #include "memory.h"
 #endif
 
-//#define TAG "cpython-32"
-//#define CACHEDIR "__pycache__"
-/* Current magic word and string tag as globals. */
-
-//static const char *pyc_tag = TAG;
-
-//static short pyc_magic_short = 3180;
 #ifdef __cplusplus
 extern "C"  {
 #endif
@@ -107,14 +100,6 @@ struct _stack;
 struct _object;
 struct _tuple_object;
 struct _code_object;
-/*
-typedef	union _object_func
-{
-	struct _object* (*func) (struct _vm *vm,struct _tuple_object *locals,struct _tuple_object *kw_locals);
-	struct _object* (*func_obj) (struct _vm *vm,struct _object *object);
-	struct _code_object *code;
-} object_func;
-*/
 
 #ifndef USE_ARDUINO_FUNCTIONS
 #pragma pack(push)				/* push current alignment to stack */
@@ -124,14 +109,12 @@ typedef	union _object_func
 typedef struct _object
 {
 	OBJECT_TYPE type;
-	//OBJECT_FLAGS flags;
 	OBJECT_REF_COUNT ref_count;
 } object;
 
 typedef struct _ref_object
 {
 	OBJECT_TYPE type;
-	//OBJECT_FLAGS flags;
 	OBJECT_REF_COUNT ref_count;
 	object *ref;
 } ref_object;
@@ -139,16 +122,13 @@ typedef struct _ref_object
 typedef struct _tag_object
 {
 	OBJECT_TYPE type;
-	//OBJECT_FLAGS flags;
 	OBJECT_REF_COUNT ref_count;
 	void *tag;
 } tag_object;
 
-
 typedef struct _int_object
 {
 	OBJECT_TYPE type;
-	//OBJECT_FLAGS flags;
 	OBJECT_REF_COUNT ref_count;
 	INT value;
 } int_object;
@@ -156,7 +136,6 @@ typedef struct _int_object
 typedef struct _float_object
 {
 	OBJECT_TYPE type;
-	//OBJECT_FLAGS flags;
 	OBJECT_REF_COUNT ref_count;
 	FLOAT value;
 } float_object;
@@ -164,16 +143,13 @@ typedef struct _float_object
 typedef struct _unicode_object
 {
 	OBJECT_TYPE type;
-	//OBJECT_FLAGS flags;
 	OBJECT_REF_COUNT ref_count;
 	char *value;
 }unicode_object;
 
-
 typedef struct _kv_object
 {
 	OBJECT_TYPE type;
-	//OBJECT_FLAGS flags;
 	OBJECT_REF_COUNT ref_count;
 	void *value;
 	void *key;
@@ -182,7 +158,6 @@ typedef struct _kv_object
 typedef struct _code_object
 {
 	OBJECT_TYPE type;
-	//OBJECT_FLAGS flags;
 	OBJECT_REF_COUNT ref_count;
 	char *name;
 	NUM argcount;
@@ -206,9 +181,7 @@ typedef struct _code_object
 typedef struct _class_object
 {
 	OBJECT_TYPE type;
-	//OBJECT_FLAGS flags;
 	OBJECT_REF_COUNT ref_count;
-	//char *name;//TODO remove
 	code_object *code;
 	object *base_classes;
 } class_object;
@@ -216,7 +189,6 @@ typedef struct _class_object
 typedef struct _class_instance_object
 {
 	OBJECT_TYPE type;
-	//OBJECT_FLAGS flags;
 	OBJECT_REF_COUNT ref_count;
 	class_object *instance_of;	
 	object *methods;
@@ -226,65 +198,45 @@ typedef struct _class_instance_object
 typedef struct _method_object
 {
 	OBJECT_TYPE type;
-	//OBJECT_FLAGS flags;
 	OBJECT_REF_COUNT ref_count;
-	//char *name;
 	object *func;
 	class_instance_object *instance;
 } method_object;
 
-
 typedef struct _string_object
 {
 	OBJECT_TYPE type;
-	//OBJECT_FLAGS flags;
 	OBJECT_REF_COUNT ref_count;
 	char *content;
 	NUM len;
 } string_object;
 
-
 typedef struct _tuple_object
 {
 	OBJECT_TYPE type;
-	//OBJECT_FLAGS flags;
 	OBJECT_REF_COUNT ref_count;
-	//object *ptr;
 	INDEX ptr;
 	ptr_list *list;
 } tuple_object;
 
-
-//struct _vm;
-//struct _stack;
-
 typedef struct _function_object
 {
 	OBJECT_TYPE type;
-	//OBJECT_FLAGS flags;
 	OBJECT_REF_COUNT ref_count;
-	/*tuple_object *defaults;//set to default values in MAKE_FUNCTION opcode //TODO REMOVE THESE ... redundant with new function calling style(each function gets its own copy before execution > move this into the make_function opcode)
-	tuple_object *kw_defaults;//set to default keyword values in MAKE_FUNCTION opcode
-	tuple_object *closure;*/
 	struct _code_object *func;
 } function_object;
 
 typedef struct _cfunction_object
 {
 	OBJECT_TYPE type;
-	//OBJECT_FLAGS flags;
 	OBJECT_REF_COUNT ref_count;
-	//tuple_object *defaults;//set to default values in MAKE_FUNCTION opcode //TODO check if really needed
-	//tuple_object *kw_defaults;//set to default keyword values in MAKE_FUNCTION opcode
 	struct _object* (*func) (struct _vm *vm,struct _tuple_object *locals,struct _tuple_object *kw_locals);
 } cfunction_object;
-
 
 //TODO create struct for generator storage
 typedef struct _iter_object
 {
 	OBJECT_TYPE type;
-	//OBJECT_FLAGS flags;
 	OBJECT_REF_COUNT ref_count;
 	object *tag;//used for storage of iter options and index ptr
 	object *(*iter_func)(struct _iter_object *iter,struct _vm *vm);
@@ -294,7 +246,6 @@ typedef struct _iter_object
 typedef struct _block_object
 {
 	OBJECT_TYPE type;
-	//OBJECT_FLAGS flags;
 	OBJECT_REF_COUNT ref_count;
 	code_object *code;
 	INDEX start;
@@ -302,21 +253,6 @@ typedef struct _block_object
 	NUM len;
 	struct _stack *stack;
 } block_object;
-
-typedef struct _exception_object
-{
-	OBJECT_TYPE type;
-	//OBJECT_FLAGS flags;
-	OBJECT_REF_COUNT ref_count;
-	char *name;
-	char *description;
-	//struct _block_object *block;//block in which the exception occured 
-	struct _stack *traceback;
-	struct _object *exception;//
-} exception_object;
-
-
-
 
 #ifndef USE_ARDUINO_FUNCTIONS
 #pragma pack(pop)				/* restore original alignment from stack */
@@ -326,14 +262,11 @@ void obj_Init(void);
 
 void obj_Close(void);
 
-
 kv_object *ConvertToKVObject(object *key);
 
 kv_object *ConvertToKVObjectValued(object *key,object *value);
 
 object *AllocObject(void);
-
-exception_object *AllocExceptionObject(void);
 
 block_object *AllocBlockObject(void);
 
@@ -367,47 +300,9 @@ cfunction_object *AllocCFunctionObject(void);
 
 method_object *AllocMethodObject(void);
 
-/*object *AsObject(void *ptr);
-
-string_object *AsStringObject(object * obj);
-
-code_object *AsCodeObject(object * obj);
-
-ref_object *AsRefObject(object *obj);
-
-iter_object *AsIterObject(object * obj);
-
-int_object *AsIntObject(object * obj);
-
-float_object *AsFloatObject(object * obj);
-
-function_object *AsFunctionObject(object * obj);
-
-tuple_object *AsTupleObject(object * obj);
-
-unicode_object *AsUnicodeObject(object *obj);
-
-int IsIntObject(object * obj);
-
-int IsFloatObject(object * obj);
-
-int IsStringObject(object * obj);
-
-int IsUnicodeObject(object * obj);
-
-int IsCodeObject(object * obj);
-
-int IsTupleObject(object * obj);
-
-int IsRefObject(object * obj);
-
-int IsIterObject(object * obj);
-*/
-
 object *LockObject(object *obj);
 
 void UnlockObject(object *obj);
-
 
 long ReadLong(stream *f);
 
@@ -464,8 +359,6 @@ class_object *CreateClassObject(code_object *code,object *base_classes);//char *
 code_object *CreateCodeObject(char *name);
 
 class_instance_object *CreateClassInstanceObject(class_object *instance_of);
-
-exception_object *CreateExceptionObject(char *name,char *description,struct _stack *blocks,struct _object *exception);
 
 iter_object *CreateIterObject(void);
 

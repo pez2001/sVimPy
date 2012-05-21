@@ -650,7 +650,7 @@ void atomic_test(void)
 
 	//exceptions
 	AtomicOpenPYC("tests/test_assert.pyc");
-	return;
+	//return;
 	
 	//AtomicOpenPYC("tests/Queens2a.pyc");
 	//return;

@@ -108,15 +108,6 @@ code_object *AllocCodeObject(void)
 	#endif
 }
 
-exception_object *AllocExceptionObject(void)
-{
-	#ifdef USE_DEBUGGING
-	return((exception_object*)mem_malloc(sizeof(exception_object), "AllocExceptionObject() return"));
-	#else
-	return((exception_object*)malloc(sizeof(exception_object)));
-	#endif
-}
-
 class_object *AllocClassObject(void)
 {
 	#ifdef USE_DEBUGGING
@@ -233,92 +224,6 @@ iter_object *AllocIterObject(void)
 	return((iter_object*) malloc(sizeof(iter_object)));
 	#endif
 }
-
-/*int IsIntObject(object * obj)
-{
-	return (obj->type == TYPE_INT);
-}
-
-int IsFloatObject(object * obj)
-{
-	return (obj->type == TYPE_BINARY_FLOAT);
-}
-
-int IsStringObject(object * obj)
-{
-	return (obj->type == TYPE_STRING);
-}
-
-int IsUnicodeObject(object * obj)
-{
-	return (obj->type == TYPE_UNICODE);
-}
-
-int IsCodeObject(object * obj)
-{
-	return (obj->type == TYPE_CODE);
-}
-
-int IsTupleObject(object * obj)
-{
-	return (obj->type == TYPE_TUPLE);
-}
-
-int IsRefObject(object * obj)
-{
-	return (obj->type == TYPE_REF);
-}
-
-int IsIterObject(object * obj)
-{
-	return (obj->type == TYPE_ITER);
-}
-
-string_object *AsStringObject(object * obj)
-{
-	return ((string_object *) obj);
-}
-
-code_object *AsCodeObject(object * obj)
-{
-	return ((code_object *) obj);
-}
-
-function_object *AsFunctionObject(object * obj)
-{
-	return ((function_object *) obj);
-}
-
-tuple_object *AsTupleObject(object * obj)
-{
-	return ((tuple_object *) obj);
-}
-
-unicode_object *AsUnicodeObject(object *obj)
- {
-   return((unicode_object*)obj); 
-  }
-
-int_object *AsIntObject(object *obj)
- {
-   return((int_object*)obj); 
-  }
-
-float_object *AsFloatObject(object *obj)
- {
-   return((float_object*)obj); 
-  }   
-  
-ref_object *AsRefObject(object *obj)
-{   
-   return((ref_object*)obj); 
-}
-
-iter_object *AsIterObject(object *obj)
-{   
-   return((iter_object*)obj); 
-}
-*/
 
 ref_object *CreateRefObject(object *ref_to)//,OBJECT_FLAGS flags)
 {

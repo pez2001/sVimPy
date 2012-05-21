@@ -76,25 +76,6 @@ r :\n\
 
 #endif
 /*
-cfunction *AllocCFunction(void)
-{
-	#ifdef USE_DEBUGGING
-	return((cfunction*) mem_malloc(sizeof(cfunction),"AllocCFunction() return"));
-	#else
-	return((cfunction*) malloc(sizeof(cfunction)));
-	#endif
-}
-
-void FreeCFunction(cfunction *cf)
-{
-	#ifdef USE_DEBUGGING
-	assert(mem_free(cf));
-	#else
-	free(cf);
-	#endif
-}
-*/
-/*
 BOOL vm_SearchObject(object *obj,object *needle)
 {
 	if (obj != NULL)
@@ -233,85 +214,7 @@ void vm_DumpStackTree(vm *vm)
 	}
 }
 #endif
-/*
-cfunction *CreateCFunction(object *(*func) (vm *vm,tuple_object *locals,tuple_object *kw_locals), char *name)
-{	
-	cfunction *fo = AllocCFunction();
-	fo->func = func;
-	//fo->name = str_Copy(name);
-	fo->name = name;
-	return (fo);
-}
 
-int vm_AddFunction(vm *vm, cfunction *fo)
-{
-	ptr_Push(vm->functions, fo);
-	//IncRefCount((object*)fo);
-	//printf("a:%s\n",fo->name);
-	return (vm->functions->num - 1);
-}
-
-void vm_RemoveFunctionByName(vm *vm, char *name)
-{
-	for (NUM i = 0; i < vm->functions->num; i++)
-	{
-		if (!strcmp(((cfunction*)vm->functions->items[i])->name, name))
-		{
-			FreeCFunction((cfunction*)vm->functions->items[i]);
-			ptr_Remove(vm->functions, i);
-			return;
-		}
-	}
-}
-
-void vm_RemoveFunction(vm *vm, cfunction *fo)
-{
-	for (NUM i = 0; i < vm->functions->num; i++)
-	{
-		if (vm->functions->items[i] == fo)
-		{
-			FreeCFunction((cfunction*)fo);
-			ptr_Remove(vm->functions, i);
-			return;
-		}
-	}
-}
-
-object *vm_ExecuteCFunctionByName(vm *vm, char *name,tuple_object *locals,tuple_object *kw_locals)
-{
-	cfunction *fo = vm_FindFunction(vm, name);
-
-	if (fo != NULL)
-	{
-		 //printf("fd found:%s\n",fo->name);
-		
-		return ((*fo->func) (vm,locals,kw_locals));
-	}
-	return(NULL);
-}
-
-object *vm_ExecuteCFunction(vm *vm, cfunction *cf, tuple_object *locals,tuple_object *kw_locals)
-{
-	if (cf != NULL)
-	{	
-		//PrintObject(locals);
-		//DumpObject(locals,0);
-		//DumpObject(kw_locals,0);
-		return((*cf->func) (vm,locals,kw_locals));
-	}
-	return(NULL);
-}
-
-cfunction *vm_FindFunction(vm *vm, char *name)
-{
-	for (NUM i = 0; i < vm->functions->num; i++)
-	{
-		if (!strcmp(((cfunction*) vm->functions->items[i])->name, name))
-			return((cfunction*)vm->functions->items[i]);
-	}
-	return(NULL);
-}
-*/
 vm *vm_Init(code_object *co)
 {
 	#ifdef USE_DEBUGGING
@@ -321,13 +224,9 @@ vm *vm_Init(code_object *co)
 	vm *tmp = (vm *)malloc(sizeof(vm));
 	#endif
 
-	//tmp->functions = ptr_CreateList(0, 0);
 	tmp->blocks = stack_Init();
-	//tmp->exceptions = stack_Init();
-	//tmp->globals = ptr_CreateList(0,0);
 	tmp->globals = CreateTuple(0);
 	gc_IncRefCount((object*)tmp->globals);
-	//tmp->classes = ptr_CreateList(0,0);
 	tmp->running = 0;
 	tmp->interrupt_vm = 0;
 	tmp->interrupt_handler = NULL;
@@ -378,23 +277,8 @@ void vm_Close(vm *vm)
 	#endif
 	gc_Clear();
 
-	/*
-	if (vm->functions->num)
-	{
-		for (NUM i = 0; i < vm->functions->num; i++)
-			FreeCFunction((cfunction*)vm->functions->items[i]);
-	}
-	ptr_CloseList(vm->functions);
-	*/
-	//for(NUM i = 0;i<vm->blocks->list->num;i++)
-	//		FreeObject((object*)vm->blocks->list->items[i]);
 	stack_Close(vm->blocks, 1);
-	//stack_Close(vm->exceptions,1);
-	//vm_FreeGlobals(vm);
-	//ptr_CloseList(vm->globals);
 	gc_DecRefCount((object*)vm->globals);
-	//vm_FreeClasses(vm);
-	//ptr_CloseList(vm->classes);
 	#ifdef USE_DEBUGGING
 	assert(mem_free(vm));
 	#else
@@ -442,62 +326,6 @@ object *vm_GetGlobal(vm *vm, object *key)//retrieve a global object
 	return(GetDictItem((object*)vm->globals,key));
 }
 
-/*
-void vm_AddGlobal(vm *vm, code_object *co)
-{
-	if(!ptr_Contains(vm->globals,co))
-	{
-		//printf("adding module\n");
-		//DumpObject(co,0);
-		ptr_Push(vm->globals,co);
-		gc_IncRefCount(co);
-	}
-}
-
-void vm_RemoveGlobal(vm *vm, code_object *co)
-{
-	ptr_RemoveItem(vm->globals,co);
-	gc_DecRefCount(co);
-}
-
-void vm_FreeGlobals(vm *vm)
-{
-	for(INDEX i=0;i<vm->globals->num;i++)
-	{	
-			//printf("freeing module %d: %x\n",i,(object*)vm->globals->items[i]);
-			//DumpObject((object*)vm->globals->items[i],0);
-			gc_DecRefCount((object*)vm->globals->items[i]);
-	}
-}
-*/
-/*
-void vm_AddClass(vm *vm, class_object *co)
-{
-	if(!ptr_Contains(vm->classes,co))
-	{
-		//printf("adding class\n");
-		//FullDumpObject(co,0);
-		ptr_Push(vm->classes,co);
-		gc_IncRefCount(co);
-	}
-}
-
-void vm_RemoveClass(vm *vm, class_object *co)
-{
-	ptr_RemoveItem(vm->classes,co);
-	gc_DecRefCount(co);
-}
-
-void vm_FreeClasses(vm *vm)
-{
-	for(INDEX i=0;i<vm->classes->num;i++)
-	{	
-			//printf("freeing class %d: %x\n",i,(object*)vm->classes->items[i]);
-			//FullDumpObject((object*)vm->classes->items[i],0);
-			gc_DecRefCount((object*)vm->classes->items[i]);
-	}
-}
-*/
 void vm_Interrupt(vm *vm,object *(*interrupt) (struct _vm *vm,stack *stack))
 {
 	vm->interrupt_handler = interrupt;
@@ -855,17 +683,7 @@ object *vm_StartFunctionObject(vm *vm,function_object *fo,tuple_object *locals,t
 		stack_Push(vm->blocks, (object*)bo);
 		return(NULL);//got nothing to return now
 }
-/*
-object *vm_StartCFunction(vm *vm,cfunction *cf,tuple_object *locals,tuple_object *kw_locals)
-{
-	#ifdef USE_DEBUGGING
-	debug_printf(DEBUG_VERBOSE_STEP,"executing C function: %s\n",  cf->name);
-	#endif
-	//printf("executing C function: %s\n",  cf->name);
-	object *tmp = vm_ExecuteCFunction(vm, cf,locals,kw_locals);
-	return(tmp);
-}
-*/
+
 object *vm_StartCFunctionObject(vm *vm,cfunction_object *cfo,tuple_object *locals,tuple_object *kw_locals)
 {
 	#ifdef USE_DEBUGGING
