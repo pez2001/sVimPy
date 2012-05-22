@@ -23,14 +23,24 @@
 #schwarz +5v /gnd
 
 
+UNAME := $(shell uname)
+
+ifeq ($(UNAME), Linux)
+PLATFORM_EXT = 
+PLATFORM_NAME = Linux
+endif
+ifeq ($(UNAME), MINGW32_NT-6.1)
+PLATFORM_NAME = Win32
+PLATFORM_EXT = .exe
+endif
 
 
 
 MAJOR_VERSION = 0
 MINOR_VERSION = 77
 #builds are counted since version 0.5 roughly
-BUILD = 245
-DEBUG_BUILD = 1056
+BUILD = 252
+DEBUG_BUILD = 1070
 
 #CFLAGS= -Ilibraries/fmod -W -w -O2 -std=c99 -DBUILD=$(BUILD) -DMAJOR_VERSION=$(MAJOR_VERSION) -DMINOR_VERSION=$(MINOR_VERSION)
 CFLAGS= -W -w -O2 -std=c99 -DBUILD=$(BUILD) -DMAJOR_VERSION=$(MAJOR_VERSION) -DMINOR_VERSION=$(MINOR_VERSION) -lm
@@ -40,7 +50,7 @@ AR=ar
 LD=ld
 
 #arduino environment
-ARDUINO_AVR_DIR = /C/Users/asus/Documents/Arduino-1.0
+ARDUINO_AVR_DIR = /C/Users/pez2001/Documents/Arduino-1.0
 
 ARDUINO_TERM = /C/Program\ Files\ \(x86\)/Putty/putty -load arduino_uno
 ARDUINO_MCU = atmega328p
@@ -94,11 +104,12 @@ ARDUINO_LIB_OBJ = $(ARDUINO_LIB_DIR)/wiring.ao $(ARDUINO_LIB_DIR)/wiring_analog.
 ARDUINO_CXXSRC = $(ARDUINO_LIB_DIR)/WMath.cpp $(ARDUINO_LIB_DIR)/WString.cpp
 #ARDUINO_LIB_CXX_OBJ = $(ARDUINO_LIB_DIR)/HardwareSerial.aopp $(ARDUINO_LIB_DIR)/WMath.aopp $(ARDUINO_LIB_DIR)/Print.aopp $(ARDUINO_LIB_DIR)/Stream.aopp $(ARDUINO_LIB_DIR)/Tone.aopp $(ARDUINO_LIB_DIR)/WString.aopp
 ARDUINO_LIB_CXX_OBJ = $(ARDUINO_LIB_DIR)/WMath.aopp $(ARDUINO_LIB_DIR)/WString.aopp
-ARDUINO_VM_OBJ = vm.ao strops.ao numops.ao opcodes.ao object.ao memory.ao stack.ao lists.ao internal_functions.ao stream.ao garbage.ao debug.ao iterators.ao
+ARDUINO_VM_OBJ = vm.ao strops.ao numops.ao opcodes.ao object.ao memory.ao stack.ao lists.ao internal_functions.ao internal_classes.ao stream.ao garbage.ao debug.ao iterators.ao
 
 
 VM_FILES = vm.c strops.c numops.c opcodes.c object.c memory.c stack.c lists.c internal_functions.c internal_classes.c stream.c garbage.c debug.c iterators.c types.c
-VM_INCLUDES = vm.h strops.h numops.h opcodes.h object.h memory.h stack.h lists.h internal_functions.h internal_classes.h stream.h garbage.h debug.h iterators.h types.h
+VM_BINS = vm.a
+VM_INCLUDE_FILES = vm.h strops.h numops.h opcodes.h object.h memory.h stack.h lists.h internal_functions.h internal_classes.h stream.h garbage.h debug.h iterators.h types.h
 VM_OBJ = vm.o strops.o numops.o opcodes.o object.o memory.o stack.o lists.o internal_functions.o internal_classes.o stream.o garbage.o debug.o iterators.o types.o
 VM_DEBUG_OBJ = vm.do strops.do numops.do opcodes.do object.do memory.do stack.do lists.do internal_functions.do internal_classes.do stream.do garbage.do debug.do iterators.do types.do
 
@@ -109,24 +120,29 @@ VM_DEBUG_OBJ = vm.do strops.do numops.do opcodes.do object.do memory.do stack.do
 
 UT_FILES = unit_tests.c
 UT_OBJ = unit_tests.o
+UT_BINS = unit_tests$(PLATFORM_EXT)
 UT_DEBUG_OBJ = unit_tests.do
-UT_INCLUDES = unit_tests.h
+UT_INCLUDE_FILES = unit_tests.h
 
 
 ARDUINO_FILES = arduino.cpp arduino/io.cpp arduino/debug.cpp
+ARDUINO_BINS = arduino.hex 
 ARDUINO_INCLUDE_FILES = arduino.h arduino/io.h arduino/debug.h
 ARDUINO_OBJ = arduino.aopp arduino/io.aopp arduino/debug.aopp
 ARDUINO_LIBS = core.a
 
 TOOLS_BUILD_INC_FILES = tools/build_inc/build_inc.c
+TOOLS_BUILD_INC_BINS = build_inc$(PLATFORM_EXT)
 TOOLS_BUILD_INC_INCLUDE_FILES = tools/build_inc/build_inc.h
 TOOLS_BUILD_INC_OBJ = tools/build_inc/build_inc.o
 
 TOOLS_COMPRESS_PYC_FILES = tools/compress_pyc/compress_pyc.c
+TOOLS_COMPRESS_PYC_BINS = compress_pyc$(PLATFORM_EXT)
 TOOLS_COMPRESS_PYC_INCLUDE_FILES = tools/compress_pyc/compress_pyc.h
 TOOLS_COMPRESS_PYC_OBJ = tools/compress_pyc/compress_pyc.o
 
 TOOLS_PACK_POS_FILES = tools/pack_pos/pack_pos.c
+TOOLS_PACK_POS_BINS = pack_pos$(PLATFORM_EXT)
 TOOLS_PACK_POS_INCLUDE_FILES = tools/pack_pos/pack_pos.h
 TOOLS_PACK_POS_OBJ = tools/pack_pos/pack_pos.o
 
@@ -137,29 +153,22 @@ TOOLS_PACK_POS_OBJ = tools/pack_pos/pack_pos.o
 
 SVIMPY_FILES = svimpy.c
 SVIMPY_INCLUDE_FILES = svimpy.h
-SVIMPY_OBJ = svimpy.o
+SVIMPY_BINS = svimpy$(PLATFORM_EXT)
 SVIMPY_DEBUG_OBJ = svimpy.do
+SVIMPY_OBJ = svimpy.o
 
 
-UNAME := $(shell uname)
 
-ifeq ($(UNAME), Linux)
-PLATFORM_EXT = 
-endif
-ifeq ($(UNAME), MINGW32)
-PLATFORM_EXT = .exe
-endif
-
-test: clean all
+test: all
 	./unit_tests$(PLATFORM_EXT)
 
 test_debug: debug
 	./unit_tests_debug$(PLATFORM_EXT)
 	
-debug: clean_debug build_inc svimpy_debug unit_tests_debug
+debug: build_inc svimpy_debug unit_tests_debug
 	./build_inc$(PLATFORM_EXT) Makefile DEBUG_BUILD
 
-all: build_inc svimpy unit_tests compress_pyc pack_pos debug
+all: clean clean_debug clean_binaries build_inc svimpy unit_tests compress_pyc pack_pos debug arduino.hex
 	./build_inc$(PLATFORM_EXT) Makefile BUILD
 
 unit_tests: vm_static $(UT_OBJ) 
@@ -233,7 +242,7 @@ arduino.hex: arduino.elf
 	$(ARDUINO_OBJCOPY) -O ihex -j .eeprom --set-section-flags=.eeprom=alloc,load --no-change-warnings --change-section-lma .eeprom=0 $< $@
 	$(ARDUINO_OBJCOPY) -g --strip-unneeded -O ihex -R .eeprom $< $@
 
-upload: clean arduino.hex
+upload: clean clean_binaries arduino.hex
 #	printf "0" >$(ARDUINO_PORT)
 	$(ARDUINO_AVRDUDE) $(ARDUINO_AVRDUDE_FLAGS) $(ARDUINO_AVRDUDE_WRITE_FLASH)
 
@@ -241,35 +250,56 @@ uploadview: upload
 	$(ARDUINO_TERM)
 	
 clean:
-	rm -f *.exe *.do *.da *.ao *.aopp arduino.hex *.o *.a *.so tools/pack_pos/*.o tools/build_inc/*.o tools/compress_pyc/*.o arduino/*.ao arduino/*.aopp arduino/libarduino/*.aopp arduino/libarduino/*.ao svimpy.src.tar.gz
-clean_debug:
-	rm -f svimpy_debug.exe unit_tests_debug.exe *.do *.da 
-	
-srcdist:	
-	mkdir svimpy-$(VERSION).$(BUILD)
-	cp $(VM_FILES) svimpy-$(VERSION).$(BUILD)
-	cp $(VM_INCLUDES) svimpy-$(VERSION).$(BUILD)
-	cp $(UT_FILES) svimpy-$(VERSION).$(BUILD)
-	cp $(UT_INCLUDES) svimpy-$(VERSION).$(BUILD)
-	cp $(SVIMPY_FILES) svimpy-$(VERSION).$(BUILD)
-	cp $(SVIMPY_INCLUDES) svimpy-$(VERSION).$(BUILD)
-	cp $(TOOLS_BUILD_INC_FILES) svimpy-$(VERSION).$(BUILD)
-	cp $(TOOLS_BUILD_INC_INCLUDES) svimpy-$(VERSION).$(BUILD)
-	cp $(TOOLS_PACK_POS_INC_FILES) svimpy-$(VERSION).$(BUILD)
-	cp $(TOOLS_PACK_POS_INCLUDES) svimpy-$(VERSION).$(BUILD)
-	cp $(TOOLS_COMPRESS_PYC_FILES) svimpy-$(VERSION).$(BUILD)
-	cp $(TOOLS_COMPRESS_PYC_INCLUDES) svimpy-$(VERSION).$(BUILD)
-	cp $(ARDUINO_FILES) svimpy-$(VERSION).$(BUILD)
-	cp $(ARDUINO_INCLUDE_FILES) svimpy-$(VERSION).$(BUILD)
-	cp -r arduino svimpy-$(VERSION).$(BUILD)
-	cp -r tests svimpy-$(VERSION).$(BUILD)
-	cp -r ../test-scripts svimpy-$(VERSION).$(BUILD)
-	cp ../readme svimpy-$(VERSION).$(BUILD)
-	cp Makefile svimpy-$(VERSION).$(BUILD)
-	tar -cf svimpy.src-$(VERSION).$(BUILD).tar svimpy-$(VERSION).$(BUILD)
-	gzip -9 svimpy.src-$(VERSION).$(BUILD).tar
-	rm -r svimpy-$(VERSION).$(BUILD)
+	rm -f *.elf *.do *.da *.ao *.aopp *.o *.a *.so tools/pack_pos/*.o tools/build_inc/*.o tools/compress_pyc/*.o arduino/*.ao arduino/*.aopp arduino/libarduino/*.aopp arduino/libarduino/*.ao
 
+clean_binaries:
+	rm -f svimpy$(PLATFORM_EXT) unit_tests$(PLATFORM_EXT) svimpy_debug$(PLATFORM_EXT) unit_tests_debug$(PLATFORM_EXT) build_inc$(PLATFORM_EXT) compress_pyc$(PLATFORM_EXT) pack_pos$(PLATFORM_EXT) arduino.hex
+
+clean_debug:
+	rm -f build_inc$(PLATFORM_EXT) svimpy_debug$(PLATFORM_EXT) unit_tests_debug$(PLATFORM_EXT) *.do *.da 
+	
+srcdist:	clean clean_binaries
+	mkdir svimpy-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp $(VM_FILES) svimpy-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp $(VM_INCLUDE_FILES) svimpy-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp $(UT_FILES) svimpy-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp $(UT_INCLUDE_FILES) svimpy-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp $(SVIMPY_FILES) svimpy-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp $(SVIMPY_INCLUDE_FILES) svimpy-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp $(TOOLS_BUILD_INC_FILES) svimpy-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp $(TOOLS_BUILD_INC_INCLUDE_FILES) svimpy-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp $(TOOLS_PACK_POS_FILES) svimpy-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp $(TOOLS_PACK_POS_INCLUDE_FILES) svimpy-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp $(TOOLS_COMPRESS_PYC_FILES) svimpy-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp $(TOOLS_COMPRESS_PYC_INCLUDE_FILES) svimpy-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp $(ARDUINO_FILES) svimpy-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp $(ARDUINO_INCLUDE_FILES) svimpy-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp -r arduino svimpy-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp -r tools svimpy-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp -r tests svimpy-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp -r ../test_scripts svimpy-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp ../readme svimpy-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp Makefile svimpy-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	tar -cf svimpy.src-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD).tar svimpy-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	gzip -9 svimpy.src-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD).tar
+	rm -r svimpy-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+
+binariesdist: clean_binaries clean all clean
+	mkdir svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp $(VM_BINS) svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp $(UT_BINS) svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp $(SVIMPY_BINS) svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp $(TOOLS_BUILD_INC_BINS) svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp $(TOOLS_PACK_POS_BINS) svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp $(TOOLS_COMPRESS_PYC_BINS) svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp $(ARDUINO_BINS) svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp -r tests svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp ../readme svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	tar -cf svimpy.bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)-$(PLATFORM_NAME).tar svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	gzip -9 svimpy.bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)-$(PLATFORM_NAME).tar
+	rm -r svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	
+	
 git:	
 	git add *
 	git commit

@@ -466,9 +466,9 @@ object *GetAttribute(object *obj,object *key);
 
 void SetAttribute(object *obj,object *key,object *value);
 
-object *GetClassMethod(object *class,object *key);
+object *GetClassMethod(object *_class,object *key);
 
-object *GetClassVar(object *class,object *key);
+object *GetClassVar(object *_class,object *key);
 
 object *CopyObject(object *obj);
 
@@ -485,6 +485,8 @@ void ClearDictValues(object *tuple);
 void DeleteItem(object *tuple, INDEX index);
 
 void DeleteDictItem(object *tuple,object *key);
+
+void AddCodeName(object *co,object *key,object *value);
 
 void AddCodeFunction(object *co,char *name,object *func);
 

@@ -148,29 +148,23 @@ int __attribute__((OS_main)) main(void)
 	fdev_setup_stream (&uartout, uart_putchar, NULL, _FDEV_SETUP_WRITE);
 	stdout = &uartout;
 	printf("in:%4d\n",get_free_memory());
-	vm *vm = vm_Init(NULL);
-	gc_Init(vm);
-
-	//setup(vm);
-	
-
 	debug_level = 0;
+	vm *vm = vm_Init(NULL);
+	//setup(vm);
 	//debug_level |= DEBUG_VERBOSE_TESTS;	
 	//debug_level |= DEBUG_SHOW_OPCODES;
 	//debug_printf(DEBUG_ALL,"\nsetup:%d\r\n",get_free_memory());
 	//ptr_tests();
 	//Serial.println("");
 	//Serial.println("setup");
-	streams_Init();
 	//printf("si:%4d\r\n",get_free_memory());
 	//delay(1000);	
 	//AddInternalFunctions(vm);
 	//printf("if:%4d\r\n",get_free_memory());
 	//delay(1000);
-	AddArduinoFunctions(vm);
 	//printf("af:%4d\r\n",get_free_memory());
 	//delay(1000);
-	AddArduinoGlobals(vm);
+	AddArduinoGlobal(vm);
 	//Serial.println(get_free_memory());
 	//printf("ag:%4d\r\n",get_free_memory());
 	//delay(1000);
@@ -188,7 +182,7 @@ int __attribute__((OS_main)) main(void)
 	printf("rp:%4d\n",get_free_memory());
 	//debug_printf(DEBUG_ALL,"run thru\r\n");
 	//Serial.println("thru");
-	vm_CallFunction(vm,"setup",NULL);
+	vm_RunFunction(vm,"setup",NULL,NULL);
 	printf("cf:%4d\n",get_free_memory());
 	//debug_printf(DEBUG_ALL,"called setup\r\n");
 	//vm_Close(vm);
@@ -198,7 +192,7 @@ int __attribute__((OS_main)) main(void)
     int c = 0;
 	for (;;)
 	{
-		vm_CallFunction(vm,"loop",NULL);
+		vm_RunFunction(vm,"loop",NULL,NULL);
 		//printf("loop:%4d\n",c);
 		//c++;
 	}

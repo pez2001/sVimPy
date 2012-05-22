@@ -223,7 +223,8 @@ vm *vm_Init(code_object *co)
 	#else
 	vm *tmp = (vm *)malloc(sizeof(vm));
 	#endif
-
+	tmp->error_code = 0;
+	tmp->error_message = NULL;
 	tmp->blocks = stack_Init();
 	tmp->globals = CreateTuple(0);
 	gc_IncRefCount((object*)tmp->globals);
@@ -267,8 +268,9 @@ vm *vm_Init(code_object *co)
 	return (tmp);
 }
 
-void vm_Close(vm *vm)
+NUM vm_Close(vm *vm)
 {
+	NUM code = vm->error_code;
 	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_VERBOSE_TESTS,"closing vm\n");
 	#endif
@@ -280,8 +282,12 @@ void vm_Close(vm *vm)
 	stack_Close(vm->blocks, 1);
 	gc_DecRefCount((object*)vm->globals);
 	#ifdef USE_DEBUGGING
+	if(vm->error_message != NULL)
+		assert(mem_free(vm->error_message));
 	assert(mem_free(vm));
 	#else
+	if(vm->error_message != NULL)
+		free(vm->error_message);
 	free(vm);
 	#endif
 	
@@ -301,6 +307,7 @@ void vm_Close(vm *vm)
 	#ifdef USE_DEBUGGING
 	mem_Close();
 	#endif
+	return(code);
 }
 
 void vm_FreeGlobals(vm *vm)
@@ -345,10 +352,12 @@ void vm_Continue(vm *vm)
 	vm->interrupt_vm = 0;
 }
 
-void vm_Exit(vm *vm)//just a placeholder for things i didnt consider right now
+void vm_Exit(vm *vm,char *message,NUM code)//just a placeholder for things i didnt consider right now
 {
 	vm->interrupt_vm = 0;
 	vm->running = 0;
+	vm->error_message = str_Copy(message);
+	vm->error_code = code;
 	//vm_Close(vm);
 	stack_Clear(vm->blocks,1);
 }

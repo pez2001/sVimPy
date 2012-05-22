@@ -497,13 +497,13 @@ object *CatchException(struct _vm *vm,struct _object *exception)
 	printf("\n");
 
 	//vm_Close(vm);
-	vm_Exit(vm);
+	vm_Exit(vm,((unicode_object*)message)->value,1);
 	return(NULL);
 	//exit;
 	//return(CreateEmptyObject(TYPE_NONE));
 }
 
-void AtomicOpenPYC(char *filename)
+NUM AtomicOpenPYC(char *filename)
 {
 	printf("executing object:%s\n", filename);
 	printf("sVimPy Python Output\n{\n");
@@ -517,10 +517,16 @@ void AtomicOpenPYC(char *filename)
 	long pyc_magic = MAGIC;
 	stream *f = stream_CreateFromFile(filename,"rb");
 	if (!stream_Open(f))
-		return;
+	{
+		printf("error opening pyc file: %s\n",filename);
+		return(1);
+	}
 	long magic = ReadLong(f);
 	if (magic != pyc_magic)
-		return;
+	{
+		printf("error wrong file magic: %s\n",filename);
+		return(1);
+	}
 	ReadLong(f);//skip time
 	object *obj = ReadObject(f);
 	object *global_key = (object*)CreateUnicodeObject(str_Copy(((code_object*)obj)->name));
@@ -576,6 +582,7 @@ void AtomicOpenPYC(char *filename)
 	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_DUMP_UNSUPPORTED) > 0)
 		DumpUnsupportedOpCodes();
+	#endif
 	
 	printf("}\n");
 	/*
@@ -597,13 +604,18 @@ void AtomicOpenPYC(char *filename)
 	free(py_cmdf);
 	#endif
 	*/
-	vm_Close(vm);
+	if(vm->error_message != NULL)
+		printf("error occured:\n%s\n",vm->error_message);
+	NUM exit_code = vm_Close(vm);
+	printf("vm exit code:%d\n",exit_code);
+	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_MEMORY)>0)
 		printf("%d memory chunks leaked\n", mem_chunks_num);
 	#endif
+	return(exit_code);
 }
 
-void atomic_test(void)
+NUM atomic_test(void)
 {
 	#ifdef USE_DEBUGGING
 	debug_level = 0;
@@ -643,14 +655,21 @@ void atomic_test(void)
 	//AtomicOpenPYC("tests/test_class6.pyc");
 	//AtomicOpenPYC("tests/test_import.pyc");
 //AtomicOpenPYC("tests/test_import.pyc");
-	AtomicOpenPYC("tests/Queens2a.pyc");
-	return;
+	NUM exit_code = 0;
+	exit_code = AtomicOpenPYC("tests/Queens2a.pyc");
+	if(exit_code)
+		return(exit_code);
 
-	AtomicOpenPYC("tests/test32b.pyc");
+	exit_code = AtomicOpenPYC("tests/test32b.pyc");
+	if(exit_code)
+		return(exit_code);
 	//return;
 
 	//exceptions
-	AtomicOpenPYC("tests/test_assert.pyc");
+	exit_code = AtomicOpenPYC("tests/test_assert.pyc");
+	if(exit_code != 1)
+		return(1);
+	exit_code = 0;
 	//return;
 	
 	//AtomicOpenPYC("tests/Queens2a.pyc");
@@ -660,26 +679,58 @@ void atomic_test(void)
 	//AtomicOpenPYC("tests/test_import.pyc");
 
 	//classes tests
-	AtomicOpenPYC("tests/test_class7.pyc");
-	AtomicOpenPYC("tests/test_class11.pyc");
-	AtomicOpenPYC("tests/test_class10.pyc");
-	AtomicOpenPYC("tests/test_class9.pyc");
-	AtomicOpenPYC("tests/test_class8.pyc");
-	AtomicOpenPYC("tests/test_class5.pyc");
-	AtomicOpenPYC("tests/test_class6.pyc");
-	AtomicOpenPYC("tests/test_class4.pyc");
-	AtomicOpenPYC("tests/test_class3.pyc");
-	AtomicOpenPYC("tests/test_class2.pyc");
-	AtomicOpenPYC("tests/test_class.pyc");
-	AtomicOpenPYC("tests/test_sep_method2.pyc");
-	AtomicOpenPYC("tests/test_sep_method.pyc");
+	exit_code = AtomicOpenPYC("tests/test_class7.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test_class11.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test_class10.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test_class9.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test_class8.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test_class5.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test_class6.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test_class4.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test_class3.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test_class2.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test_class.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test_sep_method2.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test_sep_method.pyc");
+	if(exit_code)
+		return(exit_code);
 
 	//testing seperated function var spaces
-	AtomicOpenPYC("tests/test_sep_func.pyc");
+	exit_code = AtomicOpenPYC("tests/test_sep_func.pyc");
+	if(exit_code)
+		return(exit_code);
 	
 	//brute prime
-	AtomicOpenPYC("tests/e20.pyc");
-	AtomicOpenPYC("tests/e_small.pyc");	
+	exit_code = AtomicOpenPYC("tests/e20.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/e_small.pyc");	
+	if(exit_code)
+		return(exit_code);
 
 	//brute recursion queens test
 	//AtomicOpenPYC("tests/Queens2a.pyc");
@@ -691,163 +742,358 @@ void atomic_test(void)
 	//AtomicOpenPYC("tests/PlayNew.pyc");
 
 	//open file test + if_iter with sentinel
-	AtomicOpenPYC("tests/test_open.pyc");
+	exit_code = AtomicOpenPYC("tests/test_open.pyc");
+	if(exit_code)
+		return(exit_code);
 
 	//module name set test
-	AtomicOpenPYC("tests/test_main.pyc");
+	exit_code = AtomicOpenPYC("tests/test_main.pyc");
+	if(exit_code)
+		return(exit_code);
 	
 	//append ops + generators
 	//AtomicOpenPYC("tests/test53.pyc", vm);
-	AtomicOpenPYC("tests/test_yield.pyc");
-	AtomicOpenPYC("tests/test45.pyc");
+	exit_code = AtomicOpenPYC("tests/test_yield.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test45.pyc");
+	if(exit_code)
+		return(exit_code);
 
 	//iters
-	AtomicOpenPYC("tests/test61.pyc");
-	AtomicOpenPYC("tests/test60.pyc");
+	exit_code = AtomicOpenPYC("tests/test61.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test60.pyc");
+	if(exit_code)
+		return(exit_code);
 
 	
 	//pos + kw defaults
-	AtomicOpenPYC("tests/test55c.pyc");
-	AtomicOpenPYC("tests/test55b.pyc");
-	AtomicOpenPYC("tests/test55.pyc");
+	exit_code = AtomicOpenPYC("tests/test55c.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test55b.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test55.pyc");
+	if(exit_code)
+		return(exit_code);
 	//return;
 
 	//kw defaults
-	AtomicOpenPYC("tests/test54.pyc");
+	exit_code = AtomicOpenPYC("tests/test54.pyc");
+	if(exit_code)
+		return(exit_code);
 	
 
 	//simple stuff
-	AtomicOpenPYC("tests/test57.pyc");
-	AtomicOpenPYC("tests/test16.pyc");
-	AtomicOpenPYC("tests/test15.pyc");
-	AtomicOpenPYC("tests/test1.pyc");
-	AtomicOpenPYC("tests/test2.pyc");
-	AtomicOpenPYC("tests/test3.pyc");
-	AtomicOpenPYC("tests/test6.pyc");
-	AtomicOpenPYC("tests/test13.pyc");
-	AtomicOpenPYC("tests/test18.pyc");
-	AtomicOpenPYC("tests/test19.pyc");
-	AtomicOpenPYC("tests/test22.pyc");
-	AtomicOpenPYC("tests/test7.pyc");
-	AtomicOpenPYC("tests/test5.pyc");
-	AtomicOpenPYC("tests/test4.pyc");
-	AtomicOpenPYC("tests/test27.pyc");
-	AtomicOpenPYC("tests/test28.pyc");
-	AtomicOpenPYC("tests/test23.pyc");
-	AtomicOpenPYC("tests/test56.pyc");
+	exit_code = AtomicOpenPYC("tests/test57.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test16.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test15.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test1.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test2.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test3.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test6.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test13.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test18.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test19.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test22.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test7.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test5.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test4.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test27.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test28.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test23.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test56.pyc");
+	if(exit_code)
+		return(exit_code);
 
 	//generators
-	AtomicOpenPYC("tests/test25.pyc");
-	AtomicOpenPYC("tests/test26.pyc");
-	AtomicOpenPYC("tests/test20.pyc");
-	AtomicOpenPYC("tests/test24b.pyc");
-	AtomicOpenPYC("tests/test24.pyc");
-	AtomicOpenPYC("tests/test52.pyc");
+	exit_code = AtomicOpenPYC("tests/test25.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test26.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test20.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test24b.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test24.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test52.pyc");
+	if(exit_code)
+		return(exit_code);
 
 	//print + recursion
-	AtomicOpenPYC("tests/test17.pyc");
+	exit_code = AtomicOpenPYC("tests/test17.pyc");
+	if(exit_code)
+		return(exit_code);
 	
 	//globals
-	AtomicOpenPYC("tests/test58.pyc");
+	exit_code = AtomicOpenPYC("tests/test58.pyc");
+	if(exit_code)
+		return(exit_code);
 
 	//brute ops + closures
-	AtomicOpenPYC("tests/test32.pyc");
+	exit_code = AtomicOpenPYC("tests/test32.pyc");
+	if(exit_code)
+		return(exit_code);
 
 	//function parameters
-	AtomicOpenPYC("tests/test_functions.pyc");
-	AtomicOpenPYC("tests/test50.pyc");//with keywords unordered
-	AtomicOpenPYC("tests/test49b.pyc");//kw unordered
-	AtomicOpenPYC("tests/test49.pyc");//kw
-	AtomicOpenPYC("tests/test48.pyc");//var
-	AtomicOpenPYC("tests/test47.pyc");
-	AtomicOpenPYC("tests/test46.pyc");
-	AtomicOpenPYC("tests/test36.pyc");//call_function_var
-	AtomicOpenPYC("tests/test37.pyc");//call_function_kw
-	AtomicOpenPYC("tests/test38.pyc");//call_function_var_kw 
-	AtomicOpenPYC("tests/test39.pyc");//call_function
+	exit_code = AtomicOpenPYC("tests/test_functions.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test50.pyc");//with keywords unordered
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test49b.pyc");//kw unordered
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test49.pyc");//kw
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test48.pyc");//var
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test47.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test46.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test36.pyc");//call_function_var
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test37.pyc");//call_function_kw
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test38.pyc");//call_function_var_kw 
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test39.pyc");//call_function
+	if(exit_code)
+		return(exit_code);
 
 	//builtins
-	AtomicOpenPYC("tests/test_range.pyc");
+	exit_code = AtomicOpenPYC("tests/test_range.pyc");
+	if(exit_code)
+		return(exit_code);
 	//AtomicOpenPYC("tests/test_builtins2.pyc");
-	AtomicOpenPYC("tests/test_builtins.pyc");
+	exit_code = AtomicOpenPYC("tests/test_builtins.pyc");
+	if(exit_code)
+		return(exit_code);
 	
 	//simple generator with yield
-	AtomicOpenPYC("tests/test59.pyc");
+	exit_code = AtomicOpenPYC("tests/test59.pyc");
+	if(exit_code)
+		return(exit_code);
 
 	//simple print 
-	AtomicOpenPYC("tests/test_print.pyc");
+	exit_code = AtomicOpenPYC("tests/test_print.pyc");
+	if(exit_code)
+		return(exit_code);
 
 	//basic stuff
-	AtomicOpenPYC("tests/test_yield.pyc");
-	AtomicOpenPYC("tests/test_next.pyc");
-	AtomicOpenPYC("tests/test_next2.pyc");
-	AtomicOpenPYC("tests/test_next3.pyc");
-	AtomicOpenPYC("tests/test_list.pyc");
-	AtomicOpenPYC("tests/test_return.pyc");
-	AtomicOpenPYC("tests/test8.pyc");
-	AtomicOpenPYC("tests/test9.pyc");
-	AtomicOpenPYC("tests/test12.pyc");
-	AtomicOpenPYC("tests/test11.pyc");
+	exit_code = AtomicOpenPYC("tests/test_yield.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test_next.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test_next2.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test_next3.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test_list.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test_return.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test8.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test9.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test12.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test11.pyc");
+	if(exit_code)
+		return(exit_code);
 
 	//while loop + break + continue
-	AtomicOpenPYC("tests/test_while.pyc");
+	exit_code = AtomicOpenPYC("tests/test_while.pyc");
+	if(exit_code)
+		return(exit_code);
 
 	//storing of globals/vars and deletion of globals/vars
-	AtomicOpenPYC("tests/test21ba2.pyc");
-	AtomicOpenPYC("tests/test21.pyc");
-	AtomicOpenPYC("tests/test21b.pyc");
-	AtomicOpenPYC("tests/test21ba.pyc");
-	AtomicOpenPYC("tests/test21ba3.pyc");
-	AtomicOpenPYC("tests/test21bb.pyc");
-	AtomicOpenPYC("tests/test21c.pyc");
-	AtomicOpenPYC("tests/test21d.pyc");
-	AtomicOpenPYC("tests/test21e.pyc");
-	AtomicOpenPYC("tests/test21a.pyc");
+	exit_code = AtomicOpenPYC("tests/test21ba2.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test21.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test21b.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test21ba.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test21ba3.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test21bb.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test21c.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test21d.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test21e.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test21a.pyc");
+	if(exit_code)
+		return(exit_code);
 	
 	//loops + recursion
-	AtomicOpenPYC("tests/test35.pyc");
-	AtomicOpenPYC("tests/test34.pyc");
-	AtomicOpenPYC("tests/test33.pyc");
+	exit_code = AtomicOpenPYC("tests/test35.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test34.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test33.pyc");
+	if(exit_code)
+		return(exit_code);
 
 	//nested tuple printing
-	AtomicOpenPYC("tests/test51.pyc");
+	exit_code = AtomicOpenPYC("tests/test51.pyc");
+	if(exit_code)
+		return(exit_code);
 	
 	//comparing
-	AtomicOpenPYC("tests/test_compare.pyc");
+	exit_code = AtomicOpenPYC("tests/test_compare.pyc");
+	if(exit_code)
+		return(exit_code);
 
 	//closures and deref opcodes
-	AtomicOpenPYC("tests/test57.pyc");
-	AtomicOpenPYC("tests/test29.pyc");
+	exit_code = AtomicOpenPYC("tests/test57.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test29.pyc");
+	if(exit_code)
+		return(exit_code);
 	
 	//ellipsis object
-	AtomicOpenPYC("tests/test43.pyc");
-	AtomicOpenPYC("tests/test40.pyc");
+	exit_code = AtomicOpenPYC("tests/test43.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test40.pyc");
+	if(exit_code)
+		return(exit_code);
 
 	//most binary ops test
-	AtomicOpenPYC("tests/test14.pyc");
-	AtomicOpenPYC("tests/test14b.pyc");
-	AtomicOpenPYC("tests/test14f.pyc");
-	AtomicOpenPYC("tests/test14bf.pyc");
+	exit_code = AtomicOpenPYC("tests/test14.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test14b.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test14f.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test14bf.pyc");
+	if(exit_code)
+		return(exit_code);
 
 	//floats
-	AtomicOpenPYC("tests/test44.pyc");
-	AtomicOpenPYC("tests/test42.pyc");
-	AtomicOpenPYC("tests/test41.pyc");
+	exit_code = AtomicOpenPYC("tests/test44.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test42.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test41.pyc");
+	if(exit_code)
+		return(exit_code);
 
 	//dictionaries
-	AtomicOpenPYC("tests/test30.pyc");
-	AtomicOpenPYC("tests/test31.pyc");
+	exit_code = AtomicOpenPYC("tests/test30.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test31.pyc");
+	if(exit_code)
+		return(exit_code);
 	
 	//brute prime
-	AtomicOpenPYC("tests/e20.pyc");
-	AtomicOpenPYC("tests/e_small.pyc");	
-	AtomicOpenPYC("tests/e_med.pyc");
-	AtomicOpenPYC("tests/e_big.pyc");
-	AtomicOpenPYC("tests/e_bigger.pyc");
-	AtomicOpenPYC("tests/e_max.pyc");
-	AtomicOpenPYC("tests/e_huge.pyc");
-
-
+	exit_code = AtomicOpenPYC("tests/e20.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/e_small.pyc");	
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/e_med.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/e_big.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/e_bigger.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/e_max.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/e_huge.pyc");
+	if(exit_code)
+		return(exit_code);
+	return(exit_code);
 }
 
 int main(int argc, char *argv[])
@@ -856,7 +1102,7 @@ int main(int argc, char *argv[])
 	//return;
 	//stream_tests();
 	//brute_test();
-	atomic_test();
+	NUM exit_code = atomic_test();
 /*	for(int i=0;i<100000;i++)
 	{
 		printf("[[[[[%d]]]]]\n",i);
@@ -873,5 +1119,5 @@ int main(int argc, char *argv[])
 	//AtomicOpenPYC("tests/test_functions.pyc");
 	//AtomicOpenPYC("tests/test_function_kw.pyc");
 	//	AtomicOpenPYC("tests/e_med.pyc");
-	return (0);
+	return (exit_code);
 }

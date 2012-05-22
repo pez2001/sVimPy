@@ -111,6 +111,8 @@ typedef struct _vm
 	object *(*import_module_handler) (struct _vm *vm,char *module_name);
 	object *(*exception_handler) (struct _vm *vm,struct _object *exception);
 	object *(*step_handler) (struct _vm *vm);//TODO implement step handler to execute external work functions
+	NUM error_code;
+	char *error_message;
 	BOOL interrupt_vm;
 	BOOL running;
 } vm;
@@ -128,7 +130,7 @@ object *vm_ExecuteCFunctionByName(vm *vm, char *name, tuple_object *locals,tuple
 
 vm *vm_Init(code_object *co);//init vm and set global object if given
 
-void vm_Close(vm *vm);//close vm and free all of its used memory
+NUM vm_Close(vm *vm);//close vm and free all of its used memory
 
 void vm_FreeGlobals(vm *vm);
 
@@ -144,7 +146,7 @@ void vm_Interrupt(vm *vm, object *(*interrupt_func) (struct _vm *vm,stack *stack
 
 void vm_Continue(vm *vm);//continue vm execution
 
-void vm_Exit(vm *vm); //exit vm
+void vm_Exit(vm *vm,char *message,NUM code); //exit vm
 
 void vm_Stop(vm *vm); //pause vm execution
 

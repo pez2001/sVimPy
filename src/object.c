@@ -2012,18 +2012,18 @@ void SetAttribute(object *obj,object *key,object *value)
 */
 }
 
-object *GetClassMethod(object *class,object *key)
+object *GetClassMethod(object *_class,object *key)
 {
 	object *r = obj_NULL;
-	if(class->type == TYPE_CLASS)
+	if(_class->type == TYPE_CLASS)
 	{
 		//DumpObject(((class_object*)class)->code->names,0);
-		r = GetDictItem(((class_object*)class)->code->names,key);
+		r = GetDictItem(((class_object*)_class)->code->names,key);
 		if(r!= NULL && r != obj_NULL && !(r->type == TYPE_FUNCTION || r->type == TYPE_CFUNCTION))
 			r = obj_NULL;
 		if(r == NULL || r == obj_NULL)
 		{	
-			tuple_object *bc = (tuple_object*)((class_object*)class)->base_classes;
+			tuple_object *bc = (tuple_object*)((class_object*)_class)->base_classes;
 			for(INDEX i = 0;i<GetTupleLen((object*)bc);i++)
 			{
 				r = GetClassMethod(bc->list->items[i],key);
@@ -2034,9 +2034,9 @@ object *GetClassMethod(object *class,object *key)
 		//DumpObject(r,0);
 	}
 	else
-	if(class->type == TYPE_CLASS_INSTANCE)
+	if(_class->type == TYPE_CLASS_INSTANCE)
 	{
-		r = GetDictItem(((class_instance_object*)class)->methods,key);
+		r = GetDictItem(((class_instance_object*)_class)->methods,key);
 		if(r == NULL || r == obj_NULL)
 		{
 			//DumpObject((object*)((class_instance_object*)class)->instance_of,0);						
@@ -2045,7 +2045,7 @@ object *GetClassMethod(object *class,object *key)
 			//DumpObject(key,0);
 			//r = GetDictItem(((class_instance_object*)class)->instance_of->code->names,key);
 			if(r == NULL || obj_NULL)
-				r = GetClassMethod((object*)((class_instance_object*)class)->instance_of,key);
+				r = GetClassMethod((object*)((class_instance_object*)_class)->instance_of,key);
 			/*
 			tuple_object *bc = (tuple_object*)((class_instance_object*)class)->instance_of->base_classes;
 			for(INDEX i = 0;i<GetTupleLen((object*)bc);i++)
@@ -2065,20 +2065,20 @@ object *GetClassMethod(object *class,object *key)
 	return(r);
 }
 
-object *GetClassVar(object *class,object *key)
+object *GetClassVar(object *_class,object *key)
 {
 	object *r = obj_NULL;
-	if(class->type == TYPE_CLASS_INSTANCE)
+	if(_class->type == TYPE_CLASS_INSTANCE)
 	{
 		//DumpObject(((class_instance_object*)class)->vars,0);
-		r = GetDictItem(((class_instance_object*)class)->vars,key);
+		r = GetDictItem(((class_instance_object*)_class)->vars,key);
 		//if(r == NULL)
 		//	r = GetAttribute(((class_instance_object*)class)->instance_of,key);
 	}
 	return(r);
 }
 
-void AddCodeFunction(object *co,char *name,object *func)
+void AddCodeName(object *co,object *key,object *value)
 {
 	((code_object*)co)->nlocals++;
 	if(((code_object*)co)->names == NULL)
@@ -2086,9 +2086,15 @@ void AddCodeFunction(object *co,char *name,object *func)
 		((code_object*)co)->names = (object*)CreateTuple(0);
 		gc_IncRefCount(((code_object*)co)->names);
 	}
+	kv_object *kv = CreateKVObject((object*)key,value);
+	AppendItem(((code_object*)co)->names,(object*)kv);
+
+}
+
+void AddCodeFunction(object *co,char *name,object *func)
+{
 	unicode_object *key = CreateUnicodeObject(str_Copy(name));
-	kv_object *kvfunc = CreateKVObject((object*)key,func);
-	AppendItem(((code_object*)co)->names,(object*)kvfunc);
+	AddCodeName(co,(object*)key,func);
 }
 
 void AddCodeCFunction(object *co,char *name,	struct _object* (*func) (struct _vm *vm,struct _tuple_object *locals,struct _tuple_object *kw_locals))

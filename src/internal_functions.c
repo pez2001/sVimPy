@@ -608,20 +608,22 @@ object *if_build_class(struct _vm *vm,tuple_object *locals,tuple_object *kw_loca
 
 object *if_open(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
-	object *x = GetItem((object*)locals,0);
-	if(x->type == TYPE_UNICODE)
-		printf("opening file:%s\n",((unicode_object*)x)->value);
+	//if(x->type == TYPE_UNICODE)
+	//	printf("opening file:%s\n",((unicode_object*)x)->value);
 	
 	unicode_object *file_class_key = CreateUnicodeObject(str_Copy("file_class"));
 	class_object *file_class = (class_object*)vm_GetGlobal(vm,(object*)file_class_key);
 	gc_IncRefCount((object*)file_class_key);
 	gc_DecRefCount((object*)file_class_key);
+	class_instance_object *file_instance = CreateClassInstanceObject(file_class);	
+	#ifndef USE_ARDUINO_FUNCTIONS
+	object *x = GetItem((object*)locals,0);
 	stream *fs = stream_CreateFromFile(((unicode_object*)x)->value,"rb");
 	stream_Open(fs);
 	tag_object *file_tag = CreateTagObject(fs);
 	unicode_object *file_name = CreateUnicodeObject(str_Copy("__file__"));
-	class_instance_object *file_instance = CreateClassInstanceObject(file_class);	
 	SetAttribute((object*)file_instance,(object*)file_name,(object*)file_tag);	
+	#endif
 	return((object*)file_instance);
 		
 	//object *tmp =CreateEmptyObject(TYPE_NONE);

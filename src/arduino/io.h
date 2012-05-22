@@ -44,8 +44,8 @@ object *a_delay(vm *vm,tuple_object *locals,tuple_object *kw_locals); //(ms);
 object *a_serialprint(vm *vm,tuple_object *locals,tuple_object *kw_locals); //(message);
 object *a_serialBegin(vm *vm,tuple_object *locals,tuple_object *kw_locals); //(baudrate);
 
-void AddArduinoFunctions(vm *vm);
-void AddArduinoGlobals(vm *vm);
+//void AddArduinoFunctions(vm *vm);
+void AddArduinoGlobal(vm *vm);
 
 #endif
 #endif

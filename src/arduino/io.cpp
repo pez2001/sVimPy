@@ -150,7 +150,7 @@ object *a_serialBegin(vm *vm,tuple_object *locals,tuple_object *kw_locals)
 	object *tmp =CreateEmptyObject(TYPE_NONE);
 	return (tmp);	
 }
-
+/*
 void AddArduinoFunctions(vm *vm)
 {
 	cfunction *a_pin_mode = CreateCFunction(&a_pinMode, "pinMode");
@@ -172,45 +172,23 @@ void AddArduinoFunctions(vm *vm)
 	//function_object *a_ = CreateCFunction(&a_, "");
 	//vm_AddFunctionObject(vm, a_);
 }
-
-void AddArduinoGlobals(vm *vm)
+*/
+void AddArduinoGlobal(vm *vm)
 {
-	code_object *a_globals = AllocCodeObject();
-	a_globals->type = TYPE_CODE;
-	a_globals->name = str_Copy("arduino");
-	a_globals->argcount = 0;
-	a_globals->kwonlyargcount = 0;
-	a_globals->nlocals = 4;
-	a_globals->stacksize = 0;
-	a_globals->co_flags = 0;
-	a_globals->code = NULL;
-	a_globals->consts = NULL;
-	a_globals->varnames = NULL;
-	a_globals->freevars = NULL;
-	a_globals->cellvars = NULL;
-	a_globals->ref_count = 1;
-	a_globals->names = (object*)CreateTuple(4);
-
-	int_object *vinput = CreateIntObject(0);
-	int_object *voutput = CreateIntObject(1);
-	int_object *vlow = CreateIntObject(0);
-	int_object *vhigh = CreateIntObject(1);
-	unicode_object *kinput = CreateUnicodeObject(str_Copy("INPUT"));
-	unicode_object *koutput = CreateUnicodeObject(str_Copy("OUTPUT"));
-	unicode_object *klow = CreateUnicodeObject(str_Copy("LOW"));
-	unicode_object *khigh = CreateUnicodeObject(str_Copy("HIGH"));
-	kv_object *kvinput = CreateKVObject((object*)kinput,(object*)vinput);
-	kv_object *kvoutput = CreateKVObject((object*)koutput,(object*)voutput);
-	kv_object *kvlow = CreateKVObject((object*)klow,(object*)vlow);
-	kv_object *kvhigh = CreateKVObject((object*)khigh,(object*)vhigh);
-	//kv_object *kvlow = CreateKVObject((object*)klow,(object*)vinput);
-	//kv_object *kvhigh = CreateKVObject((object*)khigh,(object*)voutput);
-	SetItem(a_globals->names,0,(object*)kvinput);
-	SetItem(a_globals->names,1,(object*)kvoutput);
-	SetItem(a_globals->names,2,(object*)kvlow);
-	SetItem(a_globals->names,3,(object*)kvhigh);
-	
-	vm_AddGlobal(vm,a_globals);
+	code_object *a_globals = CreateCodeObject(str_Copy("arduino"));
+	AddCodeCFunction((object*)a_globals,"pinMode",&a_pinMode);
+	AddCodeCFunction((object*)a_globals,"digitalRead",&a_digitalRead);
+	AddCodeCFunction((object*)a_globals,"digitalWrite",&a_digitalWrite);
+	AddCodeCFunction((object*)a_globals,"analogRead",&a_analogRead);
+	AddCodeCFunction((object*)a_globals,"analogWrite",&a_analogWrite);
+	AddCodeCFunction((object*)a_globals,"delay",&a_delay);
+	AddCodeCFunction((object*)a_globals,"Serial.print",&a_serialprint);
+	AddCodeCFunction((object*)a_globals,"Serial.Begin",&a_serialBegin);
+	AddCodeName((object*)a_globals,(object*)CreateUnicodeObject(str_Copy("INPUT")),(object*)CreateIntObject(0));
+	AddCodeName((object*)a_globals,(object*)CreateUnicodeObject(str_Copy("OUTPUT")),(object*)CreateIntObject(1));
+	AddCodeName((object*)a_globals,(object*)CreateUnicodeObject(str_Copy("LOW")),(object*)CreateIntObject(0));
+	AddCodeName((object*)a_globals,(object*)CreateUnicodeObject(str_Copy("HIGH")),(object*)CreateIntObject(1));
+	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy("arduino")),(object*)a_globals);
 }
 
 #endif
