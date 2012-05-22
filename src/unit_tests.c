@@ -644,7 +644,7 @@ void atomic_test(void)
 	//AtomicOpenPYC("tests/test_import.pyc");
 //AtomicOpenPYC("tests/test_import.pyc");
 	AtomicOpenPYC("tests/Queens2a.pyc");
-	//return;
+	return;
 
 	AtomicOpenPYC("tests/test32b.pyc");
 	//return;
