@@ -168,7 +168,7 @@ test_debug: debug
 debug: build_inc svimpy_debug unit_tests_debug
 	./build_inc$(PLATFORM_EXT) Makefile DEBUG_BUILD
 
-all: clean clean_debug clean_binaries build_inc svimpy unit_tests compress_pyc pack_pos debug arduino.hex
+all: clean clean_debug clean_binaries build_inc svimpy unit_tests compress_pyc pack_pos debug
 	./build_inc$(PLATFORM_EXT) Makefile BUILD
 
 unit_tests: vm_static $(UT_OBJ) 
@@ -285,7 +285,7 @@ srcdist:	clean clean_binaries
 	rm -r svimpy-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
 	mv svimpy.src-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD).tar.gz ..
 
-binariesdist: clean_binaries clean all clean
+binariesdist: clean_binaries clean all arduino.hex clean
 	mkdir svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
 	cp $(VM_BINS) svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
 	cp $(UT_BINS) svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
