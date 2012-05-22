@@ -1,4 +1,4 @@
-	sVimPy-0.74
+	sVimPy-0.77
 
 sVimPy is a very small Python virtual machine intended for use in microcontroller projects.
 
@@ -21,6 +21,7 @@ Features include:
  * generators
  * compares & binary ops
  * classes & inheritance
+ * exceptions
  * VM single stepping (game loop usage is possible)
  * calling Pyton functions from C and Python itself
  * calling C functions from C and Python,
@@ -69,14 +70,14 @@ Features include:
 	0.75	add basic support for file operations
 	0.76  add missing opcodes
 		    + basic exceptions support
-	0.77  stream printing + sd-fat support
-	0.78  add missing internal functions used by classes
-	0.79  remove redundancies and manual stuff in external code + more management functions
+	0.77  remove redundancies and manual stuff in external code + more management functions
 	0.8    vm feature complete 
-                (except classes ,exceptions and some builtin functions)
 	0.9    memory optimizations including object locking mechanism 
             + caching  for near zero byte memory usage interpretation 
             of python code
+	0.91  stream printing + sd-fat support
+	0.92  add missing internal functions used by classes
+	0.95  use buildhive for automatic releases generation (packaging + web deploy)
 	0.99  source clean up 
 			+ prepare packaging
 	1.0    stable release 
@@ -85,7 +86,6 @@ Features include:
 	1.1    custom bootloader
 	1.5    ??? :-)
 	2.0    slices
-	2.1    classes
 	3.0    time sliced multithreading
 	
 	

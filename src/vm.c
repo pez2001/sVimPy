@@ -1122,41 +1122,19 @@ object *vm_RunFunction(vm *vm,char *name,tuple_object *locals,tuple_object *kw_l
 
 object *vm_RunPYC(vm *vm,stream *f ,BOOL free_object)
 {
-	//printf("run\n");
-	//debug_printf(DEBUG_ALL,"running pyc\n");
 	long pyc_magic = MAGIC;
 	BOOL r = stream_Open(f);
-	//printf("r:%d\n",r);
 	if (!r)
 		return(NULL);//TODO maybe return an empty object for simplification
-	//printf("so\n");
-	//debug_printf(DEBUG_ALL,"open\n");
-	#if defined(USE_DEBUGGING)
-	//debug_printf(DEBUG_ALL,"running pyc\n");
-	#endif
 	long magic = ReadLong(f);
 	if (magic != pyc_magic)
 		return(NULL);
-	//printf("magic\n");
 	//long time = ReadLong(f);
 	ReadLong(f);//read time
-	#if defined(USE_DEBUGGING)
-	//debug_printf(DEBUG_ALL,"read header\n");
-	#endif
 	object *obj = ReadObject(f);
-	#if defined(USE_DEBUGGING)
-	//debug_printf(DEBUG_ALL,"read object\n");
-	#endif
 	object *global_key = (object*)CreateUnicodeObject(str_Copy("__main__"));
 	vm_AddGlobal(vm, global_key,obj);
-	#if defined(USE_DEBUGGING)
-	//debug_printf(DEBUG_ALL,"added global\n");
-	#endif
 	object *ret = vm_RunObject(vm, obj, NULL,NULL);
-	#if defined(USE_DEBUGGING)
-	debug_printf(DEBUG_ALL,"ran object\n");
-	#endif
-	//printf("ran object\n");
 	if (ret != NULL)
 	{
 		gc_DecRefCount(ret);
@@ -1180,10 +1158,7 @@ object *vm_RunObject(vm *vm, object *obj, tuple_object *locals,tuple_object *kw_
 		gc_IncRefCount((object*)var_name);
 		unicode_object *module_name = CreateUnicodeObject(str_Copy("__main__"));
 		SetDictItem(((code_object*)obj)->names,(object*)var_name,(object*)module_name);
-		//DumpObject(file_tag,0);
 		gc_DecRefCount((object*)var_name);
-		//DumpObject(((code_object*)obj)->names,0);
-		//vm_StartCodeObject(vm,(code_object*)obj,locals,kw_locals);
 		vm_StartObject(vm,obj,locals,kw_locals);
 		object *ret = NULL;
 		while(ret == NULL)
@@ -1197,7 +1172,9 @@ object *vm_Step(vm *vm)
 	object *obj = (object*)bo->code;
 	if(obj->type != TYPE_CODE)
 	{
-		printf("stepping non code:%c(%x)\n",obj->type,obj);
+		#ifdef USE_DEBUGGING
+		debug_printf(DEBUG_ALL,"stepping non code:%c(%x)\n",obj->type,obj);
+		#endif
 		return(CreateEmptyObject(TYPE_NONE));
 	}
 	if (obj->type == TYPE_CODE)
@@ -1474,6 +1451,7 @@ object *vm_Step(vm *vm)
 			case OPCODE_EXTENDED_ARG:
 				{
 					extended_arg = num_short(string[bo->ip + 1], string[bo->ip + 2]);
+					//printf("found extended arg\n");
 					bo->ip += 2;
 					op_thru = 1;
 					has_extended_arg = 1;
@@ -1532,6 +1510,8 @@ object *vm_Step(vm *vm)
 						arg = num_long((extended_arg >> 8) & 0xFF, extended_arg & 0xFF, string[bo->ip], string[bo->ip + 1]);
 						has_extended_arg = 0;
 						extended_arg = 0;
+						//printf("found extended arg\n");
+
 					}
 					else
 						arg = (long)num_short(string[bo->ip], string[bo->ip + 1]);

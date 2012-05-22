@@ -37,32 +37,53 @@ void obj_Init(void)
 	obj_NULL = AllocObject();
 	obj_NULL->type = TYPE_NULL;
 	obj_NULL->ref_count = 1;
+	#ifdef USE_LOCKING
+	obj_NULL->lock_count = 1;
+	#endif
 	obj_NONE = AllocObject();
 	obj_NONE->type = TYPE_NONE;
 	obj_NONE->ref_count = 1;
+	#ifdef USE_LOCKING
+	obj_NONE->lock_count = 1;
+	#endif
 	obj_TRUE = AllocObject();
 	obj_TRUE->type = TYPE_TRUE;
 	obj_TRUE->ref_count = 1;
+	#ifdef USE_LOCKING
+	obj_TRUE->lock_count = 1;
+	#endif
 	obj_FALSE = AllocObject();
 	obj_FALSE->type = TYPE_FALSE;
 	obj_FALSE->ref_count = 1;
+	#ifdef USE_LOCKING
+	obj_FALSE->lock_count = 1;
+	#endif
 	obj_ELLIPSIS = AllocObject();
 	obj_ELLIPSIS->type = TYPE_ELLIPSIS;
 	obj_ELLIPSIS->ref_count = 1;
+	#ifdef USE_LOCKING
+	obj_ELLIPSIS->lock_count = 1;
+	#endif
 	obj_UNKNOWN = AllocObject();
 	obj_UNKNOWN->type = TYPE_UNKNOWN;
 	obj_UNKNOWN->ref_count = 1;
+	#ifdef USE_LOCKING
+	obj_UNKNOWN->lock_count = 1;
+	#endif
 }
 
 void obj_Close(void)
 {
 	#ifdef USE_DEBUGGING
-	DumpObject(obj_NULL,0);
-	DumpObject(obj_NONE,0);
-	DumpObject(obj_TRUE,0);
-	DumpObject(obj_FALSE,0);
-	DumpObject(obj_ELLIPSIS,0);
-	DumpObject(obj_UNKNOWN,0);
+	if(debug_level & DEBUG_VERBOSE_TESTS)
+	{
+		DumpObject(obj_NULL,0);
+		DumpObject(obj_NONE,0);
+		DumpObject(obj_TRUE,0);
+		DumpObject(obj_FALSE,0);
+		DumpObject(obj_ELLIPSIS,0);
+		DumpObject(obj_UNKNOWN,0);
+	}
 	#endif
 	gc_DecRefCount(obj_NULL);
 	gc_DecRefCount(obj_NONE);
@@ -229,11 +250,13 @@ ref_object *CreateRefObject(object *ref_to)//,OBJECT_FLAGS flags)
 {
 	ref_object *r = AllocRefObject();
 	r->type = TYPE_REF;
-	//r->flags = flags;
 	r->ref_count = 0;
+	#ifdef USE_LOCKING
+	r->lock_count = 0;
+	#endif
 	r->ref = ref_to;
 	gc_IncRefCount(ref_to);
-	printf("created ref object\n");
+	//printf("created ref object\n");
 	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
@@ -248,8 +271,10 @@ tag_object *CreateTagObject(void *tag)
 {
 	tag_object *r = AllocTagObject();
 	r->type = TYPE_TAG;
-	//r->flags = flags;
 	r->ref_count = 0;
+	#ifdef USE_LOCKING
+	r->lock_count = 0;
+	#endif
 	r->tag = tag;
 	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_CREATION) > 0)
@@ -266,7 +291,9 @@ int_object *CreateIntObject(long value)//,OBJECT_FLAGS flags)
 	int_object *r = AllocIntObject();
 	r->type = TYPE_INT;
 	r->ref_count = 0;
-	//r->flags = flags;
+	#ifdef USE_LOCKING
+	r->lock_count = 0;
+	#endif
 	r->value = value;
 	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_CREATION) > 0)
@@ -283,7 +310,9 @@ float_object *CreateFloatObject(float value)//,OBJECT_FLAGS flags)
 	float_object *r = AllocFloatObject();
 	r->type = TYPE_BINARY_FLOAT;
 	r->ref_count = 0;
-	//r->flags = flags;
+	#ifdef USE_LOCKING
+	r->lock_count = 0;
+	#endif
 	r->value = value;
 	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_CREATION) > 0)
@@ -299,8 +328,10 @@ unicode_object *CreateUnicodeObject(char *value)//,OBJECT_FLAGS flags)
 {
 	unicode_object *r = AllocUnicodeObject();
 	r->type = TYPE_UNICODE;
-	//r->flags = flags;
 	r->ref_count = 0;
+	#ifdef USE_LOCKING
+	r->lock_count = 0;
+	#endif
 	r->value = value;
 	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_CREATION) > 0)
@@ -316,8 +347,10 @@ tuple_object *CreateTuple(NUM num)//,OBJECT_FLAGS flags)
 {
 	tuple_object *r = AllocTupleObject();
 	r->type = TYPE_TUPLE;
-	//r->flags = flags;
 	r->ref_count = 0;
+	#ifdef USE_LOCKING
+	r->lock_count = 0;
+	#endif
 	r->ptr = 0;
 	r->list = ptr_CreateList(num,PTR_STATIC_LIST);
 	#ifdef USE_DEBUGGING
@@ -334,8 +367,10 @@ string_object *CreateStringObject(char *bytes,NUM len)//,OBJECT_FLAGS flags)
 {
 	string_object *r = AllocStringObject();
 	r->type = TYPE_STRING;
-	//r->flags = flags;
 	r->ref_count = 0;
+	#ifdef USE_LOCKING
+	r->lock_count = 0;
+	#endif
 	r->content = bytes;
 	r->len = len;
 	#ifdef USE_DEBUGGING
@@ -352,12 +387,13 @@ kv_object *CreateKVObject(object *key,object *value)
 {
 	kv_object *r = AllocKVObject();
 	r->type = TYPE_KV;
-	//r->flags = flags;
 	r->ref_count = 0;
+	#ifdef USE_LOCKING
+	r->lock_count = 0;
+	#endif
 	r->key = key;
 	gc_IncRefCount(key);
 	r->value = value;
-	//DecRefCount(value);// ?? why did this not produce any memory leaks ?? strange
 	gc_IncRefCount(value);
 	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_CREATION) > 0)
@@ -394,20 +430,6 @@ object *CreateEmptyObject(char type)
 			return(obj_UNKNOWN);
 	}
 	return(obj_UNKNOWN);
-	/*
-	object *r = AllocObject();
-	r->type = type;
-	//r->flags = flags;
-	r->ref_count = 0;
-	#ifdef USE_DEBUGGING
-	if((debug_level & DEBUG_CREATION) > 0)
-	{
-		debug_printf(DEBUG_CREATION,"created object\n");
-		DumpObject((object*)r,0);
-	}
-	#endif
-	return(r);
-	*/
 }
 
 function_object *CreateFunctionObject_MAKE_FUNCTION(code_object *function_code,tuple_object *defaults,tuple_object *kw_defaults)
@@ -415,6 +437,9 @@ function_object *CreateFunctionObject_MAKE_FUNCTION(code_object *function_code,t
 	function_object *r = AllocFunctionObject();
 	r->type = TYPE_FUNCTION;
 	r->ref_count = 0;
+	#ifdef USE_LOCKING
+	r->lock_count = 0;
+	#endif
 	r->func = function_code;
 	gc_IncRefCount((object*)function_code);
 	
@@ -478,6 +503,9 @@ function_object *CreateFunctionObject_MAKE_CLOSURE(code_object *function_code,tu
 	function_object *r = AllocFunctionObject();
 	r->type = TYPE_FUNCTION;
 	r->ref_count = 0;
+	#ifdef USE_LOCKING
+	r->lock_count = 0;
+	#endif
 	r->func = function_code;
 	gc_IncRefCount((object*)function_code);
 	
@@ -530,26 +558,6 @@ function_object *CreateFunctionObject_MAKE_CLOSURE(code_object *function_code,tu
 		}
 	}
 
-	
-	//r->closure = closure;
-	//gc_IncRefCount((object*)closure);
-	//r->func_type = FUNC_PYTHON;
-	//r->name = function_code->name;
-	/*if(defaults != NULL)
-	{
-		r->defaults = defaults;
-		gc_IncRefCount((object*)defaults);
-	}
-	else
-		r->defaults = NULL;
-	if(kw_defaults != NULL)
-	{
-		r->kw_defaults = kw_defaults;
-		gc_IncRefCount((object*)kw_defaults);
-	}
-	else
-		r->kw_defaults = NULL;
-	*/
 	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
@@ -564,16 +572,12 @@ function_object *CreateFunctionObject(code_object *co)
 {
 	function_object *r = AllocFunctionObject();
 	r->type = TYPE_FUNCTION;
-	//r->flags = flags;
-	//r->defaults = NULL;
-	//r->kw_defaults = NULL;
-	//r->closure = NULL;
-	//r->func.func = NULL;
 	r->func = co;
 	gc_IncRefCount((object*)co);
-	//r->name = NULL;
 	r->ref_count = 0;
-	//r->func_type = func_type;
+	#ifdef USE_LOCKING
+	r->lock_count = 0;
+	#endif
 	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
@@ -588,26 +592,11 @@ cfunction_object *CreateCFunctionObject(struct _object* (*func) (struct _vm *vm,
 {
 	cfunction_object *r = AllocCFunctionObject();
 	r->type = TYPE_CFUNCTION;
-	//r->flags = flags;
-	//r->func.func = NULL;
 	r->func = func;
-	//r->name = NULL;
 	r->ref_count = 0;
-	/*if(defaults != NULL)
-	{
-		r->defaults = defaults;
-		gc_IncRefCount((object*)defaults);
-	}
-	else
-		r->defaults = NULL;
-	if(kw_defaults != NULL)
-	{
-		r->kw_defaults = kw_defaults;
-		gc_IncRefCount((object*)kw_defaults);
-	}
-	else
-		r->kw_defaults = NULL;
-		*/
+	#ifdef USE_LOCKING
+	r->lock_count = 0;
+	#endif
 	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
@@ -625,6 +614,9 @@ method_object *CreateMethodObject(object *func,class_instance_object *instance)
 	r->func = func;
 	gc_IncRefCount((object*)r->func);
 	r->ref_count = 0;
+	#ifdef USE_LOCKING
+	r->lock_count = 0;
+	#endif
 	r->instance = instance;
 	gc_IncRefCount((object*)r->instance);
 
@@ -642,12 +634,13 @@ class_object *CreateClassObject(code_object *code,object *base_classes)//char *n
 	class_object *r = AllocClassObject();
 	r->type = TYPE_CLASS;
 	r->code = code;
-	//r->name = name;//str_Copy(name);
 	r->ref_count = 0;
+	#ifdef USE_LOCKING
+	r->lock_count = 0;
+	#endif
 	r->base_classes = base_classes;
 	gc_IncRefCount((object*)code);
 	gc_IncRefCount(base_classes);
-	//if((code->co_flags & CO_CLASS_ROOT) == 0)
 	code->co_flags |= CO_CLASS_ROOT;
 	
 	#ifdef USE_DEBUGGING
@@ -677,6 +670,9 @@ code_object *CreateCodeObject(char *name)
 	obj->cellvars = NULL;
 	obj->names = NULL;
 	obj->ref_count = 0;
+	#ifdef USE_LOCKING
+	obj->lock_count = 0;
+	#endif
 	return(obj);
 }
 
@@ -686,8 +682,10 @@ class_instance_object *CreateClassInstanceObject(class_object *instance_of)
 	r->type = TYPE_CLASS_INSTANCE;
 	r->instance_of = instance_of;
 	r->ref_count = 0;
+	#ifdef USE_LOCKING
+	r->lock_count = 0;
+	#endif
 	gc_IncRefCount((object*)instance_of);
-
 	r->methods = (object*)CreateTuple(0);//this is a kv list of cfunctions or functions ->key is an unicode object with the methods name as value
 	gc_IncRefCount((object*)r->methods);
 	r->vars = (object*)CreateTuple(0);
@@ -707,12 +705,12 @@ iter_object *CreateIterObject(void)
 {
 	iter_object *r = AllocIterObject();
 	r->type = TYPE_ITER;
-	//r->flags = flags;
-	//r->iter_func = iter_func;
-	//r->tag = tag;
 	r->block_stack = NULL;
 	r->tag = NULL;
 	r->ref_count = 0;
+	#ifdef USE_LOCKING
+	r->lock_count = 0;
+	#endif
 	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
@@ -729,16 +727,20 @@ long objects_max = 0;
 long objects_header_total = 0;
 #endif
 
+#ifdef USE_LOCKING
+
 object *LockObject(object *obj)
 {
+	obj->lock_count++;
 	return(obj);
 }
 
 void UnlockObject(object *obj)
 {
-
-
+	obj->lock_count--;
 }
+
+#endif
 
 object *DissolveRef(object *obj)
 {
@@ -1791,9 +1793,9 @@ object *GetDictItemByIndex(object *tuple,INDEX index)
 
 NUM GetTupleLen(object *tuple)
 {
-	if (tuple == NULL || tuple->type != TYPE_TUPLE || ((tuple_object *) tuple)->list == NULL || ((tuple_object *) tuple)->list->num == 0)
+	if (tuple == NULL || tuple->type != TYPE_TUPLE || ((tuple_object*) tuple)->list == NULL || ((tuple_object*) tuple)->list->num == 0)
 		return(0);
-	return(((tuple_object *) tuple)->list->num);
+	return(((tuple_object*) tuple)->list->num);
 }
 
 object *GetDictItem(object *tuple,object *key)
@@ -1811,7 +1813,7 @@ object *GetDictItem(object *tuple,object *key)
 
 INDEX GetDictItemIndex(object *tuple,object *key)
 {
-	if(tuple == NULL || tuple->type != TYPE_TUPLE || ((tuple_object *) tuple)->list == NULL || key == NULL)
+	if(tuple == NULL || tuple->type != TYPE_TUPLE || ((tuple_object*) tuple)->list == NULL || key == NULL)
 		return (-1);
 	 //printf("checking in %d tuple items for\n",((tuple_object*)tuple->ptr)->list->num);
 	//printf("getdictitemindex\n");

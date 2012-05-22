@@ -246,16 +246,6 @@ void gc_FreeObject(object *obj)
 		gc_DecRefCount(((code_object*)obj)->cellvars);
 		break;
 	case TYPE_CLASS:
-		/*
-		if(((class_object*)obj)->name != NULL)
-		{
-			#ifdef USE_DEBUGGING
-			assert(mem_free(((class_object*)obj)->name));
-			#else
-			free(((class_object*)obj)->name);
-			#endif
-		}
-		*/
 		gc_DecRefCount((object*)((class_object*)obj)->code);
 		gc_DecRefCount(((class_object*)obj)->base_classes);
 		break;

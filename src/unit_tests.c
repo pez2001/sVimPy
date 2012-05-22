@@ -608,7 +608,7 @@ void atomic_test(void)
 	#ifdef USE_DEBUGGING
 	debug_level = 0;
 	//debug_level |= DEBUG_INTERACTIVE;
-	debug_level |= DEBUG_MEMORY;
+	//debug_level |= DEBUG_MEMORY;
 	//debug_level |= DEBUG_SHOW_OPCODES;
 	//debug_level |= DEBUG_FULL_DUMP;
 	//debug_level |= DEBUG_STACK;
@@ -643,6 +643,7 @@ void atomic_test(void)
 	//AtomicOpenPYC("tests/test_class6.pyc");
 	//AtomicOpenPYC("tests/test_import.pyc");
 //AtomicOpenPYC("tests/test_import.pyc");
+	AtomicOpenPYC("tests/Queens2a.pyc");
 	//return;
 
 	AtomicOpenPYC("tests/test32b.pyc");
@@ -840,7 +841,11 @@ void atomic_test(void)
 	//brute prime
 	AtomicOpenPYC("tests/e20.pyc");
 	AtomicOpenPYC("tests/e_small.pyc");	
-	//AtomicOpenPYC("tests/e_med.pyc");
+	AtomicOpenPYC("tests/e_med.pyc");
+	AtomicOpenPYC("tests/e_big.pyc");
+	AtomicOpenPYC("tests/e_bigger.pyc");
+	AtomicOpenPYC("tests/e_max.pyc");
+	AtomicOpenPYC("tests/e_huge.pyc");
 
 
 }

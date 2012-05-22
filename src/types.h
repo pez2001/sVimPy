@@ -31,11 +31,11 @@
 #define OBJECT_TYPE char
 #define OBJECT_FLAGS unsigned char
 //#define OBJECT_REF_COUNT unsigned short
-#define OBJECT_REF_COUNT short
 
 //stream 
 #ifdef USE_ARDUINO_FUNCTIONS
 #define STREAM_NUM unsigned short
+#define OBJECT_REF_COUNT short
 // used in INDEXING situations
 #define INDEX short 
 //used in enum over array and total numbers
@@ -45,6 +45,7 @@
 #define REL_NUM short
 #else
 #define STREAM_NUM long 
+#define OBJECT_REF_COUNT long
 // used in INDEXING situations
 #define INDEX long 
 //used in enum over array and total numbers

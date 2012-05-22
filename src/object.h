@@ -110,12 +110,18 @@ typedef struct _object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
+	#ifdef USE_LOCKING
+	OBJECT_REF_COUNT lock_count;
+	#endif
 } object;
 
 typedef struct _ref_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
+	#ifdef USE_LOCKING
+	OBJECT_REF_COUNT lock_count;
+	#endif
 	object *ref;
 } ref_object;
 
@@ -123,6 +129,9 @@ typedef struct _tag_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
+	#ifdef USE_LOCKING
+	OBJECT_REF_COUNT lock_count;
+	#endif
 	void *tag;
 } tag_object;
 
@@ -130,6 +139,9 @@ typedef struct _int_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
+	#ifdef USE_LOCKING
+	OBJECT_REF_COUNT lock_count;
+	#endif
 	INT value;
 } int_object;
 
@@ -137,6 +149,9 @@ typedef struct _float_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
+	#ifdef USE_LOCKING
+	OBJECT_REF_COUNT lock_count;
+	#endif
 	FLOAT value;
 } float_object;
 
@@ -144,6 +159,9 @@ typedef struct _unicode_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
+	#ifdef USE_LOCKING
+	OBJECT_REF_COUNT lock_count;
+	#endif
 	char *value;
 }unicode_object;
 
@@ -151,6 +169,9 @@ typedef struct _kv_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
+	#ifdef USE_LOCKING
+	OBJECT_REF_COUNT lock_count;
+	#endif
 	void *value;
 	void *key;
 } kv_object;				// TO OPTIMIZE MEMORY USAGE -> only used in tuples 
@@ -159,6 +180,9 @@ typedef struct _code_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
+	#ifdef USE_LOCKING
+	OBJECT_REF_COUNT lock_count;
+	#endif
 	char *name;
 	NUM argcount;
 	NUM kwonlyargcount;
@@ -182,6 +206,9 @@ typedef struct _class_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
+	#ifdef USE_LOCKING
+	OBJECT_REF_COUNT lock_count;
+	#endif
 	code_object *code;
 	object *base_classes;
 } class_object;
@@ -190,6 +217,9 @@ typedef struct _class_instance_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
+	#ifdef USE_LOCKING
+	OBJECT_REF_COUNT lock_count;
+	#endif
 	class_object *instance_of;	
 	object *methods;
 	object *vars;
@@ -199,6 +229,9 @@ typedef struct _method_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
+	#ifdef USE_LOCKING
+	OBJECT_REF_COUNT lock_count;
+	#endif
 	object *func;
 	class_instance_object *instance;
 } method_object;
@@ -207,6 +240,9 @@ typedef struct _string_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
+	#ifdef USE_LOCKING
+	OBJECT_REF_COUNT lock_count;
+	#endif
 	char *content;
 	NUM len;
 } string_object;
@@ -215,6 +251,9 @@ typedef struct _tuple_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
+	#ifdef USE_LOCKING
+	OBJECT_REF_COUNT lock_count;
+	#endif
 	INDEX ptr;
 	ptr_list *list;
 } tuple_object;
@@ -223,6 +262,9 @@ typedef struct _function_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
+	#ifdef USE_LOCKING
+	OBJECT_REF_COUNT lock_count;
+	#endif
 	struct _code_object *func;
 } function_object;
 
@@ -230,6 +272,9 @@ typedef struct _cfunction_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
+	#ifdef USE_LOCKING
+	OBJECT_REF_COUNT lock_count;
+	#endif
 	struct _object* (*func) (struct _vm *vm,struct _tuple_object *locals,struct _tuple_object *kw_locals);
 } cfunction_object;
 
@@ -238,6 +283,9 @@ typedef struct _iter_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
+	#ifdef USE_LOCKING
+	OBJECT_REF_COUNT lock_count;
+	#endif
 	object *tag;//used for storage of iter options and index ptr
 	object *(*iter_func)(struct _iter_object *iter,struct _vm *vm);
 	struct _stack *block_stack;//iters will save blocks on stack when yielding
@@ -247,12 +295,26 @@ typedef struct _block_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
+	#ifdef USE_LOCKING
+	OBJECT_REF_COUNT lock_count;
+	#endif
 	code_object *code;
 	INDEX start;
 	INDEX ip;
 	NUM len;
 	struct _stack *stack;
 } block_object;
+
+typedef struct _cache_object
+{
+	OBJECT_TYPE type;
+	OBJECT_REF_COUNT ref_count;
+	#ifdef USE_LOCKING
+	OBJECT_REF_COUNT lock_count;
+	#endif
+	//object *object;
+	STREAM_NUM stream_pos;
+} cache_object;
 
 #ifndef USE_ARDUINO_FUNCTIONS
 #pragma pack(pop)				/* restore original alignment from stack */
