@@ -43,11 +43,11 @@ Features include:
 	0.4    generators/iterators & yield opcode
 	0.5    streams for reading
 	0.55  fix function calls bugs fixed introduced during rewrite 
-				of some code parts 
+			of some code parts 
 		+ build_inc tool 
-                (to automatically increment build number)
+			(to automatically increment build number)
 	0.56  fixed a million dollar bug :-) 
-            + BLINK example runs on an atmega328p with only 2kb 
+		+ BLINK example runs on an atmega328p with only 2kb 
 	0.57  stream writing
 	0.58  svimpy interpreter executable 
 		+ pyc_compress tool (WriteObject function) 
