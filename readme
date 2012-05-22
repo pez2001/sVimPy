@@ -54,39 +54,39 @@ Features include:
             + pack_pos tool (for packing of python objects) 
             + cleaned up debugging + Makefile enhancements
 	0.59  mp3 playback with external library 
-				to test wrapper abilities 
-				(every engine needs mp3 support) 
-				of course i dont intend to use it 
-				on small scale devices ; just for testing
+			to test wrapper abilities 
+			(every engine needs mp3 support) 
+			of course i dont intend to use it 
+			on small scale devices ; just for testing
 	0.6    internal functions
 	0.7    module import abilities
 	0.71	missing opcode SETUP_WITH and corrected
 			an indexing bug with the opcodes 
 			after SETUP_WITH (not many)
-	0.73	basic attributes
+	0.73  basic attributes
 	0.74  classes support
 			+ class inheritance
 			+ fixed function calling 
-				(now each function call 
-				uses its own memory space)
-	0.75	basic support for file operations
+			(now each function call 
+			uses its own memory space)
+	0.75  basic support for file operations
 	0.76  missing opcodes (2-3 still missing)
 		    + basic exceptions support
 	0.77  removed redundancies 
-				& manual stuff in external code 
+			& manual stuff in external code 
 			+ more management functions
 			+ basic error handling
 			+ packaging
 	0.8    vm feature complete (almost)
 	0.9    memory optimizations 
-				including object locking mechanism 
+			including object locking mechanism 
             + caching  for near zero byte 
-				memory usage interpretation 
-				of python code
+			memory usage interpretation 
+			of python code
 	0.91  stream printing + sd-fat support
 	0.92  add missing internal functions used by classes
 	0.95  use buildhive for automatic release generation
-				(packaging + web deploy)
+			(packaging + web deploy)
 	0.99  source clean up 
 	1.0    stable release 
 			+ real life applications 
