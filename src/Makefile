@@ -39,8 +39,8 @@ endif
 MAJOR_VERSION = 0
 MINOR_VERSION = 77
 #builds are counted since version 0.5 roughly
-BUILD = 252
-DEBUG_BUILD = 1070
+BUILD = 257
+DEBUG_BUILD = 1075
 
 #CFLAGS= -Ilibraries/fmod -W -w -O2 -std=c99 -DBUILD=$(BUILD) -DMAJOR_VERSION=$(MAJOR_VERSION) -DMINOR_VERSION=$(MINOR_VERSION)
 CFLAGS= -W -w -O2 -std=c99 -DBUILD=$(BUILD) -DMAJOR_VERSION=$(MAJOR_VERSION) -DMINOR_VERSION=$(MINOR_VERSION) -lm
@@ -283,6 +283,7 @@ srcdist:	clean clean_binaries
 	tar -cf svimpy.src-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD).tar svimpy-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
 	gzip -9 svimpy.src-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD).tar
 	rm -r svimpy-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	mv svimpy.src-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD).tar.gz ..
 
 binariesdist: clean_binaries clean all clean
 	mkdir svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
@@ -298,8 +299,10 @@ binariesdist: clean_binaries clean all clean
 	tar -cf svimpy.bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)-$(PLATFORM_NAME).tar svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
 	gzip -9 svimpy.bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)-$(PLATFORM_NAME).tar
 	rm -r svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
-	
-	
+	mv svimpy.bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)-$(PLATFORM_NAME).tar.gz ..
+
+dist:	srcdist binariesdist 
+	make clean clean_binaries
 git:	
 	git add *
 	git commit

@@ -70,8 +70,11 @@ Features include:
 	0.75	add basic support for file operations
 	0.76  add missing opcodes
 		    + basic exceptions support
-	0.77  remove redundancies and manual stuff in external code + more management functions
-	0.8    vm feature complete 
+	0.77  remove redundancies and manual stuff in external code 
+			+ more management functions
+			+ basic error handling
+			+ packaging
+	0.8    vm feature complete (almost)
 	0.9    memory optimizations including object locking mechanism 
             + caching  for near zero byte memory usage interpretation 
             of python code
@@ -79,10 +82,8 @@ Features include:
 	0.92  add missing internal functions used by classes
 	0.95  use buildhive for automatic releases generation (packaging + web deploy)
 	0.99  source clean up 
-			+ prepare packaging
 	1.0    stable release 
 			+ real life applications 
-			+ packaging
 	1.1    custom bootloader
 	1.5    ??? :-)
 	2.0    slices
