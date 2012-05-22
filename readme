@@ -37,11 +37,11 @@ Features include:
  * some support tools to be used with svimpy
  
 	History + Roadmap :
-	0.1    first testing release 
-	0.2    correct interpretation of function parameters
-	0.3    closures and refs
-	0.4    generators/iterators & yield opcode
-	0.5    streams for reading
+	0.1   first testing release 
+	0.2   correct interpretation of function parameters
+	0.3   closures and refs
+	0.4   generators/iterators & yield opcode
+	0.5   streams for reading
 	0.55  fix function calls bugs fixed introduced during rewrite 
 			of some code parts 
 		+ build_inc tool 
