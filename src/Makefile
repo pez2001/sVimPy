@@ -285,7 +285,22 @@ srcdist:	clean clean_binaries
 	rm -r svimpy-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
 	mv svimpy.src-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD).tar.gz ..
 
-binariesdist: clean_binaries clean all arduino.hex clean
+binariesdist: clean_binaries clean all clean
+	mkdir svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp $(VM_BINS) svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp $(UT_BINS) svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp $(SVIMPY_BINS) svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp $(TOOLS_BUILD_INC_BINS) svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp $(TOOLS_PACK_POS_BINS) svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp $(TOOLS_COMPRESS_PYC_BINS) svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp -r tests svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp ../readme svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	tar -cf svimpy.bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)-$(PLATFORM_NAME).tar svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	gzip -9 svimpy.bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)-$(PLATFORM_NAME).tar
+	rm -r svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+#	mv svimpy.bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)-$(PLATFORM_NAME).tar.gz ..
+
+hexbinariesdist: clean_binaries clean all arduino.hex clean
 	mkdir svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
 	cp $(VM_BINS) svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
 	cp $(UT_BINS) svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
@@ -299,9 +314,11 @@ binariesdist: clean_binaries clean all arduino.hex clean
 	tar -cf svimpy.bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)-$(PLATFORM_NAME).tar svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
 	gzip -9 svimpy.bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)-$(PLATFORM_NAME).tar
 	rm -r svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
-	mv svimpy.bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)-$(PLATFORM_NAME).tar.gz ..
-
+#	mv svimpy.bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)-$(PLATFORM_NAME).tar.gz ..
+	
 dist:	srcdist binariesdist 
+	make clean clean_binaries
+hexdist:	srcdist hexbinariesdist 
 	make clean clean_binaries
 git:	
 	git add *
