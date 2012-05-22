@@ -90,10 +90,10 @@ Features include:
 	0.99  source clean up 
 	1.0    stable release 
 		+ real life applications 
-	1.1    custom bootloader
-	1.5    ??? :-)
-	2.0    slices
-	3.0    time sliced multithreading
+	1.1   custom bootloader
+	1.5   ??? :-)
+	2.0   slices
+	3.0   time sliced multithreading
 	
 	
 	
