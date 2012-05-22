@@ -656,7 +656,7 @@ NUM atomic_test(void)
 	//AtomicOpenPYC("tests/test_import.pyc");
 //AtomicOpenPYC("tests/test_import.pyc");
 	NUM exit_code = 0;
-	exit_code = AtomicOpenPYC("tests/Queens2a.pyc");
+	exit_code = AtomicOpenPYC("tests/queens2a.pyc");
 	if(exit_code)
 		return(exit_code);
 
@@ -1090,9 +1090,9 @@ NUM atomic_test(void)
 	exit_code = AtomicOpenPYC("tests/e_max.pyc");
 	if(exit_code)
 		return(exit_code);
-	exit_code = AtomicOpenPYC("tests/e_huge.pyc");
-	if(exit_code)
-		return(exit_code);
+	//exit_code = AtomicOpenPYC("tests/e_huge.pyc");
+	//if(exit_code)
+	//	return(exit_code);
 	return(exit_code);
 }
 
