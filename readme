@@ -60,7 +60,7 @@ Features include:
 			on small scale devices ; just for testing
 	0.6    internal functions
 	0.7    module import abilities
-	0.71	missing opcode SETUP_WITH and corrected
+	0.71  missing opcode SETUP_WITH and corrected
 			an indexing bug with the opcodes 
 			after SETUP_WITH (not many)
 	0.73  basic attributes
