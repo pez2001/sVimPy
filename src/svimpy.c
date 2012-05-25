@@ -34,11 +34,11 @@ void ExecutePYC(char *filename)
 	stream *f = stream_CreateFromFile(filename,"rb");
 	if (!stream_Open(f))
 		return;
-	long magic = ReadLong(f);
+	long magic = stream_ReadLong(f);
 	if (magic != pyc_magic)
 		return;
-	ReadLong(f);//skip time
-	object *obj = ReadObject(f);
+	stream_ReadLong(f);//skip time
+	object *obj = stream_ReadObject(f);
 	object *global_key = (object*)CreateUnicodeObject(str_Copy(((code_object*)obj)->name));
 	vm_AddGlobal(vm, global_key,obj);
 	object *ret = NULL;
@@ -64,7 +64,7 @@ void ExecuteRPYC(char *filename)
 	stream *f = stream_CreateFromFile(filename,"rb");
 	if (!stream_Open(f))
 		return;
-	object *obj = ReadObject(f);
+	object *obj = stream_ReadObject(f);
 	object *global_key = (object*)CreateUnicodeObject(str_Copy(((code_object*)obj)->name));
 	vm_AddGlobal(vm, global_key,obj);
 	object *ret = NULL;
@@ -91,7 +91,7 @@ void ExecuteRPYC_PLUS(char *filename)
 	stream *f = stream_CreateFromFile(filename,"rb");
 	if (!stream_Open(f))
 		return;
-	object *obj = ReadObjectPlus(f);
+	object *obj = stream_ReadObjectPlus(f);
 	object *global_key = (object*)CreateUnicodeObject(str_Copy(((code_object*)obj)->name));
 	vm_AddGlobal(vm, global_key,obj);
 	object *ret = NULL;
@@ -189,12 +189,12 @@ int main(int argc, char** argv)
 		if (!stream_Open(f))
 			return(1);
 		//printf("file opened\n");
-		long magic = ReadLong(f);
+		long magic = stream_ReadLong(f);
 
 		if (magic != pyc_magic)
 			return(1);
-		ReadLong(f);//skip time
-		object *obj = ReadObject(f);
+		stream_ReadLong(f);//skip time
+		object *obj = stream_ReadObject(f);
 		#ifdef USE_DEBUGGING	
 		DumpObject(obj, 0);
 		#else

@@ -113,7 +113,7 @@ void stream_tests(void)
 		return;
 	}
 	printf("stream opened\n");
-	long magic = ReadLong(f);
+	long magic = stream_ReadLong(f);
 
 	if (magic != pyc_magic)
 	{
@@ -131,7 +131,7 @@ void stream_tests(void)
 		return;
 	}
 	printf("mstream opened\n");
-	long mmagic = ReadLong(m);
+	long mmagic = stream_ReadLong(m);
 
 	if (mmagic != pyc_magic)
 	{
@@ -160,18 +160,18 @@ void OpenPYC(stream *f, vm *vm)
 	//#endif
 	// int r = fread(bh,4,1,f);
 	// if(!memcmp(bh,(char*)&pyc_magic,4))
-	long magic = ReadLong(f);
+	long magic = stream_ReadLong(f);
 
 	if (magic != pyc_magic)
 		return;
-	ReadLong(f);//skip time
+	stream_ReadLong(f);//skip time
 
 	/* struct tm *ti; //TO DECREASE MEMORY USAGE ti = localtime((void*)&time);
 	   char *bt = (char*)mem_malloc(100); strftime(bt,100,"%Y.%m.%d ",ti);
 	   printf("file date: %s\n", bt); strftime(bt,100,"%H:%M:%S \n",ti);
 	   printf("file time: %s\n", bt); mem_free(bt); //8 bytes into the file */
 	//printf("reading object\n");
-	object *obj = ReadObject(f);
+	object *obj = stream_ReadObject(f);
 	//object *obj = NULL;
 	//return;
 	//printf("read pyc\n");
@@ -459,11 +459,11 @@ object *ImportModule(struct _vm *vm,char *module_name)
 	stream *f = stream_CreateFromFile(filename,"rb");
 	if (!stream_Open(f))
 		return(NULL);
-	long magic = ReadLong(f);
+	long magic =stream_ReadLong(f);
 	if (magic != pyc_magic)
 		return(NULL);
-	ReadLong(f);//skip time
-	object *obj = ReadObject(f);
+	stream_ReadLong(f);//skip time
+	object *obj = stream_ReadObject(f);
 	if(obj->type != TYPE_CODE)
 	{
 		#ifdef USE_DEBUGGING
@@ -521,14 +521,14 @@ NUM AtomicOpenPYC(char *filename)
 		printf("error opening pyc file: %s\n",filename);
 		return(1);
 	}
-	long magic = ReadLong(f);
+	long magic = stream_ReadLong(f);
 	if (magic != pyc_magic)
 	{
 		printf("error wrong file magic: %s\n",filename);
 		return(1);
 	}
-	ReadLong(f);//skip time
-	object *obj = ReadObject(f);
+	stream_ReadLong(f);//skip time
+	object *obj = stream_ReadObject(f);
 	object *global_key = (object*)CreateUnicodeObject(str_Copy(((code_object*)obj)->name));
 	vm_AddGlobal(vm, global_key,obj);
 	#ifdef USE_DEBUGGING
@@ -656,10 +656,62 @@ NUM atomic_test(void)
 	//AtomicOpenPYC("tests/test_import.pyc");
 //AtomicOpenPYC("tests/test_import.pyc");
 	NUM exit_code = 0;
+	//exit_code = AtomicOpenPYC("tests/");
+	//if(exit_code)
+	//	return(exit_code);
+	//return(exit_code);
+
+	printf("executing arduino object:tests/blink.pyc\n");
+	printf("sVimPy Python Output\n{\n");
+	vm *vm = vm_Init(NULL);
+	vm->import_module_handler = &ImportModule;
+	vm->exception_handler = &CatchException;
+	long pyc_magic = MAGIC;
+	stream *f = stream_CreateFromFile("tests/fade_min.pyc","rb");
+	if (!stream_Open(f))
+	{
+		printf("error opening pyc file: tests/blink.pyc\n");
+		return(1);
+	}
+	long magic = stream_ReadLong(f);
+	if (magic != pyc_magic)
+	{
+		printf("error wrong file magic: tests/blink.pyc\n");
+		return(1);
+	}
+	stream_ReadLong(f);//skip time
+	object *obj = stream_ReadObject(f);
+	object *global_key = (object*)CreateUnicodeObject(str_Copy(((code_object*)obj)->name));
+	vm_AddGlobal(vm, global_key,obj);
+	object *ret = vm_RunObject(vm, obj, NULL,NULL);
+	printf("ran module main\n");
+	if(ret != NULL)
+		gc_DecRefCount(ret);
+		
+	vm_RunFunction(vm,"setup",NULL,NULL);
+	printf("ran setup\n");
+	for(INDEX i = 0;i<100;i++) //execute one hundred test loops
+		vm_RunFunction(vm,"loop",NULL,NULL);
+	printf("ran loops\n");
+	
+	vm_RemoveGlobal(vm,global_key);
+	gc_DecRefCount(obj);
+	stream_Free(f);
+	printf("}\n");
+	if(vm->error_message != NULL)
+		printf("error occured:\n%s\n",vm->error_message);
+	exit_code = vm_Close(vm);
+	printf("vm exit code:%d\n",exit_code);
+	return(exit_code);
+
+
+
+
+
 	exit_code = AtomicOpenPYC("tests/queens2a.pyc");
 	if(exit_code)
 		return(exit_code);
-
+	//return(exit_code);
 	exit_code = AtomicOpenPYC("tests/test32b.pyc");
 	if(exit_code)
 		return(exit_code);

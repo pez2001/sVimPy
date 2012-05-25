@@ -40,8 +40,8 @@
 #include "object.h"
 //#include "memory.h"
 #include "internal_functions.h"
-#include "arduino/blink.h"
-//#include "arduino/fade_min.h"
+//#include "arduino/blink.h"
+#include "arduino/fade_min.h"
 
 
 

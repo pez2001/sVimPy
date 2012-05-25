@@ -77,7 +77,7 @@ object *a_digitalWrite(vm *vm,tuple_object *locals,tuple_object *kw_locals)
 		pin =(object*) ((kv_object*)pin)->value;
 	if(val->type == TYPE_KV)
 	{
-		val =(object*) ((kv_object*)val)->value;
+		val = (object*) ((kv_object*)val)->value;
 		//printf("pt:%c,vt:%c\r\n",pin->type,val->type);
 		//printf("val:%d\r\n",((int_object*)val)->value);
 	}
@@ -121,14 +121,14 @@ object *a_delay(vm *vm,tuple_object *locals,tuple_object *kw_locals)
  //ms
  	//printf("delay\n");
  	object *ms = GetItem((object*)locals,0);
-	//if(ms->type == TYPE_INT)
+	if(ms->type == TYPE_INT)
 	//	printf("delay:%d\r\n",((int_object*)ms)->value);
-	//	delay(((int_object*)ms)->value);
+		delay(((int_object*)ms)->value);
 	//delay(8);
 	object *tmp =CreateEmptyObject(TYPE_NONE);
 	return (tmp);	
 }
-
+/*
 object *a_serialprint(vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
  //message
@@ -150,28 +150,6 @@ object *a_serialBegin(vm *vm,tuple_object *locals,tuple_object *kw_locals)
 	object *tmp =CreateEmptyObject(TYPE_NONE);
 	return (tmp);	
 }
-/*
-void AddArduinoFunctions(vm *vm)
-{
-	cfunction *a_pin_mode = CreateCFunction(&a_pinMode, "pinMode");
-	vm_AddFunction(vm, a_pin_mode);
-	cfunction *a_digital_read = CreateCFunction(&a_digitalRead, "digitalRead");
-	vm_AddFunction(vm, a_digital_read);
-	cfunction *a_digital_write = CreateCFunction(&a_digitalWrite, "digitalWrite");
-	vm_AddFunction(vm, a_digital_write);
-	cfunction *a_analog_read = CreateCFunction(&a_analogRead, "analogRead");
-	vm_AddFunction(vm, a_analog_read);
-	cfunction *a_analog_write = CreateCFunction(&a_analogWrite, "analogWrite");
-	vm_AddFunction(vm, a_analog_write);
-	cfunction *a_delay_fd = CreateCFunction(&a_delay, "delay");
-	vm_AddFunction(vm, a_delay_fd);
-	//function_object *a_serial_print = CreateCFunction(&a_serialprint, "Serial.print");
-	//vm_AddFunctionObject(vm, a_serial_print);
-	//function_object *a_serial_begin = CreateCFunction(&a_serialBegin, "Serial.Begin");
-	//vm_AddFunctionObject(vm, a_serial_begin);
-	//function_object *a_ = CreateCFunction(&a_, "");
-	//vm_AddFunctionObject(vm, a_);
-}
 */
 void AddArduinoGlobal(vm *vm)
 {
@@ -182,8 +160,8 @@ void AddArduinoGlobal(vm *vm)
 	AddCodeCFunction((object*)a_globals,"analogRead",&a_analogRead);
 	AddCodeCFunction((object*)a_globals,"analogWrite",&a_analogWrite);
 	AddCodeCFunction((object*)a_globals,"delay",&a_delay);
-	AddCodeCFunction((object*)a_globals,"Serial.print",&a_serialprint);
-	AddCodeCFunction((object*)a_globals,"Serial.Begin",&a_serialBegin);
+	//AddCodeCFunction((object*)a_globals,"Serial.print",&a_serialprint);
+	//AddCodeCFunction((object*)a_globals,"Serial.Begin",&a_serialBegin);
 	AddCodeName((object*)a_globals,(object*)CreateUnicodeObject(str_Copy("INPUT")),(object*)CreateIntObject(0));
 	AddCodeName((object*)a_globals,(object*)CreateUnicodeObject(str_Copy("OUTPUT")),(object*)CreateIntObject(1));
 	AddCodeName((object*)a_globals,(object*)CreateUnicodeObject(str_Copy("LOW")),(object*)CreateIntObject(0));

@@ -75,6 +75,7 @@ int main(int argc, char *argv[])
 		printf("input pyc filename:%s\n",input_filename);
 		printf("output filename:%s\n",output_filename);
 		gc_Init(NULL);
+		obj_Init();
 		streams_Init();
 		long pyc_magic = MAGIC;
 		stream *f = stream_CreateFromFile(input_filename,"rb");
@@ -84,25 +85,26 @@ int main(int argc, char *argv[])
 		if (!stream_Open(o))
 			return(1);
 		printf("files opened\n");
-		long magic = ReadLong(f);
+		long magic = stream_ReadLong(f);
 
 		if(magic != pyc_magic)	
 			return(1);
-		ReadLong(f);//skip time
-		object *obj = ReadObject(f);
+		stream_ReadLong(f);//skip time
+		object *obj = stream_ReadObject(f);
 		if(format_rpyc)
 		{
-			WriteObject(obj,o);
+			stream_WriteObject(obj,o);
 			printf("written object to stream in rpyc format\n");	
 		}
 		else if(format_rpyc_plus)
 		{
-			WriteObjectPlus(obj,o);
+			stream_WriteObjectPlus(obj,o);
 			printf("written object to stream in rpyc+ format\n");
 		}
 		stream_Free(f);
 		stream_Free(o);
 		streams_Close();
+		obj_Close();
 		gc_Close();
 	}
 	else

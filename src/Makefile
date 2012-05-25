@@ -22,6 +22,7 @@
 #rot button 2
 #schwarz +5v /gnd
 
+USER := $(shell whoami)
 
 UNAME := $(shell uname)
 
@@ -40,7 +41,7 @@ MAJOR_VERSION = 0
 MINOR_VERSION = 77
 #builds are counted since version 0.5 roughly
 BUILD = 257
-DEBUG_BUILD = 1078
+DEBUG_BUILD = 1124
 
 #CFLAGS= -Ilibraries/fmod -W -w -O2 -std=c99 -DBUILD=$(BUILD) -DMAJOR_VERSION=$(MAJOR_VERSION) -DMINOR_VERSION=$(MINOR_VERSION)
 CFLAGS= -W -w -O2 -std=c99 -DBUILD=$(BUILD) -DMAJOR_VERSION=$(MAJOR_VERSION) -DMINOR_VERSION=$(MINOR_VERSION) -lm
@@ -50,7 +51,7 @@ AR=ar
 LD=ld
 
 #arduino environment
-ARDUINO_AVR_DIR = /C/Users/pez2001/Documents/Arduino-1.0
+ARDUINO_AVR_DIR = /C/Users/$(USER)/Documents/Arduino-1.0
 
 ARDUINO_TERM = /C/Program\ Files\ \(x86\)/Putty/putty -load arduino_uno
 ARDUINO_MCU = atmega328p

@@ -72,11 +72,11 @@ extern "C"  {
 #define TYPE_CFUNCTION 'C'
 #define TYPE_BLOCK 'b'
 #define TYPE_KV 'k'
-#define TYPE_REF 'r'
+#define TYPE_PROXY 'r'
 #define TYPE_ITER 'R'
 #define TYPE_CLASS_INSTANCE '*'
 #define TYPE_CLASS '&'
-#define TYPE_EXCEPTION 'E'
+//#define TYPE_EXCEPTION 'E'
 #define TYPE_METHOD 'M'
 #define TYPE_TAG 't'
 
@@ -114,16 +114,6 @@ typedef struct _object
 	OBJECT_REF_COUNT lock_count;
 	#endif
 } object;
-
-typedef struct _ref_object
-{
-	OBJECT_TYPE type;
-	OBJECT_REF_COUNT ref_count;
-	#ifdef USE_LOCKING
-	OBJECT_REF_COUNT lock_count;
-	#endif
-	object *ref;
-} ref_object;
 
 typedef struct _tag_object
 {
@@ -305,6 +295,8 @@ typedef struct _block_object
 	struct _stack *stack;
 } block_object;
 
+#ifdef USE_LOCKING
+/*
 typedef struct _cache_object
 {
 	OBJECT_TYPE type;
@@ -315,6 +307,18 @@ typedef struct _cache_object
 	//object *object;
 	STREAM_NUM stream_pos;
 } cache_object;
+*/
+typedef struct _proxy_object
+{
+	OBJECT_TYPE type;
+	OBJECT_REF_COUNT ref_count;
+	#ifdef USE_LOCKING
+	OBJECT_REF_COUNT lock_count;
+	#endif
+	void *ref;//object* or stream_pos/512
+	void *is_cached; // == 0 -> not cached use ref as object*  > 0 -> pointer stream where object is cached ,ref is the position(mmc sector address 512 bytes aligned) in the stream 
+} proxy_object;
+#endif
 
 #ifndef USE_ARDUINO_FUNCTIONS
 #pragma pack(pop)				/* restore original alignment from stack */
@@ -324,17 +328,15 @@ void obj_Init(void);
 
 void obj_Close(void);
 
-kv_object *ConvertToKVObject(object *key);
-
-kv_object *ConvertToKVObjectValued(object *key,object *value);
-
 object *AllocObject(void);
 
 block_object *AllocBlockObject(void);
 
 kv_object *AllocKVObject(void);
 
-ref_object *AllocRefObject(void);
+#ifdef USE_LOCKING
+proxy_object *AllocProxyObject(void);
+#endif
 
 tag_object *AllocTagObject(void);
 
@@ -362,33 +364,9 @@ cfunction_object *AllocCFunctionObject(void);
 
 method_object *AllocMethodObject(void);
 
-object *LockObject(object *obj);
-
-void UnlockObject(object *obj);
-
-long ReadLong(stream *f);
-
-FLOAT ReadFloat(stream *f);
-
-char ReadChar(stream *f);
-
-object *ReadObject(stream *f);
-
-object *ReadObjectPlus(stream *f);
-
-void WriteLong(long l,stream *f);
-
-void WriteFloat(FLOAT fl,stream *f);
-
-void WriteChar(char c,stream *f);
-
-void WriteObject(object *obj,stream *f);
-
-void WriteObjectPlus(object *obj,stream *f);
-
-object *DissolveRef(object *obj);
-
-ref_object *CreateRefObject(object *ref_to);
+#ifdef USE_LOCKING
+proxy_object *CreateProxyObject(void);
+#endif
 
 tag_object *CreateTagObject(void *tag);
 
@@ -406,11 +384,7 @@ kv_object *CreateKVObject(object *key,object *value);
 
 object *CreateEmptyObject(char type);
 
-function_object *CreateFunctionObject_MAKE_FUNCTION(code_object *function_code,tuple_object *defaults,tuple_object *kw_defaults);
-
-function_object *CreateFunctionObject_MAKE_CLOSURE(code_object *function_code,tuple_object *closure,tuple_object *defaults,tuple_object *kw_defaults);
-
-function_object *CreateFunctionObject(code_object *co);
+function_object *CreateFunctionObject(code_object *function_code,tuple_object *defaults,tuple_object *kw_defaults,tuple_object *closure);
 
 cfunction_object *CreateCFunctionObject(struct _object* (*func) (struct _vm *vm,struct _tuple_object *locals,struct _tuple_object *kw_locals));//,tuple_object *defaults,tuple_object *kw_defaults);//used for in-python storage of external calls
 
@@ -424,15 +398,45 @@ class_instance_object *CreateClassInstanceObject(class_object *instance_of);
 
 iter_object *CreateIterObject(void);
 
+#ifdef USE_LOCKING
+object *LockObject(object *obj);
+
+void UnlockObject(object *obj);
+#endif
+
+object *CopyObject(object *obj);
+
+BOOL CompareObjects(object *a,object *b);
+
+kv_object *ConvertToKVObject(object *key);
+
+kv_object *ConvertToKVObjectValued(object *key,object *value);
+
+//object *DissolveRef(object *obj);
+
 void PrintObject(object *obj);
 
+#ifndef USE_ARDUINO_FUNCTIONS
 void FullDumpObject(object * obj, char level);
+#endif
 
 #ifdef USE_DEBUGGING
 void DumpObject(object *obj, char level);
 
 char *DumpObjectXml(object *obj, char level);
 #endif
+
+void AddCodeName(object *co,object *key,object *value);
+
+void AddCodeFunction(object *co,char *name,object *func);
+
+void AddCodeCFunction(object *co,char *name,	struct _object* (*func) (struct _vm *vm,struct _tuple_object *locals,struct _tuple_object *kw_locals));
+
+
+//TODO tuple functions -> move to tuples.c 
+void ClearDictValues(object *tuple);
+
+void ConvertToDict(object *tuple);
 
 object *GetNextItem(object *tuple);
 
@@ -470,10 +474,6 @@ object *GetClassMethod(object *_class,object *key);
 
 object *GetClassVar(object *_class,object *key);
 
-object *CopyObject(object *obj);
-
-BOOL CompareObjects(object *a,object *b);
-
 void AppendDictItem(object *tuple,object *key,object *value);
 
 void AppendItem(object *tuple,object *value);
@@ -485,13 +485,6 @@ void ClearDictValues(object *tuple);
 void DeleteItem(object *tuple, INDEX index);
 
 void DeleteDictItem(object *tuple,object *key);
-
-void AddCodeName(object *co,object *key,object *value);
-
-void AddCodeFunction(object *co,char *name,object *func);
-
-void AddCodeCFunction(object *co,char *name,	struct _object* (*func) (struct _vm *vm,struct _tuple_object *locals,struct _tuple_object *kw_locals));
-
 
 #ifdef __cplusplus
 } 

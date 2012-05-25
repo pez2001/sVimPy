@@ -40,7 +40,9 @@ extern "C"  {
 // object *pow(object *base,object *exp);
 struct _vm;
 
-object *if_assert(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+#ifdef USE_INTERNAL_FUNCTIONS
+
+//object *if_assert(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
 
 object *if_build_class(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
 
@@ -90,14 +92,10 @@ object *if_map(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
 
 object *if_next(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
 
-
-object *BinaryOp(object *tos,object *tos1,unsigned char op);
-
-object *CompareOp(object *tos,object *tos1,unsigned char cmp_op);
-
 object *custom_code(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
 
 void AddInternalFunctions(struct _vm *vm);
+#endif
 
 object *BinaryOp(object *tos,object *tos1,unsigned char op);
 

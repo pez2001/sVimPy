@@ -111,8 +111,10 @@ typedef struct _vm
 	object *(*import_module_handler) (struct _vm *vm,char *module_name);
 	object *(*exception_handler) (struct _vm *vm,struct _object *exception);
 	object *(*step_handler) (struct _vm *vm);//TODO implement step handler to execute external work functions
+	//#ifndef USE_ARDUINO_FUNCTIONS
 	NUM error_code;
 	char *error_message;
+	//#endif
 	BOOL interrupt_vm;
 	BOOL running;
 } vm;
@@ -126,6 +128,7 @@ typedef struct _vm
 #ifdef USE_DEBUGGING
 void vm_DumpStackTree(vm *vm);
 #endif
+
 object *vm_ExecuteCFunctionByName(vm *vm, char *name, tuple_object *locals,tuple_object *kw_locals);
 
 vm *vm_Init(code_object *co);//init vm and set global object if given
@@ -139,6 +142,8 @@ void vm_AddGlobal(vm *vm,object *key,object *global);//add a global object
 void vm_RemoveGlobal(vm *vm, object *key);//remove a global object
 
 object *vm_GetGlobal(vm *vm, object *key);//retrieve a global object
+
+object *vm_GetGlobalByIndex(vm *vm, INDEX i);
 
 void vm_SetInterrupt(vm*vm,object *(*interrupt_func) (struct _vm *vm,stack *stack)); //set interrupt handler function
 
@@ -158,7 +163,9 @@ object *vm_RunFunction(vm *vm,char *name, tuple_object *locals,tuple_object *kw_
 
 object *vm_RunObject(vm *vm, object *obj, tuple_object *locals,tuple_object *kw_locals);//run a python object if possible
 
+#ifdef USE_DEBUGGING
 object *vm_InteractiveRunObject(vm *vm, object *obj,  tuple_object *locals,tuple_object *kw_locals);
+#endif
 
 object *vm_StartMethod(vm *vm,object *key,class_instance_object *cio,tuple_object *locals,tuple_object *kw_locals);
 
@@ -174,7 +181,7 @@ block_object *vm_StartClassObject(vm *vm,class_object *co,tuple_object *locals,t
 
 object *vm_StartFunctionObject(vm *vm,function_object *fo,tuple_object *locals,tuple_object *kw_locals);//run a python function object 
 
-object *vm_StartCFunctionObject(vm *vm,cfunction_object *cfo,tuple_object *locals,tuple_object *kw_locals);//run a python function object 
+object *vm_StartCFunctionObject(vm *vm,cfunction_object *cfo,tuple_object *locals,tuple_object *kw_locals);//run a c function object 
 
 object *vm_StartMethodObject(vm *vm,method_object *mo,tuple_object *locals,tuple_object *kw_locals);
 

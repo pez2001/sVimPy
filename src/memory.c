@@ -73,6 +73,7 @@ void mem_Close(void)
 	printf("not freed heap bytes num:%d\n", mem_chunks_actual_size);
 	printf("MAX HEAP USAGE:%d\n", mem_chunks_max_size);
 	}
+	
 }
 
 void mem_Push(void *x, long size, char *description)
@@ -243,7 +244,7 @@ int mem_free(void *ptr)
 	if (!f)
 	{
 		debug_printf(DEBUG_MEMORY,"chunk not found @%x\n", p);
-		mem_cnf();
+		//mem_cnf();
 		return (0);
 	}
 	mem_chunks_num--;
@@ -267,11 +268,6 @@ int mem_free(void *ptr)
 	// printf("freed bytes @%x\n",ptr);
 	}
 	return (1);
-}
-
-void mem_cnf(void)
-{
-
 }
 
 #endif

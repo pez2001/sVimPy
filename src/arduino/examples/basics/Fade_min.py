@@ -5,12 +5,14 @@ f = 5    # how many points to fade the LED by
 
 def setup():
 	# declare pin 9 to be an output:
-	pinMode(13, OUTPUT)
+	pinMode(9, OUTPUT)
 
 
 def loop():
+	global b
+	global f
 	# set the brightness of pin 9:
-	analogWrite(13, b)    
+	analogWrite(9, b)    
 
 	# change the brightness for next time through the loop:
 	b = b + f

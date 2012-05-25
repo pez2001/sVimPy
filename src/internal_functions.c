@@ -554,6 +554,7 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 	return(new_tos);
 }
 
+
 object *custom_code(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
 	object *a = GetItem((object*)locals,0);
@@ -561,20 +562,21 @@ object *custom_code(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 	return(BinaryOp(a,b,OPCODE_BINARY_ADD));
 }
 
+/*
 object *if_assert(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
 	object *bool = GetItem((object*)locals,0);
 	unicode_object *message = (unicode_object*)GetItem((object*)locals,1);
 	if(bool->type == TYPE_FALSE)
 	{
-		printf("Assertion failed:\n");
+		//printf("Assertion failed:\n");
 		PrintObject((object*)message);
 		vm_Interrupt(vm,NULL);
 	}
 	object *tmp =CreateEmptyObject(TYPE_NONE);
 	return (tmp);
 }
-
+*/
 object *if_build_class(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
 	//printf("build_class called\n");
@@ -606,6 +608,7 @@ object *if_build_class(struct _vm *vm,tuple_object *locals,tuple_object *kw_loca
 	//return (tmp);
 }
 
+#ifdef USE_INTERNAL_CLASSES
 object *if_open(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
 	//if(x->type == TYPE_UNICODE)
@@ -616,19 +619,20 @@ object *if_open(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 	gc_IncRefCount((object*)file_class_key);
 	gc_DecRefCount((object*)file_class_key);
 	class_instance_object *file_instance = CreateClassInstanceObject(file_class);	
-	#ifndef USE_ARDUINO_FUNCTIONS
+	//#ifndef USE_ARDUINO_FUNCTIONS
 	object *x = GetItem((object*)locals,0);
 	stream *fs = stream_CreateFromFile(((unicode_object*)x)->value,"rb");
 	stream_Open(fs);
 	tag_object *file_tag = CreateTagObject(fs);
 	unicode_object *file_name = CreateUnicodeObject(str_Copy("__file__"));
 	SetAttribute((object*)file_instance,(object*)file_name,(object*)file_tag);	
-	#endif
+	//#endif
 	return((object*)file_instance);
 		
 	//object *tmp =CreateEmptyObject(TYPE_NONE);
 	//return (tmp);
 }
+#endif
 
 object *if_list(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
@@ -694,12 +698,11 @@ object *if_range(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 	}
 	return ((object*)iter);
 }
-
+#ifndef USE_ARDUINO_FUNCTIONS
 object *if_print(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
 	BOOL printed_something = 0;
 	INDEX i = 0; 
-	//DumpObject(kw_locals,0);
 	unicode_object *end = CreateUnicodeObject(str_Copy("end"));
 	gc_IncRefCount((object*)end);
 	object *endval = GetDictItem((object*)kw_locals,(object*)end);
@@ -709,7 +712,6 @@ object *if_print(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 		object *t = GetItem((object *)locals,i);//TODO maybe move this into PrintObject() as case ITER:	
 		if(t->type == TYPE_ITER)
 		{
-			//printf("TUPLE EXPAND in print\n");
 			tuple_object *to = iter_TupleExpand((iter_object*)t,vm);
 			gc_IncRefCount((object*)to);
 			PrintObject((object*)to);
@@ -720,7 +722,6 @@ object *if_print(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 		if(t->type == TYPE_NONE)
 		{
 			i++;
-			//gc_DecRefCount((object*)t);
 			continue;
 		}
 		if (printed_something)
@@ -738,6 +739,7 @@ object *if_print(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 	object *tmp =CreateEmptyObject(TYPE_NONE);
 	return (tmp);
 }
+#endif
 
 object *if_sum(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
@@ -780,6 +782,7 @@ object *if_sum(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 	return ((object*)tmp);
 }
 
+/*
 object *if_max(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
 	object *max = NULL;
@@ -1051,7 +1054,7 @@ object *if_float(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 	object *tmp =CreateEmptyObject(TYPE_NONE);
 	return (tmp);
 }
-
+*/
 object *if_iter(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
 	if(locals->list->num == 2)
@@ -1070,14 +1073,166 @@ object *if_iter(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 	object *tmp =CreateEmptyObject(TYPE_NONE);
 	return (tmp);
 }
-
+/*
 object *if_map(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
 
 	object *tmp =CreateEmptyObject(TYPE_NONE);
 	return (tmp);
 }
+*/
 
+#ifndef USE_ARDUINO_FUNCTIONS
+
+
+object *a_pinMode(vm *vm,tuple_object *locals,tuple_object *kw_locals)
+{
+ //pin,mode
+	object *pin = GetItem((object*)locals,0);
+	object *mode = GetItem((object*)locals,1);
+	//printf("pinMode\n");
+	//TODO only a temp solution
+	if(pin->type == TYPE_KV)
+		pin = (object*)((kv_object*)pin)->value;
+	if(mode->type == TYPE_KV)
+		mode = (object*)((kv_object*)mode)->value;
+	if(pin->type == TYPE_INT && mode->type == TYPE_INT)
+		printf("pinMode: %d to %d\n",((int_object*)pin)->value,((int_object*)mode)->value);
+	object *tmp =CreateEmptyObject(TYPE_NONE);
+	return (tmp);	
+}
+
+object *a_digitalRead(vm *vm,tuple_object *locals,tuple_object *kw_locals)
+{
+ //pin
+	//printf("digitalRead\n");
+	object *pin = GetItem((object*)locals,0);
+	int r = 0;
+	if(pin->type == TYPE_INT)
+		printf("digitalRead: %d\n",((int_object*)pin)->value);
+	int_object *tmp = CreateIntObject(r);
+	return ((object*)tmp);	
+	
+}
+
+object *a_digitalWrite(vm *vm,tuple_object *locals,tuple_object *kw_locals)
+{
+ //pin,value
+	if(locals->list->num < 2)
+	{
+		//printf("not enough args for digitalWrite();\r\n");
+		object *tmp =CreateEmptyObject(TYPE_NONE);
+		return (tmp);	
+	}
+	object *pin = GetItem((object*)locals,0);
+	object *val = GetItem((object*)locals,1);
+    //PrintObject(pin);
+	//printf("\r\nval:");
+	//PrintObject(val);
+	//printf("\r\n");
+	//printf("pt:%c,vt:%c\r\n",pin->type,val->type);
+	//printf("digitalWrite\n");
+	//TODO only a temp solution
+	if(pin->type == TYPE_KV)
+		pin =(object*) ((kv_object*)pin)->value;
+	if(val->type == TYPE_KV)
+	{
+		val = (object*) ((kv_object*)val)->value;
+		//printf("pt:%c,vt:%c\r\n",pin->type,val->type);
+		//printf("val:%d\r\n",((int_object*)val)->value);
+	}
+	if((pin->type == TYPE_INT) && (val->type == TYPE_INT))
+	{
+		printf("digitalWrite pin: %d val: %d\n",((int_object*)pin)->value,((int_object*)val)->value);
+	}
+	object *tmp =CreateEmptyObject(TYPE_NONE);
+	return (tmp);	
+}
+
+object *a_analogRead(vm *vm,tuple_object *locals,tuple_object *kw_locals)
+{
+ //pin
+ 	//printf("analogRead\n");
+ 	object *pin = GetItem((object*)locals,0);
+	int r = 0;
+	if(pin->type == TYPE_INT)
+		printf("analogRead: %d\n",((int_object*)pin)->value);
+	int_object *tmp =CreateIntObject(r);
+	return ((object*)tmp);	
+}
+
+object *a_analogWrite(vm *vm,tuple_object *locals,tuple_object *kw_locals)
+{
+ //pin,value
+ 	//printf("analogWrite\n");
+	object *pin = GetItem((object*)locals,0);
+	object *val = GetItem((object*)locals,1);
+	if(pin->type == TYPE_KV)
+		pin = (object*)((kv_object*)pin)->value;
+	if(val->type == TYPE_KV)
+		val = (object*)((kv_object*)val)->value;
+	//DumpObject(pin,0);
+	//DumpObject(val,0);
+	if(pin->type == TYPE_INT && val->type == TYPE_INT)
+		printf("analogWrite pin: %d val: %d\n",((int_object*)pin)->value,((int_object*)val)->value);
+	object *tmp =CreateEmptyObject(TYPE_NONE);
+	return (tmp);	
+}
+
+object *a_delay(vm *vm,tuple_object *locals,tuple_object *kw_locals)
+{
+ //ms
+ 	//printf("delay\n");
+ 	object *ms = GetItem((object*)locals,0);
+	//if(ms->type == TYPE_INT)
+	printf("delay: %d\n",((int_object*)ms)->value);
+	//delay(((int_object*)ms)->value);
+	//delay(8);
+	object *tmp =CreateEmptyObject(TYPE_NONE);
+	return (tmp);	
+}
+/*
+object *a_serialprint(vm *vm,tuple_object *locals,tuple_object *kw_locals)
+{
+ //message
+ 	//printf("serial.Println\n");
+ 	object *message = GetItem((object*)locals,0);
+	//if(message->type == TYPE_UNICODE)
+	//	Serial.print(((unicode_object*)message)->value);
+	object *tmp =CreateEmptyObject(TYPE_NONE);
+	return (tmp);	
+}
+
+object *a_serialBegin(vm *vm,tuple_object *locals,tuple_object *kw_locals)
+{
+ //baudrate
+ 	//printf("serial.Begin\n");
+ 	object *baudrate = GetItem((object*)locals,0);
+	//if(baudrate->type == TYPE_INT)
+	//	Serial.begin(((int_object*)baudrate)->value);
+	object *tmp =CreateEmptyObject(TYPE_NONE);
+	return (tmp);	
+}
+*/
+void AddArduinoGlobal(vm *vm)
+{
+	code_object *a_globals = CreateCodeObject(str_Copy("arduino"));
+	AddCodeCFunction((object*)a_globals,"pinMode",&a_pinMode);
+	AddCodeCFunction((object*)a_globals,"digitalRead",&a_digitalRead);
+	AddCodeCFunction((object*)a_globals,"digitalWrite",&a_digitalWrite);
+	AddCodeCFunction((object*)a_globals,"analogRead",&a_analogRead);
+	AddCodeCFunction((object*)a_globals,"analogWrite",&a_analogWrite);
+	AddCodeCFunction((object*)a_globals,"delay",&a_delay);
+	//AddCodeCFunction((object*)a_globals,"Serial.print",&a_serialprint);
+	//AddCodeCFunction((object*)a_globals,"Serial.Begin",&a_serialBegin);
+	AddCodeName((object*)a_globals,(object*)CreateUnicodeObject(str_Copy("INPUT")),(object*)CreateIntObject(0));
+	AddCodeName((object*)a_globals,(object*)CreateUnicodeObject(str_Copy("OUTPUT")),(object*)CreateIntObject(1));
+	AddCodeName((object*)a_globals,(object*)CreateUnicodeObject(str_Copy("LOW")),(object*)CreateIntObject(0));
+	AddCodeName((object*)a_globals,(object*)CreateUnicodeObject(str_Copy("HIGH")),(object*)CreateIntObject(1));
+	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy("arduino")),(object*)a_globals);
+}
+
+#endif
 
 
 
@@ -1085,10 +1240,14 @@ void AddInternalFunctions(struct _vm *vm)
 {
 	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy("list")),(object*)CreateCFunctionObject(&if_list));
 	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy("range")),(object*)CreateCFunctionObject(&if_range));
+	#ifndef USE_ARDUINO_FUNCTIONS
 	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy("print")),(object*)CreateCFunctionObject(&if_print));
+	#endif
 	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy("sum")),(object*)CreateCFunctionObject(&if_sum));
 	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy("next")),(object*)CreateCFunctionObject(&if_next));
+	#ifdef USE_INTERNAL_CLASSES
 	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy("open")),(object*)CreateCFunctionObject(&if_open));
+	#endif
 	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy("iter")),(object*)CreateCFunctionObject(&if_iter));
 	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy("custom_code")),(object*)CreateCFunctionObject(&custom_code));
 }

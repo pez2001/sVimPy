@@ -201,14 +201,16 @@ unicode_object *AllocUnicodeObject(void)
 	#endif
 }
 
-ref_object *AllocRefObject(void)
+#ifdef USE_LOCKING
+ref_object *AllocProxyObject(void)
 {
 	#ifdef USE_DEBUGGING
-    return((ref_object*) mem_malloc(sizeof(ref_object), "AllocRefObject() return")); 
+    return((proxy_object*)mem_malloc(sizeof(proxy_object), "AllocProxyObject() return")); 
 	#else
-    return((ref_object*) malloc(sizeof(ref_object))); 
+    return((proxy_object*) malloc(sizeof(proxy_object))); 
 	#endif
 }
+#endif
 
 tag_object *AllocTagObject(void)
 {
@@ -246,26 +248,27 @@ iter_object *AllocIterObject(void)
 	#endif
 }
 
-ref_object *CreateRefObject(object *ref_to)//,OBJECT_FLAGS flags)
+#ifdef USE_LOCKING
+ref_object *CreateProxyObject(void)
 {
-	ref_object *r = AllocRefObject();
-	r->type = TYPE_REF;
+	proxy_object *r = AllocProxyObject();
+	r->type = TYPE_PROXY;
 	r->ref_count = 0;
 	#ifdef USE_LOCKING
 	r->lock_count = 0;
 	#endif
-	r->ref = ref_to;
-	gc_IncRefCount(ref_to);
-	//printf("created ref object\n");
+	r->ref = NULL;
+	r->is_cached = NULL;
 	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
-		debug_printf(DEBUG_CREATION,"created ref object\n");
+		debug_printf(DEBUG_CREATION,"created proxy object\n");
 		DumpObject((object*)r,0);
 	}
 	#endif
 	return(r);
 }
+#endif
 
 tag_object *CreateTagObject(void *tag)
 {
@@ -286,7 +289,7 @@ tag_object *CreateTagObject(void *tag)
 	return(r);
 }
 
-int_object *CreateIntObject(long value)//,OBJECT_FLAGS flags)
+int_object *CreateIntObject(long value)
 {
 	int_object *r = AllocIntObject();
 	r->type = TYPE_INT;
@@ -305,7 +308,7 @@ int_object *CreateIntObject(long value)//,OBJECT_FLAGS flags)
 	return(r);
 }
 
-float_object *CreateFloatObject(float value)//,OBJECT_FLAGS flags)
+float_object *CreateFloatObject(float value)
 {
 	float_object *r = AllocFloatObject();
 	r->type = TYPE_BINARY_FLOAT;
@@ -324,7 +327,7 @@ float_object *CreateFloatObject(float value)//,OBJECT_FLAGS flags)
 	return(r);
 }
 
-unicode_object *CreateUnicodeObject(char *value)//,OBJECT_FLAGS flags)
+unicode_object *CreateUnicodeObject(char *value)
 {
 	unicode_object *r = AllocUnicodeObject();
 	r->type = TYPE_UNICODE;
@@ -343,7 +346,7 @@ unicode_object *CreateUnicodeObject(char *value)//,OBJECT_FLAGS flags)
 	return(r);
 }
 
-tuple_object *CreateTuple(NUM num)//,OBJECT_FLAGS flags)
+tuple_object *CreateTuple(NUM num)
 {
 	tuple_object *r = AllocTupleObject();
 	r->type = TYPE_TUPLE;
@@ -363,7 +366,7 @@ tuple_object *CreateTuple(NUM num)//,OBJECT_FLAGS flags)
 	return(r);
 }
 
-string_object *CreateStringObject(char *bytes,NUM len)//,OBJECT_FLAGS flags)
+string_object *CreateStringObject(char *bytes,NUM len)
 {
 	string_object *r = AllocStringObject();
 	r->type = TYPE_STRING;
@@ -432,7 +435,7 @@ object *CreateEmptyObject(char type)
 	return(obj_UNKNOWN);
 }
 
-function_object *CreateFunctionObject_MAKE_FUNCTION(code_object *function_code,tuple_object *defaults,tuple_object *kw_defaults)
+function_object *CreateFunctionObject(code_object *function_code,tuple_object *defaults,tuple_object *kw_defaults,tuple_object *closure)
 {
 	function_object *r = AllocFunctionObject();
 	r->type = TYPE_FUNCTION;
@@ -445,73 +448,8 @@ function_object *CreateFunctionObject_MAKE_FUNCTION(code_object *function_code,t
 	
 	if(GetTupleLen(function_code->varnames) > 0)
 	{
-		ClearDictValues(function_code->varnames);
-		if(defaults!=NULL)
-		{
-			//printf("loading defaults\n");
-			NUM locals_num = function_code->argcount;
-			for(NUM i = 0;i < defaults->list->num; i++) //load default values
-			{
-				if(GetItem(function_code->varnames,(locals_num-1) - i)->type != TYPE_KV)
-				{
-					SetItem(function_code->varnames,(locals_num-1) - i,(object*)ConvertToKVObjectValued(GetItem(function_code->varnames,(locals_num-1) - i),GetItem((object*)defaults,i)));
-				}		
-				else
-				{
-					SetDictItemByIndex(function_code->varnames,(locals_num-1) - i,GetItem((object*)defaults,i));
-				}
-			}
-		}
-		if(kw_defaults != NULL)
-		{
-			//printf("loading kw defaults\n");
-			for(NUM i = 0;i < kw_defaults->list->num; i++) //load default keyword values
-			{
-				kv_object *kv = (kv_object*)GetItem((object*)kw_defaults,i);
-				SetDictItem(function_code->varnames,kv->key,kv->value);
-			}
-		}
-	}
-/*
-	if(defaults != NULL)
-	{
-		r->defaults = defaults;
-		gc_IncRefCount((object*)defaults);
-	}
-	else
-		r->defaults = NULL;
-	if(kw_defaults != NULL)
-	{
-		r->kw_defaults = kw_defaults;
-		gc_IncRefCount((object*)kw_defaults);
-	}
-	else
-		r->kw_defaults = NULL;
-		*/
-	#ifdef USE_DEBUGGING
-	if((debug_level & DEBUG_CREATION) > 0)
-	{
-		debug_printf(DEBUG_CREATION,"created function object - MAKE_FUNCTION\n");
-		DumpObject((object*)r,0);
-	}
-	#endif
-	return(r);
-}
-
-function_object *CreateFunctionObject_MAKE_CLOSURE(code_object *function_code,tuple_object *closure,tuple_object *defaults,tuple_object *kw_defaults)
-{
-	function_object *r = AllocFunctionObject();
-	r->type = TYPE_FUNCTION;
-	r->ref_count = 0;
-	#ifdef USE_LOCKING
-	r->lock_count = 0;
-	#endif
-	r->func = function_code;
-	gc_IncRefCount((object*)function_code);
-	
-	if(GetTupleLen(function_code->varnames) > 0)
-	{
-		ClearDictValues(function_code->varnames);
+		if(defaults != NULL || kw_defaults != NULL)
+			ClearDictValues(function_code->varnames);
 		if(defaults!=NULL)
 		{
 			//printf("loading defaults\n");
@@ -544,51 +482,22 @@ function_object *CreateFunctionObject_MAKE_CLOSURE(code_object *function_code,tu
 		for (NUM i = 0; i < GetTupleLen((object*)closure); i++)
 		{
 			object *local = GetItem((object*)closure,i);
-			//if(local->type == TYPE_KV)
-			//	local = ((kv_object*)local)->value;
-			
-			//if(GetItem(function_code->freevars,i)->type != TYPE_KV)
-			//{
-			//	SetItem(function_code->freevars,i,(object*)ConvertToKVObjectValued(GetItem(function_code->freevars,i),local));
-			//}
-			//else
-			//{
-				SetItem(function_code->freevars,i,local);
-			//}
+			SetItem(function_code->freevars,i,local);
 		}
 	}
 
 	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_CREATION) > 0)
 	{
-		debug_printf(DEBUG_CREATION,"created function object - MAKE_CLOSURE\n");
+		debug_printf(DEBUG_CREATION,"created function object\n");
 		DumpObject((object*)r,0);
 	}
 	#endif
+	//FullDumpObject(r,0);
 	return(r);
 }
 
-function_object *CreateFunctionObject(code_object *co)
-{
-	function_object *r = AllocFunctionObject();
-	r->type = TYPE_FUNCTION;
-	r->func = co;
-	gc_IncRefCount((object*)co);
-	r->ref_count = 0;
-	#ifdef USE_LOCKING
-	r->lock_count = 0;
-	#endif
-	#ifdef USE_DEBUGGING
-	if((debug_level & DEBUG_CREATION) > 0)
-	{
-		debug_printf(DEBUG_CREATION,"created function object\n");
-		//DumpObject(r,0);
-	}
-	#endif
-	return(r);
-}
-
-cfunction_object *CreateCFunctionObject(struct _object* (*func) (struct _vm *vm,struct _tuple_object *locals,struct _tuple_object *kw_locals))//,tuple_object *defaults,tuple_object *kw_defaults)
+cfunction_object *CreateCFunctionObject(struct _object* (*func) (struct _vm *vm,struct _tuple_object *locals,struct _tuple_object *kw_locals))
 {
 	cfunction_object *r = AllocCFunctionObject();
 	r->type = TYPE_CFUNCTION;
@@ -629,7 +538,7 @@ method_object *CreateMethodObject(object *func,class_instance_object *instance)
 	return(r);
 }
 
-class_object *CreateClassObject(code_object *code,object *base_classes)//char *name,
+class_object *CreateClassObject(code_object *code,object *base_classes)
 {
 	class_object *r = AllocClassObject();
 	r->type = TYPE_CLASS;
@@ -729,11 +638,24 @@ long objects_header_total = 0;
 
 #ifdef USE_LOCKING
 
+//lock objects only if non global member vars are accessed
+//check if object is a cached_object
+//if it is -> load object from storage into memory
+//return loaded object
+//increases lock count of object
+
+//this way caching would leave freed pointers arround hmmm
+//implement a small proxy object to get arround freed pointers problem
+
 object *LockObject(object *obj)
 {
 	obj->lock_count++;
 	return(obj);
 }
+
+//unlock objects after usage of lock and access to member vars is no longer needed
+//decreases lock count of object
+//if lock count reached zero and object is a non global type check if object should be cached
 
 void UnlockObject(object *obj)
 {
@@ -741,7 +663,7 @@ void UnlockObject(object *obj)
 }
 
 #endif
-
+/*
 object *DissolveRef(object *obj)
 {
 	if(obj == NULL)
@@ -750,7 +672,7 @@ object *DissolveRef(object *obj)
 		return(((ref_object*)obj)->ref);
 	return(obj);
 }
-
+*/
 kv_object *ConvertToKVObject(object *obj)
 {
 	kv_object *kv = AllocKVObject();
@@ -781,15 +703,16 @@ kv_object *ConvertToKVObjectValued(object *key,object *value)
 	return(kv);
 }
 
+#ifndef USE_ARDUINO_FUNCTIONS
 void PrintObject(object *obj)
 {
 	if (obj != NULL)
 	{
 		switch (obj->type)
 		{
-		case TYPE_REF:
-			PrintObject(((ref_object*)obj)->ref);
-			break;
+		//case TYPE_PROXY:
+		//	PrintObject(((proxy_object*)obj)->ref);
+		//	break;
 		case TYPE_ELLIPSIS:
 			printf("Ellipsis");
 			break;
@@ -830,6 +753,7 @@ void PrintObject(object *obj)
 		}
 	}
 }
+#endif
 
 #ifdef USE_DEBUGGING	
 void DumpObject(object * obj, char level)
@@ -874,10 +798,10 @@ void DumpObject(object * obj, char level)
 			debug_printf(DEBUG_ALL,"iter block stack:\n");
 			stack_Dump(((iter_object*)obj)->block_stack);
 			break;
-	case TYPE_REF:
-		debug_printf(DEBUG_ALL,"ref object\n");
-		DumpObject(((ref_object*)obj)->ref,level+1);
-		break;
+	//case TYPE_REF:
+	//	debug_printf(DEBUG_ALL,"ref object\n");
+	//	DumpObject(((ref_object*)obj)->ref,level+1);
+	//	break;
 	case TYPE_ELLIPSIS:
 		debug_printf(DEBUG_ALL,"ellipsis	 object\n");
 		break;
@@ -1076,6 +1000,7 @@ void DumpObject(object * obj, char level)
 }
 #endif
 
+#ifndef USE_ARDUINO_FUNCTIONS
 void FullDumpObject(object * obj, char level)
 {
 	if (obj == NULL)
@@ -1113,10 +1038,10 @@ void FullDumpObject(object * obj, char level)
 			//printf("iter block stack:\n");
 			//stack_Dump(((iter_object*)obj)->block_stack);
 			break;
-	case TYPE_REF:
-		printf("ref object\n");
-		FullDumpObject(((ref_object*)obj)->ref,level+1);
-		break;
+	//case TYPE_REF:
+	//	printf("ref object\n");
+	//	FullDumpObject(((ref_object*)obj)->ref,level+1);
+	//	break;
 	case TYPE_ELLIPSIS:
 		printf("ellipsis	 object\n");
 		break;
@@ -1274,6 +1199,7 @@ void FullDumpObject(object * obj, char level)
 		printf("object type is unknown:%c\n", obj->type);
 	}
 }
+#endif
 
 #ifdef USE_DEBUGGING
 char *DumpObjectXml(object * obj, char level)
@@ -1300,10 +1226,10 @@ char *DumpObjectXml(object * obj, char level)
 		printf("-- block object\n");
 		
 		break;
-	case TYPE_REF:
-		printf("ref object\n");
-		DumpObject(((ref_object*)obj)->ref,level+1);
-		break;
+	//case TYPE_REF:
+	//	printf("ref object\n");
+	//	DumpObject(((ref_object*)obj)->ref,level+1);
+	//	break;
 	case TYPE_ELLIPSIS:
 		printf("ellipsis	 object\n");
 		break;
@@ -1455,7 +1381,7 @@ char *DumpObjectXml(object * obj, char level)
 }
 #endif
 
-BOOL CompareObjects(object *a,object *b)
+BOOL CompareObjects(object *a,object *b)//TODO add tuple compare
 {
 	//return(CompareOp(a,b,2));
 	//printf("comparing objects\n");
@@ -1552,8 +1478,8 @@ object *CopyObject(object *obj)
 			}
 		case TYPE_KV:
 			return((object*)CreateKVObject(CopyObject(((kv_object*)obj)->key),CopyObject(((kv_object*)obj)->value)));
-		case TYPE_REF:
-			return((object*)CreateRefObject(((ref_object*)obj)->ref));
+		//case TYPE_REF:
+		//	return((object*)CreateRefObject(((ref_object*)obj)->ref));
 		case TYPE_TAG:
 			return((object*)CreateTagObject(((tag_object*)obj)->tag));
 		case TYPE_METHOD:
@@ -1608,7 +1534,7 @@ object *CopyObject(object *obj)
 			break;
 		case TYPE_FUNCTION:
 			{
-				function_object *f = CreateFunctionObject((code_object*)CopyObject((object*)((function_object*)obj)->func));
+				function_object *f = CreateFunctionObject((code_object*)CopyObject((object*)((function_object*)obj)->func),NULL,NULL,NULL);
 				//f->defaults = (tuple_object*)CopyObject((object*)((function_object*)obj)->defaults);
 				//f->kw_defaults = (tuple_object*)CopyObject((object*)((function_object*)obj)->kw_defaults);
 				//f->closure = (tuple_object*)CopyObject((object*)((function_object*)obj)->closure);
@@ -2088,7 +2014,6 @@ void AddCodeName(object *co,object *key,object *value)
 	}
 	kv_object *kv = CreateKVObject((object*)key,value);
 	AppendItem(((code_object*)co)->names,(object*)kv);
-
 }
 
 void AddCodeFunction(object *co,char *name,object *func)
@@ -2192,602 +2117,6 @@ object *GetNextItem(object * tuple) //TODO move to tuples
 	{	
 		((tuple_object*)tuple)->ptr = 0;
 		return (obj_NULL);
-	}
-}
-
-long ReadLong(stream *f) //TODO move to streams
-{
-	long r = 0;
-	stream_Read(f,&r, 4);
-	return (r);
-}
-
-FLOAT ReadFloat(stream *f)
-{
-	float r = 0;
-	double t = 0;
-	stream_Read(f, &t,8);
-	r = (FLOAT)t;
-	return (r);
-}
-
-char ReadChar(stream *f)
-{
-	char r = 0;
-	stream_Read(f,&r,1);
-	return (r);
-}
-
-void WriteLong(long l,stream *f)
-{
-	stream_Write(f,&l,4);
-}
-
-void WriteFloat(FLOAT fl,stream *f)
-{
-	double d = (double)fl;
-	stream_Write(f,&d,8);
-}
-
-void WriteChar(char c,stream *f)
-{
-	stream_Write(f,&c,1);
-}
-
-object *ReadObject(stream *f)
-{
-	OBJECT_TYPE type = ReadChar(f);
-
-	#ifdef USE_DEBUGGING
-	debug_printf(DEBUG_CREATION,"reading object with type:%c\n",type);
-	#endif
-	switch (type)
-	{
-		case TYPE_NONE:
-		case TYPE_NULL:
-		case TYPE_TRUE:
-		case TYPE_FALSE:
-		case TYPE_ELLIPSIS:
-		{
-		/*
-		// printf("allocating empty object\n");
-		object *obj = AllocObject();
-		obj->type = type;
-		//obj->flags = 0;
-		obj->ref_count = 1;
-		// printf("allocated empty object @%x\n",obj);
-		*/
-		object *obj = CreateEmptyObject(type);
-		gc_IncRefCount(obj);
-		return (obj);
-		}
-	case TYPE_CODE:
-       {	
-		code_object *co = AllocCodeObject();
-		co->type = TYPE_CODE;
-		co->ref_count = 1;
-		co->argcount = (NUM)ReadLong(f);
-		co->kwonlyargcount = (NUM)ReadLong(f);
-		co->nlocals = (NUM)ReadLong(f);
-		co->stacksize = (NUM)ReadLong(f);
-		co->co_flags = ReadLong(f);
-		co->code = ReadObject(f);
-		co->consts = ReadObject(f);
-		co->names = ReadObject(f);
-		co->varnames = ReadObject(f);
-		co->freevars = ReadObject(f);
-		co->cellvars = ReadObject(f);
-		ConvertToDict(co->freevars); //TODO only needed as long deref and closure opcodes are not implemented using references
-		ConvertToDict(co->cellvars);
-		object *tmp_filename = ReadObject(f);
-		gc_DecRefCount(tmp_filename);	// TO DECREASE MEMORY USAGE
-		object *tmp_name = ReadObject(f);
-		co->name = str_Copy(((unicode_object *)tmp_name)->value);
-		gc_DecRefCount(tmp_name);
-		ReadLong(f);//firstlineno
-		object *tmp_lnotab = ReadObject(f);
-		gc_DecRefCount(tmp_lnotab);	// TO DECREASE MEMORY USAGE
-		gc_Clear();
-		return((object*)co);
-		}
-		break;
-	case TYPE_STRING:
-		{
-		string_object *obj = AllocStringObject();
-
-		obj->ref_count = 1;
-
-		NUM n;
-		// printf("reading string chunk\n");
-		n = (NUM)ReadLong(f);
-		if (n > 0)
-		{
-			#ifdef USE_DEBUGGING
-			char *string = (char *)mem_malloc(n, "ReadObject() string");
-			#else
-			char *string = (char *)malloc(n);
-			#endif
-
-			// printf("str_ptr=%x\n",(unsigned long)string);
-			stream_Read(f,string, n);
-
-			// printf("str_so_ptr=%x\n",(unsigned long)so);
-			obj->len = n;
-			obj->content = string;
-			// free(string); 
-
-			 //printf("read string:\"%s\"\r\n",obj->content);
-			//printf("n:%d\n",obj->len);
-			obj->type = TYPE_STRING;
-		}
-		else
-		{
-			// printf ("read empty string\n");
-			obj->content = NULL;
-			obj->type = TYPE_NULL;
-			obj->len = 0;
-		}
-		return((object*)obj);
-		}
-		break;
-	case TYPE_TUPLE:
-		{
-		// printf("reading tuple\n");
-		INT n = (INT)ReadLong(f);
-		tuple_object *to = AllocTupleObject();
-		to->ref_count = 1;
-		to->ptr = 0;
-
-		// printf("items_num:%d\n",n);
-		if (n > 0)
-		{
-			//to->items =
-			//	(object **) mem_malloc(n * sizeof(object *),
-			//						   "ReadObject() to->items");
-			to->list = ptr_CreateList(n,PTR_STATIC_LIST);
-			for (NUM i = 0; i < n; i++)
-			{
-				object *tuple = ReadObject(f);
-
-				//if (i == 0)
-				//{
-				//	to->ptr = tuple;
-					// printf("setting tuple's iterate over ptr\n");
-				//}
-				// printf("object type:%c\n",tuple->type);
-				to->list->items[i] = tuple;
-			}
-		}
-		else
-		 to->list = NULL;
-		//to->num = n;
-		//to->flags = 0;
-		to->type = TYPE_TUPLE;
-		return((object*)to);
-		}
-		break;
-	case TYPE_UNICODE:
-		{
-		// printf("reading unicode\n");
-		unicode_object *obj = AllocUnicodeObject();
-		obj->ref_count = 1;
-
-		NUM n = (NUM)ReadLong(f);
-		// printf("len:%d\n",n);
-		#ifdef USE_DEBUGGING
-		char *unicode_string = (char *)mem_malloc(n + 1, "ReadObject() unicode_string");
-		#else
-		char *unicode_string = (char *)malloc(n + 1);
-		#endif
-		memset(unicode_string, 0, n + 1);
-		stream_Read(f,unicode_string, n);
-		//printf("read unicode string:%s\n",unicode_string);
-		// uo->len = n;
-		//obj->flags = 0;
-		obj->value = unicode_string;
-		obj->type = TYPE_UNICODE;
-		return((object*)obj);
-		}
-		break;
-	case TYPE_BINARY_FLOAT:
-		{
-		float_object *obj = AllocFloatObject();
-		FLOAT n = (FLOAT)ReadFloat(f);
-		obj->ref_count = 1;
-		//obj->flags = 0;
-		obj->value = n;
-		//printf("read float:%7g\n",obj->value);
-		obj->type = TYPE_BINARY_FLOAT;
-		return((object*)obj);
-		}
-		break;
-	case TYPE_INT:
-		{
-		// printf("reading int\n");
-		int_object *obj = AllocIntObject();
-		INT n = (INT)ReadLong(f);
-		obj->ref_count = 1;
-		//obj->flags = 0;
-		obj->value = n;
-		obj->type = TYPE_INT;
-		return((object*)obj);
-		}
-		break;
-	default:
-		{
-		/*
-		object *obj = AllocObject();
-		obj->ref_count = 1;
-		obj->type = TYPE_UNKNOWN;
-		#ifdef USE_DEBUGGING
-		debug_printf(DEBUG_ALL,"unknown chunk type:%c\n", type);
-		#endif
-		return(obj);
-		*/
-		object *obj = CreateEmptyObject(TYPE_UNKNOWN);
-		gc_IncRefCount(obj);
-		return (obj);
-		}
-	}
-	// printf("read object\r\n"); 
-	return (NULL);
-}
-
-void WriteObject(object *obj,stream *f)
-{
-	WriteChar(obj->type,f);
-	#ifdef USE_DEBUGGING
-	debug_printf(DEBUG_CREATION,"writing object with type:%c\n",obj->type);
-	#endif
-	//printf("writing object:\n");
-	//DumpObject(obj,0);
-	switch(obj->type)
-	{
-		case TYPE_NONE:
-		case TYPE_NULL:
-		case TYPE_TRUE:
-		case TYPE_FALSE:
-		case TYPE_ELLIPSIS:
-		{
-		return;
-		}
-	case TYPE_CODE:
-       {
-		WriteLong(((code_object*)obj)->argcount,f);
-		WriteLong(((code_object*)obj)->kwonlyargcount,f);
-		WriteLong(((code_object*)obj)->nlocals,f);
-		WriteLong(((code_object*)obj)->stacksize,f);
-		WriteLong(((code_object*)obj)->co_flags,f);
-		WriteObject(((code_object*)obj)->code,f);
-		WriteObject(((code_object*)obj)->consts,f);
-		WriteObject(((code_object*)obj)->names,f);
-		WriteObject(((code_object*)obj)->varnames,f);
-		WriteObject(((code_object*)obj)->freevars,f);
-		WriteObject(((code_object*)obj)->cellvars,f);
-		unicode_object *filename = CreateUnicodeObject("");
-		gc_IncRefCount((object*)filename);
-		WriteObject((object*)filename,f);
-		gc_DecRefCount((object*)filename);
-		unicode_object *name = CreateUnicodeObject(((code_object*)obj)->name);
-		gc_IncRefCount((object*)name);
-		WriteObject((object*)name,f);
-		gc_DecRefCount((object*)name);
-		WriteLong(0,f);
-		object *lnotab = CreateEmptyObject(TYPE_NONE);
-		gc_IncRefCount((object*)lnotab);
-		WriteObject(lnotab,f);
-		gc_DecRefCount(lnotab);
-		gc_Clear();
-		return;
-		}
-	case TYPE_STRING:
-		{
-		NUM n = ((string_object*)obj)->len;
-		WriteLong(n,f);
-		if (n > 0)
-		{
-			stream_Write(f,((string_object*)obj)->content, n);
-		}
-		return;
-		}
-	case TYPE_TUPLE:
-		{
-		if(((tuple_object*)obj)->list != NULL)
-		{
-			INT n = ((tuple_object*)obj)->list->num;
-			WriteLong(n,f);
-			//printf("tuple items:%d\n",n);
-			if (n > 0)
-			{
-				for (NUM i = 0; i < n; i++)
-				{
-					WriteObject(((tuple_object*)obj)->list->items[i],f);
-				}
-			}
-		}
-		else
-			WriteLong(0,f);
-		
-		//printf("written tuple\n");
-		return;
-		}
-	case TYPE_UNICODE:
-		{
-		NUM n = strlen(((unicode_object*)obj)->value);
-		WriteLong(n,f);
-		if(n > 0)
-		{
-			stream_Write(f,((unicode_object*)obj)->value, n);
-		}
-		return;
-		}
-	case TYPE_BINARY_FLOAT:
-		{
-		WriteFloat(((float_object*)obj)->value,f);
-		return;
-		}
-	case TYPE_INT:
-		{
-		WriteLong(((int_object*)obj)->value,f);
-		return;
-		}
-	default:
-		{
-		#ifdef USE_DEBUGGING
-		debug_printf(DEBUG_ALL,"unknown chunk type:%c\n", obj->type);
-		#endif
-		return;
-		}
-	}
-}
-
-//same as above , but using a reduced code object layout
-object *ReadObjectPlus(stream *f)
-{
-	OBJECT_TYPE type = ReadChar(f);
-
-	#ifdef USE_DEBUGGING
-	debug_printf(DEBUG_CREATION,"reading object with type:%c\n",type);
-	#endif
-	switch (type)
-	{
-		case TYPE_NONE:
-		case TYPE_NULL:
-		case TYPE_TRUE:
-		case TYPE_FALSE:
-		case TYPE_ELLIPSIS:
-		{
-		/*
-		object *obj = AllocObject();
-		obj->type = type;
-		obj->ref_count = 1;
-		*/
-		object *obj = CreateEmptyObject(type);
-		gc_IncRefCount(obj);
-		return (obj);
-		}
-	case TYPE_CODE:
-       {	
-		code_object *co = AllocCodeObject();
-		co->type = TYPE_CODE;
-		co->ref_count = 1;
-		co->stacksize = 0;
-
-		co->argcount = (NUM)ReadLong(f);
-		co->kwonlyargcount = (NUM)ReadLong(f);
-		co->nlocals = (NUM)ReadLong(f);
-		co->co_flags = ReadLong(f);
-		co->code = ReadObjectPlus(f);
-		co->consts = ReadObjectPlus(f);
-		co->names = ReadObjectPlus(f);
-		co->varnames = ReadObjectPlus(f);
-		co->freevars = ReadObjectPlus(f);
-		co->cellvars = ReadObjectPlus(f);
-		ConvertToDict(co->freevars); //TODO only needed as long deref and closure opcodes are not implemented using references
-		ConvertToDict(co->cellvars);
-		object *tmp_name = ReadObjectPlus(f);
-		co->name = str_Copy(((unicode_object *)tmp_name)->value);
-		gc_DecRefCount(tmp_name);
-		gc_Clear();
-		return((object*)co);
-		}
-		break;
-	case TYPE_STRING:
-		{
-		string_object *obj = AllocStringObject();
-		obj->ref_count = 1;
-		NUM n;
-		n = (NUM)ReadLong(f);
-		if (n > 0)
-		{
-			#ifdef USE_DEBUGGING
-			char *string = (char *)mem_malloc(n, "ReadObject() string");
-			#else
-			char *string = (char *)malloc(n);
-			#endif
-			stream_Read(f,string, n);
-			obj->len = n;
-			obj->content = string;
-			obj->type = TYPE_STRING;
-		}
-		else
-		{
-			obj->content = NULL;
-			obj->type = TYPE_NULL;
-			obj->len = 0;
-		}
-		return((object*)obj);
-		}
-		break;
-	case TYPE_TUPLE:
-		{
-		INT n = (INT)ReadLong(f);
-		tuple_object *to = AllocTupleObject();
-		to->ref_count = 1;
-		to->ptr = 0;
-		if (n > 0)
-		{
-			to->list = ptr_CreateList(n,PTR_STATIC_LIST);
-			for (NUM i = 0; i < n; i++)
-			{
-				object *tuple = ReadObjectPlus(f);
-				to->list->items[i] = tuple;
-			}
-		}
-		else
-		 to->list = NULL;
-		to->type = TYPE_TUPLE;
-		return((object*)to);
-		}
-		break;
-	case TYPE_UNICODE:
-		{
-		unicode_object *obj = AllocUnicodeObject();
-		obj->ref_count = 1;
-
-		NUM n = (NUM)ReadLong(f);
-		#ifdef USE_DEBUGGING
-		char *unicode_string = (char *)mem_malloc(n + 1, "ReadObject() unicode_string");
-		#else
-		char *unicode_string = (char *)malloc(n + 1);
-		#endif
-		memset(unicode_string, 0, n + 1);
-		stream_Read(f,unicode_string, n);
-		obj->value = unicode_string;
-		obj->type = TYPE_UNICODE;
-		return((object*)obj);
-		}
-		break;
-	case TYPE_BINARY_FLOAT:
-		{
-		float_object *obj = AllocFloatObject();
-		FLOAT n = (FLOAT)ReadFloat(f);
-		obj->ref_count = 1;
-		obj->value = n;
-		obj->type = TYPE_BINARY_FLOAT;
-		return((object*)obj);
-		}
-		break;
-	case TYPE_INT:
-		{
-		int_object *obj = AllocIntObject();
-		INT n = (INT)ReadLong(f);
-		obj->ref_count = 1;
-		obj->value = n;
-		obj->type = TYPE_INT;
-		return((object*)obj);
-		}
-		break;
-	default:
-		{
-		/*
-		object *obj = AllocObject();
-		obj->ref_count = 1;
-		obj->type = TYPE_UNKNOWN;
-		#ifdef USE_DEBUGGING
-		debug_printf(DEBUG_ALL,"unknown chunk type:%c\n", type);
-		#endif
-		return(obj);
-		*/
-		object *obj = CreateEmptyObject(TYPE_UNKNOWN);
-		gc_IncRefCount(obj);
-		return (obj);
-		}
-	}
-	return (NULL);
-}
-
-void WriteObjectPlus(object *obj,stream *f)
-{
-	WriteChar(obj->type,f);
-	#ifdef USE_DEBUGGING
-	debug_printf(DEBUG_CREATION,"writing object with type:%c\n",obj->type);
-	#endif
-
-	switch(obj->type)
-	{
-		case TYPE_NONE:
-		case TYPE_NULL:
-		case TYPE_TRUE:
-		case TYPE_FALSE:
-		case TYPE_ELLIPSIS:
-		{
-		return;
-		}
-	case TYPE_CODE:
-       {
-		WriteLong(((code_object*)obj)->argcount,f);
-		WriteLong(((code_object*)obj)->kwonlyargcount,f);
-		WriteLong(((code_object*)obj)->nlocals,f);
-		WriteLong(((code_object*)obj)->co_flags,f);
-		WriteObject(((code_object*)obj)->code,f);
-		WriteObject(((code_object*)obj)->consts,f);
-		WriteObject(((code_object*)obj)->names,f);
-		WriteObject(((code_object*)obj)->varnames,f);
-		WriteObject(((code_object*)obj)->freevars,f);
-		WriteObject(((code_object*)obj)->cellvars,f);
-		unicode_object *name = CreateUnicodeObject(((code_object*)obj)->name);
-		gc_IncRefCount((object*)name);
-		WriteObject((object*)name,f);
-		gc_DecRefCount((object*)name);
-		gc_Clear();
-		return;
-		}
-	case TYPE_STRING:
-		{
-		NUM n = ((string_object*)obj)->len;
-		WriteLong(n,f);
-		if (n > 0)
-		{
-			stream_Write(f,((string_object*)obj)->content, n);
-		}
-		return;
-		}
-	case TYPE_TUPLE:
-		{
-		if(((tuple_object*)obj)->list != NULL)
-		{
-			INT n = ((tuple_object*)obj)->list->num;
-			WriteLong(n,f);
-			if (n > 0)
-			{
-				for (NUM i = 0; i < n; i++)
-				{
-					WriteObject(((tuple_object*)obj)->list->items[i],f);
-				}
-			}
-		}
-		else
-			WriteLong(0,f);
-		return;
-		}
-	case TYPE_UNICODE:
-		{
-		NUM n = strlen(((unicode_object*)obj)->value);
-		WriteLong(n,f);
-		if(n > 0)
-		{
-			stream_Write(f,((unicode_object*)obj)->value, n);
-		}
-		return;
-		}
-	case TYPE_BINARY_FLOAT:
-		{
-		WriteFloat(((float_object*)obj)->value,f);
-		return;
-		}
-	case TYPE_INT:
-		{
-		WriteLong(((int_object*)obj)->value,f);
-		return;
-		}
-	default:
-		{
-		#ifdef USE_DEBUGGING
-		debug_printf(DEBUG_ALL,"unknown chunk type:%c\n", obj->type);
-		#endif
-		return;
-		}
 	}
 }
 

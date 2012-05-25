@@ -22,6 +22,7 @@
 
 #include "internal_classes.h"
 
+#ifdef USE_INTERNAL_CLASSES
 
 object *ic_file_close(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
@@ -97,6 +98,7 @@ class_object *ic_CreateFileClass(void)
 	return(file_class);
 }
 
+
 object *ic_assertion_error_init(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
 	//printf("file close called\n");
@@ -107,6 +109,7 @@ object *ic_assertion_error_init(struct _vm *vm,tuple_object *locals,tuple_object
 	object *tmp =CreateEmptyObject(TYPE_NONE);
 	return (tmp);
 }
+
 
 class_object *ic_CreateAssertionErrorClass(void)
 {
@@ -123,4 +126,4 @@ void AddInternalClasses(struct _vm *vm)
 	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy("file_class")),(object*)ic_CreateFileClass());
 	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy("AssertionError")),(object*)ic_CreateAssertionErrorClass());
 }
-
+#endif

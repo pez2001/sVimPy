@@ -27,6 +27,7 @@
 #include "debug.h"
 #include "lists.h"
 #include "strops.h"
+#include "object.h"
 
 #ifdef __cplusplus
 extern "C"  {
@@ -89,9 +90,10 @@ typedef struct _streams
 
 void streams_Init(void);
 
+void streams_Close(void);
+
 struct _stream_type *GetStreamType(STREAM_TYPE_ID id);
 
-void streams_Close(void);
 
 stream *stream_CreateFromFile(char *filename,char *flags); //will create a copy of filename
 stream *stream_CreateFromBytes(char *bytes ,STREAM_NUM len); //will use bytes directly - remember to free bytes after stream closing
@@ -148,7 +150,30 @@ BOOL stream_flash_memory_read(struct _stream *stream,void *ptr,STREAM_NUM len);
 
 #endif
 
+//functions used primarily for object reading and writing from/to streams
 
+long stream_ReadLong(struct _stream *f);
+
+FLOAT stream_ReadFloat(struct _stream *f);
+
+char stream_ReadChar(struct _stream *f);
+
+
+void stream_WriteLong(long l,struct _stream *f);
+
+void stream_WriteFloat(FLOAT fl,struct _stream *f);
+
+void stream_WriteChar(char c,struct _stream *f);
+
+struct _object *stream_ReadObject(struct _stream *f);
+
+void stream_WriteObject(struct _object *obj,struct _stream *f);
+
+#ifndef USE_ARDUINO_FUNCTIONS
+struct _object *stream_ReadObjectPlus(struct _stream *f);
+
+void stream_WriteObjectPlus(struct _object *obj,struct _stream *f);
+#endif
 
 #ifdef __cplusplus
 } 

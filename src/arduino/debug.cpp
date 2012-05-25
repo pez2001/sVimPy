@@ -21,7 +21,7 @@
  */
 
 #include "debug.h"
-
+/*
 #ifdef USE_ARDUINO_DEBUGGING
 extern "C"  void debug_printf(int msg_debug_level,char* format, ...)
 {
@@ -44,6 +44,7 @@ extern "C"  void debug_printf(int msg_debug_level,char* format, ...)
 	Serial.print(output);
 	free(output);
 	*/
+	/*
 	va_list va;
 	va_start(va,format);
 	vprintf(format,va);
@@ -52,4 +53,5 @@ extern "C"  void debug_printf(int msg_debug_level,char* format, ...)
 }
 
 #endif
+*/
 

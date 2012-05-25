@@ -152,11 +152,11 @@ void gc_FreeObject(object *obj)
 		if(((block_object*)obj)->stack != NULL)
 			stack_Close(((block_object*)obj)->stack,1);
 		break;
-	case TYPE_REF:
-		#ifdef USE_DEBUGGING
-		debug_printf(DEBUG_VERBOSE_FREEING,"Freeing Ref to %x\n",((ref_object*)obj)->ref);
-		#endif
-		break;
+	//case TYPE_REF:
+	//	#ifdef USE_DEBUGGING
+	//	debug_printf(DEBUG_VERBOSE_FREEING,"Freeing Ref to %x\n",((ref_object*)obj)->ref);
+	//	#endif
+	//	break;
 	case TYPE_ITER:
 		#ifdef USE_DEBUGGING
 		debug_printf(DEBUG_VERBOSE_FREEING,"Freeing Iter %x\n",obj);
