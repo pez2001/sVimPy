@@ -271,6 +271,7 @@ clean_debug:
 	rm -f build_inc$(PLATFORM_EXT) svimpy_debug$(PLATFORM_EXT) unit_tests_debug$(PLATFORM_EXT) *.do *.da 
 	
 srcdist:	clean clean_binaries
+	rm -f -r svimpy-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
 	mkdir svimpy-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
 	cp $(VM_FILES) svimpy-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
 	cp $(VM_INCLUDE_FILES) svimpy-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
@@ -299,6 +300,7 @@ srcdist:	clean clean_binaries
 	mv svimpy.src-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD).tar.gz ..
 
 binariesdist: clean_binaries clean all clean
+	rm -f -r svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
 	mkdir svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
 	cp $(VM_BINS) svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
 	cp $(UT_BINS) svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
@@ -312,24 +314,25 @@ binariesdist: clean_binaries clean all clean
 	rm -f svimpy.bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)-$(PLATFORM_NAME).tar.gz
 	gzip -9 svimpy.bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)-$(PLATFORM_NAME).tar
 	rm -r svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
-#	mv svimpy.bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)-$(PLATFORM_NAME).tar.gz ..
+	mv svimpy.bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)-$(PLATFORM_NAME).tar.gz ..
 
 hexbinariesdist: clean_binaries clean all arduino.hex clean
-	mkdir svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
-	cp $(VM_BINS) svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
-	cp $(UT_BINS) svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
-	cp $(SVIMPY_BINS) svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
-	cp $(TOOLS_BUILD_INC_BINS) svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
-	cp $(TOOLS_PACK_POS_BINS) svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
-	cp $(TOOLS_COMPRESS_PYC_BINS) svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
-	cp $(ARDUINO_BINS) svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
-	cp -r tests svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
-	cp ../readme svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
-	tar -cf svimpy.bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)-$(PLATFORM_NAME).tar svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
-	rm -f svimpy.bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)-$(PLATFORM_NAME).tar.gz
-	gzip -9 svimpy.bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)-$(PLATFORM_NAME).tar
-	rm -r svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
-#	mv svimpy.bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)-$(PLATFORM_NAME).tar.gz ..
+	rm -f -r svimpy-hexbin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	mkdir svimpy-hexbin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp $(VM_BINS) svimpy-hexbin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp $(UT_BINS) svimpy-hexbin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp $(SVIMPY_BINS) svimpy-hexbin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp $(TOOLS_BUILD_INC_BINS) svimpy-hexbin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp $(TOOLS_PACK_POS_BINS) svimpy-hexbin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp $(TOOLS_COMPRESS_PYC_BINS) svimpy-hexbin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp $(ARDUINO_BINS) svimpy-hexbin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp -r tests svimpy-hexbin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	cp ../readme svimpy-hexbin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	tar -cf svimpy.hexbin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)-$(PLATFORM_NAME).tar svimpy-bin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	rm -f svimpy.hexbin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)-$(PLATFORM_NAME).tar.gz
+	gzip -9 svimpy.hexbin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)-$(PLATFORM_NAME).tar
+	rm -r svimpy-hexbin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)
+	mv svimpy.hexbin-$(MAJOR_VERSION).$(MINOR_VERSION)-$(BUILD)-$(PLATFORM_NAME).tar.gz ..
 	
 dist:	srcdist binariesdist 
 	make clean clean_binaries
