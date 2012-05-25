@@ -702,7 +702,7 @@ NUM atomic_test(void)
 		printf("error occured:\n%s\n",vm->error_message);
 	exit_code = vm_Close(vm);
 	printf("vm exit code:%d\n",exit_code);
-	return(exit_code);
+	//return(exit_code);
 
 
 

@@ -1217,7 +1217,7 @@ object *vm_RunRPYC(vm *vm,stream *f ,BOOL free_object)
 		stream_Free(f);
 		return(NULL);
 	}
-	//stream_Free(f);
+	stream_Free(f);
 	return(obj);
 }
 
