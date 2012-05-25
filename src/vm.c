@@ -1126,13 +1126,17 @@ object *vm_RunFunction(vm *vm,char *name,tuple_object *locals,tuple_object *kw_l
 			//FullDumpObject(((object*)vm->globals->list->items[i]),0);
 			//vm_GetGlobalByIndex(vm->globals,i)
 			if(vm_GetGlobalByIndex(vm,i)->type == TYPE_CODE)
+			{
 				f = GetDictItemByName(((code_object*)vm_GetGlobalByIndex(vm,i))->names,name);
-			
+				//FullDumpObjectArduino(vm_GetGlobalByIndex(vm,i),0);
+				//FullDumpObjectArduino(f,0);
+			}
 			if(f != obj_NULL)
 				break;
 	}
 	
 	//DumpObject(f,0);
+	//FullDumpObjectArduino(f,0);
 	//printf("run func\r\n");
 	if(f->type == TYPE_FUNCTION)
 	{
@@ -1154,17 +1158,85 @@ object *vm_RunPYC(vm *vm,stream *f ,BOOL free_object)
 	//printf("r:%d\r\n",r);
 	if(r)
 		return(NULL);//TODO maybe return an empty object for simplification
+	long magic = stream_ReadLong(f);
+	//printf("m:%u,%u\r\n",magic,pyc_magic);
+	if(magic != pyc_magic)
+		return(NULL);
+	//printf("works\r\n");
+	//long time = ReadLong(f);
+	stream_ReadLong(f);//read time
+	object *obj = stream_ReadObject(f);
+	object *global_key = (object*)CreateUnicodeObject(str_Copy("__main__"));
+	vm_AddGlobal(vm, global_key,obj);
+	//printf("co:%c\r\n",obj->type);
+	object *ret = vm_RunObject(vm, obj, NULL,NULL);
+	if (ret != NULL)
+	{
+		gc_DecRefCount(ret);
+	}
+	if(free_object)
+	{
+		gc_DecRefCount(obj);
+		vm_RemoveGlobal(vm,global_key);
+		stream_Free(f);
+		return(NULL);
+	}
+	stream_Free(f);
+	return(obj);
+}
+
+object *vm_RunRPYC(vm *vm,stream *f ,BOOL free_object)
+{
+	long pyc_magic = MAGIC;
+	BOOL r = stream_Open(f);
+	//printf("r:%d\r\n",r);
+	if(r)
+		return(NULL);//TODO maybe return an empty object for simplification
 	//long magic = stream_ReadLong(f);
 	//printf("m:%u,%u\r\n",magic,pyc_magic);
 	//if(magic != pyc_magic)
 	//	return(NULL);
-	printf("works\r\n");
+	//printf("works\r\n");
 	//long time = ReadLong(f);
 	//stream_ReadLong(f);//read time
 	object *obj = stream_ReadObject(f);
 	object *global_key = (object*)CreateUnicodeObject(str_Copy("__main__"));
 	vm_AddGlobal(vm, global_key,obj);
-	printf("co:%c\r\n",obj->type);
+	//printf("co:%c\r\n",obj->type);
+	//FullDumpObjectArduino(obj,0);
+	object *ret = vm_RunObject(vm, obj, NULL,NULL);
+	
+	if (ret != NULL)
+	{
+		gc_DecRefCount(ret);
+	}
+	if(free_object)
+	{
+		gc_DecRefCount(obj);
+		vm_RemoveGlobal(vm,global_key);
+		stream_Free(f);
+		return(NULL);
+	}
+	//stream_Free(f);
+	return(obj);
+}
+
+object *vm_RunRPYCPlus(vm *vm,stream *f ,BOOL free_object)
+{
+	long pyc_magic = MAGIC;
+	BOOL r = stream_Open(f);
+	//printf("r:%d\r\n",r);
+	if(r)
+		return(NULL);//TODO maybe return an empty object for simplification
+	//long magic = stream_ReadLong(f);
+	//printf("m:%u,%u\r\n",magic,pyc_magic);
+	//if(magic != pyc_magic)
+	//	return(NULL);
+	//long time = ReadLong(f);
+	//stream_ReadLong(f);//read time
+	object *obj = stream_ReadObjectPlus(f);
+	object *global_key = (object*)CreateUnicodeObject(str_Copy("__main__"));
+	vm_AddGlobal(vm, global_key,obj);
 	object *ret = vm_RunObject(vm, obj, NULL,NULL);
 	if (ret != NULL)
 	{

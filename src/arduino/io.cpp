@@ -87,6 +87,8 @@ object *a_digitalWrite(vm *vm,tuple_object *locals,tuple_object *kw_locals)
 		//printf("pin:%d\r\n",((int_object*)pin)->value);
 		//printf("val:%d\r\n",((int_object*)val)->value);
 		digitalWrite(((int_object*)pin)->value,((int_object*)val)->value);
+		//pinMode(9,OUTPUT);
+		//digitalWrite(9,((int_object*)val)->value);
 	}
 	object *tmp =CreateEmptyObject(TYPE_NONE);
 	return (tmp);	
@@ -121,9 +123,17 @@ object *a_delay(vm *vm,tuple_object *locals,tuple_object *kw_locals)
  //ms
  	//printf("delay\n");
  	object *ms = GetItem((object*)locals,0);
+	if(ms->type == TYPE_KV)
+	{
+		ms = (object*) ((kv_object*)ms)->value;
+		//printf("pt:%c,vt:%c\r\n",pin->type,val->type);
+		//printf("val:%d\r\n",((int_object*)val)->value);
+	}
 	if(ms->type == TYPE_INT)
-	//	printf("delay:%d\r\n",((int_object*)ms)->value);
+	{
+		printf("delay:%d\r\n",((int_object*)ms)->value);
 		delay(((int_object*)ms)->value);
+	}
 	//delay(8);
 	object *tmp =CreateEmptyObject(TYPE_NONE);
 	return (tmp);	

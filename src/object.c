@@ -1199,6 +1199,205 @@ void FullDumpObject(object * obj, char level)
 		printf("object type is unknown:%c\n", obj->type);
 	}
 }
+#else
+void FullDumpObjectArduino(object * obj, char level)
+{
+	if (obj == NULL)
+		return;
+	for (char i = 0; i < level; i++)
+		printf("\t");
+	printf("(%d)(%x)",obj->ref_count,obj);
+	switch (obj->type)
+	{
+	case TYPE_BLOCK:
+		printf("block object\r\n");
+		for (char i = 0; i < level; i++)
+		printf("\t");
+		printf("stack @%x\r\n",((block_object*)obj)->stack);
+		for (char i = 0; i < level; i++)
+		printf("\t");
+		printf("code @%x\r\n",((block_object*)obj)->code);
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("start: %d\r\n",((block_object*)obj)->start);
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("len: %d\r\n",((block_object*)obj)->len);
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("ip: %d\r\n",((block_object*)obj)->ip);
+		for (char i = 0; i < level; i++)
+				printf("\t");
+		printf("-- block object\r\n");
+		break;
+	case TYPE_ITER:
+			printf("iter object\r\n");
+			printf("iter tag:\r\n");
+			FullDumpObjectArduino((object*)((iter_object*)obj)->tag,level + 1);
+			//printf("iter block stack:\n");
+			//stack_Dump(((iter_object*)obj)->block_stack);
+			break;
+	//case TYPE_REF:
+	//	printf("ref object\n");
+	//	FullDumpObject(((ref_object*)obj)->ref,level+1);
+	//	break;
+	case TYPE_ELLIPSIS:
+		printf("ellipsis	 object\r\n");
+		break;
+	case TYPE_TRUE:
+		printf("true object\r\n");
+		break;
+	case TYPE_FALSE:
+		printf("false object\r\n");
+		break;
+	case TYPE_NULL:
+		printf("NULL object\r\n");
+		break;
+	case TYPE_NONE:
+		printf("NONE object\r\n");
+		break;
+	case TYPE_BINARY_FLOAT:
+		printf("float object: %7g\r\n", ((float_object*)obj)->value);
+		break;
+	case TYPE_INT:
+		printf("int object: %d\r\n", ((int_object*)obj)->value);
+		break;
+	case TYPE_KV:
+		printf("kv object\r\n");
+		FullDumpObjectArduino(((kv_object*)obj)->key,level);
+		FullDumpObjectArduino(((kv_object*)obj)->value,level + 1);
+		break;
+	case TYPE_FUNCTION:
+			printf("function object: %s\r\n",((function_object*)obj)->func->name);
+			for (char i = 0; i < level; i++)
+				printf("\t");
+			printf("Python function\r\n");
+			for (char i = 0; i < level; i++)
+				printf("\t");
+			printf("code:\r\n");
+			FullDumpObjectArduino((object*)((function_object*)obj)->func,level + 1);
+		break;
+	case TYPE_CFUNCTION:
+			printf("cfunction object: %x\r\n",((cfunction_object*)obj)->func);
+		break;
+	case TYPE_UNICODE:
+		printf("unicode object: %s\r\n", ((unicode_object*)obj)->value);
+		break;
+	case TYPE_STRING:
+		printf("string object: ");
+		for (NUM i = 0; i < ((string_object *) obj)->len; i++)
+			printf("%02x ", (unsigned char)((string_object *) obj)->content[i]);
+		printf("\r\n");
+		break;
+	case TYPE_TUPLE:
+		printf("tuple object");
+		if (((tuple_object *) obj)->list != NULL && ((tuple_object *) obj)->list->num > 0)
+		{
+			printf(" contains %d items\r\n", ((tuple_object *) obj)->list->num);
+			for (NUM i = 0; i < ((tuple_object *) obj)->list->num; i++)
+			{
+				if (((tuple_object*) obj)->list->items[i] != NULL)
+				{
+
+					if ( i == ((tuple_object*)obj)->ptr)
+						printf("%d->",i);
+					else
+						printf("%d  ",i);
+					FullDumpObjectArduino((object*)((tuple_object*) obj)->list->items[i], level + 1);
+				}
+			}
+		}
+		else
+		{
+			printf("\r\n");
+			for (char i = 0; i < level; i++)
+				printf("\t");
+			printf("empty tuple\r\n");
+		}
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("-- tuple object\r\n");
+		break;
+	case TYPE_CODE:
+		printf("code object\r\n");
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("name: %s\r\n", ((code_object *) obj)->name);
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("nlocals:%d\r\n",((code_object *) obj)->nlocals);
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("argcount:%d\r\n",((code_object *) obj)->argcount);
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("co_flags:%d\r\n",((code_object *) obj)->co_flags);
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("kwonlyargcount:%d\r\n",((code_object *) obj)->kwonlyargcount);
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("code:\r\n");
+		FullDumpObjectArduino(((code_object *) obj)->code, level + 1);
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("consts:\r\n");
+		FullDumpObjectArduino(((code_object *) obj)->consts, level + 1);
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("names:\r\n");
+		FullDumpObjectArduino(((code_object *) obj)->names, level + 1);
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("varnames:\r\n");
+		FullDumpObjectArduino(((code_object *) obj)->varnames, level + 1);
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("freevars:\r\n");
+		FullDumpObjectArduino(((code_object *) obj)->freevars, level + 1);
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("cellvars:\r\n");
+		FullDumpObjectArduino(((code_object *) obj)->cellvars, level + 1);
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("-- code object\r\n");
+		break;
+	case TYPE_CLASS_INSTANCE:
+		printf("class_instance object:\r\n");
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("-- class_instance object\r\n");
+		break;
+	case TYPE_CLASS:
+		printf("class object\r\n");
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("code:\r\n");
+		FullDumpObjectArduino((object*)((class_object*)obj)->code, level + 1);
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("-- class object\r\n");
+		break;
+	case TYPE_METHOD:
+		printf("method object\r\n");
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("-- method object\r\n");
+		break;
+	case TYPE_TAG:
+		printf("tag object\r\n");
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("tag: %x\r\n",((tag_object*)obj)->tag);
+		for (char i = 0; i < level; i++)
+			printf("\t");
+		printf("-- tag object\r\n");
+		break;
+	default:
+		printf("object type is unknown:%c\r\n", obj->type);
+	}
+}
 #endif
 
 #ifdef USE_DEBUGGING

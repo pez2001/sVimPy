@@ -45,11 +45,11 @@ void initUSART (void)
      UBRR0L = (uint8_t) (baud_setting);    
 } 
 
-int debug_level = 0;
+//int debug_level = 0;
 
-//extern void *__bss_end;
-//extern void *__brkval;
-/*
+extern void *__bss_end;
+extern void *__brkval;
+
 int get_free_memory(void)
 {
   int free_memory;
@@ -61,7 +61,7 @@ int get_free_memory(void)
 
   return(free_memory);
 }
-*/
+
 
 static FILE uartout = {0} ;
 
@@ -76,8 +76,8 @@ static int uart_putchar (char c, FILE *stream)
 int __attribute__((OS_main)) main(void)  
 {
 	init();
-	pinMode(13,OUTPUT);
-	digitalWrite(13,LOW);
+	//pinMode(13,OUTPUT);
+	//digitalWrite(13,LOW);
 
 	//#if defined(USBCON)
 	//USB.attach();
@@ -85,7 +85,7 @@ int __attribute__((OS_main)) main(void)
 	initUSART();
 	fdev_setup_stream (&uartout, uart_putchar, NULL, _FDEV_SETUP_WRITE);
 	stdout = &uartout;
-	//printf("in:%4d\n",get_free_memory());
+	printf("in:%4d\r\n",get_free_memory());
 	//debug_level = 0;
 	vm *vm = vm_Init(NULL);
 	AddArduinoGlobal(vm);
@@ -101,7 +101,7 @@ int __attribute__((OS_main)) main(void)
 	//AddInternalFunctions(vm);
 	//printf("if:%4d\r\n",get_free_memory());
 	//delay(1000);
-	//printf("af:%4d\r\n",get_free_memory());
+	printf("ag:%4d\r\n",get_free_memory());
 	//delay(1000);
 	//	digitalWrite(13,HIGH);
 
@@ -109,9 +109,9 @@ int __attribute__((OS_main)) main(void)
 	//printf("ag:%4d\r\n",get_free_memory());
 	//delay(1000);
 	//stream *m = stream_CreateFromFlashBytes(((char*)&blink),BLINK_LEN);
-	stream *m = stream_CreateFromFlashBytes(((char*)&fade_min),FADE_MIN_LEN);
+	//stream *m = stream_CreateFromFlashBytes(((char*)&fade_min),FADE_MIN_LEN);
 	//stream *m = stream_CreateFromBytes(((char*)&fade_min),FADE_MIN_LEN);
-	//stream *m = stream_CreateFromBytes(((char*)&blink),BLINK_LEN);
+	stream *m = stream_CreateFromFlashBytes(((char*)&blink),BLINK_LEN);
 	//Serial.println("stream");
 	//Serial.println(get_free_memory());
 	//printf("cs:%4d\n",get_free_memory());
@@ -120,11 +120,11 @@ int __attribute__((OS_main)) main(void)
 	//Serial.print("run");
 	
 	vm_RunPYC(vm,m,0);
-	//printf("rp:%4d\n",get_free_memory());
+	printf("rp:%4d\r\n",get_free_memory());
 	//debug_printf(DEBUG_ALL,"run thru\r\n");
 	//Serial.println("thru");
 	vm_RunFunction(vm,"setup",NULL,NULL);
-	//printf("cf:%4d\n",get_free_memory());
+	printf("rf:%4d\r\n",get_free_memory());
 	//debug_printf(DEBUG_ALL,"called setup\r\n");
 	//vm_Close(vm);
 	//Serial.println("done");
@@ -132,12 +132,12 @@ int __attribute__((OS_main)) main(void)
     int c = 0;
 	for (;;)
 	{
-		digitalWrite(13,HIGH);
+		//digitalWrite(13,HIGH);
 		
 		vm_RunFunction(vm,"loop",NULL,NULL);
-		delay(500);
-		digitalWrite(13,LOW);
-		delay(500);
+		//delay(500);
+		//digitalWrite(13,LOW);
+		//delay(500);
 		printf("loop:%4d\r\n",c);
 		c++;
 	}

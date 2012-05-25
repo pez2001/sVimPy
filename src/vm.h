@@ -159,6 +159,10 @@ object *vm_Step(vm *vm);//single step vm //TODO rename to vm_Step
 
 object *vm_RunPYC(vm *vm,stream *f,BOOL free_object);
 
+object *vm_RunRPYC(vm *vm,stream *f ,BOOL free_object);
+
+object *vm_RunRPYCPlus(vm *vm,stream *f ,BOOL free_object);
+
 object *vm_RunFunction(vm *vm,char *name, tuple_object *locals,tuple_object *kw_locals);//call a python function from C
 
 object *vm_RunObject(vm *vm, object *obj, tuple_object *locals,tuple_object *kw_locals);//run a python object if possible

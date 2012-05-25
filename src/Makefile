@@ -41,7 +41,7 @@ MAJOR_VERSION = 0
 MINOR_VERSION = 77
 #builds are counted since version 0.5 roughly
 BUILD = 257
-DEBUG_BUILD = 1124
+DEBUG_BUILD = 1126
 
 #CFLAGS= -Ilibraries/fmod -W -w -O2 -std=c99 -DBUILD=$(BUILD) -DMAJOR_VERSION=$(MAJOR_VERSION) -DMINOR_VERSION=$(MINOR_VERSION)
 CFLAGS= -W -w -O2 -std=c99 -DBUILD=$(BUILD) -DMAJOR_VERSION=$(MAJOR_VERSION) -DMINOR_VERSION=$(MINOR_VERSION) -lm
@@ -51,20 +51,23 @@ AR=ar
 LD=ld
 
 #arduino environment
-ARDUINO_AVR_DIR = /C/Users/$(USER)/Documents/Arduino-1.0
-
+#ARDUINO_MCU = atmega328p
+ARDUINO_MCU = atmega2560
+ifeq ($(ARDUINO_MCU), atmega328p)
+ARDUINO_AVRDUDE_PROGRAMMER = arduino
 ARDUINO_TERM = /C/Program\ Files\ \(x86\)/Putty/putty -load arduino_uno
-ARDUINO_MCU = atmega328p
 ARDUINO_PORT = com3
+endif
+ifeq ($(ARDUINO_MCU), atmega2560)
+ARDUINO_AVRDUDE_PROGRAMMER = stk500v2
+ARDUINO_TERM = /C/Program\ Files\ \(x86\)/Putty/putty -load arduino_mega
+ARDUINO_PORT = com5
+endif
+
+ARDUINO_AVR_DIR = /C/Users/$(USER)/Documents/Arduino-1.0
 ARDUINO_UPLOAD_RATE = 115200
 #ARDUINO_UPLOAD_RATE = 57600
-ARDUINO_AVRDUDE_PROGRAMMER = arduino
 
-#ARDUINO_TERM = /C/Program\ Files\ \(x86\)/Putty/putty -load arduino_mega
-#ARDUINO_MCU = atmega2560
-#ARDUINO_PORT = com5
-#ARDUINO_UPLOAD_RATE = 115200
-#ARDUINO_AVRDUDE_PROGRAMMER = stk500v2
 
 ARDUINO_AVRDUDE_PORT = $(ARDUINO_PORT)
 ARDUINO_AVRDUDE_WRITE_FLASH = -U flash:w:arduino.hex:i
@@ -237,6 +240,12 @@ core.a: $(ARDUINO_LIB_OBJ) $(ARDUINO_LIB_CXX_OBJ) $(ARDUINO_VM_OBJ)
 	$(ARDUINO_CXX) $(ARDUINO_CXXFLAGS) $(ARDUINO_LDFLAGS) -c -o $@ $^
 
 arduino.elf: $(ARDUINO_OBJ) core.a
+ifeq ($(ARDUINO_MCU), atmega328p)
+	cp -f arduino/libarduino/pins_arduino.h_328p arduino/libarduino/pins_arduino.h
+endif
+ifeq ($(ARDUINO_MCU), atmega2560)
+	cp -f arduino/libarduino/pins_arduino.h_mega2560 arduino/libarduino/pins_arduino.h
+endif
 	$(ARDUINO_CXX) $(ARDUINO_CXXFLAGS) $(ARDUINO_LDFLAGS) -o $@ $^ 
 
 arduino.hex: arduino.elf
@@ -244,7 +253,9 @@ arduino.hex: arduino.elf
 	$(ARDUINO_OBJCOPY) -g --strip-unneeded -O ihex -R .eeprom $< $@
 
 upload: clean clean_binaries arduino.hex
-#	printf "0" >$(ARDUINO_PORT)
+ifeq ($(ARDUINO_MCU), atmega2560)
+	printf "0" >$(ARDUINO_PORT)
+endif
 	$(ARDUINO_AVRDUDE) $(ARDUINO_AVRDUDE_FLAGS) $(ARDUINO_AVRDUDE_WRITE_FLASH)
 
 uploadview: upload

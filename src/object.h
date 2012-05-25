@@ -418,6 +418,8 @@ void PrintObject(object *obj);
 
 #ifndef USE_ARDUINO_FUNCTIONS
 void FullDumpObject(object * obj, char level);
+#else
+void FullDumpObjectArduino(object * obj, char level);
 #endif
 
 #ifdef USE_DEBUGGING
