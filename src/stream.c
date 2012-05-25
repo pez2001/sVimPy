@@ -595,7 +595,7 @@ struct _object *stream_ReadObject(struct _stream *f)
 		object *tmp_lnotab = stream_ReadObject(f);
 		gc_DecRefCount(tmp_lnotab);	// TO DECREASE MEMORY USAGE
 		gc_Clear();
-		FullDumpObjectArduino(co,0);
+		//FullDumpObjectArduino(co,0);
 		return((object*)co);
 		}
 		break;
