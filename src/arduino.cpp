@@ -110,8 +110,8 @@ int __attribute__((OS_main)) main(void)
 	//delay(1000);
 	//stream *m = stream_CreateFromFlashBytes(((char*)&blink),BLINK_LEN);
 	//stream *m = stream_CreateFromFlashBytes(((char*)&fade_min),FADE_MIN_LEN);
-	//stream *m = stream_CreateFromBytes(((char*)&fade_min),FADE_MIN_LEN);
-	stream *m = stream_CreateFromFlashBytes(((char*)&blink),BLINK_LEN);
+	stream *m = stream_CreateFromBytes(((char*)&fade_min),FADE_MIN_LEN);
+	//stream *m = stream_CreateFromFlashBytes(((char*)&blink),BLINK_LEN);
 	//Serial.println("stream");
 	//Serial.println(get_free_memory());
 	//printf("cs:%4d\n",get_free_memory());
@@ -119,7 +119,7 @@ int __attribute__((OS_main)) main(void)
 	//debug_printf(DEBUG_ALL,"run pyc\r\n");
 	//Serial.print("run");
 	
-	vm_RunPYC(vm,m,0);
+	vm_RunRPYC(vm,m,0);
 	printf("rp:%4d\r\n",get_free_memory());
 	//debug_printf(DEBUG_ALL,"run thru\r\n");
 	//Serial.println("thru");
@@ -138,7 +138,7 @@ int __attribute__((OS_main)) main(void)
 		//delay(500);
 		//digitalWrite(13,LOW);
 		//delay(500);
-		printf("loop:%4d\r\n",c);
+		//printf("loop:%4d\r\n",c);
 		c++;
 	}
 		//		loop(vm);

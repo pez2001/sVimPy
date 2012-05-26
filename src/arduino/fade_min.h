@@ -23,7 +23,7 @@
 #ifndef FADE_H
 #define FADE_H
 
-#include "avr/pgmspace.h"
+//#include "avr/pgmspace.h"
 
 #define FADE_MIN_LEN 491
 

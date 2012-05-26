@@ -1156,7 +1156,7 @@ object *vm_RunPYC(vm *vm,stream *f ,BOOL free_object)
 	long pyc_magic = MAGIC;
 	BOOL r = stream_Open(f);
 	//printf("r:%d\r\n",r);
-	if(r)
+	if(!r)
 		return(NULL);//TODO maybe return an empty object for simplification
 	long magic = stream_ReadLong(f);
 	//printf("m:%u,%u\r\n",magic,pyc_magic);
@@ -1187,10 +1187,10 @@ object *vm_RunPYC(vm *vm,stream *f ,BOOL free_object)
 
 object *vm_RunRPYC(vm *vm,stream *f ,BOOL free_object)
 {
-	long pyc_magic = MAGIC;
+	//long pyc_magic = MAGIC;
 	BOOL r = stream_Open(f);
 	//printf("r:%d\r\n",r);
-	if(r)
+	if(!r)
 		return(NULL);//TODO maybe return an empty object for simplification
 	//long magic = stream_ReadLong(f);
 	//printf("m:%u,%u\r\n",magic,pyc_magic);
@@ -1203,7 +1203,7 @@ object *vm_RunRPYC(vm *vm,stream *f ,BOOL free_object)
 	object *global_key = (object*)CreateUnicodeObject(str_Copy("__main__"));
 	vm_AddGlobal(vm, global_key,obj);
 	//printf("co:%c\r\n",obj->type);
-	//FullDumpObjectArduino(obj,0);
+	FullDumpObjectArduino(obj,0);
 	object *ret = vm_RunObject(vm, obj, NULL,NULL);
 	
 	if (ret != NULL)
@@ -1226,7 +1226,7 @@ object *vm_RunRPYCPlus(vm *vm,stream *f ,BOOL free_object)
 	long pyc_magic = MAGIC;
 	BOOL r = stream_Open(f);
 	//printf("r:%d\r\n",r);
-	if(r)
+	if(!r)
 		return(NULL);//TODO maybe return an empty object for simplification
 	//long magic = stream_ReadLong(f);
 	//printf("m:%u,%u\r\n",magic,pyc_magic);

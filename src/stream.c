@@ -247,7 +247,7 @@ stream *stream_CreateDebugOutput(void)
 BOOL stream_Open(struct _stream *stream)
 {
 	if(stream->type->stream_open == NULL)
-		return(0);
+		return(1);
 	BOOL b = stream->type->stream_open(stream);
 	return(b);
 }
@@ -255,14 +255,14 @@ BOOL stream_Open(struct _stream *stream)
 BOOL stream_Close(struct _stream *stream)
 {
 	if(stream->type->stream_close == NULL)
-		return(0);
+		return(1);
 	return(stream->type->stream_close(stream));
 }
 
 BOOL stream_Free(struct _stream *stream)
 {
 	if(stream->type->stream_free == NULL)
-		return(0);
+		return(1);
 	return(stream->type->stream_free(stream));
 }
 
@@ -290,7 +290,7 @@ BOOL stream_Seek(struct _stream *stream,STREAM_NUM offset,STREAM_ORIGIN origin)
 INT stream_GetPos(struct _stream *stream)
 {
 	if(stream->type->stream_getpos == NULL)
-		return(0);
+		return(-1);
 	return(stream->type->stream_getpos(stream));
 }
 //file stream functions
@@ -428,8 +428,13 @@ BOOL stream_memory_free(struct _stream *stream)
 BOOL stream_memory_read(struct _stream *stream,void *ptr,STREAM_NUM len)
 {
 	char *bytes = (char*)ptr_Get(stream->tags,0);
+	STREAM_NUM slen  = (char*)ptr_Get(stream->tags,1);
 	STREAM_NUM offset = (STREAM_NUM)ptr_Get(stream->tags,2);
-	memcpy(ptr,*(&bytes+offset),len);
+	//printf("o:%d,slen:%d,len:%d\n",offset,slen,len);
+	if( (offset + len) > slen )
+		return(0);
+	//	printf("error reading memory out of bounds\n");
+	memcpy(ptr,(bytes+offset),len);
 	ptr_Set(stream->tags,2,(void*)(offset+len));
 	return(1);
 }

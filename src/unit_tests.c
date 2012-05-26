@@ -668,7 +668,7 @@ NUM atomic_test(void)
 	vm->exception_handler = &CatchException;
 	long pyc_magic = MAGIC;
 	stream *f = stream_CreateFromFile("tests/fade_min.pyc","rb");
-	if (!stream_Open(f))
+	if(!stream_Open(f))
 	{
 		printf("error opening pyc file: tests/blink.pyc\n");
 		return(1);
@@ -704,7 +704,48 @@ NUM atomic_test(void)
 	printf("vm exit code:%d\n",exit_code);
 	//return(exit_code);
 
-
+	printf("executing arduino object:fade_min.h\n");
+	printf("sVimPy Python Output\n{\n");
+	vm = vm_Init(NULL);
+	vm->import_module_handler = &ImportModule;
+	vm->exception_handler = &CatchException;
+	//stream *f = stream_CreateFromFile("tests/fade_min.pyc","rb");
+	f = stream_CreateFromBytes(((char*)&fade_min),FADE_MIN_LEN);
+	if(!stream_Open(f))
+	{
+		printf("error opening pyc file: fade_min\n");
+		return(1);
+	}
+	//long magic = stream_ReadLong(f);
+	//if (magic != pyc_magic)
+	//{
+	//	printf("error wrong file magic: tests/blink.pyc\n");
+	//	return(1);
+	//}
+	//stream_ReadLong(f);//skip time
+	obj = stream_ReadObject(f);
+	global_key = (object*)CreateUnicodeObject(str_Copy(((code_object*)obj)->name));
+	vm_AddGlobal(vm, global_key,obj);
+	ret = vm_RunObject(vm, obj, NULL,NULL);
+	printf("ran module main\n");
+	if(ret != NULL)
+		gc_DecRefCount(ret);
+		
+	vm_RunFunction(vm,"setup",NULL,NULL);
+	printf("ran setup\n");
+	for(INDEX i = 0;i<100;i++) //execute one hundred test loops
+		vm_RunFunction(vm,"loop",NULL,NULL);
+	printf("ran loops\n");
+	
+	vm_RemoveGlobal(vm,global_key);
+	gc_DecRefCount(obj);
+	stream_Free(f);
+	printf("}\n");
+	if(vm->error_message != NULL)
+		printf("error occured:\n%s\n",vm->error_message);
+	exit_code = vm_Close(vm);
+	printf("vm exit code:%d\n",exit_code);
+	return(exit_code);
 
 
 

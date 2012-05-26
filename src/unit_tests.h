@@ -37,6 +37,7 @@
 #include "arduino/io.h"
 #include "libraries/fmod_wrapper.h"
 
+#include "arduino/fade_min.h"
 
 #ifdef USE_DEBUGGING
 extern long mem_chunks_num;

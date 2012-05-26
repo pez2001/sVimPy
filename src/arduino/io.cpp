@@ -111,9 +111,13 @@ object *a_analogWrite(vm *vm,tuple_object *locals,tuple_object *kw_locals)
  //pin,value
  	//printf("analogWrite\n");
 	object *pin = GetItem((object*)locals,0);
-	object *value = GetItem((object*)locals,1);
-	if(pin->type == TYPE_INT && value->type == TYPE_INT)
-		analogWrite(((int_object*)pin)->value,((int_object*)value)->value);
+	object *val = GetItem((object*)locals,1);
+	if(pin->type == TYPE_KV)
+		pin =(object*) ((kv_object*)pin)->value;
+	if(val->type == TYPE_KV)
+		val = (object*) ((kv_object*)val)->value;
+	if(pin->type == TYPE_INT && val->type == TYPE_INT)
+		analogWrite(((int_object*)pin)->value,((int_object*)val)->value);
 	object *tmp =CreateEmptyObject(TYPE_NONE);
 	return (tmp);	
 }
@@ -131,8 +135,8 @@ object *a_delay(vm *vm,tuple_object *locals,tuple_object *kw_locals)
 	}
 	if(ms->type == TYPE_INT)
 	{
-		printf("delay:%d\r\n",((int_object*)ms)->value);
-		delay(((int_object*)ms)->value);
+		//printf("delay:%d\r\n",((int_object*)ms)->value);
+		delay(((int_object*)ms)->value - 5);
 	}
 	//delay(8);
 	object *tmp =CreateEmptyObject(TYPE_NONE);
