@@ -1203,7 +1203,7 @@ object *vm_RunRPYC(vm *vm,stream *f ,BOOL free_object)
 	object *global_key = (object*)CreateUnicodeObject(str_Copy("__main__"));
 	vm_AddGlobal(vm, global_key,obj);
 	//printf("co:%c\r\n",obj->type);
-	FullDumpObjectArduino(obj,0);
+	//FullDumpObjectArduino(obj,0);
 	object *ret = vm_RunObject(vm, obj, NULL,NULL);
 	
 	if (ret != NULL)
