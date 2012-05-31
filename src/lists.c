@@ -41,6 +41,7 @@ ptr_list *ptr_CreateList(NUM num, unsigned char flags)
 	}
 	else
 		tmp->items = NULL;
+	printf("ptr.x: %x, ptr.i.x: %d\r\n",tmp,tmp->items);
 	tmp->num = num;
 	tmp->flags = flags;
 	return (tmp);
