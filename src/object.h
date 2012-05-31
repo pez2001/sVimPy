@@ -103,75 +103,105 @@ struct _code_object;
 
 #ifndef USE_ARDUINO_FUNCTIONS
 #pragma pack(push)				/* push current alignment to stack */
-#pragma pack(1)					/* set alignment to 1 byte boundary */
+#pragma pack(210)					/* set alignment to 1 byte boundary */
 #endif
 
+
+//general object header struct
+//normal size = 9
+//avr size = 4
 typedef struct _object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
 	#ifdef USE_LOCKING
-	OBJECT_REF_COUNT lock_count;
+	OBJECT_LOCK_COUNT lock_count;
 	#endif
 } object;
 
+//tag object struct
+//can be used to reference to custom data
+// *tag will not be freed by gc
+//normal size = 13
+//avr size = 6
 typedef struct _tag_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
 	#ifdef USE_LOCKING
-	OBJECT_REF_COUNT lock_count;
+	OBJECT_LOCK_COUNT lock_count;
 	#endif
 	void *tag;
 } tag_object;
 
+//integer object struct
+//normal size = 13
+//avr size = 8
 typedef struct _int_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
 	#ifdef USE_LOCKING
-	OBJECT_REF_COUNT lock_count;
+	OBJECT_LOCK_COUNT lock_count;
 	#endif
 	INT value;
 } int_object;
 
+//float object struct
+//normal size = 13
+//avr size = 8
 typedef struct _float_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
 	#ifdef USE_LOCKING
-	OBJECT_REF_COUNT lock_count;
+	OBJECT_LOCK_COUNT lock_count;
 	#endif
 	FLOAT value;
 } float_object;
 
+//unicode object struct
+//gc will free value
+//normal size = 13
+//avr size = 6
 typedef struct _unicode_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
 	#ifdef USE_LOCKING
-	OBJECT_REF_COUNT lock_count;
+	OBJECT_LOCK_COUNT lock_count;
 	#endif
 	char *value;
 }unicode_object;
 
+//kv object struct
+//represents a key / value pair
+//used in dictionaries for example
+//normal size = 17
+//avr size = 8
 typedef struct _kv_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
 	#ifdef USE_LOCKING
-	OBJECT_REF_COUNT lock_count;
+	OBJECT_LOCK_COUNT lock_count;
 	#endif
 	void *value;
 	void *key;
 } kv_object;				// TO OPTIMIZE MEMORY USAGE -> only used in tuples 
 
+//code object struct
+//represents a python code object
+//used in python modules,functions,methods,classes
+//gc will free name
+//normal size = 57
+//avr size = 30
 typedef struct _code_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
 	#ifdef USE_LOCKING
-	OBJECT_REF_COUNT lock_count;
+	OBJECT_LOCK_COUNT lock_count;
 	#endif
 	char *name;
 	NUM argcount;
@@ -192,101 +222,141 @@ typedef struct _code_object
 	// long firstlineno;
 } code_object;
 
+//class object struct
+//internal representation of python class objects
+//normal size = 17
+//avr size = 8
 typedef struct _class_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
 	#ifdef USE_LOCKING
-	OBJECT_REF_COUNT lock_count;
+	OBJECT_LOCK_COUNT lock_count;
 	#endif
 	code_object *code;
 	object *base_classes;
 } class_object;
 
+//class instance object struct
+//internal representation of python class instances
+//normal size = 21
+//avr size = 10
 typedef struct _class_instance_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
 	#ifdef USE_LOCKING
-	OBJECT_REF_COUNT lock_count;
+	OBJECT_LOCK_COUNT lock_count;
 	#endif
 	class_object *instance_of;	
 	object *methods;
 	object *vars;
 } class_instance_object;
 
+//method object struct
+//internal representation of python class methods
+//methods are bound to a specified class instance
+//normal size = 17
+//avr size = 8
 typedef struct _method_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
 	#ifdef USE_LOCKING
-	OBJECT_REF_COUNT lock_count;
+	OBJECT_LOCK_COUNT lock_count;
 	#endif
 	object *func;
 	class_instance_object *instance;
 } method_object;
 
+//string object struct
+//byte arrays 
+//at the moment only used to store python bytecode
+//gc will free content
+//normal size = 17
+//avr size = 8
 typedef struct _string_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
 	#ifdef USE_LOCKING
-	OBJECT_REF_COUNT lock_count;
+	OBJECT_LOCK_COUNT lock_count;
 	#endif
 	char *content;
 	NUM len;
 } string_object;
 
+//tuple object struct
+//normal size = 17
+//gc will free list
+//avr size = 8
 typedef struct _tuple_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
 	#ifdef USE_LOCKING
-	OBJECT_REF_COUNT lock_count;
+	OBJECT_LOCK_COUNT lock_count;
 	#endif
 	INDEX ptr;
 	ptr_list *list;
 } tuple_object;
 
+//function object struct
+//internal type used to push functions on the stack
+//or to store functions in modules or methods in classes
+//normal size = 13
+//avr size = 6
 typedef struct _function_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
 	#ifdef USE_LOCKING
-	OBJECT_REF_COUNT lock_count;
+	OBJECT_LOCK_COUNT lock_count;
 	#endif
 	struct _code_object *func;
 } function_object;
 
+//cfunction object struct
+//internal type used to push external c-functions on the stack
+//or to store c-functions in modules or methods in classes
+//normal size = 13
+//avr size = 6
 typedef struct _cfunction_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
 	#ifdef USE_LOCKING
-	OBJECT_REF_COUNT lock_count;
+	OBJECT_LOCK_COUNT lock_count;
 	#endif
 	struct _object* (*func) (struct _vm *vm,struct _tuple_object *locals,struct _tuple_object *kw_locals);
 } cfunction_object;
 
-//TODO create struct for generator storage
+//iter object struct
+//iterator state object
+//normal size = 21
+//avr size = 10
 typedef struct _iter_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
 	#ifdef USE_LOCKING
-	OBJECT_REF_COUNT lock_count;
+	OBJECT_LOCK_COUNT lock_count;
 	#endif
 	object *tag;//used for storage of iter options and index ptr
 	object *(*iter_func)(struct _iter_object *iter,struct _vm *vm);
 	struct _stack *block_stack;//iters will save blocks on stack when yielding
 } iter_object;
 
+//block object struct
+//blocks are used to form the execution tree
+//normal size = 29
+//avr size = 14
 typedef struct _block_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
 	#ifdef USE_LOCKING
-	OBJECT_REF_COUNT lock_count;
+	OBJECT_LOCK_COUNT lock_count;
 	#endif
 	code_object *code;
 	INDEX start;
@@ -308,12 +378,17 @@ typedef struct _cache_object
 	STREAM_NUM stream_pos;
 } cache_object;
 */
+
+//proxy object struct
+//used for virtual caching objects in streams
+//normal size = 9 + 8 
+//avr size = 4 + 4
 typedef struct _proxy_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
 	#ifdef USE_LOCKING
-	OBJECT_REF_COUNT lock_count;
+	OBJECT_LOCK_COUNT lock_count;
 	#endif
 	void *ref;//object* or stream_pos/512
 	void *is_cached; // == 0 -> not cached use ref as object*  > 0 -> pointer stream where object is cached ,ref is the position(mmc sector address 512 bytes aligned) in the stream 

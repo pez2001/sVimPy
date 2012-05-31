@@ -116,6 +116,7 @@ object *a_analogWrite(vm *vm,tuple_object *locals,tuple_object *kw_locals)
 		pin =(object*) ((kv_object*)pin)->value;
 	if(val->type == TYPE_KV)
 		val = (object*) ((kv_object*)val)->value;
+	printf("vx:%x\r\n",val);
 	if(pin->type == TYPE_INT && val->type == TYPE_INT)
 		analogWrite(((int_object*)pin)->value,((int_object*)val)->value);
 	object *tmp =CreateEmptyObject(TYPE_NONE);

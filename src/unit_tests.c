@@ -733,7 +733,7 @@ NUM atomic_test(void)
 		
 	vm_RunFunction(vm,"setup",NULL,NULL);
 	printf("ran setup\n");
-	for(INDEX i = 0;i<100;i++) //execute one hundred test loops
+	for(INDEX i = 0;i<1000000;i++) //execute one hundred test loops
 		vm_RunFunction(vm,"loop",NULL,NULL);
 	printf("ran loops\n");
 	

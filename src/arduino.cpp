@@ -140,7 +140,18 @@ int __attribute__((OS_main)) main(void)
 		//delay(500);
 		//printf("loop:%4d\r\n",c);
 		c++;
-	}
+		printf("loop 	:%4d ,%d\r\n",get_free_memory(),c);
+		int ms = 64;
+		for(char l = 1; l<5;l++)
+		{
+			char *m = (char*)malloc(ms);
+			if(m == NULL)
+				printf("warning max chunk size reached: %d\r\n",ms);
+			else
+				free(m);
+			ms = ms * 2;
+		}
+		}
 		//		loop(vm);
         
 	return 0;

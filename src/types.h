@@ -36,6 +36,7 @@
 #ifdef USE_ARDUINO_FUNCTIONS
 #define STREAM_NUM unsigned short
 #define OBJECT_REF_COUNT short
+#define OBJECT_LOCK_COUNT unsigned char
 // used in INDEXING situations
 #define INDEX short 
 //used in enum over array and total numbers
@@ -46,6 +47,7 @@
 #else
 #define STREAM_NUM long 
 #define OBJECT_REF_COUNT long
+#define OBJECT_LOCK_COUNT long
 // used in INDEXING situations
 #define INDEX long 
 //used in enum over array and total numbers
