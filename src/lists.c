@@ -84,6 +84,7 @@ void ptr_Push(ptr_list *list, void *ptr)
 		list->items = (void**)malloc(list->num * sizeof(void*));
 		#endif
 		list->items[0] = ptr;
+		printf("li: %x\r\n",list->items);
 	}
 	else
 	{
@@ -92,6 +93,7 @@ void ptr_Push(ptr_list *list, void *ptr)
 		#else
 		list->items = (void**)realloc(list->items,(list->num + 1) * sizeof(void*));
 		#endif
+		printf("li: %x\r\n",list->items);
 		list->items[list->num] = ptr;
 		list->num++;
 	}
@@ -122,6 +124,7 @@ BOOL ptr_Insert(ptr_list *list, INDEX index, void *ptr)
 		#else
 		list->items = (void **)realloc(list->items, (list->num) * sizeof(void *));
 		#endif
+		printf("li: %x\r\n",list->items);
 		// int len = (list->num-1) - index;
 		// if(len)
 		// {
