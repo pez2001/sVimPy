@@ -40,7 +40,7 @@ the rest is reserved for string ids
 
 max alloc size 256 except ptr lists which are a special case and are handled like strings
 
-pools for fixed size objects
+pools for fixed size objects, const object will be handled seperately
 string pool which will automatically fill freed space by moving strings afterwards
 list pool for ptr lists etc
 
