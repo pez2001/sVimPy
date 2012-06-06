@@ -30,6 +30,49 @@
 #include "debug.h"
 
 
+/*
+memory layout : 
+
+chunks are accessed with ids 
+the first 32768 are pool ids
+the rest is reserved for string ids
+
+
+max alloc size 256 except ptr lists which are a special case and are handled like strings
+
+pools for fixed size objects
+string pool which will automatically fill freed space by moving strings afterwards
+list pool for ptr lists etc
+
+
+cache for memory chunks addressable by id stored in streams
+
+alloc function
+free function
+access function
+egress function (for handling memory chunk caching
+
+
+object chunk header :
+unsigned char size
+unsigned short id
+char[] chunk_data
+
+string chunk header : 
+unsigned short size
+unsigned short id
+char[] string
+
+
+remember sorting of ids can speed up things
+
+
+
+*/
+
+
+
+
 #ifdef USE_DEBUGGING
 
 #ifdef __cplusplus
@@ -57,9 +100,6 @@ void *mem_malloc(size_t size, char *description);
 void *mem_realloc(void *ptr, size_t size);
 
 int mem_free(void *ptr);
-
-
-void mem_cnf(void);
 
 #ifdef __cplusplus
 } 
