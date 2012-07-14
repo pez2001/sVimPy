@@ -60,13 +60,41 @@
 #define STREAM_TYPE_ID char
 
 //standard int size
-#define INT long
+#define INT long long
 //standard floating number size
 #define FLOAT float
 
 
 //used for boolean comparisons
 #define BOOL unsigned char
+
+#define MEM_ID long
+#define MEM_POOL_CLASS_ID char
+
+
+#define BYTES_ID MEM_ID
+#define VM_ID MEM_ID
+#define STREAM_ID MEM_ID
+#define STACK_ID MEM_ID
+#define LIST_ID MEM_ID
+
+//python type ids
+#define OBJECT_ID MEM_ID
+#define TUPLE_ID OBJECT_ID
+#define CODE_ID OBJECT_ID
+#define BLOCK_ID OBJECT_ID
+#define CLASS_ID OBJECT_ID
+#define METHOD_ID OBJECT_ID
+#define FUNCTION_ID OBJECT_ID
+#define CFUNCTION_ID OBJECT_ID
+#define TAG_ID OBJECT_ID
+#define CLASS_INSTANCE_ID OBJECT_ID
+#define ITER_ID OBJECT_ID
+#define FLOAT_ID OBJECT_ID
+#define INT_ID OBJECT_ID
+#define UNICODE_ID OBJECT_ID
+#define KV_ID OBJECT_ID
+#define STRING_ID OBJECT_ID
 
 #ifdef USE_DEBUGGING
 

@@ -28,15 +28,14 @@
 #include "types.h"
 #include "debug.h"
 
+#include "memory.h"
+
+
 #include "stdio.h"
 #include "stdarg.h"
 #include "stdlib.h"
 #include "string.h"
 
-#ifdef USE_DEBUGGING
-#include "memory.h"
-#include "assert.h"
-#endif
 
 #ifdef __cplusplus
 extern "C"  {
@@ -47,66 +46,55 @@ extern "C"  {
 #pragma pack(push)				/* push current alignment to stack */
 #pragma pack(1)					/* set alignment to 1 byte boundary */
 #endif
-typedef struct
+typedef struct _id_list
 {
-	void **items;
+	MEM_ID items; /*list of OBJECT_IDs*/
 	NUM num;
 	unsigned char flags;
-} ptr_list;
+} id_list;
 
-/*
-typedef struct
-{
-	void **items;
-	NUM num;
-	unsigned char flags;
-	void *tag;
-} ptr_list_with_tag;
-*/
+
 #ifndef USE_ARDUINO_FUNCTIONS
 #pragma pack(pop)				/* restore original alignment from stack */
 #endif
 
-#define PTR_STATIC_LIST 1		// TODO add support for static lists , so indices wont change
-#define PTR_LIST_HAS_TAG 2
+#define LIST_STATIC 1		// TODO add support for static lists , so indices wont change
 
-ptr_list *ptr_CreateList(NUM num, unsigned char flags);
+LIST_ID list_Create(NUM num, unsigned char flags); /* returns id_list*/
 
-//ptr_list_with_tag *ptr_CreateTaggedList(NUM num, int flags);
+void list_Close(LIST_ID list);
 
-void ptr_CloseList(ptr_list * list);
+void list_Push(LIST_ID list, OBJECT_ID obj);
 
-void ptr_Push(ptr_list * list, void *ptr);
+OBJECT_ID list_Pop(LIST_ID list);
 
-void *ptr_Pop(ptr_list * list);
+BOOL list_Insert(LIST_ID list, INDEX index, OBJECT_ID obj);
 
-BOOL ptr_Insert(ptr_list * list, INDEX index, void *ptr);
+OBJECT_ID list_Remove(LIST_ID list, INDEX index);
 
-void *ptr_Remove(ptr_list * list, INDEX index);
+void list_RemoveItem(LIST_ID list, OBJECT_ID obj);
 
-void ptr_RemoveItem(ptr_list * list, void *ptr);
+INDEX list_GetIndex(LIST_ID list, OBJECT_ID obj);
 
-INDEX ptr_GetIndex(ptr_list *list, void *ptr);
+void list_Clear(LIST_ID list);
 
-void ptr_Clear(ptr_list * list);
+NUM list_GetLen(LIST_ID list);
 
-NUM ptr_GetNum(ptr_list * list);
+OBJECT_ID list_Get(LIST_ID list, INDEX index);
 
-void *ptr_Get(ptr_list * list, INDEX index);
+void list_Set(LIST_ID list, INDEX index, OBJECT_ID obj);
 
-void ptr_Set(ptr_list * list, INDEX index, void *ptr);
+void list_Queue(LIST_ID list, OBJECT_ID obj);
 
-void ptr_Queue(ptr_list * list, void *ptr);
+OBJECT_ID list_Dequeue(LIST_ID list);
 
-void *ptr_Dequeue(ptr_list * list);
+BOOL list_IsEmpty(LIST_ID list);
 
-BOOL ptr_IsEmpty(ptr_list * list);
+BOOL list_Contains(LIST_ID list,OBJECT_ID obj);
 
-BOOL ptr_Contains(ptr_list *list,void *ptr);
+void list_MoveUp(LIST_ID list, INDEX index);
 
-void ptr_MoveUp(ptr_list * list, INDEX index);
-
-void ptr_MoveDown(ptr_list * list, INDEX index);
+void list_MoveDown(LIST_ID list, INDEX index);
 
 
 #ifdef __cplusplus

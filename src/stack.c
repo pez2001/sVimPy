@@ -22,249 +22,230 @@
 
 #include "stack.h"
 
-stack *stack_Init(void)
+STACK_ID stack_Create(void)
 {
-	#ifdef USE_DEBUGGING
-	stack *tmp = (stack *)mem_malloc(sizeof(stack), "stack_Init() return");
-	#else
-	stack *tmp = (stack *)malloc(sizeof(stack));
-	#endif
-	tmp->list = ptr_CreateList(0, 0);
-	return (tmp);
+	STACK_ID stack = list_Create(0,0);
+	return(stack);
 }
 
-void stack_Close(stack *stack, BOOL free_objects)
+void stack_Close(STACK_ID stack, BOOL free_objects)
 {
-	if (stack != NULL)
+	if(stack != 0)
 	{
 		stack_Clear(stack,free_objects);
-		ptr_CloseList(stack->list);
-		#ifdef USE_DEBUGGING
-		//assert(mem_free(stack));
-		mem_free(stack);
-		#else
-		free(stack);
-		#endif
+		list_Close(stack);
 	}
 }
 
-void stack_Clear(stack *stack, BOOL free_objects)
+void stack_Clear(STACK_ID stack, BOOL free_objects)
 {
-	if (stack != NULL)
+	if(stack != 0)
 	{
-		if (free_objects)
+		if(free_objects)
 		{
-			while(stack->list->num)
+			id_list *l = (id_list*)mem_lock(stack);
+			while(l->num)
 			{
-					//FreeObject((object**)&((object*)(ptr_Pop(stack->list))));
-					object *fo = (object*)ptr_Pop(stack->list);
-					gc_DecRefCount(fo);
-					//printf("freed stack item: %x\n",fo);
+					OBJECT_ID fo = list_Pop(stack);
+					obj_DecRefCount(fo);
 			}
-			//printf("stack list num:%d\n",stack->list->num);
+			mem_unlock(stack,0);
 		}
 		#ifdef USE_DEBUGGING
-		else if (stack->list->num > 0)
-			debug_printf(DEBUG_STACK,"%d items left untouched on stack\n", stack->list->num);
+		else if(list_GetLen(stack) > 0)
+			debug_printf(DEBUG_STACK,"%d items left untouched on stack\n", list_GetLen(stack));
 		#endif
 	}
 }
 
-BOOL stack_IsEmpty(stack *stack)
+BOOL stack_IsEmpty(STACK_ID stack)
 {
-	return(ptr_IsEmpty(stack->list));
+	return(list_IsEmpty(stack));
 }
 
-void stack_Push(stack *stack, struct _object * x)
+void stack_Push(STACK_ID stack, OBJECT_ID x)
 {
-	if (x == NULL)
+	if(x == 0)
 		return;
-	//debug_printf(DEBUG_ALL,"incrementing ref_count in stack_Push() - x\n");
-	gc_IncRefCount(x);
-	ptr_Push(stack->list, x);
+	obj_IncRefCount(x);
+	list_Push(stack, x);
 }
 
-struct _object *stack_Bottom(stack *stack)
+OBJECT_ID stack_Bottom(STACK_ID stack)
 {
-	if (stack->list->num < 1)
+	if(list_GetLen(stack) < 1)
 	{
 		#ifdef USE_DEBUGGING
-		debug_printf(DEBUG_STACK,"stack_Bottom() - stack underflow - no top\n");
+		debug_printf(DEBUG_STACK,"stack_Bottom() - stack underflow - no bottom\n");
 		#endif
-		return (NULL);
+		return(0);
 	}
-	object *r = stack->list->items[0];
-
-	return (r);
+	OBJECT_ID r = list_Get(stack,0);
+	return(r);
 }
 
-struct _object *stack_Get(stack *stack,INDEX index)
+OBJECT_ID stack_Get(STACK_ID stack,INDEX index)
 {
 	if(index < 0)
-		index = stack->list->num- (-index);
-	//printf("get %d\n",index);
-	if (index >= stack->list->num || index < 0)
+		index = list_GetLen(stack) - (-index);
+	if(index >= list_GetLen(stack) || index < 0)
 	{
 		#ifdef USE_DEBUGGING
 		debug_printf(DEBUG_STACK,"stack_Get() - stack underflow - index out of range\n");
 		#endif
-		return (NULL);
+		return(0);
 	}
-	object *r = stack->list->items[index];
+	OBJECT_ID r = list_Get(stack,index);
 	return(r);
 }
 
-NUM stack_Pointer(stack *stack)
+NUM stack_Pointer(STACK_ID stack)
 {
-	return(stack->list->num-1);
+	return(list_GetLen(stack)-1);
 }
 
-struct _object *stack_Top(stack *stack)
+OBJECT_ID stack_Top(STACK_ID stack)
 {
-	if (stack->list->num < 1)
+	if(list_GetLen(stack) < 1)
 	{
 		#ifdef USE_DEBUGGING
 		debug_printf(DEBUG_STACK,"stack_Top() - stack underflow - no top\n");
 		#endif
-		return (NULL);
+		return(0);
 	}
-	object *r = stack->list->items[stack->list->num - 1];
-	return (r);
+	OBJECT_ID r = list_Get(stack,list_GetLen(stack) - 1);
+	return(r);
 }
 
-struct _object *stack_Second(stack *stack)
+OBJECT_ID stack_Second(STACK_ID stack)
 {
-	if (stack->list->num < 2)
+	if(list_GetLen(stack) < 2)
 	{
 		#ifdef USE_DEBUGGING
-		debug_printf(DEBUG_STACK,"stack_Second() - stack underflow - no top\n");
+		debug_printf(DEBUG_STACK,"stack_Second() - stack underflow - no second\n");
 		#endif
-		return (NULL);
+		return(0);
 	}
-	object *r = stack->list->items[stack->list->num - 2];
-	return (r);
+	OBJECT_ID r = list_Get(stack,list_GetLen(stack) - 2);
+	return(r);
 }
 
-struct _object *stack_Third(stack *stack)
+OBJECT_ID stack_Third(STACK_ID stack)
 {
-	if (stack->list->num < 3)
+	if(list_GetLen(stack) < 3)
 	{
 		#ifdef USE_DEBUGGING
-		debug_printf(DEBUG_STACK,"stack_Third() - stack underflow - no top\n");
+		debug_printf(DEBUG_STACK,"stack_Third() - stack underflow - no third\n");
 		#endif
-		return (NULL);
+		return(0);
 	}
-	object *r = stack->list->items[stack->list->num - 3];
-
+	OBJECT_ID r = list_Get(stack,list_GetLen(stack) - 3);
 	return (r);
 }
 
-void stack_SetBottom(stack *stack, struct _object * x)
+void stack_SetBottom(STACK_ID stack, OBJECT_ID x)
 {
-	if (stack->list->num < 1)
+	if(list_GetLen(stack) < 1)
 	{
 		#ifdef USE_DEBUGGING
-		debug_printf(DEBUG_STACK,"stack_SetBottom() - stack underflow - no top\n");
+		debug_printf(DEBUG_STACK,"stack_SetBottom() - stack underflow - no bottom\n");
 		#endif
 		return;
 	}
-	stack->list->items[0] = x;
-	//IncRefCount(x);
+	list_Set(stack,0,x);
 }
 
-void stack_SetTop(stack *stack, object * x)
+void stack_SetTop(STACK_ID stack, OBJECT_ID x)
 {
-	if (stack->list->num < 1)
+	if(list_GetLen(stack) < 1)
 	{
 		#ifdef USE_DEBUGGING
 		debug_printf(DEBUG_STACK,"stack_SetTop() - stack underflow - no top\n");
 		#endif
 		return;
 	}
-	stack->list->items[stack->list->num - 1] = x;
-	//IncRefCount(x);
+	list_Set(stack,list_GetLen(stack) - 1, x);
 }
 
-void stack_SetSecond(stack *stack, struct _object * x)
+void stack_SetSecond(STACK_ID stack, OBJECT_ID x)
 {
-	if (stack->list->num < 2)
+	if(list_GetLen(stack) < 2)
 	{
 		#ifdef USE_DEBUGGING
-		debug_printf(DEBUG_STACK,"stack_SetSecond() - stack underflow - no top\n");
+		debug_printf(DEBUG_STACK,"stack_SetSecond() - stack underflow - no second\n");
 		#endif
 		return;
 	}
-	stack->list->items[stack->list->num - 2] = x;
-	//IncRefCount(x);
+	list_Set(stack,list_GetLen(stack) - 2,x);
 }
 
-void stack_SetThird(stack *stack, struct _object * x)
+void stack_SetThird(STACK_ID stack, OBJECT_ID x)
 {
-	if (stack->list->num < 3)
+	if(list_GetLen(stack) < 3)
 	{
 		#ifdef USE_DEBUGGING
-		debug_printf(DEBUG_STACK,"stack_SetThird() - stack underflow - no top\n");
+		debug_printf(DEBUG_STACK,"stack_SetThird() - stack underflow - no third\n");
 		#endif
 		return;
 	}
-	stack->list->items[stack->list->num - 3] = x;
-	//IncRefCount(x);
+	list_Set(stack,list_GetLen(stack) - 3,x);
 }
 
-void stack_Adjust(stack *stack, REL_NUM by)
+void stack_Adjust(STACK_ID stack, REL_NUM by)
 {
 	if(by>0)
-	for (NUM i = 0; i < by; i++)
-		ptr_Push(stack->list, NULL);
+		for(NUM i = 0; i < by; i++)
+			list_Push(stack, 0);
 	if(by<0)
-	for (NUM i = 0; i < -by; i++)
-		ptr_Pop(stack->list);
+		for(NUM i = 0; i < -by; i++)
+			list_Pop(stack);
 }
 
 #ifdef USE_DEBUGGING
-void stack_Dump(stack *stack)
+void stack_Dump(STACK_ID stack)
 {
-	if(stack == NULL)
+	if(stack == 0)
 	{
 		debug_printf(DEBUG_ALL,"non existant stack\n");
 		return;
 	}
-	
-	if(stack->list == NULL)
+	if(list_GetLen(stack) == 0)
 	{
 		debug_printf(DEBUG_ALL,"empty stack\n");
 		return;
 	}
-	debug_printf(DEBUG_ALL,"Dumping %d stack items\n", stack->list->num);
-	for (NUM i = 0; i < stack->list->num; i++)
+	debug_printf(DEBUG_ALL,"Dumping %d stack items\n", list_GetLen(stack));
+	for(NUM i = 0; i < list_GetLen(stack); i++)
 	{
 		debug_printf(DEBUG_ALL,"item: %d\n", i);
-		DumpObject(stack->list->items[i], 1);
-
+		obj_Dump(list_Get(stack,i), 1,1);
 	}
 }
 #endif
 
-struct _object *stack_Pop(stack *stack)
+OBJECT_ID stack_Pop(STACK_ID stack)/*id_list*/
 {
-	if (stack->list->num < 1)
+	if(list_GetLen(stack) < 1)
 	{
 		#ifdef USE_DEBUGGING
 		debug_printf(DEBUG_STACK,"stack_Pop() - stack underflow\n");
 		#endif
-		return (NULL);
+		return(0);
 	}
-	object *r = ptr_Pop(stack->list);
-	//debug_printf(DEBUG_ALL,"decrementing ref_count in stack_Pop() - r\n");
-	gc_DecRefCount(r);
+	OBJECT_ID r = list_Pop(stack);
+	obj_DecRefCount(r);
 	return (r);
 }
 
-BOOL stack_Contains(stack *stack, struct _object * x)
+BOOL stack_Contains(STACK_ID stack, OBJECT_ID x)
 {
-	for (NUM i = 0; i < stack->list->num; i++)
-		if (stack->list->items[i] == x)
-			return (1);
-	return (0);
+	for (NUM i = 0; i < list_GetLen(stack); i++)
+		if(list_Get(stack,i) == x)
+			return(1);
+	return(0);
 }
 
+NUM stack_GetLen(STACK_ID stack)
+{
+	return(list_GetLen(stack));
+}

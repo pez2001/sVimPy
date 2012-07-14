@@ -35,31 +35,6 @@
 extern "C"  {
 #endif
 
-struct _object;
-
-struct _vm;
-
-struct _tuple_object;
-
-struct _class_instance_object;
-
-struct _object *vm_RunMethod(struct _vm *vm,struct _object *key,struct _class_instance_object *cio,struct _tuple_object *locals,struct _tuple_object *kw_locals);
-
-void gc_FreeObject(struct _object *obj);
-
-void gc_IncRefCount(struct _object *obj);
-
-void gc_DecRefCount(struct _object *obj);
-
-BOOL gc_HasNoRefs(struct _object *obj);
-
-BOOL gc_HasRefs(struct _object *obj);
-
-void gc_Init(struct _vm *vm);
-
-void gc_Close(void);
-
-void gc_Clear(void);
 
 #ifdef __cplusplus
 } 

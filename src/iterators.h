@@ -33,39 +33,37 @@
 extern "C"  {
 #endif
 
-extern object *obj_NULL;
+ITER_ID iter_CreateIter(OBJECT_ID iteration_id,VM_ID vm_id);
 
-void iter_Expand(iter_object *iter,struct _vm *vm,stack *stack);
+OBJECT_ID iter_Next(ITER_ID iter_id,VM_ID vm_id);
 
-void iter_ExpandTuple(iter_object *iter,struct _vm *vm,tuple_object *to);
+void iter_Expand(ITER_ID iter_id,VM_ID vm_id,STACK_ID stack_id);
 
-tuple_object *iter_TupleExpand(iter_object *iter,struct _vm *vm);
+TUPLE_ID iter_TupleExpand(ITER_ID iter_id,VM_ID vm_id);
 
-object *iter_NextNow(iter_object *iter,struct _vm *vm);
+void iter_ExpandTuple(ITER_ID iter_id,VM_ID vm_id,TUPLE_ID to_id);
 
-object *iter_Next(iter_object *iter,struct _vm *vm);
+OBJECT_ID iter_NextNow(ITER_ID iter_id,VM_ID vm_id);
 
-iter_object *iter_CreateIter(object *iteration,struct _vm *vm);//struct _vm *vm
+OBJECT_ID iter_Sequence(ITER_ID iter_id,VM_ID vm_id);
 
-object *iter_Sequence(iter_object *iter,struct _vm *vm);
+void iter_InitSequence(ITER_ID iter_id,VM_ID vm_id,INDEX start,NUM end,NUM step);
 
-void iter_InitSequence(iter_object *iter,struct _vm *vm,INDEX start,NUM end,NUM step);
+OBJECT_ID iter_Generator(ITER_ID iter_id,VM_ID vm_id);
 
-object *iter_Generator(iter_object *iter,struct _vm *vm);
+void iter_InitGenerator(ITER_ID iter_id,VM_ID vm_id,BLOCK_ID bo_id);
 
-void iter_InitGenerator(iter_object *iter,struct _vm *vm,block_object *bo);
+OBJECT_ID iter_CFGenerator(ITER_ID iter_id,VM_ID vm_id);
 
-object *iter_CFGenerator(iter_object *iter,struct _vm *vm);
+void iter_InitCFGenerator(ITER_ID iter_id,VM_ID vm_id,CFUNCTION_ID cfo_id);
 
-void iter_InitCFGenerator(iter_object *iter,struct _vm *vm,cfunction_object *cfo);
+OBJECT_ID iter_MGenerator(ITER_ID iter_id,VM_ID vm_id);
 
-object *iter_MGenerator(iter_object *iter,struct _vm *vm);
+void iter_InitMGenerator(ITER_ID iter_id,VM_ID vm_id,METHOD_ID mo_id);
 
-void iter_InitMGenerator(iter_object *iter,struct _vm *vm,method_object *mo);
+OBJECT_ID iter_Iteration(ITER_ID iter_id,VM_ID vm_id);
 
-object *iter_Iteration(iter_object *iter,struct _vm *vm);
-
-void iter_InitIteration(iter_object *iter,struct _vm *vm,tuple_object *to);
+void iter_InitIteration(ITER_ID iter_id,VM_ID vm_id,TUPLE_ID to_id);
 
 #ifdef __cplusplus
 } 

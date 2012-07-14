@@ -29,30 +29,34 @@ int debug_level = 0;
 void ExecutePYC(char *filename)
 {
 	//printf("executing object:%s\n", filename);
-	vm *vm = vm_Init(NULL);
+	VM_ID vm = vm_Init(0);
 	long pyc_magic = MAGIC;
-	stream *f = stream_CreateFromFile(filename,"rb");
+	MEM_ID filename_id = mem_create_string(filename);
+	STREAM_ID f = stream_CreateFromFile(filename_id,mem_create_string("rb"));
+	//mem_free(filename_id);
 	if (!stream_Open(f))
 		return;
 	long magic = stream_ReadLong(f);
 	if (magic != pyc_magic)
 		return;
 	stream_ReadLong(f);//skip time
-	object *obj = stream_ReadObject(f);
-	object *global_key = (object*)CreateUnicodeObject(str_Copy(((code_object*)obj)->name));
+	OBJECT_ID obj = stream_ReadObject(f);
+	code_object *co = (code_object*)mem_lock(obj);
+	OBJECT_ID global_key = obj_CreateUnicode(mem_copy(co->name));
+	mem_unlock(obj,0);
 	vm_AddGlobal(vm, global_key,obj);
-	object *ret = NULL;
-	ret = vm_RunObject(vm, obj, NULL,NULL);
-	if (ret != NULL)
+	OBJECT_ID ret = 0;
+	ret = vm_RunObject(vm, obj, 0,0);
+	if (ret != 0)
 	{
 		#ifdef USE_DEBUGGING
 		if((debug_level & DEBUG_DUMP_OBJECT) > 0)
-			DumpObject(ret, 0);
+			obj_Dump(ret, 0,1);
 		#endif
-		gc_DecRefCount(ret);
+		obj_DecRefCount(ret);
 	}
 	vm_RemoveGlobal(vm,global_key);
-	gc_DecRefCount(obj);
+	obj_DecRefCount(obj);
 	stream_Free(f);
 	vm_Close(vm);
 }
@@ -60,25 +64,29 @@ void ExecutePYC(char *filename)
 void ExecuteRPYC(char *filename)
 {
 	//printf("executing object:%s\n", filename);
-	vm *vm = vm_Init(NULL);
-	stream *f = stream_CreateFromFile(filename,"rb");
+	VM_ID vm = vm_Init(0);
+	MEM_ID filename_id = mem_create_string(filename);
+	STREAM_ID f = stream_CreateFromFile(filename_id,mem_create_string("rb"));
+	//mem_free(filename_id);
 	if (!stream_Open(f))
 		return;
-	object *obj = stream_ReadObject(f);
-	object *global_key = (object*)CreateUnicodeObject(str_Copy(((code_object*)obj)->name));
+	OBJECT_ID obj = stream_ReadObject(f);
+	code_object *co = (code_object*)mem_lock(obj);
+	OBJECT_ID global_key = obj_CreateUnicode(mem_copy(co->name));
+	mem_unlock(obj,0);
 	vm_AddGlobal(vm, global_key,obj);
-	object *ret = NULL;
-	ret = vm_RunObject(vm, obj, NULL,NULL);	
-	if (ret != NULL)
+	OBJECT_ID ret = 0;
+	ret = vm_RunObject(vm, obj, 0,0);	
+	if (ret != 0)
 	{
 		#ifdef USE_DEBUGGING
 		if((debug_level & DEBUG_DUMP_OBJECT) > 0)
-			DumpObject(ret, 0);
+			obj_Dump(ret, 0,1);
 		#endif
-		gc_DecRefCount(ret);
+		obj_DecRefCount(ret);
 	}
 	vm_RemoveGlobal(vm,global_key);
-	gc_DecRefCount(obj);
+	obj_DecRefCount(obj);
 	stream_Free(f);
 	vm_Close(vm);
 }
@@ -86,26 +94,29 @@ void ExecuteRPYC(char *filename)
 void ExecuteRPYC_PLUS(char *filename)
 {
 	//printf("executing object:%s\n", filename);
-	vm *vm = vm_Init(NULL);
-
-	stream *f = stream_CreateFromFile(filename,"rb");
+	VM_ID vm = vm_Init(0);
+	MEM_ID filename_id = mem_create_string(filename);
+	STREAM_ID f = stream_CreateFromFile(filename_id,mem_create_string("rb"));
+	//mem_free(filename_id);
 	if (!stream_Open(f))
 		return;
-	object *obj = stream_ReadObjectPlus(f);
-	object *global_key = (object*)CreateUnicodeObject(str_Copy(((code_object*)obj)->name));
+	OBJECT_ID obj = stream_ReadObjectPlus(f);
+	code_object *co = (code_object*)mem_lock(obj);
+	OBJECT_ID global_key = obj_CreateUnicode(mem_copy(co->name));
+	mem_unlock(obj,0);
 	vm_AddGlobal(vm, global_key,obj);
-	object *ret = NULL;
-	ret = vm_RunObject(vm, obj, NULL,NULL);	
-	if (ret != NULL)
+	OBJECT_ID ret = 0;
+	ret = vm_RunObject(vm, obj, 0,0);	
+	if (ret != 0)
 	{
 		#ifdef USE_DEBUGGING
 		if((debug_level & DEBUG_DUMP_OBJECT) > 0)
-			DumpObject(ret, 0);
+			obj_Dump(ret, 0,1);
 		#endif
-		gc_DecRefCount(ret);
+		obj_DecRefCount(ret);
 	}
 	vm_RemoveGlobal(vm, global_key);
-	gc_DecRefCount(obj);
+	obj_DecRefCount(obj);
 	stream_Free(f);
 	vm_Close(vm);
 }
@@ -181,11 +192,13 @@ int main(int argc, char** argv)
 		#ifdef USE_DEBUGGING	
 		debug_level |= DEBUG_FULL_DUMP;
 		#endif
-		gc_Init(NULL);
+		mem_Init();
 		obj_Init();
 		streams_Init();
 		long pyc_magic = MAGIC;
-		stream *f = stream_CreateFromFile(filename,"rb");
+		MEM_ID filename_id = mem_create_string(filename);
+		STREAM_ID f = stream_CreateFromFile(filename_id,mem_create_string("rb"));
+		//mem_free(filename_id);
 		if (!stream_Open(f))
 			return(1);
 		//printf("file opened\n");
@@ -194,18 +207,18 @@ int main(int argc, char** argv)
 		if (magic != pyc_magic)
 			return(1);
 		stream_ReadLong(f);//skip time
-		object *obj = stream_ReadObject(f);
+		OBJECT_ID obj = stream_ReadObject(f);
 		#ifdef USE_DEBUGGING	
-		DumpObject(obj, 0);
+		obj_Dump(obj, 0,1);
 		#else
-		PrintObject(obj);
+		obj_Print(obj);
 		#endif
-		gc_DecRefCount(obj);
-		gc_Clear();
+		obj_DecRefCount(obj);
+		obj_ClearGC();
 		stream_Free(f);
 		streams_Close();
 		obj_Close();
-		gc_Close();
+		mem_Close();
 		return (0);
 	}else
 	if(filename != NULL && strlen(filename)>0 && format_pyc) //execute file as default option

@@ -22,17 +22,34 @@
 
 #include "numops.h"
 
-long long_pow(long base, long exp)
+INT num_pow(INT base, INT exp)
+{
+	INT r = base;
+	//printf("base:%d\n",base);
+	//printf("exp:%d\n",exp);	
+	
+	for(INT i = 0; i < exp - 1; i++)
+	{
+		r = r * base;
+		//printf("pow i:%d r:%llu\n",i,r);
+	}
+	//if(r== 0)
+	//	printf("zero pow\n");
+	return (r);
+}
+
+/*long long_pow(long base, INT exp)
 {
 	long r = base;
 
 	for (long i = 0; i < exp - 1; i++)
 	{
 		r = r * base;
+		printf("pow i:%d r:%d\n",i,r);
 	}
 	return (r);
 }
-
+*/
 short num_short(unsigned char a, unsigned char b)
 {
 	return ((short)((((short)b) << 8) | a));

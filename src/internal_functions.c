@@ -22,84 +22,107 @@
 
 #include "internal_functions.h"
 
-object *StringAdd(object *a,object *b)
+OBJECT_ID StringAdd(OBJECT_ID a_id,OBJECT_ID b_id)
 {
-	char *as;
-	char *bs;
-	as = ((unicode_object *)a)->value;
-	bs = ((unicode_object *)b)->value;
-	char *tmp = str_Cat(as,bs);
-	unicode_object *r = CreateUnicodeObject(tmp);
-	return((object*)r);
+	unicode_object *a = (unicode_object*)mem_lock(a_id);
+	unicode_object *b = (unicode_object*)mem_lock(b_id);
+	BYTES_ID tmp = str_Cat(a->value,b->value);
+	mem_unlock(b_id,0);
+	mem_unlock(a_id,0);
+	UNICODE_ID r = obj_CreateUnicode(tmp);
+	return(r);
 }
 
-object *StringMultiply(object *a,object *b)
+OBJECT_ID StringMultiply(OBJECT_ID a_id,OBJECT_ID b_id)//TODO check string alloc and leaks
 {
-	char *as;
 	NUM bi;
-	as = ((unicode_object *)a)->value;
-	bi = ((int_object *)b)->value;
+	int_object *b = (int_object*)mem_lock(b_id);
+	unicode_object *a = (unicode_object*)mem_lock(a_id);
+	BYTES_ID as_id = a->value;
+	bi = b->value;
+	mem_unlock(a_id,0);
+	mem_unlock(b_id,0);
 
-	#ifdef USE_DEBUGGING
-	char *tmp = (char*)mem_malloc((strlen(as)*bi) + 1, "str_Cat() return");
+	char *as = (char*)mem_lock(as_id);
+	
+	#ifdef USE_MEMORY_DEBUGGING
+	BYTES_ID tmp_id = mem_malloc_debug((strlen(as)*bi) + 1,MEM_POOL_CLASS_DYNAMIC, "str_Multiply() return");
 	#else
-	char *tmp = (char*)malloc((strlen(as)*bi) + 1);
+	BYTES_ID tmp_id = mem_malloc((strlen(as)*bi) + 1,MEM_POOL_CLASS_DYNAMIC);
 	#endif
-
+	char *tmp = (char*)mem_lock(tmp_id);
+	
 	memset(tmp,0,(strlen(as)*bi) + 1);
 
 	for(INDEX i = 0;i< bi;i++)
 	{
 		memcpy(tmp+(i*strlen(as)), as, strlen(as));
 	}
-	unicode_object *r = CreateUnicodeObject(tmp);
-	return((object*)r);
-}
-
-object *StringCompare(object *a,object *b)
-{
-	char *as;
-	char *bs;
-	as = ((unicode_object *)a)->value;
-	bs = ((unicode_object *)b)->value;
-	object *r = CreateEmptyObject(!strcmp(as,bs) ? TYPE_TRUE : TYPE_FALSE);
-	#ifdef USE_DEBUGGING
-	debug_printf (DEBUG_VERBOSE_STEP,"%s == %s == %c\n", as, bs,r->type);
-	#endif
+	OBJECT_ID r = obj_CreateUnicode(tmp_id);//TODO mem_create_string_copy
+	mem_unlock(tmp_id,1);
+	mem_unlock(as_id,0);
 	return(r);
 }
 
-object *BinaryOp(object *tos,object *tos1,unsigned char op)
+OBJECT_ID StringCompare(OBJECT_ID a_id,OBJECT_ID b_id)
 {
-	object *new_tos = NULL;
-	if (tos->type == TYPE_UNICODE && tos1->type == TYPE_UNICODE && op == OPCODE_BINARY_ADD) //string add -> returns string
+	unicode_object *a = (unicode_object*)mem_lock(a_id);
+	unicode_object *b = (unicode_object*)mem_lock(b_id);
+	
+	OBJECT_ID as = a->value;
+	OBJECT_ID bs = b->value;
+	OBJECT_ID r = obj_CreateEmpty(mem_compare(as,bs) ? TYPE_TRUE : TYPE_FALSE);
+	mem_unlock(b_id,0);
+	mem_unlock(a_id,0);
+	//#ifdef USE_DEBUGGING
+	//debug_printf (DEBUG_VERBOSE_STEP,"%s == %s == %c\n", as, bs,obj_GetType(r));
+	//#endif
+	return(r);
+}
+
+OBJECT_ID BinaryOp(OBJECT_ID tos_id,OBJECT_ID tos1_id,unsigned char op)
+{
+	object *tos = (object*)mem_lock(tos_id);
+	object *tos1 = (object*)mem_lock(tos1_id);
+	OBJECT_ID new_tos_id = 0;
+	if(tos->type == TYPE_UNICODE && tos1->type == TYPE_UNICODE && op == OPCODE_BINARY_ADD) //string add -> returns string
 	{
-		return(StringAdd(tos1,tos));
+		mem_unlock(tos1_id,0);
+		mem_unlock(tos_id,0);
+		return(StringAdd(tos1_id,tos_id));
 	}
 	
-	if (tos->type == TYPE_INT && tos1->type == TYPE_UNICODE && op == OPCODE_BINARY_MULTIPLY) //unicode multiply -> returns unicode
+	if(tos->type == TYPE_INT && tos1->type == TYPE_UNICODE && op == OPCODE_BINARY_MULTIPLY) //unicode multiply -> returns unicode
 	{
 		//printf("string multiply\n");
-		return(StringMultiply(tos1,tos));
+		mem_unlock(tos1_id,0);
+		mem_unlock(tos_id,0);
+		return(StringMultiply(tos1_id,tos_id));
 	}
-	if (tos->type == TYPE_INT && tos1->type == TYPE_TUPLE && op == OPCODE_BINARY_MULTIPLY) //tuple multiply -> returns tuple
+	if(tos->type == TYPE_INT && tos1->type == TYPE_TUPLE && op == OPCODE_BINARY_MULTIPLY) //tuple multiply -> returns tuple
 	{
 		NUM a =(NUM) ((int_object*)tos)->value;
 
-		NUM mnum = ((tuple_object *) tos1)->list->num;
-		if (mnum == 1)
-			tos1 = ((tuple_object *) tos1)->list->items[0];
-
-		tuple_object *mtr = CreateTuple(a);
-		for (NUM i = 0; i < a; i++)
+		NUM mnum = tuple_GetLen(tos1_id);
+		if(mnum == 1)
+		{	
+			OBJECT_ID old = tos1_id;
+			tos1_id = tuple_GetItem(tos1_id,0);
+			mem_unlock(old,0);//TODO what if tos1_id == old .... ???????
+			tos1 = (object*)mem_lock(tos1_id);
+		}
+		TUPLE_ID mtr = obj_CreateTuple(a);
+		for(NUM i = 0; i < a; i++)
 		{
-			SetItem((object*)mtr,i,tos1);
+			tuple_SetItem(mtr,i,tos1_id);
 		}
 		#ifdef USE_DEBUGGING
 		if((debug_level & DEBUG_VERBOSE_STEP) > 0)
-			DumpObject((object*)mtr,0);
+			obj_Dump(mtr,0,1);
 		#endif
-		return((object*)mtr);
+		mem_unlock(tos1_id,0);
+		mem_unlock(tos_id,0);
+		return(mtr);
 	}
 	if(tos->type == TYPE_BINARY_FLOAT || tos1->type == TYPE_BINARY_FLOAT) //mixed op -> returns float
 	{
@@ -107,37 +130,40 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 		FLOAT bf = 0.0f;
 		//printf("float ret\n");
 		
-		if (tos->type == TYPE_INT)
+		if(tos->type == TYPE_INT)
 		//if (tos1->type == TYPE_INT)
 		{
 			af = (FLOAT) ((int_object*)tos)->value;
 			//af = (FLOAT) ((int_object*)tos1)->value;
 		}	
-		if (tos1->type == TYPE_INT)
+		if(tos1->type == TYPE_INT)
 		//if (tos->type == TYPE_INT)
 		{
 			bf = (FLOAT) ((int_object*)tos1)->value;
 			//bf = (FLOAT) ((int_object*)tos)->value;
 		}	
-		if (tos->type == TYPE_BINARY_FLOAT)
+		if(tos->type == TYPE_BINARY_FLOAT)
 		//if (tos1->type == TYPE_BINARY_FLOAT)
 		{
 			af = ((float_object*)tos)->value;
 			//af = ((float_object*)tos1)->value;
 		}	
-		if (tos1->type == TYPE_BINARY_FLOAT)
+		if(tos1->type == TYPE_BINARY_FLOAT)
 		//if (tos->type == TYPE_BINARY_FLOAT)
 		{
 			bf = ((float_object*)tos1)->value;
 			//bf = ((float_object*)tos)->value;
 		}	
-		new_tos = (object*)CreateFloatObject(0);
+		mem_unlock(tos1_id,0);
+		mem_unlock(tos_id,0);
+		new_tos_id = obj_CreateFloat(0);
+		float_object *new_tos = (float_object*)mem_lock(new_tos_id);
 		switch(op)
 		{
 			case OPCODE_INPLACE_MULTIPLY:
 			case OPCODE_BINARY_MULTIPLY:
 				{
-					((float_object*)new_tos)->value = bf  * af;
+					new_tos->value = bf  * af;
 					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g * %7g = %7g\n", bf, af, bf  * af);
 					#endif
@@ -146,7 +172,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_INPLACE_OR:
 			case OPCODE_BINARY_OR:
 				{
-					((float_object*)new_tos)->value = (long)bf  | (long)af;
+					new_tos->value = (long)bf  | (long)af;
 					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g | %7g = %7g\n", bf, af, (long)bf  | (long)af);
 					#endif
@@ -155,7 +181,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_INPLACE_XOR:
 			case OPCODE_BINARY_XOR:
 				{
-					((float_object*)new_tos)->value = (long)bf  ^ (long)af;
+					new_tos->value = (long)bf  ^ (long)af;
 					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g ^ %7g = %7g\n", bf, af, (long)bf  ^ (long)af);
 					#endif
@@ -164,7 +190,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_INPLACE_AND:
 			case OPCODE_BINARY_AND:
 				{
-					((float_object*)new_tos)->value = (long)bf  & (long)af;
+					new_tos->value = (long)bf  & (long)af;
 					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g & %7g = %7g\n", bf, af, (long)bf  & (long)af);
 					#endif
@@ -173,7 +199,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_INPLACE_LSHIFT:
 			case OPCODE_BINARY_LSHIFT:
 				{
-					((float_object*)new_tos)->value = (long)bf << (long)af;
+					new_tos->value = (long)bf << (long)af;
 					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g << %7g = %7g\n", bf, af, (long)bf << (long)af);
 					#endif
@@ -182,7 +208,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_INPLACE_RSHIFT:
 			case OPCODE_BINARY_RSHIFT:
 				{
-					((float_object*)new_tos)->value =  (long)bf >>  (long)af;
+					new_tos->value =  (long)bf >>  (long)af;
 					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g>> %7g = %7g\n", bf, af,  (long)bf >>  (long)af);
 					#endif
@@ -191,7 +217,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_INPLACE_MODULO:
 			case OPCODE_BINARY_MODULO:
 				{
-					((float_object*)new_tos)->value =  (long)bf %  (long)af;
+					new_tos->value =  (long)bf %  (long)af;
 					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g %% %7g = %7g\n", bf, af,  (long)bf %  (long)af);
 					#endif
@@ -200,7 +226,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_INPLACE_FLOOR_DIVIDE:
 			case OPCODE_BINARY_FLOOR_DIVIDE:
 				{
-					((float_object*)new_tos)->value = floor(bf / af);
+					new_tos->value = floor(bf / af);
 					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g // %7g = %7g\n", bf, af, floor(bf / af));
 					#endif
@@ -209,7 +235,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_INPLACE_TRUE_DIVIDE:
 			case OPCODE_BINARY_TRUE_DIVIDE:
 				{
-					((float_object*)new_tos)->value = bf / af;
+					new_tos->value = bf / af;
 					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g / %7g = %7g\n", bf, af, bf / af);
 					#endif
@@ -218,7 +244,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_INPLACE_SUBTRACT:
 			case OPCODE_BINARY_SUBTRACT:
 				{
-					((float_object*)new_tos)->value = bf-af;
+					new_tos->value = bf-af;
 					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g - %7g = %7g\n", bf, af, bf - af);
 					#endif
@@ -227,16 +253,16 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_INPLACE_POWER:
 			case OPCODE_BINARY_POWER:
 				{
-					((float_object*)new_tos)->value = long_pow(bf, af);
+					new_tos->value = num_pow(bf, af); //TODO this will most likely not work correctly
 					#ifdef USE_DEBUGGING
-					debug_printf(DEBUG_VERBOSE_STEP,"%7g ** %7g = %7g\n", bf, af, long_pow(bf, af));
+					debug_printf(DEBUG_VERBOSE_STEP,"%7g ** %7g = %7g\n", bf, af, num_pow(bf, af));
 					#endif
 				}
 				break;
 			case OPCODE_INPLACE_ADD:
 			case OPCODE_BINARY_ADD:
 				{
-					((float_object*)new_tos)->value = bf + af;
+					new_tos->value = bf + af;
 					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%7g + %7g = %7g\n", bf, af, bf + af);
 					#endif					
@@ -250,15 +276,18 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 		INT b = 0;
 		a = ((int_object*)tos)->value;
 		b = ((int_object*)tos1)->value;
+		mem_unlock(tos1_id,0);
+		mem_unlock(tos_id,0);
 		//a = ((int_object*)tos1)->value;
 		//b = ((int_object*)tos)->value;
-		new_tos = (object*)CreateIntObject(0);
+		new_tos_id = obj_CreateInt(0);
+		int_object *new_tos = (int_object*)mem_lock(new_tos_id);
 		switch(op)
 		{
 			case OPCODE_INPLACE_MULTIPLY:
 			case OPCODE_BINARY_MULTIPLY:
 				{
-					((int_object*)new_tos)->value = b * a;
+					new_tos->value = b * a;
 					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d * %d = %d\n", b, a, b * a);
 					#endif
@@ -267,7 +296,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_INPLACE_OR:
 			case OPCODE_BINARY_OR:
 				{
-					((int_object*)new_tos)->value = b | a;
+					new_tos->value = b | a;
 					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d | %d = %d\n", b, a, b | a);
 					#endif
@@ -276,7 +305,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_INPLACE_XOR:
 			case OPCODE_BINARY_XOR:
 				{
-					((int_object*)new_tos)->value = b ^ a;
+					new_tos->value = b ^ a;
 					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d ^ %d = %d\n", b, a, b ^ a);
 					#endif
@@ -285,7 +314,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_INPLACE_AND:
 			case OPCODE_BINARY_AND:
 				{
-					((int_object*)new_tos)->value = b & a;
+					new_tos->value = b & a;
 					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d & %d = %d\n", b, a, b & a);
 					#endif
@@ -294,7 +323,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_INPLACE_LSHIFT:
 			case OPCODE_BINARY_LSHIFT:
 				{
-					((int_object*)new_tos)->value = b << a;
+					new_tos->value = b << a;
 					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d << %d = %d\n", b, a, b << a);
 					#endif
@@ -303,7 +332,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_INPLACE_RSHIFT:
 			case OPCODE_BINARY_RSHIFT:
 				{
-					((int_object*)new_tos)->value = b >> a;
+					new_tos->value = b >> a;
 					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d >> %d = %d\n", b, a, b >> a);
 					#endif
@@ -312,16 +341,19 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_INPLACE_MODULO:
 			case OPCODE_BINARY_MODULO:
 				{
-					((int_object*)new_tos)->value = b % a;
+					if(a == 0)
+						new_tos->value = 0;
+					else
+						new_tos->value = b % a;
 					#ifdef USE_DEBUGGING
-					debug_printf(DEBUG_VERBOSE_STEP,"%d %% %d = %d\n", b, a, b % a);
+					debug_printf(DEBUG_VERBOSE_STEP,"%d %% %d = %d\n", b, a,((int_object*)new_tos)->value);
 					#endif
 				}
 				break;
 			case OPCODE_INPLACE_FLOOR_DIVIDE:
 			case OPCODE_BINARY_FLOOR_DIVIDE:
 				{
-					((int_object*)new_tos)->value = b / a;
+					new_tos->value = b / a;
 					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d / %d = %d\n", b, a, b / a);
 					#endif
@@ -330,7 +362,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_INPLACE_TRUE_DIVIDE:
 			case OPCODE_BINARY_TRUE_DIVIDE:
 				{
-					((int_object*)new_tos)->value = b / a;
+					new_tos->value = b / a;
 					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d / %d = %d\n", b, a, b / a);
 					#endif
@@ -339,7 +371,7 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_INPLACE_SUBTRACT:
 			case OPCODE_BINARY_SUBTRACT:
 				{
-					((int_object*)new_tos)->value = b-a;
+					new_tos->value = b-a;
 					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d - %d = %d\n", b, a, b - a);
 					#endif
@@ -348,16 +380,16 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 			case OPCODE_INPLACE_POWER:
 			case OPCODE_BINARY_POWER:
 				{
-					((int_object*)new_tos)->value = long_pow(b, a);
+					new_tos->value = num_pow(b, a);
 					#ifdef USE_DEBUGGING
-					debug_printf(DEBUG_VERBOSE_STEP,"%d ** %d = %d\n", b, a, long_pow(b, a));
+					debug_printf(DEBUG_VERBOSE_STEP,"%d ** %d = %d\n", b, a, ((int_object*)new_tos)->value);
 					#endif
 				}
 				break;
 			case OPCODE_INPLACE_ADD:
 			case OPCODE_BINARY_ADD:
 				{
-					((int_object*)new_tos)->value = b + a;
+					new_tos->value = b + a;
 					#ifdef USE_DEBUGGING
 					debug_printf(DEBUG_VERBOSE_STEP,"%d + %d = %d\n", b, a, b + a);
 					#endif
@@ -365,79 +397,94 @@ object *BinaryOp(object *tos,object *tos1,unsigned char op)
 				break;
 		}
 	}
-	return(new_tos);
+	mem_unlock(new_tos_id,1);
+	return(new_tos_id);
 }
 
-object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
+OBJECT_ID CompareOp(OBJECT_ID tos_id,OBJECT_ID tos1_id,unsigned char cmp_op)
 {
-	object *new_tos = NULL;
-	if (tos->type == TYPE_UNICODE && tos1->type == TYPE_UNICODE && cmp_op == 2) //string compare
+	OBJECT_ID new_tos_id = 0;
+	object *tos = (object*)mem_lock(tos_id);
+	object *tos1 = (object*)mem_lock(tos1_id);
+	if(tos->type == TYPE_UNICODE && tos1->type == TYPE_UNICODE && cmp_op == 2) //string compare
 	{
-	return(StringCompare(tos,tos1));
+		mem_unlock(tos1_id,0);
+		mem_unlock(tos_id,0);
+		return(StringCompare(tos_id,tos1_id));
 	}
-	if ((tos->type == TYPE_FALSE || tos->type == TYPE_TRUE) && (tos1->type == TYPE_FALSE || tos1->type == TYPE_TRUE)) //bool compare
+	if((tos->type == TYPE_FALSE || tos->type == TYPE_TRUE) && (tos1->type == TYPE_FALSE || tos1->type == TYPE_TRUE)) //bool compare
 	{
-		new_tos = CreateEmptyObject(tos1->type == tos->type ? TYPE_TRUE : TYPE_FALSE);
+		new_tos_id = obj_CreateEmpty(tos1->type == tos->type ? TYPE_TRUE : TYPE_FALSE);
 		#ifdef USE_DEBUGGING
-		debug_printf (DEBUG_VERBOSE_STEP,"%c == %c == %c\n", tos1->type, tos->type, new_tos->type);
+		debug_printf (DEBUG_VERBOSE_STEP,"%c == %c == %c\n", tos1->type, tos->type, obj_GetType(new_tos_id));
 		#endif
-		return(new_tos);
+		mem_unlock(tos1_id,0);
+		mem_unlock(tos_id,0);
+		return(new_tos_id);
 	}
 	if(cmp_op == 8) // is (compare instances)
 	{
 		//new_tos = CreateEmptyObject(tos == tos1 ? TYPE_TRUE : TYPE_FALSE);
-		new_tos = CreateEmptyObject(!CompareObjects(tos ,tos1) ? TYPE_TRUE : TYPE_FALSE);
+		new_tos_id = obj_CreateEmpty(!obj_Compare(tos_id ,tos1_id) ? TYPE_TRUE : TYPE_FALSE);
 		#ifdef USE_DEBUGGING
-		debug_printf(DEBUG_VERBOSE_STEP,"%x is %x == %c\n",tos, tos1, new_tos->type);
+		debug_printf(DEBUG_VERBOSE_STEP,"%d is %d == %c\n",tos_id, tos1_id, obj_GetType(new_tos_id));
 		#endif
-		return(new_tos);
+		mem_unlock(tos1_id,0);
+		mem_unlock(tos_id,0);
+		return(new_tos_id);
 	}
 	if(cmp_op == 9) // is not (compare instances)
 	{
 		//new_tos = CreateEmptyObject(tos != tos1 ? TYPE_TRUE : TYPE_FALSE);
-		new_tos = CreateEmptyObject(CompareObjects(tos ,tos1) ? TYPE_TRUE : TYPE_FALSE);
+		new_tos_id = obj_CreateEmpty(obj_Compare(tos_id ,tos1_id) ? TYPE_TRUE : TYPE_FALSE);
 		#ifdef USE_DEBUGGING
-		debug_printf(DEBUG_VERBOSE_STEP,"%x is not %x == %c\n",tos, tos1, new_tos->type);
+		debug_printf(DEBUG_VERBOSE_STEP,"%d is not %d == %c\n",tos_id, tos1_id, obj_GetType(new_tos_id));
 		#endif
-		return(new_tos);
+		mem_unlock(tos1_id,0);
+		mem_unlock(tos_id,0);
+		return(new_tos_id);
 		}
 	if(cmp_op == 6) // in (contained in tuple)
 	{
-		new_tos = CreateEmptyObject( GetItemIndex(tos, tos1) != -1 ? TYPE_TRUE : TYPE_FALSE);
+		new_tos_id = obj_CreateEmpty( tuple_GetItemIndex(tos_id, tos1_id) != -1 ? TYPE_TRUE : TYPE_FALSE);
 		#ifdef USE_DEBUGGING
-		debug_printf(DEBUG_VERBOSE_STEP,"%x in %x == %c\n",tos, tos1, new_tos->type);
+		debug_printf(DEBUG_VERBOSE_STEP,"%d in %d == %c\n",tos_id, tos1_id, obj_GetType(new_tos_id));
 		#endif
-		return(new_tos);
+		mem_unlock(tos1_id,0);
+		mem_unlock(tos_id,0);
+		return(new_tos_id);
 		}
 	if(cmp_op == 7) // not int (not contained in tuple)
 	{
 		#ifdef USE_DEBUGGING
-		debug_printf(DEBUG_VERBOSE_STEP,"index:%d\n",GetItemIndex(tos, tos1));
+		debug_printf(DEBUG_VERBOSE_STEP,"index:%d\n",tuple_GetItemIndex(tos_id, tos1_id));
 		#endif
-		new_tos = CreateEmptyObject( GetItemIndex(tos, tos1) == -1 ? TYPE_TRUE : TYPE_FALSE);
+		new_tos_id = obj_CreateEmpty( tuple_GetItemIndex(tos_id, tos1_id) == -1 ? TYPE_TRUE : TYPE_FALSE);
 		#ifdef USE_DEBUGGING
-		debug_printf(DEBUG_VERBOSE_STEP,"%x not in %x == %c\n",tos, tos1, new_tos->type);
+		debug_printf(DEBUG_VERBOSE_STEP,"%d not in %d == %c\n",tos_id, tos1_id, obj_GetType(new_tos_id));
 		#endif
-		return(new_tos);
+		mem_unlock(tos1_id,0);
+		mem_unlock(tos_id,0);
+		return(new_tos_id);
 		}
 	if(tos->type == TYPE_BINARY_FLOAT || tos1->type == TYPE_BINARY_FLOAT) //mixed objects
 	{
 		FLOAT af = 0.0f;
 		FLOAT bf = 0.0f;
 		
-		if (tos->type == TYPE_INT)
+		if(tos->type == TYPE_INT)
 		{
 			af = (FLOAT) ((int_object*)tos)->value;
 		}	
-		if (tos1->type == TYPE_INT)
+		if(tos1->type == TYPE_INT)
 		{
 			bf = (FLOAT) ((int_object*)tos1)->value;
 		}	
-		if (tos->type == TYPE_BINARY_FLOAT)
+		if(tos->type == TYPE_BINARY_FLOAT)
 		{
 			af = ((float_object*)tos)->value;
 		}	
-		if (tos1->type == TYPE_BINARY_FLOAT)
+		if(tos1->type == TYPE_BINARY_FLOAT)
 		{
 			bf = ((float_object*)tos1)->value;
 		}	
@@ -445,49 +492,49 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 		{
 			case 0:	// <
 				{
-					new_tos = CreateEmptyObject(bf < af ? TYPE_TRUE : TYPE_FALSE);
+					new_tos_id = obj_CreateEmpty(bf < af ? TYPE_TRUE : TYPE_FALSE);
 					#ifdef USE_DEBUGGING
-					debug_printf(DEBUG_VERBOSE_STEP,"%7g < %7g == %c\n", bf, af, new_tos->type);
+					debug_printf(DEBUG_VERBOSE_STEP,"%7g < %7g == %c\n", bf, af, obj_GetType(new_tos_id));
 					#endif
 				}
 				break;
 			case 1:	// <=
 				{
-					new_tos = CreateEmptyObject(bf <= af ? TYPE_TRUE : TYPE_FALSE);
+					new_tos_id = obj_CreateEmpty(bf <= af ? TYPE_TRUE : TYPE_FALSE);
 					#ifdef USE_DEBUGGING
-					debug_printf(DEBUG_VERBOSE_STEP,"%7g <= %7g == %c\n", bf, af, new_tos->type);
+					debug_printf(DEBUG_VERBOSE_STEP,"%7g <= %7g == %c\n", bf, af, obj_GetType(new_tos_id));
 					#endif
 				}
 				break;
 			case 2:	// ==
 				{
-					new_tos = CreateEmptyObject(bf == af ? TYPE_TRUE : TYPE_FALSE);
+					new_tos_id = obj_CreateEmpty(bf == af ? TYPE_TRUE : TYPE_FALSE);
 					#ifdef USE_DEBUGGING
-					debug_printf(DEBUG_VERBOSE_STEP,"%7g == %7g == %c\n", bf, af, new_tos->type);
+					debug_printf(DEBUG_VERBOSE_STEP,"%7g == %7g == %c\n", bf, af, obj_GetType(new_tos_id));
 					#endif
 				}
 				break;
 			case 3:	// !=
 				{
-					new_tos = CreateEmptyObject(bf != af ? TYPE_TRUE : TYPE_FALSE);
+					new_tos_id = obj_CreateEmpty(bf != af ? TYPE_TRUE : TYPE_FALSE);
 					#ifdef USE_DEBUGGING
-					debug_printf(DEBUG_VERBOSE_STEP,"%7g != %7g == %c\n", bf, af, new_tos->type);
+					debug_printf(DEBUG_VERBOSE_STEP,"%7g != %7g == %c\n", bf, af, obj_GetType(new_tos_id));
 					#endif
 				}
 				break;
 			case 4:	// >
 				{
-					new_tos = CreateEmptyObject( bf > af ? TYPE_TRUE : TYPE_FALSE);
+					new_tos_id = obj_CreateEmpty( bf > af ? TYPE_TRUE : TYPE_FALSE);
 					#ifdef USE_DEBUGGING
-					debug_printf(DEBUG_VERBOSE_STEP,"%7g < %7g == %c\n", bf, af, new_tos->type);
+					debug_printf(DEBUG_VERBOSE_STEP,"%7g < %7g == %c\n", bf, af, obj_GetType(new_tos_id));
 					#endif
 				}
 				break;
 			case 5:	// >=
 				{
-					new_tos = CreateEmptyObject(bf >= af ? TYPE_TRUE : TYPE_FALSE);
+					new_tos_id = obj_CreateEmpty(bf >= af ? TYPE_TRUE : TYPE_FALSE);
 					#ifdef USE_DEBUGGING
-					debug_printf(DEBUG_VERBOSE_STEP,"%7g >= %7g == %c\n", bf, af, new_tos->type);
+					debug_printf(DEBUG_VERBOSE_STEP,"%7g >= %7g == %c\n", bf, af, obj_GetType(new_tos_id));
 					#endif
 				}
 				break;
@@ -503,67 +550,68 @@ object *CompareOp(object *tos,object *tos1,unsigned char cmp_op)
 		{
 			case 0:	// <
 				{
-					new_tos = CreateEmptyObject(b < a ? TYPE_TRUE : TYPE_FALSE);
+					new_tos_id = obj_CreateEmpty(b < a ? TYPE_TRUE : TYPE_FALSE);
 					#ifdef USE_DEBUGGING
-					debug_printf(DEBUG_VERBOSE_STEP,"%d < %d == %c\n", b, a, new_tos->type);
+					debug_printf(DEBUG_VERBOSE_STEP,"%d < %d == %c\n", b, a, obj_GetType(new_tos_id));
 					#endif
 			}
 			break;
 			case 1:	// <=
 				{
-					new_tos = CreateEmptyObject(b <= a ? TYPE_TRUE : TYPE_FALSE);
+					new_tos_id =  obj_CreateEmpty(b <= a ? TYPE_TRUE : TYPE_FALSE);
 					#ifdef USE_DEBUGGING
-					debug_printf(DEBUG_VERBOSE_STEP,"%d <= %d == %c\n", b, a, new_tos->type);
+					debug_printf(DEBUG_VERBOSE_STEP,"%d <= %d == %c\n", b, a, obj_GetType(new_tos_id));
 					#endif
 			}
 			break;
 			case 2:	// ==
 				{
-					new_tos = CreateEmptyObject(b == a ? TYPE_TRUE : TYPE_FALSE);
+					new_tos_id =  obj_CreateEmpty(b == a ? TYPE_TRUE : TYPE_FALSE);
 					#ifdef USE_DEBUGGING
-					debug_printf(DEBUG_VERBOSE_STEP,"%d == %d == %c\n", b, a, new_tos->type);
+					debug_printf(DEBUG_VERBOSE_STEP,"%d == %d == %c\n", b, a, obj_GetType(new_tos_id));
 					#endif
 				}
 				break;
 			case 3:	// !=
 				{
-					new_tos = CreateEmptyObject(b != a ? TYPE_TRUE : TYPE_FALSE);
+					new_tos_id =  obj_CreateEmpty(b != a ? TYPE_TRUE : TYPE_FALSE);
 					#ifdef USE_DEBUGGING
-					debug_printf(DEBUG_VERBOSE_STEP,"%d != %d == %c\n", b, a, new_tos->type);
+					debug_printf(DEBUG_VERBOSE_STEP,"%d != %d == %c\n", b, a, obj_GetType(new_tos_id));
 					#endif
 			}
 			break;
 			case 4:	// >
 				{
-					new_tos = CreateEmptyObject( b > a ? TYPE_TRUE : TYPE_FALSE);
+					new_tos_id =  obj_CreateEmpty( b > a ? TYPE_TRUE : TYPE_FALSE);
 					#ifdef USE_DEBUGGING
-					debug_printf(DEBUG_VERBOSE_STEP,"%d < %d == %c\n", b, a, new_tos->type);
+					debug_printf(DEBUG_VERBOSE_STEP,"%d < %d == %c\n", b, a, obj_GetType(new_tos_id));
 					#endif
 				}
 				break;
 			case 5:	// >=
 				{
-					new_tos = CreateEmptyObject(b >= a ? TYPE_TRUE : TYPE_FALSE);
+					new_tos_id =  obj_CreateEmpty(b >= a ? TYPE_TRUE : TYPE_FALSE);
 					#ifdef USE_DEBUGGING
-					debug_printf(DEBUG_VERBOSE_STEP,"%d >= %d == %c\n", b, a, new_tos->type);
+					debug_printf(DEBUG_VERBOSE_STEP,"%d >= %d == %c\n", b, a, obj_GetType(new_tos_id));
 					#endif
 				}
 				break;
 		}
 	}
-	return(new_tos);
+	mem_unlock(tos1_id,0);
+	mem_unlock(tos_id,0);
+	return(new_tos_id);
 }
 
-
-object *custom_code(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID custom_code(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
-	object *a = GetItem((object*)locals,0);
-	object *b = GetItem((object*)locals,1);
+	OBJECT_ID a = tuple_GetItem(locals,0);
+	OBJECT_ID b = tuple_GetItem(locals,1);
 	return(BinaryOp(a,b,OPCODE_BINARY_ADD));
 }
 
 /*
-object *if_assert(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+//OBJECT_ID if_assert(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
 	object *bool = GetItem((object*)locals,0);
 	unicode_object *message = (unicode_object*)GetItem((object*)locals,1);
@@ -577,622 +625,721 @@ object *if_assert(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
 	return (tmp);
 }
 */
-object *if_build_class(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID if_build_class(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
 	//printf("build_class called\n");
-	//DumpObject(locals,0);
+	FUNCTION_ID class_function_object_id = tuple_GetItem(locals,0);
+	UNICODE_ID class_name_id = tuple_GetItem(locals,1);
+	function_object *fo = (function_object*)mem_lock(class_function_object_id);
+	CLASS_ID class_id = obj_CreateClass(fo->func,0);
+	mem_unlock(class_function_object_id,0);
 
-	function_object *class_function_object = (function_object*)GetItem((object*)locals,0);
-	unicode_object *class_name = (unicode_object*)GetItem((object*)locals,1);
-	class_object *class = CreateClassObject(class_function_object->func,NULL);
-
-	if(locals->list->num> 2)
+	class_object *class = (class_object*)mem_lock(class_id);
+	if(tuple_GetLen(locals)> 2)
 	{
-		class->base_classes = (object*)CreateTuple(locals->list->num - 2);
-		gc_IncRefCount(class->base_classes);
-		for(INDEX i = 0;i<locals->list->num-2;i++)
+		class->base_classes = obj_CreateTuple(tuple_GetLen(locals) - 2);
+		obj_IncRefCount(class->base_classes);
+		for(INDEX i = 0;i<tuple_GetLen(locals)-2;i++)
 		{
-			object *bc = GetItem((object*)locals,2+i);
-			SetItem(class->base_classes,i, bc);
+			OBJECT_ID bc = tuple_GetItem(locals,2+i);
+			tuple_SetItem(class->base_classes,i, bc);
 		}
 	}
 	else
-		class->base_classes = NULL;
-	
-	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy(class_name->value)),(object*)class);
-	//DumpObject(vm->globals,0);
-	//printf("returning class\n");
-	//FullDumpObject(class,0);
-	return((object*)class);
-	//object *tmp =CreateEmptyObject(TYPE_NONE);
-	//return (tmp);
+		class->base_classes = 0;
+	mem_unlock(class_id,1);
+	unicode_object *class_name = (unicode_object*)mem_lock(class_name_id);
+	vm_AddGlobal(vm,obj_CreateUnicode(mem_copy(class_name->value)),class_id);
+	mem_unlock(class_name_id,0);
+	return(class_id);
 }
 
 #ifdef USE_INTERNAL_CLASSES
-object *if_open(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID if_open(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
 	//if(x->type == TYPE_UNICODE)
 	//	printf("opening file:%s\n",((unicode_object*)x)->value);
 	
-	unicode_object *file_class_key = CreateUnicodeObject(str_Copy("file_class"));
-	class_object *file_class = (class_object*)vm_GetGlobal(vm,(object*)file_class_key);
-	gc_IncRefCount((object*)file_class_key);
-	gc_DecRefCount((object*)file_class_key);
-	class_instance_object *file_instance = CreateClassInstanceObject(file_class);	
+	UNICODE_ID file_class_key_id = obj_CreateUnicode(mem_create_string("file_class"));
+	CLASS_ID file_class_id = vm_GetGlobal(vm,file_class_key_id);
+	obj_IncRefCount(file_class_key_id);
+	obj_DecRefCount(file_class_key_id);
+	CLASS_INSTANCE_ID file_instance_id = obj_CreateClassInstance(file_class_id);	
 	//#ifndef USE_ARDUINO_FUNCTIONS
-	object *x = GetItem((object*)locals,0);
-	stream *fs = stream_CreateFromFile(((unicode_object*)x)->value,"rb");
+	OBJECT_ID x_id = tuple_GetItem(locals,0);
+	unicode_object *x = (unicode_object*)mem_lock(x_id);
+	STREAM_ID fs = stream_CreateFromFile(x->value,mem_create_string("rb")); //TODO check for leaks
+	mem_unlock(x_id,0);
 	stream_Open(fs);
-	tag_object *file_tag = CreateTagObject(fs);
-	unicode_object *file_name = CreateUnicodeObject(str_Copy("__file__"));
-	SetAttribute((object*)file_instance,(object*)file_name,(object*)file_tag);	
+	TAG_ID file_tag = obj_CreateTag(fs);
+	UNICODE_ID file_name = obj_CreateUnicode(mem_create_string("__file__"));
+	obj_SetAttribute(file_instance_id,file_name,file_tag);	
 	//#endif
-	return((object*)file_instance);
+	return(file_instance_id);
 		
 	//object *tmp =CreateEmptyObject(TYPE_NONE);
 	//return (tmp);
 }
 #endif
 
-object *if_list(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID if_list(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
-	tuple_object *r = CreateTuple(0);
+	TUPLE_ID r = obj_CreateTuple(0);
 	INDEX i = 0;
-	while(i < locals->list->num)
+	while(i < tuple_GetLen(locals))
 	{
-		object *t = GetItem((object *)locals,i);
-		if(t->type == TYPE_ITER)
-			iter_ExpandTuple((iter_object*)t,vm,r);
+		OBJECT_ID t = tuple_GetItem(locals,i);
+		if(obj_GetType(t) == TYPE_ITER)
+			iter_ExpandTuple(t,vm,r);
 		else
-			AppendItem((object*)r,t);
+			tuple_AppendItem(r,t);
 		i++;
 	}
-	return ((object*)r);
+	return(r);
 }
 
-object *if_next(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID if_next(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
-	iter_object *iter  = iter_CreateIter(GetItem((object *)locals,0),vm);
+	ITER_ID iter  = iter_CreateIter(tuple_GetItem(locals,0),vm);
 	//object *iter = GetItem((object*)locals,0);
-	gc_IncRefCount((object*)iter);
-	object *next = iter_NextNow((iter_object*)iter,vm);
-	gc_DecRefCount((object*)iter);
+	obj_IncRefCount(iter);
+	OBJECT_ID next = iter_NextNow(iter,vm);
+	obj_DecRefCount(iter);
 	return(next);
 }
 
-object *if_range(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID if_range(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
-	if (locals->list->num < 1)
+	if(tuple_GetLen(locals) < 1)
 	{
-		object *tmp = CreateEmptyObject(TYPE_NONE);
+		OBJECT_ID tmp = obj_CreateEmpty(TYPE_NONE);
 		#ifdef USE_DEBUGGING
 		debug_printf(DEBUG_ALL,"not enough args for range\n");
 		#endif
-		return (tmp);
+		return(tmp);
 	}
-	//FullDumpObject(locals,0);
-	iter_object *iter = CreateIterObject();
-	object *s = GetItem((object*)locals,0);
-	object *e =  obj_NULL;
-	if (locals->list->num > 0)
-		e = GetItem((object*)locals,1);
-	object *st = obj_NULL;
-	if (locals->list->num > 1)
-		st = GetItem((object*)locals,2);
-
-	//DumpObject(s,0);
-	//DumpObject(st,0);
-	//DumpObject(e,0);
+	ITER_ID iter = obj_CreateIter();
+	OBJECT_ID s = tuple_GetItem(locals,0);
+	OBJECT_ID e =  0;
+	if(tuple_GetLen(locals) > 0)
+		e = tuple_GetItem(locals,1);
+	OBJECT_ID st = 0;
+	if(tuple_GetLen(locals) > 1)
+		st = tuple_GetItem(locals,2);
 		
-	if (st == obj_NULL && e == obj_NULL && s->type == TYPE_INT)
+	if(st == 0 && e == 0 && obj_GetType(s) == TYPE_INT)
 	{
-		iter_InitSequence(iter,vm,0,((int_object*)s)->value,1);//zero to s by 1
+		int_object *ts = (int_object*)mem_lock(s);
+		iter_InitSequence(iter,vm,0,ts->value,1);//zero to s by 1
+		mem_unlock(s,0);
 	}
-	else if (st == obj_NULL && s->type == TYPE_INT && e->type == TYPE_INT)
+	else if(st == 0 && obj_GetType(s) == TYPE_INT && obj_GetType(e) == TYPE_INT)
 	{
-		iter_InitSequence(iter,vm,((int_object*)s)->value,((int_object*)e)->value,1);
+		int_object *ts = (int_object*)mem_lock(s);
+		int_object *te = (int_object*)mem_lock(e);
+		iter_InitSequence(iter,vm,ts->value,te->value,1);
+		mem_unlock(e,0);
+		mem_unlock(s,0);
 	}
-	else if (s->type == TYPE_INT && e->type == TYPE_INT && st->type == TYPE_INT)
+	else if(obj_GetType(s) == TYPE_INT && obj_GetType(e) == TYPE_INT && obj_GetType(st) == TYPE_INT)
 	{
-		iter_InitSequence(iter,vm,((int_object*)s)->value,((int_object*)e)->value,((int_object*)st)->value);
+		int_object *ts = (int_object*)mem_lock(s);
+		int_object *te = (int_object*)mem_lock(e);
+		int_object *tst = (int_object*)mem_lock(st);
+		iter_InitSequence(iter,vm,ts->value,te->value,tst->value);
+		mem_unlock(st,0);
+		mem_unlock(e,0);
+		mem_unlock(s,0);
 	}
-	return ((object*)iter);
+	return(iter);
 }
 #ifndef USE_ARDUINO_FUNCTIONS
-object *if_print(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID if_print(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
 	BOOL printed_something = 0;
 	INDEX i = 0; 
-	unicode_object *end = CreateUnicodeObject(str_Copy("end"));
-	gc_IncRefCount((object*)end);
-	object *endval = GetDictItem((object*)kw_locals,(object*)end);
-	gc_DecRefCount((object*)end);
-	while(i < locals->list->num)
+	UNICODE_ID end = obj_CreateUnicode(mem_create_string("end"));
+	obj_IncRefCount(end);
+	OBJECT_ID endval = tuple_GetDictItem(kw_locals,end);
+	obj_DecRefCount(end);
+	while(i < tuple_GetLen(locals))
 	{
-		object *t = GetItem((object *)locals,i);//TODO maybe move this into PrintObject() as case ITER:	
-		if(t->type == TYPE_ITER)
+		OBJECT_ID t = tuple_GetItem(locals,i);//TODO maybe move this into PrintObject() as case ITER:	
+		if(obj_GetType(t) == TYPE_ITER)
 		{
-			tuple_object *to = iter_TupleExpand((iter_object*)t,vm);
-			gc_IncRefCount((object*)to);
-			PrintObject((object*)to);
-			gc_DecRefCount((object*)to);
+			TUPLE_ID to = iter_TupleExpand(t,vm);
+			obj_IncRefCount(to);
+			obj_Print(to);
+			obj_DecRefCount(to);
 			i++;
 			continue;
 		}
-		if(t->type == TYPE_NONE)
+		if(obj_GetType(t) == TYPE_NONE)
 		{
 			i++;
 			continue;
 		}
 		if (printed_something)
 			printf(" ");
-		if (t != NULL)
-			PrintObject(t);
+		if(t != 0)
+			obj_Print(t);
 		printed_something = 1;
 		i++;
 	}
-	if(printed_something && endval!=NULL && endval->type == TYPE_UNICODE)
-		printf("%s",((unicode_object*)endval)->value);
+	if(printed_something && endval != 0 && obj_GetType(endval) == TYPE_UNICODE)
+	{	
+		unicode_object *ue = (unicode_object*)mem_lock(endval);
+		char *send = (char*)mem_lock(ue->value); 
+		printf("%s",send);
+		mem_unlock(ue->value,0);
+		mem_unlock(endval,0);
+	}
 	else
 	if(printed_something)
 		printf("\n");
-	object *tmp =CreateEmptyObject(TYPE_NONE);
-	return (tmp);
+	OBJECT_ID tmp = obj_CreateEmpty(TYPE_NONE);
+	return(tmp);
 }
 #endif
 
-object *if_sum(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID if_sum(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
 	INT sum = 0;
 	INDEX i = 0;
-	while(i < locals->list->num)
+	while(i < tuple_GetLen(locals))
 	{
-		object *t = GetItem((object *)locals,i);//TODO maybe move this into PrintObject() as case ITER:	
-		if(t->type == TYPE_ITER)
+		OBJECT_ID t_id = tuple_GetItem(locals,i);//TODO maybe move this into PrintObject() as case ITER:	
+		if(obj_GetType(t_id) == TYPE_ITER)
 		{
-			tuple_object *to = iter_TupleExpand((iter_object*)t,vm);
-			gc_IncRefCount((object*)to);
-			object *r = if_sum(vm,to,NULL);
-			switch (r->type)
+			TUPLE_ID to = iter_TupleExpand(t_id,vm);
+			obj_IncRefCount(to);
+			OBJECT_ID r_id = if_sum(vm,to,0);
+			switch (obj_GetType(r_id))
 			{
 				case TYPE_INT:
-					sum += ((int_object*)r)->value;
-					break;
+				{
+					int_object *r = (int_object*)mem_lock(r_id);
+					sum += r->value;
+					mem_unlock(r_id,0);
+				}
+				break;
 			}
-			gc_IncRefCount((object*)r);
-			gc_DecRefCount((object*)r);
-			gc_DecRefCount((object*)to);
+			obj_IncRefCount(r_id);
+			obj_DecRefCount(r_id);
+			obj_DecRefCount(to);
 			i++;
 			continue;
 		}
 
-		if (t != NULL)
-			switch (t->type)
+		if(t_id != 0)
+			switch(obj_GetType(t_id))
 			{
 				case TYPE_INT:
-					sum += ((int_object*)t)->value;
-					break;
+				{
+					int_object *t = (int_object*)mem_lock(t_id);
+					sum += t->value;
+					mem_unlock(t_id,0);
+				}
+				break;
 			}
 		i++;
 	}
-	int_object *tmp = CreateIntObject(sum);
+	INT_ID tmp = obj_CreateInt(sum);
 	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_VERBOSE_STEP,"returning sum:%d\n",sum);
 	#endif
-	return ((object*)tmp);
+	return(tmp);
 }
 
-/*
-object *if_max(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID if_pow(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
-	object *max = NULL;
-	INDEX i = 0;
-	object *t = GetItem((object *)locals,0);	
-	if(t->type == TYPE_ITER)
+	if(tuple_GetLen(locals) < 2)
 	{
-		tuple_object *to = iter_TupleExpand((iter_object*)t,vm);
-		gc_IncRefCount((object*)to);
-		object *r = if_max(vm,to,NULL);
-		gc_DecRefCount((object*)to);
-		return(r);
-	}
-
-	while(i < locals->list->num)
-	{
-		object *t = GetItem((object *)locals,i);//TODO maybe move this into PrintObject() as case ITER:	
-
-		if (t != NULL)
-			switch (t->type)
-			{
-				case TYPE_INT:
-					if(max == NULL)
-						max = t;
-					else
-					if(((int_object*)t)->value > ((int_object*)max)->value)
-						max = t;//((int_object*)t)->value;
-					break;
-			}
-		i++;
-	}
-	if(max == NULL)
-	{
-	object *tmp =CreateEmptyObject(TYPE_NONE);
-	return (tmp);
-	}
-	return (max);
-}
-
-object *if_abs(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
-{
-	object *a = GetItem((object*)locals,0);
-	switch(a->type)
-	{
-		case TYPE_INT:
-			{
-				int_object *tmp = CreateIntObject(abs(((int_object*)a)->value));
-				return ((object*)tmp);
-			}
-		case TYPE_BINARY_FLOAT:
-			{
-				float_object *tmp = CreateFloatObject(abs(((float_object*)a)->value));
-				return ((object*)tmp);
-			}
-	}
-	object *tmp =CreateEmptyObject(TYPE_NONE);
-	return (tmp);
-}
-
-object *if_len(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
-{
-	if(locals->list->num != 1)
-	{
-		object *tmp = CreateEmptyObject(TYPE_NONE);
-		return (tmp);
-	}
-	int_object *len = CreateIntObject(GetTupleLen(GetItem((object *)locals,0)));
-	#ifdef USE_DEBUGGING
-	debug_printf(DEBUG_VERBOSE_STEP,"returning len:%d\n",len);
-	#endif
-	return ((object*)len);
-}
-
-object *if_pow(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
-{
-	if (locals->list->num < 2)
-	{
-		object *tmp = CreateEmptyObject(TYPE_NONE);
+		OBJECT_ID tmp = obj_CreateEmpty(TYPE_NONE);
 		#ifdef USE_DEBUGGING
 		debug_printf(DEBUG_ALL,"not enough args for pow\n");
 		#endif
-		return (tmp);
+		return(tmp);
 	}
-	object *x = GetItem((object*)locals,0);
-	object *y = GetItem((object*)locals,1);
-	object *z =  NULL;
-	if (locals->list->num > 2)
-		z = GetItem((object*)locals,2);
-	if (z == NULL && x->type == TYPE_INT && y->type == TYPE_INT)
+	OBJECT_ID x = tuple_GetItem(locals,0);
+	OBJECT_ID y = tuple_GetItem(locals,1);
+	OBJECT_ID z =  0;
+	if(tuple_GetLen(locals) > 2)
+		z = tuple_GetItem(locals,2);
+	if(z == 0 && obj_GetType(x) == TYPE_INT && obj_GetType(y) == TYPE_INT)
 	{	
-		object *r = BinaryOp(x,y,OPCODE_BINARY_POWER);
+		//object *r = BinaryOp(y,x,OPCODE_BINARY_POWER);
+		int_object *ix = (int_object*)mem_lock(x);
+		int_object *iy = (int_object*)mem_lock(y);
+		OBJECT_ID r = obj_CreateInt(num_pow(ix->value,iy->value));
+		mem_unlock(y,0);
+		mem_unlock(x,0);
+		//PrintObject(r);
 		return(r);
 	}
 	else
-	if (z != NULL && x->type == TYPE_INT && y->type == TYPE_INT && z->type == TYPE_INT)
+	if (z != 0 && obj_GetType(x) == TYPE_INT && obj_GetType(y) == TYPE_INT && obj_GetType(z) == TYPE_INT)
 	{
-		object *r = BinaryOp(x,y,OPCODE_BINARY_POWER);
-		object *rm = BinaryOp(r,z,OPCODE_BINARY_MODULO);
-		gc_IncRefCount(r);
-		gc_DecRefCount(r);
+		OBJECT_ID r = BinaryOp(y,x,OPCODE_BINARY_POWER);
+		OBJECT_ID rm = BinaryOp(r,z,OPCODE_BINARY_MODULO);
+		obj_IncRefCount(r);
+		obj_DecRefCount(r);
 		return(rm);
 	}
-	//return ((object*)iter);
-	object *tmp =CreateEmptyObject(TYPE_NONE);
-	return (tmp);
+	OBJECT_ID tmp = obj_CreateEmpty(TYPE_NONE);
+	return(tmp);
 }
 
-object *if_min(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID if_max(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
-	object *min = NULL;
+	OBJECT_ID max_id = 0;
 	INDEX i = 0;
-	object *t = GetItem((object *)locals,0);	
-	if(t->type == TYPE_ITER)
+	OBJECT_ID t_id = tuple_GetItem(locals,0);	
+	if(obj_GetType(t_id) == TYPE_ITER)
 	{
-		tuple_object *to = iter_TupleExpand((iter_object*)t,vm);
-		gc_IncRefCount((object*)to);
-		object *r = if_min(vm,to,NULL);
-		gc_DecRefCount((object*)to);
-		return(r);
+		TUPLE_ID to = iter_TupleExpand(t_id,vm);
+		obj_IncRefCount(to);
+		OBJECT_ID r = if_max(vm,to,0);
+		obj_DecRefCount(to);
+		//return(r);
+		max_id = r;
 	}
 
-	while(i < locals->list->num)
+	while(i < tuple_GetLen(locals))
 	{
-		object *t = GetItem((object *)locals,i);	
+		OBJECT_ID t_id = tuple_GetItem(locals,i);	
 
-		if (t != NULL)
-			switch (t->type)
+		if(t_id != 0)
+		{
+			switch(obj_GetType(t_id))
 			{
 				case TYPE_INT:
-					if(min == NULL)
-						min = t;
-					else
-					if(((int_object*)t)->value < ((int_object*)min)->value)
-						min = t;//((int_object*)t)->value;
+					{
+						int_object *t = (int_object*)mem_lock(t_id);
+						if(max_id == 0) //TODO bad construction , may lead into crashes if  min_id == t_id
+							max_id = t_id;
+						else
+						{
+							int_object *max = (int_object*)mem_lock(max_id);	
+							if(t->value > max->value)
+							{
+								mem_unlock(max_id,0);
+								max_id = t_id;//((int_object*)t)->value;
+							}
+						}
+						mem_unlock(t_id,0);
+					}
 					break;
 			}
+		}
 		i++;
 	}
-	if(min == NULL)
+	if(max_id == 0)
 	{
-	object *tmp =CreateEmptyObject(TYPE_NONE);
-	return (tmp);
+		OBJECT_ID tmp = obj_CreateEmpty(TYPE_NONE);
+		return(tmp);
 	}
-	return (min);
+	return(max_id);
 }
 
-object *if_sorted(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID if_abs(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
-
-	object *tmp =CreateEmptyObject(TYPE_NONE);
-	return (tmp);
+	OBJECT_ID a_id = tuple_GetItem(locals,0);
+	switch(obj_GetType(a_id))
+	{
+		case TYPE_INT:
+			{
+				int_object *a = (int_object*)mem_lock(a_id);
+				INT_ID tmp = obj_CreateInt(abs(a->value));
+				mem_unlock(a_id,0);
+				return(tmp);
+			}
+		case TYPE_BINARY_FLOAT:
+			{
+				int_object *a = (int_object*)mem_lock(a_id);
+				FLOAT_ID tmp = obj_CreateFloat(abs(a->value));
+				mem_unlock(a_id,0);
+				return(tmp);
+			}
+	}
+	OBJECT_ID tmp = obj_CreateEmpty(TYPE_NONE);
+	return(tmp);
 }
 
-object *if_reversed(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID if_len(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
-	object *tmp =CreateEmptyObject(TYPE_NONE);
-	return (tmp);
+	if(tuple_GetLen(locals) != 1)
+	{
+		OBJECT_ID tmp = obj_CreateEmpty(TYPE_NONE);
+		return(tmp);
+	}
+	NUM ilen = tuple_GetLen(tuple_GetItem(locals,0));
+	INT_ID len = obj_CreateInt(ilen);
+	#ifdef USE_DEBUGGING
+	debug_printf(DEBUG_VERBOSE_STEP,"returning len:%d\n",ilen);
+	#endif
+	return(len);
 }
 
-object *if_all(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID if_min(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
-	iter_object *iter = iter_CreateIter(GetItem((object *)locals,0),vm);
-	gc_IncRefCount((object*)iter);
-	object *r = CreateEmptyObject(TYPE_TRUE);
-	object *n = NULL;
+	OBJECT_ID min_id = 0;
+	INDEX i = 0;
+	OBJECT_ID t_id = tuple_GetItem(locals,0);	
+	if(obj_GetType(t_id) == TYPE_ITER)
+	{
+		TUPLE_ID to = iter_TupleExpand(t_id,vm);
+		obj_IncRefCount(to);
+		OBJECT_ID r = if_min(vm,to,0);
+		obj_DecRefCount(to);
+		//return(r);
+		min_id = r;
+	}
+
+	while(i < tuple_GetLen(locals))
+	{
+		OBJECT_ID t_id = tuple_GetItem(locals,i);	
+
+		if(t_id != 0)
+		{
+			switch(obj_GetType(t_id))
+			{
+				case TYPE_INT:
+					{
+						int_object *t = (int_object*)mem_lock(t_id);
+						if(min_id == 0) //TODO bad construction , may lead into crashes if  min_id == t_id
+							min_id = t_id;
+						else
+						{
+							int_object *min = (int_object*)mem_lock(min_id);	
+							if(t->value < min->value)
+							{
+								mem_unlock(min_id,0);
+								min_id = t_id;//((int_object*)t)->value;
+							}
+						}
+						mem_unlock(t_id,0);
+					}
+					break;
+			}
+		}
+		i++;
+	}
+	if(min_id == 0)
+	{
+		OBJECT_ID tmp = obj_CreateEmpty(TYPE_NONE);
+		return(tmp);
+	}
+	return(min_id);
+}
+
+OBJECT_ID if_sorted(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
+{
+	OBJECT_ID tmp = obj_CreateEmpty(TYPE_NONE);
+	return(tmp);
+}
+
+OBJECT_ID if_reversed(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
+{
+	OBJECT_ID tmp = obj_CreateEmpty(TYPE_NONE);
+	return(tmp);
+}
+
+OBJECT_ID if_all(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
+{
+	ITER_ID iter = iter_CreateIter(tuple_GetItem(locals,0),vm);
+	obj_IncRefCount(iter);
+	OBJECT_ID r_id = obj_CreateEmpty(TYPE_TRUE);
+	object *r = (object*)mem_lock(r_id);
+	OBJECT_ID n = 0;
 	do
 	{
 		n = iter_NextNow(iter,vm);
-		if(n->type != TYPE_TRUE)
+		if(obj_GetType(n) != TYPE_TRUE)
 		 r->type = TYPE_FALSE;
-	}while(n->type != TYPE_NONE);
-	gc_DecRefCount((object*)iter);
-	return(r);
+	}while(obj_GetType(n) != TYPE_NONE);
+	obj_DecRefCount(iter);
+	mem_unlock(r_id,1);
+	return(r_id);
 }
 
-object *if_any(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID if_any(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
-	iter_object *iter  = iter_CreateIter(GetItem((object *)locals,0),vm);
-	gc_IncRefCount((object*)iter);
-	object *r = CreateEmptyObject(TYPE_FALSE);
-	object *n = NULL;
+	ITER_ID iter  = iter_CreateIter(tuple_GetItem(locals,0),vm);
+	obj_IncRefCount(iter);
+	OBJECT_ID r_id = obj_CreateEmpty(TYPE_TRUE);
+	object *r = (object*)mem_lock(r_id);
+	OBJECT_ID n = 0;
 	do
 	{
 		n = iter_NextNow(iter,vm);
-		if(n->type == TYPE_TRUE)
+		if(obj_GetType(n) == TYPE_TRUE)
 		 r->type = TYPE_TRUE;
-	}while(n->type != TYPE_NONE);
-	gc_DecRefCount((object*)iter);
-	return(r);
+	}while(obj_GetType(n) != TYPE_NONE);
+	obj_DecRefCount(iter);
+	mem_unlock(r_id,1);
+	return(r_id);
 }
 
-object *if_chr(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID if_chr(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
-	object *a = GetItem((object*)locals,0);
-	if(a->type == TYPE_INT)
+	OBJECT_ID a_id = tuple_GetItem(locals,0);
+	if(obj_GetType(a_id) == TYPE_INT)
 	{
-		char *chr = str_FromChar(((int_object*)a)->value);
-		unicode_object *r = CreateUnicodeObject(chr);
-		#ifdef USE_DEBUGGING
-		assert(mem_free(chr));
-		#else
-		free(chr);
-		#endif
-		return((object*)r);
+		int_object *a = (int_object*)mem_lock(a_id);
+		BYTES_ID chr = str_FromChar(a->value);
+		UNICODE_ID r = obj_CreateUnicode(chr);
+		mem_unlock(a_id,0);
+		//free(chr);TODO check if it leaks here
+		return(r);
 	}
-	object *tmp =CreateEmptyObject(TYPE_NONE);
-	return (tmp);
+	OBJECT_ID tmp = obj_CreateEmpty(TYPE_NONE);
+	return(tmp);
 }
 
-object *if_ord(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID if_ord(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
-	object *a = GetItem((object*)locals,0);
-	if(a->type == TYPE_UNICODE && strlen(((unicode_object*)a)->value) > 0)
-	{	
-		int_object *r = CreateIntObject(((unicode_object*)a)->value[0]);
-		return((object*)r);
+	OBJECT_ID a_id = tuple_GetItem(locals,0);
+	unicode_object *a = (unicode_object*)mem_lock(a_id);
+	if(a->type == TYPE_UNICODE)
+	{
+		char *av = (char*)mem_lock(a->value);
+		if(strlen(av) > 0)
+		{	
+			INT_ID r = obj_CreateInt(av[0]);
+			mem_unlock(a->value,0);
+			mem_unlock(a_id,0);
+			return(r);
+		}
+		mem_unlock(a->value,0);
 	}
-	object *tmp =CreateEmptyObject(TYPE_NONE);
-	return (tmp);
+	mem_unlock(a_id,0);
+	OBJECT_ID tmp = obj_CreateEmpty(TYPE_NONE);
+	return(tmp);
 }
 
-object *if_cmp(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID if_cmp(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
-	object *tmp =CreateEmptyObject(TYPE_NONE);
-	return (tmp);
+	OBJECT_ID tmp = obj_CreateEmpty(TYPE_NONE);
+	return(tmp);
 }
 
-object *if_hex(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID if_hex(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
-	object *a = GetItem((object*)locals,0);
+	OBJECT_ID a_id = tuple_GetItem(locals,0);
+	int_object *a = (int_object*)mem_lock(a_id);
 	if(a->type == TYPE_INT)
 	{
 		NUM chars = 0;
 		for(INDEX i = 0;i<4;i++) // calculate space requirements
 		{
-			if((((int_object*)a)->value >> (i*8) & 255) > 0 )
+			if((a->value >> (i*8) & 255) > 0 )
 				chars = i;
 		}
-		#ifdef USE_DEBUGGING
-		char *tmp = (char *)mem_malloc(chars*2 + 1, "if_hex(); tmp");
+		#ifdef USE_MEMORY_DEBUGGING
+		BYTES_ID tmp_id = mem_malloc_debug(chars*2 + 1,MEM_POOL_CLASS_DYNAMIC, "if_hex(); tmp");
 		#else
-		char *tmp = (char *)malloc(chars*2 + 1);
+		BYTES_ID tmp_id = mem_malloc(chars*2 + 1,MEM_POOL_CLASS_DYNAMIC);
 		#endif
+		char *tmp = (char*)mem_lock(tmp_id);
 		memset(tmp,0,chars*2 + 1);
-		sprintf(tmp,"%X",((int_object*)a)->value);
+		sprintf(tmp,"%X",a->value);
 		
-		unicode_object *r = CreateUnicodeObject(tmp);
-		#ifdef USE_DEBUGGING
-		assert(mem_free(tmp));
-		#else
-		free(tmp);
-		#endif
-		return((object*)r);
+		UNICODE_ID r = obj_CreateUnicode(mem_create_string(tmp));
+		mem_unlock(tmp_id,1);
+	
+		mem_free(tmp_id);
+		return(r);
 	}
-	object *tmp =CreateEmptyObject(TYPE_NONE);
-	return (tmp);
+	OBJECT_ID tmp = obj_CreateEmpty(TYPE_NONE);
+	return(tmp);
 
 }
 
-object *if_int(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID if_int(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
-	object *tmp =CreateEmptyObject(TYPE_NONE);
-	return (tmp);
+	OBJECT_ID tmp = obj_CreateEmpty(TYPE_NONE);
+	return(tmp);
 }
 
-object *if_float(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID if_float(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
-
-	object *tmp =CreateEmptyObject(TYPE_NONE);
-	return (tmp);
+	OBJECT_ID tmp = obj_CreateEmpty(TYPE_NONE);
+	return(tmp);
 }
-*/
-object *if_iter(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+
+OBJECT_ID if_iter(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
-	if(locals->list->num == 2)
+	if(tuple_GetLen(locals) == 2)
 	{//uses a sentinel
 		//TODO will not work
-		iter_object *iter  = iter_CreateIter(GetItem((object *)locals,0),vm);
-		return((object*)iter);
+		ITER_ID iter  = iter_CreateIter(tuple_GetItem(locals,0),vm);
+		return(iter);
 	}
 	else
-	if(locals->list->num == 2)
+	if(tuple_GetLen(locals) == 2)
 	{
-		iter_object *iter  = iter_CreateIter(GetItem((object *)locals,0),vm);
-		return((object*)iter);
+		ITER_ID iter  = iter_CreateIter(tuple_GetItem(locals,0),vm);
+		return(iter);
 	}
-
-	object *tmp =CreateEmptyObject(TYPE_NONE);
-	return (tmp);
+	OBJECT_ID tmp = obj_CreateEmpty(TYPE_NONE);
+	return(tmp);
 }
 /*
-object *if_map(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID if_map(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
-
-	object *tmp =CreateEmptyObject(TYPE_NONE);
-	return (tmp);
+	OBJECT_ID tmp = obj_CreateEmpty(TYPE_NONE);
+	return(tmp);
 }
 */
 
 #ifndef USE_ARDUINO_FUNCTIONS
 
-
-object *a_pinMode(vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID a_pinMode(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
- //pin,mode
-	object *pin = GetItem((object*)locals,0);
-	object *mode = GetItem((object*)locals,1);
-	//printf("pinMode\n");
-	//TODO only a temp solution
-	if(pin->type == TYPE_KV)
-		pin = (object*)((kv_object*)pin)->value;
-	if(mode->type == TYPE_KV)
-		mode = (object*)((kv_object*)mode)->value;
-	if(pin->type == TYPE_INT && mode->type == TYPE_INT)
-		printf("pinMode: %d to %d\n",((int_object*)pin)->value,((int_object*)mode)->value);
-	object *tmp =CreateEmptyObject(TYPE_NONE);
-	return (tmp);	
+	if(tuple_GetLen(locals) < 2)
+	{
+		OBJECT_ID tmp = obj_CreateEmpty(TYPE_NONE);
+		return(tmp);	
+	}
+	OBJECT_ID pin = tuple_GetItem(locals,0);
+	OBJECT_ID mode = tuple_GetItem(locals,1);
+	if(obj_GetType(pin) == TYPE_KV)
+	{
+		kv_object *kpin = (kv_object*)mem_lock(pin);
+		OBJECT_ID old = pin;
+		pin = kpin->value;
+		mem_unlock(old,0);
+	}
+	if(obj_GetType(mode) == TYPE_KV)
+	{
+		kv_object *kmode = (kv_object*)mem_lock(mode);
+		OBJECT_ID old = mode;
+		mode = kmode->value;
+		mem_unlock(old,0);
+	}
+	if(obj_GetType(pin) == TYPE_INT && obj_GetType(mode) == TYPE_INT)
+	{
+		int_object *ipin = (int_object*)mem_lock(pin);
+		int_object *imode = (int_object*)mem_lock(mode);
+		printf("pinMode: %d to %d\n",ipin->value,imode->value);
+		mem_unlock(mode,0);
+		mem_unlock(pin,0);
+	}
+	OBJECT_ID tmp = obj_CreateEmpty(TYPE_NONE);
+	return(tmp);	
 }
 
-object *a_digitalRead(vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID a_digitalRead(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
- //pin
-	//printf("digitalRead\n");
-	object *pin = GetItem((object*)locals,0);
+	OBJECT_ID pin = tuple_GetItem(locals,0);
 	int r = 0;
-	if(pin->type == TYPE_INT)
-		printf("digitalRead: %d\n",((int_object*)pin)->value);
-	int_object *tmp = CreateIntObject(r);
-	return ((object*)tmp);	
-	
+	if(obj_GetType(pin) == TYPE_INT)
+	{
+		int_object *ipin = (int_object*)mem_lock(pin);
+		printf("digitalRead: %d\n",ipin->value);
+		mem_unlock(pin,0);
+	}
+	INT_ID tmp = obj_CreateInt(r);
+	return(tmp);	
 }
 
-object *a_digitalWrite(vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID a_digitalWrite(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
- //pin,value
-	if(locals->list->num < 2)
+ 	if(tuple_GetLen(locals) < 2)
 	{
-		//printf("not enough args for digitalWrite();\r\n");
-		object *tmp =CreateEmptyObject(TYPE_NONE);
-		return (tmp);	
+		OBJECT_ID tmp = obj_CreateEmpty(TYPE_NONE);
+		return(tmp);	
 	}
-	object *pin = GetItem((object*)locals,0);
-	object *val = GetItem((object*)locals,1);
-    //PrintObject(pin);
-	//printf("\r\nval:");
-	//PrintObject(val);
-	//printf("\r\n");
-	//printf("pt:%c,vt:%c\r\n",pin->type,val->type);
-	//printf("digitalWrite\n");
-	//TODO only a temp solution
-	if(pin->type == TYPE_KV)
-		pin =(object*) ((kv_object*)pin)->value;
-	if(val->type == TYPE_KV)
+	OBJECT_ID pin = tuple_GetItem(locals,0);
+	OBJECT_ID val = tuple_GetItem(locals,1);
+	if(obj_GetType(pin) == TYPE_KV)
 	{
-		val = (object*) ((kv_object*)val)->value;
-		//printf("pt:%c,vt:%c\r\n",pin->type,val->type);
-		//printf("val:%d\r\n",((int_object*)val)->value);
+		kv_object *kpin = (kv_object*)mem_lock(pin);
+		OBJECT_ID old = pin;
+		pin = kpin->value;
+		mem_unlock(old,0);
 	}
-	if((pin->type == TYPE_INT) && (val->type == TYPE_INT))
+	if(obj_GetType(val) == TYPE_KV)
 	{
-		printf("digitalWrite pin: %d val: %d\n",((int_object*)pin)->value,((int_object*)val)->value);
+		kv_object *kval = (kv_object*)mem_lock(val);
+		OBJECT_ID old = val;
+		val = kval->value;
+		mem_unlock(old,0);
 	}
-	object *tmp =CreateEmptyObject(TYPE_NONE);
-	return (tmp);	
+	if(obj_GetType(pin) == TYPE_INT && obj_GetType(val) == TYPE_INT)
+	{
+		int_object *ipin = (int_object*)mem_lock(pin);
+		int_object *ival = (int_object*)mem_lock(val);
+		printf("digitalWrite pin: %d val: %d\n",ipin->value,ival->value);
+		mem_unlock(val,0);
+		mem_unlock(pin,0);
+	}
+	OBJECT_ID tmp = obj_CreateEmpty(TYPE_NONE);
+	return(tmp);	
 }
 
-object *a_analogRead(vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID a_analogRead(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
- //pin
- 	//printf("analogRead\n");
- 	object *pin = GetItem((object*)locals,0);
+ 	OBJECT_ID pin = tuple_GetItem(locals,0);
 	int r = 0;
-	if(pin->type == TYPE_INT)
-		printf("analogRead: %d\n",((int_object*)pin)->value);
-	int_object *tmp =CreateIntObject(r);
-	return ((object*)tmp);	
+	if(obj_GetType(pin) == TYPE_INT)
+	{
+		int_object *ipin = (int_object*)mem_lock(pin);
+		printf("analogRead: %d\n",ipin->value);
+		mem_unlock(pin,0);
+	}
+	INT_ID tmp = obj_CreateInt(r);
+	return(tmp);	
 }
 
-object *a_analogWrite(vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID a_analogWrite(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
- //pin,value
- 	//printf("analogWrite\n");
-	object *pin = GetItem((object*)locals,0);
-	object *val = GetItem((object*)locals,1);
-	if(pin->type == TYPE_KV)
-		pin = (object*)((kv_object*)pin)->value;
-	if(val->type == TYPE_KV)
-		val = (object*)((kv_object*)val)->value;
-	//DumpObject(pin,0);
-	//DumpObject(val,0);
-	if(pin->type == TYPE_INT && val->type == TYPE_INT)
-		printf("analogWrite pin: %d val: %d\n",((int_object*)pin)->value,((int_object*)val)->value);
-	object *tmp =CreateEmptyObject(TYPE_NONE);
-	return (tmp);	
+	//obj_Dump(locals,1,1);
+	OBJECT_ID pin = tuple_GetItem(locals,0);
+	OBJECT_ID val = tuple_GetItem(locals,1);
+	if(obj_GetType(pin) == TYPE_KV)
+	{
+		kv_object *kpin = (kv_object*)mem_lock(pin);
+		OBJECT_ID old = pin;
+		pin = kpin->value;
+		mem_unlock(old,0);
+	}
+	if(obj_GetType(val) == TYPE_KV)
+	{
+		kv_object *kval = (kv_object*)mem_lock(val);
+		OBJECT_ID old = val;
+		val = kval->value;
+		mem_unlock(old,0);
+		printf("kv'd value\n");
+	}
+	if(obj_GetType(pin) == TYPE_INT && obj_GetType(val) == TYPE_INT)
+	{
+		int_object *ipin = (int_object*)mem_lock(pin);
+		int_object *ival = (int_object*)mem_lock(val);
+		//obj_Dump(val,1,1);
+		//obj_Print(val);
+		printf("analogWrite pin: %d\n",ipin->value);
+		printf("value: %d\n",ival->value);
+		mem_unlock(val,0);
+		mem_unlock(pin,0);
+	}
+	OBJECT_ID tmp = obj_CreateEmpty(TYPE_NONE);
+	return(tmp);	
 }
 
-object *a_delay(vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID a_delay(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
- //ms
- 	//printf("delay\n");
- 	object *ms = GetItem((object*)locals,0);
-	//if(ms->type == TYPE_INT)
-	printf("delay: %d\n",((int_object*)ms)->value);
-	//delay(((int_object*)ms)->value);
-	//delay(8);
-	object *tmp =CreateEmptyObject(TYPE_NONE);
-	return (tmp);	
+ 	OBJECT_ID ms_id = tuple_GetItem(locals,0);
+	int_object *ms = (int_object*)mem_lock(ms_id);
+	printf("delay: %d\n",ms->value);
+	//TODO add delay here
+	mem_unlock(ms_id,0);
+	OBJECT_ID tmp = obj_CreateEmpty(TYPE_NONE);
+	return(tmp);	
 }
 /*
-object *a_serialprint(vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID a_serialprint(vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
  //message
  	//printf("serial.Println\n");
@@ -1203,7 +1350,7 @@ object *a_serialprint(vm *vm,tuple_object *locals,tuple_object *kw_locals)
 	return (tmp);	
 }
 
-object *a_serialBegin(vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID a_serialBegin(vm *vm,tuple_object *locals,tuple_object *kw_locals)
 {
  //baudrate
  	//printf("serial.Begin\n");
@@ -1214,41 +1361,40 @@ object *a_serialBegin(vm *vm,tuple_object *locals,tuple_object *kw_locals)
 	return (tmp);	
 }
 */
-void AddArduinoGlobal(vm *vm)
+void AddArduinoGlobal(VM_ID vm)
 {
-	code_object *a_globals = CreateCodeObject(str_Copy("arduino"));
-	AddCodeCFunction((object*)a_globals,"pinMode",&a_pinMode);
-	AddCodeCFunction((object*)a_globals,"digitalRead",&a_digitalRead);
-	AddCodeCFunction((object*)a_globals,"digitalWrite",&a_digitalWrite);
-	AddCodeCFunction((object*)a_globals,"analogRead",&a_analogRead);
-	AddCodeCFunction((object*)a_globals,"analogWrite",&a_analogWrite);
-	AddCodeCFunction((object*)a_globals,"delay",&a_delay);
-	//AddCodeCFunction((object*)a_globals,"Serial.print",&a_serialprint);
-	//AddCodeCFunction((object*)a_globals,"Serial.Begin",&a_serialBegin);
-	AddCodeName((object*)a_globals,(object*)CreateUnicodeObject(str_Copy("INPUT")),(object*)CreateIntObject(0));
-	AddCodeName((object*)a_globals,(object*)CreateUnicodeObject(str_Copy("OUTPUT")),(object*)CreateIntObject(1));
-	AddCodeName((object*)a_globals,(object*)CreateUnicodeObject(str_Copy("LOW")),(object*)CreateIntObject(0));
-	AddCodeName((object*)a_globals,(object*)CreateUnicodeObject(str_Copy("HIGH")),(object*)CreateIntObject(1));
-	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy("arduino")),(object*)a_globals);
+	CODE_ID a_globals = obj_CreateCode(mem_create_string("arduino"));
+	obj_AddCodeCFunction(a_globals,mem_create_string("pinMode"),&a_pinMode);
+	obj_AddCodeCFunction(a_globals,mem_create_string("digitalRead"),&a_digitalRead);
+	obj_AddCodeCFunction(a_globals,mem_create_string("digitalWrite"),&a_digitalWrite);
+	obj_AddCodeCFunction(a_globals,mem_create_string("analogRead"),&a_analogRead);
+	obj_AddCodeCFunction(a_globals,mem_create_string("analogWrite"),&a_analogWrite);
+	obj_AddCodeCFunction(a_globals,mem_create_string("delay"),&a_delay);
+	//obj_AddCodeCFunction(a_globals,mem_create_string("Serial.print"),&a_serialprint);
+	//obj_AddCodeCFunction(a_globals,mem_create_string("Serial.Begin"),&a_serialBegin);
+	obj_AddCodeName(a_globals,obj_CreateUnicode(mem_create_string("INPUT")),obj_CreateInt(0));
+	obj_AddCodeName(a_globals,obj_CreateUnicode(mem_create_string("OUTPUT")),obj_CreateInt(1));
+	obj_AddCodeName(a_globals,obj_CreateUnicode(mem_create_string("LOW")),obj_CreateInt(0));
+	obj_AddCodeName(a_globals,obj_CreateUnicode(mem_create_string("HIGH")),obj_CreateInt(1));
+	vm_AddGlobal(vm,obj_CreateUnicode(mem_create_string("arduino")),a_globals);
 }
 
 #endif
 
-
-
-void AddInternalFunctions(struct _vm *vm)
+void AddInternalFunctions(VM_ID vm)
 {
-	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy("list")),(object*)CreateCFunctionObject(&if_list));
-	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy("range")),(object*)CreateCFunctionObject(&if_range));
+	vm_AddGlobal(vm,obj_CreateUnicode(mem_create_string("list")),obj_CreateCFunction(&if_list));
+	vm_AddGlobal(vm,obj_CreateUnicode(mem_create_string("range")),obj_CreateCFunction(&if_range));
+	vm_AddGlobal(vm,obj_CreateUnicode(mem_create_string("pow")),obj_CreateCFunction(&if_pow));
 	#ifndef USE_ARDUINO_FUNCTIONS
-	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy("print")),(object*)CreateCFunctionObject(&if_print));
+	vm_AddGlobal(vm,obj_CreateUnicode(mem_create_string("print")),obj_CreateCFunction(&if_print));
 	#endif
-	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy("sum")),(object*)CreateCFunctionObject(&if_sum));
-	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy("next")),(object*)CreateCFunctionObject(&if_next));
+	vm_AddGlobal(vm,obj_CreateUnicode(mem_create_string("sum")),obj_CreateCFunction(&if_sum));
+	vm_AddGlobal(vm,obj_CreateUnicode(mem_create_string("next")),obj_CreateCFunction(&if_next));
 	#ifdef USE_INTERNAL_CLASSES
-	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy("open")),(object*)CreateCFunctionObject(&if_open));
+	vm_AddGlobal(vm,obj_CreateUnicode(mem_create_string("open")),obj_CreateCFunction(&if_open));
 	#endif
-	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy("iter")),(object*)CreateCFunctionObject(&if_iter));
-	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy("custom_code")),(object*)CreateCFunctionObject(&custom_code));
+	vm_AddGlobal(vm,obj_CreateUnicode(mem_create_string("iter")),obj_CreateCFunction(&if_iter));
+	vm_AddGlobal(vm,obj_CreateUnicode(mem_create_string("custom_code")),obj_CreateCFunction(&custom_code));
 }
 

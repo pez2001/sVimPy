@@ -24,6 +24,7 @@
 #define STREAM_H
 
 #include "types.h"
+#include "memory.h"
 #include "debug.h"
 #include "lists.h"
 #include "strops.h"
@@ -63,116 +64,129 @@ struct _stream;
 typedef struct _stream_type
 {
 	STREAM_TYPE_ID type;
-	BOOL (*stream_open)(struct _stream *stream);
-	BOOL (*stream_close)(struct _stream *stream);
-	BOOL (*stream_free)(struct _stream *stream);	
-	BOOL (*stream_read)(struct _stream *stream,void *ptr ,STREAM_NUM len);
-	BOOL (*stream_write)(struct _stream *stream,void *ptr,STREAM_NUM len);
-	BOOL (*stream_seek)(struct _stream *stream,STREAM_NUM offset,STREAM_ORIGIN origin);
-	INT (*stream_getpos)(struct _stream *stream); //returns -1 if eof (eos) reached
+	BOOL (*stream_open)(STREAM_ID stream);/* struct _stream* stream*/
+	BOOL (*stream_close)(STREAM_ID stream);
+	BOOL (*stream_free)(STREAM_ID stream);	
+	BOOL (*stream_read)(STREAM_ID stream,MEM_ID ptr ,STREAM_NUM ptr_offset,STREAM_NUM len);
+	BOOL (*stream_write)(STREAM_ID stream,MEM_ID ptr,STREAM_NUM ptr_offset,STREAM_NUM len);
+	BOOL (*stream_seek)(STREAM_ID stream,STREAM_NUM offset,STREAM_ORIGIN origin);
+	INT (*stream_getpos)(STREAM_ID stream); //returns -1 if eof (eos) reached
 } stream_type;
 
 typedef struct _stream
 {
-	struct _stream_type *type;
+	MEM_ID type;/*struct _stream_type*/
 	//STREAM_FLAG flags;
-	char *flags;
-	ptr_list *tags;
+	MEM_ID flags;/*char **/
+	MEM_ID tag;/*id_list*/
 }stream;
 
 typedef struct _streams
 {
-	struct _stream *output;
-	struct _stream *input;
-	struct _stream *debug;
+	MEM_ID output;/*struct _stream **/
+	MEM_ID input;/*struct _stream **/
+	MEM_ID debug;/*struct _stream **/
 }streams;
+
+typedef struct _file_stream_tag
+{
+	FILE *file;
+	STRING_ID filename;
+	STREAM_NUM offset;
+}file_stream_tag;
+
+typedef struct _byte_stream_tag
+{
+	STRING_ID bytes;
+	STREAM_NUM len;
+	STREAM_NUM offset;
+}byte_stream_tag;
 
 
 void streams_Init(void);
 
 void streams_Close(void);
 
-struct _stream_type *GetStreamType(STREAM_TYPE_ID id);
+MEM_ID stream_GetType(STREAM_TYPE_ID id);/*returns struct _stream_type **/
 
 
-stream *stream_CreateFromFile(char *filename,char *flags); //will create a copy of filename
-stream *stream_CreateFromBytes(char *bytes ,STREAM_NUM len); //will use bytes directly - remember to free bytes after stream closing
-#ifdef USE_ARDUINO_FUNCTIONS
-stream *stream_CreateFromFlashBytes(char *bytes ,STREAM_NUM len);
-#endif
-stream *stream_CreateStandardOutput(void);
-stream *stream_CreateStandardInput(void);
-stream *stream_CreateDebugOutput(void);
+STREAM_ID stream_CreateFromFile(BYTES_ID filename,BYTES_ID flags);//(char *filename,char *flags); //will create a copy of filename returns stream*
+STREAM_ID stream_CreateFromBytes(BYTES_ID bytes,STREAM_NUM len);//(char *bytes ,STREAM_NUM len); //will use bytes directly - remember to free bytes after stream closing
+/*#ifdef USE_ARDUINO_FUNCTIONS
+MEM_ID stream_CreateFromFlashBytes(MEM_ID bytes,STREAM_NUM len);//(char *bytes ,STREAM_NUM len);
+#endif*/
+STREAM_ID stream_CreateStandardOutput(void);
+STREAM_ID stream_CreateStandardInput(void);
+STREAM_ID stream_CreateDebugOutput(void);
 
 //stream access functions
 
-BOOL stream_Open(struct _stream *stream);
-BOOL stream_Close(struct _stream *stream);
-BOOL stream_Free(struct _stream *stream);
-BOOL stream_Read(struct _stream *stream,void *ptr,STREAM_NUM len);
-BOOL stream_Write(struct _stream *stream,void *ptr ,STREAM_NUM len);
-BOOL stream_Seek(struct _stream *stream,STREAM_NUM offset,STREAM_ORIGIN origin);
-INT     stream_GetPos(struct _stream *stream);
+BOOL stream_Open(STREAM_ID stream);
+BOOL stream_Close(STREAM_ID stream);
+BOOL stream_Free(STREAM_ID stream);
+BOOL stream_Read(STREAM_ID stream,MEM_ID ptr,STREAM_NUM ptr_offset,STREAM_NUM len);
+BOOL stream_Write(STREAM_ID stream,MEM_ID ptr ,STREAM_NUM ptr_offset,STREAM_NUM len);
+BOOL stream_Seek(STREAM_ID stream,STREAM_NUM offset,STREAM_ORIGIN origin);
+INT      stream_GetPos(STREAM_ID stream);
 
 //file stream functions
 
-BOOL stream_file_open(struct _stream *stream);
-BOOL stream_file_close(struct _stream *stream);
-BOOL stream_file_free(struct _stream *stream);
-BOOL stream_file_read(struct _stream *stream,void *ptr,STREAM_NUM len);
-BOOL stream_file_write(struct _stream *stream,void *ptr ,STREAM_NUM len);
-BOOL stream_file_seek(struct _stream *stream,STREAM_NUM offset,STREAM_ORIGIN origin);
-INT     stream_file_getpos(struct _stream *stream);
+BOOL stream_file_open(STREAM_ID stream);
+BOOL stream_file_close(STREAM_ID stream);
+BOOL stream_file_free(STREAM_ID stream);
+BOOL stream_file_read(STREAM_ID stream,MEM_ID ptr,STREAM_NUM ptr_offset,STREAM_NUM len);
+BOOL stream_file_write(STREAM_ID stream,MEM_ID ptr ,STREAM_NUM ptr_offset,STREAM_NUM len);
+BOOL stream_file_seek(STREAM_ID stream,STREAM_NUM offset,STREAM_ORIGIN origin);
+INT      stream_file_getpos(STREAM_ID stream);
 
 //memory stream functions
 
-//BOOL stream_memory_open(struct _stream *stream);
-//BOOL stream_memory_close(struct _stream *stream);
-BOOL stream_memory_free(struct _stream *stream);
-BOOL stream_memory_read(struct _stream *stream,void *ptr,STREAM_NUM len);
-//BOOL stream_memory_write(struct _stream *stream,char *bytes ,STREAM_NUM len);
-//BOOL stream_memory_seek(struct _stream *stream,STREAM_NUM offset,STREAM_ORIGIN origin);
-//INT     stream_memory_getpos(struct _stream *stream);
+//BOOL stream_memory_open(STREAM_ID stream);
+//BOOL stream_memory_close(STREAM_ID stream);
+BOOL stream_memory_free(STREAM_ID stream);
+BOOL stream_memory_read(STREAM_ID stream,MEM_ID ptr,STREAM_NUM ptr_offset,STREAM_NUM len);
+//BOOL stream_memory_write(STREAM_ID stream,char *bytes ,STREAM_NUM len);
+//BOOL stream_memory_seek(STREAM_ID stream,STREAM_NUM offset,STREAM_ORIGIN origin);
+//INT     stream_memory_getpos(STREAM_ID stream);
 
-#ifdef USE_ARDUINO_FUNCTIONS
+/*#ifdef USE_ARDUINO_FUNCTIONS
 
 #include "avr/pgmspace.h"
 
 //flash memory stream functions
 
-//BOOL stream_flash_memory_open(struct _stream *stream);
-//BOOL stream_flash_memory_close(struct _stream *stream);
-BOOL stream_flash_memory_free(struct _stream *stream);
-BOOL stream_flash_memory_read(struct _stream *stream,void *ptr,STREAM_NUM len);
-//BOOL stream_flash_memory_write(struct _stream *stream,char *bytes ,STREAM_NUM len);
-//BOOL stream_flash_memory_seek(struct _stream *stream,STREAM_NUM offset,STREAM_ORIGIN origin);
-//INT     stream_flash_getpos(struct _stream *stream);
+//BOOL stream_flash_memory_open(STREAM_ID stream);
+//BOOL stream_flash_memory_close(STREAM_ID stream);
+BOOL stream_flash_memory_free(STREAM_ID stream);
+BOOL stream_flash_memory_read(STREAM_ID stream,MEM_ID ptr,STREAM_NUM len);
+//BOOL stream_flash_memory_write(STREAM_ID stream,char *bytes ,STREAM_NUM len);
+//BOOL stream_flash_memory_seek(STREAM_ID stream,STREAM_NUM offset,STREAM_ORIGIN origin);
+//INT     stream_flash_getpos(STREAM_ID stream);
 
 #endif
-
+*/
 //functions used primarily for object reading and writing from/to streams
 
-long stream_ReadLong(struct _stream *f);
+long stream_ReadLong(STREAM_ID stream);
 
-FLOAT stream_ReadFloat(struct _stream *f);
+FLOAT stream_ReadFloat(STREAM_ID stream);
 
-char stream_ReadChar(struct _stream *f);
+char stream_ReadChar(STREAM_ID stream);
 
+void stream_WriteLong(long l,STREAM_ID stream);//TODO correct parameter order
 
-void stream_WriteLong(long l,struct _stream *f);
+void stream_WriteFloat(FLOAT fl,STREAM_ID stream);
 
-void stream_WriteFloat(FLOAT fl,struct _stream *f);
+void stream_WriteChar(char c,STREAM_ID stream);
 
-void stream_WriteChar(char c,struct _stream *f);
+OBJECT_ID stream_ReadObject(STREAM_ID stream);
 
-struct _object *stream_ReadObject(struct _stream *f);
-
-void stream_WriteObject(struct _object *obj,struct _stream *f);
+void stream_WriteObject(OBJECT_ID obj_id,STREAM_ID stream);
 
 #ifndef USE_ARDUINO_FUNCTIONS
-struct _object *stream_ReadObjectPlus(struct _stream *f);
+OBJECT_ID stream_ReadObjectPlus(STREAM_ID stream);
 
-void stream_WriteObjectPlus(struct _object *obj,struct _stream *f);
+void stream_WriteObjectPlus(OBJECT_ID obj_id,STREAM_ID stream);
 #endif
 
 #ifdef __cplusplus

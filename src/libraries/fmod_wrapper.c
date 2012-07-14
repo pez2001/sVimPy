@@ -54,9 +54,8 @@ void fmod_play_sound(FMOD_SYSTEM *fmod_sys,char *filename,int mode)
     return;
 }
 
-object *fmod_playSound(vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID fmod_playSound(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
- //filename,mode
 	object *self = GetItem((object*)locals,0);
 	object *filename = GetItem((object*)locals,1);
 	object *mode = GetItem((object*)locals,2);
@@ -64,39 +63,31 @@ object *fmod_playSound(vm *vm,tuple_object *locals,tuple_object *kw_locals)
 	object *sys = GetAttribute(self,(object*)sys_name);
 	gc_IncRefCount((object*)sys_name);
 	gc_DecRefCount((object*)sys_name);
-	//printf("playSound\n");
-	//TODO only a temp solution
 	if(filename->type == TYPE_KV)
 		filename = (object*)((kv_object*)filename)->value;
 	if(mode->type == TYPE_KV)
 		mode = (object*)((kv_object*)mode)->value;
-	//if(filename->type == TYPE_UNICODE && mode->type == TYPE_INT)
-	//	fmod_play_sound(((unicode_object*)filename)->value,((int_object*)mode)->value);
 	if(filename->type == TYPE_UNICODE)
 		fmod_play_sound(((tag_object*)sys)->tag,((unicode_object*)filename)->value,0);
-	//printf("playSound: %s ,mode: %d\n",((unicode_object*)filename)->value,((int_object*)mode)->value);
 	object *tmp =CreateEmptyObject(TYPE_NONE);
 	return (tmp);	
 }
 
-object *fmod_Sleep(vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID mod_Sleep(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
-	//printf("sleep\n");
-	//object *self = GetItem((object*)locals,0);
 	object *delay = GetItem((object*)locals,1);
 	if(delay->type == TYPE_KV)
 		delay = (object*)((kv_object*)delay)->value;
 	if(delay->type == TYPE_INT)
 	{
-		printf("sleeping:%d \n",((int_object*)delay)->value);
-		//Sleep(((int_object*)delay)->value);
-		Sleep(5000);
+		Sleep(((int_object*)delay)->value);
+		//Sleep(5000);
 	}
 	object *tmp =CreateEmptyObject(TYPE_NONE);
 	return (tmp);	
 }
 
-void AddFmodGlobals(vm *vm)
+void AddFmodGlobals(VM_ID vm)
 {
 	code_object *a_globals = CreateCodeObject(str_Copy("fmod_code"));
 	AddCodeCFunction((object*)a_globals,"Sleep",&fmod_Sleep);
@@ -108,7 +99,7 @@ void AddFmodGlobals(vm *vm)
 	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy("fmod")),fmod_global);
 }
 
-object *fmod_Init(vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID fmod_Init(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
 	object *self = GetItem((object*)locals,0);
 	unsigned int version;
@@ -136,7 +127,7 @@ object *fmod_Init(vm *vm,tuple_object *locals,tuple_object *kw_locals)
 	return (tmp);	
 }
 
-object *fmod_Close(vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID fmod_Close(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
 	object *self = GetItem((object*)locals,0);
 	unicode_object *sys_name = CreateUnicodeObject(str_Copy("__fmod_sys__"));

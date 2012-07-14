@@ -1,4 +1,4 @@
-/* 
+﻿/* 
  * sVimPy - small Virtual interpreting machine for Python
  * (c) 2012 by Tim Theede aka Pez2001 <pez2001@voyagerproject.de> / vp
  *
@@ -22,23 +22,281 @@
 
 #include "memory.h"
 
-#ifdef USE_DEBUGGING
+char * memory = NULL;
 
 long mem_chunks_num = 0;
-long mem_chunks_max_size = 0;
-long mem_chunks_actual_size = 0;
+long mem_locks_num = 0;
+long mem_unlocks_num = 0;
+long mem_max_locked = 0;
+long mem_max_locked_size = 0;
 mem_chunk **mem_chunk_items;
-long mem_chunks_top = 0;
+
+MEM_ID *mem_locks;
+long mem_locks_top = 0;
+
+void mem_Init(void)
+{
+	#ifdef USE_DEBUGGING
+	if((debug_level & DEBUG_MEMORY) > 0)
+	{
+	}
+	#endif
+	mem_chunk_items =	(mem_chunk**) malloc(1 * sizeof(mem_chunk*));
+	mem_chunks_num = 0;
+	mem_locks_num = 0;
+	mem_unlocks_num = 0;
+	mem_locks_top = 0;
+	mem_max_locked = 0;
+	mem_max_locked_size = 0;
+	mem_locks = (MEM_ID*) malloc(1 * sizeof(MEM_ID));
+}
+
+MEM_ID mem_AddChunk(void *ptr,char *description,long size)
+{
+	mem_chunk *chunk = (mem_chunk*)malloc(sizeof(mem_chunk));
+	chunk->ptr = ptr;
+	chunk->description = description;
+	chunk->size = size;
+	chunk->is_freed = 0;
+	//chunk->is_removed = 0;
+	chunk->locks = 0;
+	mem_chunk_items = (mem_chunk**) realloc(mem_chunk_items,(mem_chunks_num+1)*sizeof(mem_chunk*));
+	mem_chunk_items[mem_chunks_num] = chunk;
+	mem_chunks_num++;
+	return(mem_chunks_num-1);
+}
+
+void mem_PushLock(MEM_ID ptr)
+{
+	mem_locks = (MEM_ID*) realloc(mem_locks,(mem_locks_top+1)*sizeof(MEM_ID));
+	mem_locks[mem_locks_top] = ptr;
+	mem_locks_top++;
+	//printf("locked %d\n",ptr);
+	if(mem_locks_top > mem_max_locked)
+	{
+		mem_max_locked = mem_locks_top;
+		//printf("locks peaked @ %d\n",mem_locks_top);
+	}
+	long heap_size = 0;
+	for(long i = 0;i<mem_locks_top;i++)
+	{
+		heap_size += mem_chunk_items[mem_locks[i]]->size;
+	}
+	if(heap_size > mem_max_locked_size)
+	{
+		mem_max_locked_size = heap_size;
+		//printf("heap peaked @ %d\n",heap_size);
+	}
+}
+
+void mem_PopLock(MEM_ID ptr)
+{
+	mem_locks_top--;
+	if(mem_locks_top<0)
+	{
+		printf("Error no locks left to pop\n");
+		mem_locks_top = 0;
+	}
+	else
+	{
+		if(mem_locks[mem_locks_top] != ptr)
+		{
+			printf("Error wrong unlock sequence:last lock was %d but ptr is %d (open locks:%d)\n",mem_locks[mem_locks_top],ptr,mem_locks_top);
+		//force segfault for gdb debugging  to get the exact location 
+			mem_locks = 1;
+			if(mem_locks[0] == 'c')
+				printf("crash\n");
+		}	
+		//printf("unlocked %d\n",ptr);
+	}
+	mem_locks = (MEM_ID*) realloc(mem_locks,(mem_locks_top+1)*sizeof(MEM_ID));
+}
+
+
+/*
+MEM_ID mem_RemoveChunk(MEM_ID chunk)
+{
+	
+}
+*/
+
+BOOL mem_DebugHeapWalk(BOOL show_leaked,BOOL show_locked)
+{
+	long locked = 0;
+	long leaked = 0;
+	for(long i = 0;i<mem_chunks_num;i++)
+	{
+		if(show_leaked && !mem_chunk_items[i]->is_freed)
+		{
+			printf("leaked chunk id:%d\ndescription:%s\nsize:%d\nhex:\n",i,mem_chunk_items[i]->description,mem_chunk_items[i]->size);
+			for(int b = 0;b<mem_chunk_items[i]->size;b++)
+			{
+				printf("%2x ",((unsigned char*)mem_chunk_items[i]->ptr)[b]);
+			}
+			printf("\nraw:\n");
+			for(int b = 0;b<mem_chunk_items[i]->size;b++)
+			{
+				printf("%c",((unsigned char*)mem_chunk_items[i]->ptr)[b]);
+			}
+			printf("\n");
+			leaked++;
+		}
+		if(show_locked && mem_chunk_items[i]->locks > 0)
+		{
+			printf("still locked chunk id:%d\ndescription:%s\nsize:%d\nlocks num:%d\n",i,mem_chunk_items[i]->description,mem_chunk_items[i]->size,mem_chunk_items[i]->locks);
+			locked++;			
+		}
+	}
+	if(show_locked)
+		printf("still locked chunks:%d\n",locked);
+	if(show_leaked)
+		printf("leaked chunks:%d\n",leaked);
+	if(locked || leaked)
+		return(1);
+	else 
+		return(0);
+}
+
+BOOL mem_Close(void)
+{
+	printf("mem chunks allocated:%d\n",mem_chunks_num);
+	printf("mem chunks locked:%d\n",mem_locks_num);
+	printf("mem chunks unlocked:%d\n",mem_unlocks_num);
+	printf("locks peaked @ %d\n",mem_max_locked);
+	printf("heap peaked @ %d\n",mem_max_locked_size);
+	BOOL r = mem_DebugHeapWalk(1,1);
+	for(long i = 0;i<mem_chunks_num;i++)
+	{
+		if(!mem_chunk_items[i]->is_freed)
+		{
+			free(mem_chunk_items[i]->ptr);
+		}
+		if(mem_chunk_items[i]->description != NULL)
+			free(mem_chunk_items[i]->description);
+		free(mem_chunk_items[i]);
+	}
+	free(mem_chunk_items);
+	return(r);
+}
+
+MEM_ID mem_malloc(size_t size,MEM_POOL_CLASS_ID pool_class)
+{
+	void *ptr = malloc(size);
+	return(mem_AddChunk(ptr,NULL,size));
+}
+
+MEM_ID mem_malloc_debug(size_t size,MEM_POOL_CLASS_ID pool_class, char *description)
+{
+	void *ptr = malloc(size);
+	return(mem_AddChunk(ptr,description,size));
+}
+
+MEM_ID mem_realloc(MEM_ID ptr, size_t size)
+{
+	void *tmp = (void*)malloc(size);
+	memcpy(tmp,mem_chunk_items[ptr]->ptr,size);
+	free(mem_chunk_items[ptr]->ptr);
+	mem_chunk_items[ptr]->ptr = tmp;
+	return(ptr);
+}
+
+void mem_free(MEM_ID ptr)
+{	
+	free(mem_chunk_items[ptr]->ptr);
+	mem_chunk_items[ptr]->is_freed = 1;
+	mem_chunk_items[ptr]->ptr = NULL;
+}
+
+void *mem_lock(MEM_ID ptr)
+{	
+	mem_locks_num++;
+	mem_chunk_items[ptr]->locks++;
+	mem_PushLock(ptr);
+	return(mem_chunk_items[ptr]->ptr);
+}
+
+
+void mem_unlock(MEM_ID ptr,BOOL is_dirty)
+{
+	mem_unlocks_num++;
+	mem_chunk_items[ptr]->locks--;	
+	mem_PopLock(ptr);
+}
+
+MEM_ID mem_copy(MEM_ID src)
+{
+	void *tmp = (void*)malloc(mem_chunk_items[src]->size);
+	memcpy(tmp,mem_chunk_items[src]->ptr,mem_chunk_items[src]->size);
+	return(mem_AddChunk(tmp,"memory copy",mem_chunk_items[src]->size));
+}
+
+MEM_ID mem_create(char *bytes,INT len)
+{
+	void *tmp = (void*)malloc(len);
+	memcpy(tmp,(void*)bytes,len);
+	return(mem_AddChunk(tmp,"memory create",len));
+}
+
+MEM_ID mem_create_buf(INT len)
+{
+	void *ptr = malloc(len);
+	memset((void*)ptr,0,len);
+	return(mem_AddChunk(ptr,"memory create buffer",len));
+
+}
+
+MEM_ID mem_create_string(char *string)
+{
+	void *tmp = (void*)malloc(strlen(string) + 1);
+	memcpy(tmp,(void*)string,strlen(string) + 1);
+	return(mem_AddChunk(tmp,"memory create string",strlen(string) + 1));
+}
+
+BOOL mem_compare(MEM_ID a,MEM_ID b)
+{
+	long len = mem_chunk_items[a]->size;
+	long len2 = mem_chunk_items[b]->size;
+	if(len != len2)
+		return(0);
+	return(!memcmp((void*)mem_chunk_items[a]->ptr,(void*)mem_chunk_items[b]->ptr,len));
+}
+
+void mem_set(MEM_ID src,char value,INT len)
+{
+	memset(mem_chunk_items[src]->ptr,value,len);
+}
+
+BOOL mem_copy_to(MEM_ID dst,char *bytes,INT len)
+{
+	memcpy(mem_chunk_items[dst]->ptr,(void*)bytes,len);
+	return(1);
+}
+
+BOOL mem_copy_from(MEM_ID src,char *bytes,INT len)
+{
+	memcpy(bytes,mem_chunk_items[src]->ptr,len);
+	return(1);
+}
+
+BOOL mem_copy_to_offset(MEM_ID dst,NUM dst_offset,char *bytes,INT len)
+{
+	memcpy((void*)(((char*)mem_chunk_items[dst]->ptr)+dst_offset),(void*)bytes,len);
+	return(1);
+}
+
+
+BOOL mem_copy_from_offset(MEM_ID src,NUM src_offset,char *bytes,INT len)
+{
+	memcpy((void*)bytes,(void*)(((char*)mem_chunk_items[src]->ptr)+src_offset),len);
+	return(1);
+}
+
+/*
 
 #define BOUNDS_LEN 1
 
 void mem_Init(void)
 {
-	if((debug_level & DEBUG_MEMORY) > 0)
-	{
-	mem_chunk_items =	(mem_chunk**) malloc(1 * sizeof(mem_chunk*));
-	mem_chunks_top = 0;
-	}
 }
 
 void mem_Close(void)
@@ -200,7 +458,9 @@ int mem_free(void *ptr)
 			mem_chunk_items[i]->is_freed = 1;
 			//memset(ptr,255,mem_chunk_items[i]->size+(BOUNDS_LEN*2));
 			memset(ptr,255,mem_chunk_items[i]->size);
-			/*unsigned char *bound = (unsigned char*)mem_chunk_items[i]->ptr;
+			
+			//
+			unsigned char *bound = (unsigned char*)mem_chunk_items[i]->ptr;
 			bound += mem_chunk_items[i]->size+1;
 			unsigned char *bound2 = (unsigned char*)mem_chunk_items[i]->ptr;
 			bound2 -= 1;
@@ -236,7 +496,7 @@ int mem_free(void *ptr)
 				printf("\n");
 	
 			}
-			*/
+			//
 			break;
 		}
 	}
@@ -269,7 +529,6 @@ int mem_free(void *ptr)
 	}
 	return (1);
 }
-
-#endif
+*/
 
 

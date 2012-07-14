@@ -22,77 +22,88 @@
 
 #include "strops.h"
 
-char *str_Cat(char *a, char *b)
+BYTES_ID str_Cat(BYTES_ID a_id, BYTES_ID b_id)
 {
-	if(a == NULL && b != NULL)
-		return(str_Copy(b));
+	if(a_id == 0 && b_id != 0)
+		return(str_Copy(b_id));
 	else
-		if(a != NULL && b == NULL)
-			return(str_Copy(a));
+		if(a_id != 0 && b_id == 0)
+			return(str_Copy(a_id));
 	else
-		if(a == NULL && b == NULL)
-			return(NULL);
-	#ifdef USE_DEBUGGING
-	char *tmp = (char *)mem_malloc(strlen(a) + strlen(b) + 1, "str_Cat() return");
+		if(a_id == 0 && b_id == 0)
+			return(0);
+	char *a = (char*)mem_lock(a_id);
+	char *b = (char*)mem_lock(b_id);
+	#ifdef USE_MEMORY_DEBUGGING
+	MEM_ID tmp_id = mem_malloc_debug(strlen(a) + strlen(b) + 1, MEM_POOL_CLASS_DYNAMIC,"str_Cat() return");
 	#else
-	char *tmp = (char *)malloc(strlen(a) + strlen(b) + 1);
+	MEM_ID tmp_id = mem_malloc(strlen(a) + strlen(b) + 1,MEM_POOL_CLASS_DYNAMIC);
 	#endif
+	char *tmp = (char*)mem_lock(tmp_id);
+	
 	memset(tmp, 0, strlen(a) + strlen(b) + 1);
 	memcpy(tmp, a, strlen(a));
 	memcpy(tmp + strlen(a), b, strlen(b));
-	//#ifdef USE_DEBUGGING
-	//assert(mem_free(a));
-	//#else
-	//free(a);
-	//#endif
-	
-	return (tmp);
+	mem_unlock(tmp_id,1);
+	mem_unlock(b_id,0);	
+	mem_unlock(a_id,0);
+	return(tmp_id);
 }
 
-char *str_Substring(char *a,INDEX start,NUM len)
+BYTES_ID str_Substring(BYTES_ID a_id,INDEX start,NUM len)
 {
+	char *a = (char*)mem_lock(a_id);
 	NUM e = start + len;
 	if(e> strlen(a))
 		e = strlen(a) - start;
 	else
 		e = len;
-	#ifdef USE_DEBUGGING
-	char *tmp = (char *)mem_malloc(e + 1, "str_Copy() return");
+	#ifdef USE_MEMORY_DEBUGGING
+	BYTES_ID tmp_id = mem_malloc_debug(e + 1, MEM_POOL_CLASS_DYNAMIC,"str_Copy() return");
 	#else
-	char *tmp = (char *)malloc(e + 1);
+	BYTES_ID tmp_id = mem_malloc(e + 1,MEM_POOL_CLASS_DYNAMIC);
 	#endif
+	char *tmp = (char*)mem_lock(tmp_id);
 	memset(tmp, 0, e + 1);
 	memcpy(tmp, a+start, e);
-	return(tmp);
+	mem_unlock(tmp_id,1);
+	mem_unlock(a_id,0);
+	return(tmp_id);
 }
 
-char *str_Copy(char *a)
+BYTES_ID str_Copy(BYTES_ID a_id)
 {
-	#ifdef USE_DEBUGGING
-	char *tmp = (char *)mem_malloc(strlen(a) + 1, "str_Copy() return");
+	char *a = (char*)mem_lock(a_id);
+	#ifdef USE_MEMORY_DEBUGGING
+	BYTES_ID tmp_id = mem_malloc_debug(strlen(a) + 1,MEM_POOL_CLASS_DYNAMIC, "str_Copy() return");
 	#else
-	char *tmp = (char *)malloc(strlen(a) + 1);
+	BYTES_ID tmp_id = mem_malloc(strlen(a) + 1,MEM_POOL_CLASS_DYNAMIC);
 	#endif
 
+	char *tmp = (char*)mem_lock(tmp_id);
 	memset(tmp, 0, strlen(a) + 1);
 	memcpy(tmp, a, strlen(a));
-	return(tmp);
+	mem_unlock(tmp_id,1);
+	mem_unlock(a_id,0);
+	return(tmp_id);
 }
 
-char *str_FromChar(char c)
+BYTES_ID str_FromChar(char c)
 {
-	#ifdef USE_DEBUGGING
-	char *tmp = (char *)mem_malloc(2, "str_FromChar() return");
+	#ifdef USE_MEMORY_DEBUGGING
+	BYTES_ID tmp_id = mem_malloc_debug(2, MEM_POOL_CLASS_STATIC,"str_FromChar() return");
 	#else
-	char *tmp = (char *)malloc(2);
+	BYTES_ID tmp_id = mem_malloc(MEM_POOL_CLASS_STATIC);
 	#endif
+	char *tmp = (char*)mem_lock(tmp_id);
 	
 	memset(tmp, 0, 2);
 	memset(tmp, c, 1);
-	return(tmp);
+	mem_unlock(tmp_id,1);
+	return(tmp_id);
 }
 
-char *str_Printf(char *format, ...)
+BYTES_ID str_Printf(BYTES_ID format, ...)
 {
 	va_list va;
 	va_start(va,format);
@@ -101,37 +112,43 @@ char *str_Printf(char *format, ...)
 	va_end(va);
 	//printf("n:%d\n",n);
 	va_start(va,format);
-	char *output = str_PrintfVa(format,n,va);
+	BYTES_ID output = str_PrintfVa(format,n,va);
 	va_end(va);
 	return(output);
 }
 
-NUM str_PrintfVaLen(char *format,va_list va)
+NUM str_PrintfVaLen(BYTES_ID format,va_list va)
 {
-	NUM n = vsnprintf(NULL,0,format,va);
+	char *f = (char*)mem_lock(format);
+	NUM n = vsnprintf(NULL,0,f,va);
+	mem_unlock(format,0);
 	return(n+1);
 }
 
-char *str_PrintfVa(char *format,NUM len,va_list va)
+BYTES_ID str_PrintfVa(BYTES_ID format,NUM len,va_list va)
 {
-	char *output = NULL;
+	BYTES_ID output = 0;
 	//va_start(va,format);
 	//va_list vc = va;
 	//int n = vsnprintf(NULL,0,format,va) + 1;
 	//va_end(va);
 	//printf("len:%d\n",len);
 	//printf("format:%s\n",format);
-	#ifdef USE_DEBUGGING
-	output = (char*) mem_malloc((len),"str_PrintfVA() - return");
+	#ifdef USE_MEMORY_DEBUGGING
+	output = mem_malloc_debug((len),MEM_POOL_CLASS_DYNAMIC,"str_PrintfVA() - return");
 	#else
-	output = (char*) malloc((len));
+	output = mem_malloc((len),MEM_POOL_CLASS_DYNAMIC);
 	#endif
-	memset(output,0,(len));
+	char *o = (char*)mem_lock(output);
+	char *f = (char*)mem_lock(format);
+	memset(o,0,(len));
 	//va_start(va,format);
 	//printf("alloced\n");
-	vsnprintf(output,(len),format,va);
+	vsnprintf(o,(len),f,va);
 	//va_end(va);
 	//printf("output:%s\n",output);
+	mem_unlock(format,0);
+	mem_unlock(output,1);
 	return(output);
 }
 

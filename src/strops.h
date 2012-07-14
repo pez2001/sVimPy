@@ -31,25 +31,26 @@
 #include "stdio.h"
 #include "stdlib.h"
 #include "string.h"
+#include "memory.h"
 
 #ifdef __cplusplus
 extern "C"  {
 #endif
 
 
-char *str_Cat(char *a, char *b);
+BYTES_ID str_Cat(BYTES_ID a_id, BYTES_ID b_id);
 
-char *str_Copy(char *a);
+BYTES_ID str_Copy(BYTES_ID a_id);
 
-char *str_Substring(char *a,INDEX start,NUM len);
+BYTES_ID str_Substring(BYTES_ID a_id,INDEX start,NUM len);
 
-char *str_FromChar(char c);
+BYTES_ID str_FromChar(char c);
 
-char *str_Printf(char *format, ...);
+BYTES_ID str_Printf(BYTES_ID format, ...);
 
-char *str_PrintfVa(char *format,NUM len,va_list va);
+BYTES_ID str_PrintfVa(BYTES_ID format,NUM len,va_list va);
 
-NUM str_PrintfVaLen(char *format,va_list va);
+NUM str_PrintfVaLen(BYTES_ID format,va_list va);
 
 
 #ifdef __cplusplus

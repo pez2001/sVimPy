@@ -37,69 +37,70 @@
 extern "C"  {
 #endif
 
-// object *pow(object *base,object *exp);
 struct _vm;
 
 #ifdef USE_INTERNAL_FUNCTIONS
 
-//object *if_assert(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+//OBJECT_ID if_assert(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals);
 
-object *if_build_class(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+OBJECT_ID if_build_class(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals);
 
-object *if_open(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+OBJECT_ID if_open(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals);
 
-object *if_range(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+OBJECT_ID if_range(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals);
 
-object *if_print(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+OBJECT_ID if_print(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals);
 
-object *if_sum(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+OBJECT_ID if_sum(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals);
 
-object *if_list(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+OBJECT_ID if_list(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals);
 
-object *if_max(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+OBJECT_ID if_max(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals);
 
-object *if_abs(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+OBJECT_ID if_abs(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals);
 
-object *if_len(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+OBJECT_ID if_len(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals);
 
-object *if_pow(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+OBJECT_ID if_pow(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals);
 
-object *if_min(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+OBJECT_ID if_min(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals);
 
-object *if_sorted(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+OBJECT_ID if_sorted(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals);
 
-object *if_reversed(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+OBJECT_ID if_reversed(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals);
 
-object *if_all(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+OBJECT_ID if_all(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals);
 
-object *if_any(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+OBJECT_ID if_any(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals);
 
-object *if_chr(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+OBJECT_ID if_chr(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals);
 
-object *if_ord(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+OBJECT_ID if_ord(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals);
 
-object *if_cmp(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+OBJECT_ID if_cmp(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals);
 
-object *if_hex(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+OBJECT_ID if_hex(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals);
 
-object *if_int(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+OBJECT_ID if_int(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals);
 
-object *if_float(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+OBJECT_ID if_float(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals);
 
-object *if_iter(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+OBJECT_ID if_iter(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals);
 
-object *if_map(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+OBJECT_ID if_map(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals);
 
-object *if_next(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+OBJECT_ID if_next(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals);
 
-object *custom_code(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals);
+OBJECT_ID custom_code(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals);
 
-void AddInternalFunctions(struct _vm *vm);
+void AddArduinoGlobal(VM_ID vm);
+
+void AddInternalFunctions(VM_ID vm);
 #endif
 
-object *BinaryOp(object *tos,object *tos1,unsigned char op);
+OBJECT_ID BinaryOp(OBJECT_ID tos_id,OBJECT_ID tos1_id,unsigned char op);
 
-object *CompareOp(object *tos,object *tos1,unsigned char cmp_op);
+OBJECT_ID CompareOp(OBJECT_ID tos_id,OBJECT_ID tos1_id,unsigned char cmp_op);
 
 #ifdef __cplusplus
 } 

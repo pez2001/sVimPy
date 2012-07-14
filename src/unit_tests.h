@@ -39,13 +39,4 @@
 
 #include "arduino/fade_min.h"
 
-#ifdef USE_DEBUGGING
-extern long mem_chunks_num;
-extern long mem_chunks_actual_size;
-extern long mem_chunks_max_size;
-extern long objects_num;
-extern long objects_max;
-extern long objects_header_total;
-#endif
-
 #endif

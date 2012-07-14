@@ -23,6 +23,51 @@
 
 #ifndef TUPLES_H
 #define TUPLES_H
+#include "object.h"
+#include "types.h"
+#include "features.h"
+#include "memory.h"
 
+BOOL tuple_IsTuple(TUPLE_ID tuple);
+
+NUM tuple_GetLen(TUPLE_ID tuple);
+
+void tuple_ClearDictValues(TUPLE_ID tuple);
+
+void tuple_ConvertToDict(TUPLE_ID tuple);
+
+void tuple_ResetIteration(TUPLE_ID tuple);
+
+OBJECT_ID tuple_GetNextItem(TUPLE_ID tuple);
+
+OBJECT_ID tuple_GetItem(TUPLE_ID tuple, INDEX index);
+
+OBJECT_ID tuple_GetDictItem(TUPLE_ID tuple,OBJECT_ID key);
+
+OBJECT_ID tuple_GetDictItemByIndex(TUPLE_ID tuple,INDEX index);
+
+OBJECT_ID tuple_GetDictItemByName(TUPLE_ID tuple,BYTES_ID name);
+
+INDEX tuple_GetItemIndex(TUPLE_ID tuple,OBJECT_ID obj);
+
+INDEX tuple_GetItemIndexByName(TUPLE_ID tuple, BYTES_ID name);
+
+INDEX tuple_GetDictItemIndex(TUPLE_ID tuple,OBJECT_ID key);
+
+void tuple_SetItem(TUPLE_ID tuple, INDEX index, OBJECT_ID obj);
+
+void tuple_SetDictItem(TUPLE_ID tuple,OBJECT_ID key,OBJECT_ID value);
+
+void tuple_SetDictItemByIndex(TUPLE_ID tuple,INDEX index,OBJECT_ID value);
+
+void tuple_AppendItem(TUPLE_ID tuple,OBJECT_ID value);
+
+void tuple_AppendDictItem(TUPLE_ID tuple,OBJECT_ID key,OBJECT_ID value);
+
+void tuple_InsertItem(TUPLE_ID tuple,INDEX index,OBJECT_ID value);
+
+void tuple_DeleteItem(TUPLE_ID tuple, INDEX index);
+
+void tuple_DeleteDictItem(TUPLE_ID tuple,OBJECT_ID key);
 
 #endif

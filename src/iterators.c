@@ -21,380 +21,351 @@
  */
 
 #include "iterators.h"
-iter_object *iter_CreateIter(object *iteration,struct _vm *vm)//,struct _vm *vm
+
+
+ITER_ID iter_CreateIter(OBJECT_ID iteration_id,VM_ID vm_id)
 {
-	if(iteration->type == TYPE_KV) //TODO remove here
-		iteration = ((kv_object*)iteration)->value;
+	object *iteration = (object*)mem_lock(iteration_id);
+	if(iteration->type == TYPE_KV)
+	{//TODO remove here
+		OBJECT_ID old  = iteration_id;
+		iteration_id = ((kv_object*)iteration)->value;
+		mem_unlock(old,0);
+		iteration = (object*)mem_lock(iteration_id);
+	}
 	if(iteration->type == TYPE_TUPLE)
 	{
-		iter_object *iter = CreateIterObject();
-		iter_InitIteration(iter,vm,(tuple_object*)iteration);
+		mem_unlock(iteration_id,0);
+		OBJECT_ID iter = obj_CreateIter();
+		iter_InitIteration(iter,vm_id,iteration_id);
 		return(iter);
 	}
-	else	if(iteration->type == TYPE_CFUNCTION)
+	else if(iteration->type == TYPE_CFUNCTION)
 	{
-		iter_object *iter = CreateIterObject();
-		iter_InitCFGenerator(iter,vm,(cfunction_object*)iteration);	
+		mem_unlock(iteration_id,0);
+		OBJECT_ID iter = obj_CreateIter();
+		iter_InitCFGenerator(iter,vm_id,iteration_id);	
 		return(iter);
 	}
-	else	if(iteration->type == TYPE_METHOD)
+	else if(iteration->type == TYPE_METHOD)
 	{
-		iter_object *iter = CreateIterObject();
-		iter_InitMGenerator(iter,vm,(method_object*)iteration);	
+		mem_unlock(iteration_id,0);
+		OBJECT_ID iter = obj_CreateIter();
+		iter_InitMGenerator(iter,vm_id,iteration_id);	
 		return(iter);
 	}
 	else if(iteration->type == TYPE_ITER)
 	{
-		//printf("iteration already created\n");
-		//if(((iter_object*)iteration)->
-		return((iter_object*)iteration);
+		mem_unlock(iteration_id,0);
+		return(iteration_id);
 	}
 	else
 	{
+		mem_unlock(iteration_id,0);
 		#ifdef USE_DEBUGGING
-		debug_printf(DEBUG_ALL,"no appropriate iter found for obj @%x\n",iteration);
+		debug_printf(DEBUG_ALL,"no appropriate iter found for obj @%d\n",iteration_id);
 		#endif
-		return(NULL);
+		return(0);
 	}
 }
 
-void iter_RestoreBlockStack(iter_object *iter,struct _vm *vm)
+void iter_RestoreBlockStack(ITER_ID iter_id,VM_ID vm_id)
 {
+	struct _vm *vm = (struct _vm*)mem_lock(vm_id);
+	iter_object *iter = (iter_object*)mem_lock(iter_id);
+	
 	stack_Push(vm->blocks,iter->tag);
-	while(iter->block_stack->list->num)
+	while(!stack_IsEmpty(iter->block_stack))
 	{
-		block_object *bo = (block_object*)stack_Pop(iter->block_stack);
-		stack_Push(vm->blocks,(object*)bo);//reverserd order
-		//printf("restoring bo:%x\n",bo);
-		//DumpObject(bo,0);
+		OBJECT_ID bo = stack_Pop(iter->block_stack);
+		stack_Push(vm->blocks,bo);//reverserd order
 	}
+	mem_unlock(iter_id,0);
+	mem_unlock(vm_id,0);
 }
 
-void iter_ClearBlockStack(iter_object *iter,struct _vm *vm)
+void iter_ClearBlockStack(ITER_ID iter_id,VM_ID vm_id)
 {
-	//stack_Push(vm->blocks,iter->tag);
-	while(iter->block_stack->list->num)
+	//struct _vm *vm = (struct _vm*)mem_lock(vm_id);
+	iter_object *iter = (iter_object*)mem_lock(iter_id);
+	while(!stack_IsEmpty(iter->block_stack))
 	{
-		block_object *bo = (block_object*)stack_Pop(iter->block_stack);
-		//stack_Push(vm->blocks,(object*)bo);//reverserd order
-		gc_DecRefCount((object*)bo);
-		//printf("restoring bo:%x\n",bo);
-		//DumpObject(bo,0);
+		//OBJECT_ID bo = stack_Pop(iter->block_stack);
+		stack_Pop(iter->block_stack);
+		//obj_DecRefCount(bo);
 	}
+	//mem_unlock(vm_id,0);
+	mem_unlock(iter_id,0);
 }
 
-void iter_SaveBlockStack(iter_object *iter,struct _vm *vm)
+void iter_SaveBlockStack(ITER_ID iter_id,VM_ID vm_id)
 {
-	block_object *bo = NULL;
-	//DumpObject((object*)iter,0);
-	while((object*)(bo = (block_object*)stack_Pop(vm->blocks)) != iter->tag)
+	struct _vm *vm = (struct _vm*)mem_lock(vm_id);
+	iter_object *iter = (iter_object*)mem_lock(iter_id);
+	OBJECT_ID bo = 0;
+	while((bo = stack_Pop(vm->blocks)) != iter->tag)
 	{
-		//debug_printf(DEBUG_ALL,"saving bo:%x\n",bo);
-		//DumpObject(bo,0);
-		//debug_printf(DEBUG_ALL,"to:@%x\n",iter->block_stack);
-		//stack_Dump(iter->block_stack);
-		stack_Push(iter->block_stack,(object*)bo);//reverserd order
-	}//while(bo != iter);
+		stack_Push(iter->block_stack,bo);//reverserd order
+	}
+	mem_unlock(iter_id,0);
+	mem_unlock(vm_id,0);
 }
 
-object *iter_Next(iter_object *iter,struct _vm *vm)
+OBJECT_ID iter_Next(ITER_ID iter_id,VM_ID vm_id)
 {
-	object *next = iter->iter_func(iter,vm);
-	//IncRefCount(next);
+	iter_object *iter = (iter_object*)mem_lock(iter_id);
+	OBJECT_ID next = iter->iter_func(iter_id,vm_id);
+	mem_unlock(iter_id,0);
 	return(next);
 }
 
-void iter_Expand(iter_object *iter,struct _vm *vm,stack *stack)
+void iter_Expand(ITER_ID iter_id,VM_ID vm_id,STACK_ID stack_id)
 {
-	//debug_printf(DEBUG_ALL,"incrementing ref_count in iter_Expand() - iter\n");
-	gc_IncRefCount((object*)iter);
-	object *n = NULL;
-	//printf("expanding iter\n");
-	struct _stack *tmp = stack_Init();
+	obj_IncRefCount(iter_id);
+	OBJECT_ID n = 0;
+	STACK_ID tmp = stack_Create();
+	//BOOL found_none = 0;
 	do
 	{
-		n = iter_NextNow(iter,vm);
-		//if(n!= NULL)
-		//	printf("n:%c\n",n->type);
-		//else 
-		//	printf("n: NULL\n");
-		//gc_DecRefCount(n);
+		n = iter_NextNow(iter_id,vm_id);
 		stack_Push(tmp,n);
-		//debug_printf(DEBUG_ALL,"decrementing ref_count in iter_Expand() - n\n");
-	}while(n->type != TYPE_NONE);
-	//printf("pushing expanded items\n");
-	while(tmp->list->num)
+	}while(obj_GetType(n) != TYPE_NONE);
+	while(!stack_IsEmpty(tmp))
 	{
-		object *s = stack_Pop(tmp);
-		//if(s->type != TYPE_NONE)
-		//{
-			stack_Push(stack,s);
-		//}
-		//else
-		//{
-			//FreeObject(s);
-		//	gc_DecRefCount(s);
-		//}
+		OBJECT_ID s = stack_Pop(tmp);
+		stack_Push(stack_id,s);
 	}
 	stack_Close(tmp,0);
-	//debug_printf(DEBUG_ALL,"decrementing ref_count in iter_Expand() - iter\n");
-	gc_DecRefCount((object*)iter);
-	//printf("expanded iter\n");
+	obj_DecRefCount(iter_id);
 }
 
-tuple_object *iter_TupleExpand(iter_object *iter,struct _vm *vm)
+TUPLE_ID iter_TupleExpand(ITER_ID iter_id,VM_ID vm_id)
 {
-	gc_IncRefCount((object*)iter);
-	object *n = NULL;
-	tuple_object *to = CreateTuple(0);
+	obj_IncRefCount(iter_id);
+	OBJECT_ID n = 0;
+	TUPLE_ID to = obj_CreateTuple(0);
 	do
 	{
-		n = iter_NextNow(iter,vm);
-		//if(n==NULL)
-		//	printf("WARNING NEXTNOW RETURNED NULL\n");
-		//if(n->type != TYPE_NONE)
-		//{
-			//DumpObject((object*)n,0);
-		//gc_DecRefCount(n);
-		AppendItem((object*)to,n);
-		//}
-		//else //TODO just a quick fix ... the real problem lies hidden deep in the jungle of gc calls
-			//if(n->ref_count==0)
-		//else
-		 //DumpObject(n,0);
-		//	DecRefCountGC((object*)n,vm->garbage);
-	}while(n->type != TYPE_NONE);
-	gc_DecRefCount((object*)iter);
+		n = iter_NextNow(iter_id,vm_id);
+		tuple_AppendItem(to,n);
+	}while(obj_GetType(n) != TYPE_NONE);
+	obj_DecRefCount(iter_id);
 	return(to);
 }
 
-void iter_ExpandTuple(iter_object *iter,struct _vm *vm,tuple_object *to)
+void iter_ExpandTuple(ITER_ID iter_id,VM_ID vm_id,TUPLE_ID to_id)
 {
-	gc_IncRefCount((object*)iter);
-	object *n = NULL;
+	obj_IncRefCount(iter_id);
+	OBJECT_ID n = 0;
 	do
 	{
-		n = iter_NextNow(iter,vm);
-		//if(n->type != TYPE_NONE)
-		//{
-		//gc_DecRefCount(n);
-		AppendItem((object*)to,n);
-		//}
-		//else
-			//if(n->ref_count==0)
-			//{
-			//	printf("KILLING UNREFED OBJECT\n");
-			//}
-	//else
-		//	DumpObject(n,0);
-		//	DecRefCountGC((object*)n,vm->garbage);
-	}while(n->type != TYPE_NONE);
-	gc_DecRefCount((object*)iter);
+		n = iter_NextNow(iter_id,vm_id);
+		tuple_AppendItem(to_id,n);
+	}while(obj_GetType(n) != TYPE_NONE);
+	obj_DecRefCount(iter_id);
 }
 
-object *iter_NextNow(iter_object *iter,struct _vm *vm)
+OBJECT_ID iter_NextNow(ITER_ID iter_id,VM_ID vm_id)
 {
-	//printf("nextNow()\n");
-	object *next = iter->iter_func(iter,vm);
-	//DumpObject(iter,0);
-	//DumpObject(next,0);
-	//printf("iter executed:%x\n",iter);
-	if(next->type == TYPE_BLOCK) //used only to differentiate between an object to return and a generator not finished
+	OBJECT_ID next = iter_Next(iter_id,vm_id);
+	if(obj_GetType(next) == TYPE_BLOCK) //used only to differentiate between an object to return and a generator not finished
 	{
-		object *ret = NULL;
-		block_object *bo = (block_object*)iter->tag;
-		//code_object *co = bo->code;
+		struct _vm *vm = (struct _vm*)mem_lock(vm_id);
+		iter_object *iter = (iter_object*)mem_lock(iter_id);
+		OBJECT_ID ret = 0;
+		BLOCK_ID bo = iter->tag;
+		iter_RestoreBlockStack(iter_id,vm_id);
+		obj_IncRefCount(iter_id);
 		
-		//stack *saved_blocks = vm->blocks
-		//vm->blocks = stack_Init();
-		//stack_Push(vm->blocks, bo);
-		//vm_DumpCode(vm,0,0);
-		iter_RestoreBlockStack(iter,vm);
-		//printf("restored block stack for iter\n");
-		//printf("top:%x, bo:%x\n",stack_Top(vm->blocks),bo);
-		//debug_printf(DEBUG_ALL,"incrementing ref_count in iter_NextNow() - iter\n");
-		gc_IncRefCount((object*)iter);
-		
-		while(ret == NULL)//TODO doesnt stop after one block
+		while(ret == 0)//TODO doesnt stop after one block
 		{
-			//printf("in next now loop\n");
-			ret = vm_Step(vm);
-			//block_object *n = (block_object*)stack_Top(vm->blocks);
-			//debug_printf(DEBUG_ALL,"iter_NextNow() - step thru\n");
-			if(!stack_Contains(vm->blocks,(object*)bo)) //via normal return 
+			ret = vm_Step(vm_id);
+			if(!stack_Contains(vm->blocks,bo)) //via normal return 
 			//TODO switch to integer comparison to block stack num with the block stack num at the beginning
 			{
-				//debug_printf(DEBUG_ALL,"block executed\n");
-				//stack_Dump(n->stack);
-				block_object *n = (block_object*)stack_Top(vm->blocks);
-				if(vm->blocks->list->num)
+				BLOCK_ID n = stack_Top(vm->blocks);
+				if(!stack_IsEmpty(vm->blocks))
 				{
-					ret = stack_Pop(n->stack);
-					//gc_DecRefCount(ret);
-					//IncRefCount(ret);
+					block_object *bn = (block_object*)mem_lock(n);
+					ret = stack_Pop(bn->stack);
+					mem_unlock(n,0);
 				}	
-				iter_ClearBlockStack(iter,vm);
+				iter_ClearBlockStack(iter_id,vm_id);
 				break;
 			}
-			else if(ret != NULL) //via yield 
+			else if(ret != 0) //via yield 
 			{
-				//printf("saving block stack of iter\n");
-				iter_SaveBlockStack(iter,vm);
-				//debug_printf(DEBUG_ALL,"decrementing ref_count in iter_NextNow() - ret\n");
-				gc_DecRefCount(ret);
-				//IncRefCount(ret);
-				//printf("decremented iter\n");
+				iter_SaveBlockStack(iter_id,vm_id);
+				obj_DecRefCount(ret);
 			}
 		}
-		//debug_printf(DEBUG_ALL,"decrementing ref_count in iter_NextNow() - iter\n");
-		gc_DecRefCount((object*)iter);
-
-		//printf("ret object\n");
-		//DumpObject(ret,0);
+		mem_unlock(iter_id,0);
+		mem_unlock(vm_id,0);
+		obj_DecRefCount(iter_id);
 		return(ret);
 	}
-	//printf("iter thru nextNow:\n");
-	//DumpObject(next,0);
-	gc_DecRefCount(next);
-	//IncRefCount(next);
+	obj_DecRefCount(next);
 	return(next);
 }
 
-object *iter_Sequence(iter_object *iter,struct _vm *vm)
+OBJECT_ID iter_Sequence(ITER_ID iter_id,VM_ID vm_id)
 {
-	tuple_object *seq = (tuple_object*)iter->tag;
-	int_object *pos = (int_object*)GetItem((object*)seq,2);
-	int_object *step = (int_object*)GetItem((object*)seq,1);
-	int_object *end = (int_object*)GetItem((object*)seq,0);
-	//printf("p:%d,s:%d,e:%d\n",pos->value,step->value,end->value);
+	iter_object *iter = (iter_object*)mem_lock(iter_id);
+	TUPLE_ID seq = iter->tag;
+	mem_unlock(iter_id,0);
+	INT_ID pos_id = tuple_GetItem(seq,2);
+	INT_ID step_id = tuple_GetItem(seq,1);
+	INT_ID end_id = tuple_GetItem(seq,0);
+	int_object *pos = (int_object*)mem_lock(pos_id);
+	int_object *step = (int_object*)mem_lock(step_id);
+	int_object *end= (int_object*)mem_lock(end_id);
 	if((step->value>0  && pos->value < end->value) || (step->value<0  && pos->value > end->value) ) //absolute compare
-	//if(pos->value != end->value)
 	{
-		int_object *r = CreateIntObject(pos->value);
+		INT_ID r = obj_CreateInt(pos->value);
 		pos->value+=step->value;
-		//printf("created sq:%x : %d\n",r,r->value);
-		gc_IncRefCount((object*)r);
-		return((object*)r);
+		obj_IncRefCount(r);
+		mem_unlock(end_id,0);
+		mem_unlock(step_id,0);
+		mem_unlock(pos_id,1);
+		return(r);
 	}
 	else
 	{
-		int_object *start = (int_object*)GetItem((object*)seq,3);
+		INT_ID start_id = tuple_GetItem(seq,3);
+		int_object *start = (int_object*)mem_lock(start_id);
 		pos->value = start->value;
-		object *r = CreateEmptyObject( TYPE_NONE);
-		//printf("created:%x\n",r);
-		gc_IncRefCount(r);
+		OBJECT_ID r = obj_CreateEmpty( TYPE_NONE);
+		obj_IncRefCount(r);
+		mem_unlock(start_id,0);
+		mem_unlock(end_id,0);
+		mem_unlock(step_id,0);
+		mem_unlock(pos_id,1);
 		return(r);
 	}
+	mem_unlock(end_id,0);
+	mem_unlock(step_id,0);
+	mem_unlock(pos_id,1);
 }
 
-void iter_InitSequence(iter_object *iter,struct _vm *vm,INDEX start,NUM end,NUM step)
+void iter_InitSequence(ITER_ID iter_id,VM_ID vm_id,INDEX start,NUM end,NUM step)
 {
-	tuple_object *seq = CreateTuple(4);
-	int_object *iend = CreateIntObject(end);
-	SetItem((object*)seq,0,(object*)iend);
-	int_object *istep = CreateIntObject(step);
-	SetItem((object*)seq,1,(object*)istep);
-	int_object *ipos = CreateIntObject(start);
-	SetItem((object*)seq,2,(object*)ipos);
-	int_object *istart = CreateIntObject(start);
-	SetItem((object*)seq,3,(object*)istart);
-	iter->tag = (object*)seq;
-	//debug_printf(DEBUG_ALL,"incrementing ref_count in iter_InitSequence() - seq\n");
-	gc_IncRefCount((object*)seq);
-	iter->block_stack = NULL;
+	iter_object *iter = (iter_object*)mem_lock(iter_id);
+	TUPLE_ID seq = obj_CreateTuple(4);
+	INT_ID iend = obj_CreateInt(end);
+	tuple_SetItem(seq,0,iend);
+	INT_ID istep = obj_CreateInt(step);
+	tuple_SetItem(seq,1,istep);
+	INT_ID ipos = obj_CreateInt(start);
+	tuple_SetItem(seq,2,ipos);
+	INT_ID istart = obj_CreateInt(start);
+	tuple_SetItem(seq,3,istart);
+	iter->tag = seq;
+	obj_IncRefCount(seq);
+	iter->block_stack = 0;
 	iter->iter_func = &iter_Sequence;
-	//printf("seq initiated\n");
-	//DumpObject(iter,0);
-	//getch();
+	mem_unlock(iter_id,1);
 }
 
-object *iter_Generator(iter_object *iter,struct _vm *vm)
+OBJECT_ID iter_Generator(ITER_ID iter_id,VM_ID vm_id)
 {
-	//printf("iter->ref_count:%d\n",iter->ref_count);
-	block_object *bo = (block_object*)iter->tag;
-	//code_object *co = bo->code;
-	//stack_Push(vm->blocks, bo);
-	//printf("checking if block has finished\n");
+	iter_object *iter = (iter_object*)mem_lock(iter_id);
+	BLOCK_ID bo_id = iter->tag;
+	mem_unlock(iter_id,1);
+	block_object *bo = (block_object*)mem_lock(bo_id);
 	if(bo->ip < bo->len)
-		return((object*)bo);
-	//printf("finished returning empty object\n");
-	bo->ip = bo->start;//reset iterator for further uses
-	object *r = CreateEmptyObject( TYPE_NONE);
-	gc_IncRefCount(r);
-	return(r);
-}
-
-void iter_InitGenerator(iter_object *iter,struct _vm *vm,block_object *bo)
-{
-	iter->tag = (object*)bo;
-	//debug_printf(DEBUG_ALL,"incrementing ref_count in iter_InitGenerator() - bo\n");
-	gc_IncRefCount((object*)bo);
-	bo->ip = bo->start;
-	iter->block_stack = stack_Init();
-	iter->iter_func = &iter_Generator;
-}
-
-object *iter_CFGenerator(iter_object *iter,struct _vm *vm)
-{
-	cfunction_object *cfo = (cfunction_object*)iter->tag;
-	object *r = vm_StartCFunctionObject(vm,cfo,NULL,NULL);
-	gc_IncRefCount(r);
-	return(r);
-}
-
-void iter_InitCFGenerator(iter_object *iter,struct _vm *vm,cfunction_object *cfo)
-{
-	iter->tag = (object*)cfo;
-	//debug_printf(DEBUG_ALL,"incrementing ref_count in iter_InitGenerator() - bo\n");
-	gc_IncRefCount((object*)cfo);
-	iter->block_stack = stack_Init();
-	iter->iter_func = &iter_CFGenerator;
-}
-
-object *iter_MGenerator(iter_object *iter,struct _vm *vm)
-{
-	method_object *mo = (method_object*)iter->tag;
-	object *r = vm_StartMethodObject(vm,mo,NULL,NULL);
-	gc_IncRefCount(r);
-	return(r);
-}
-
-void iter_InitMGenerator(iter_object *iter,struct _vm *vm,method_object *mo)
-{
-	iter->tag = (object*)mo;
-	gc_IncRefCount((object*)mo);
-	iter->block_stack = stack_Init();
-	iter->iter_func = &iter_MGenerator;
-}
-
-object *iter_Iteration(iter_object *iter,struct _vm *vm)
-{
-	tuple_object *it = (tuple_object*)iter->tag;
-	object *next = GetNextItem((object*)it);
-	if(next == NULL || next->type == TYPE_NONE || next == obj_NULL)
 	{
-		//printf("tuple iterated thru\n");
-		ResetIteration((object*)it);
-		if(next == obj_NULL)
+		mem_unlock(bo_id,0);
+		return(bo_id);
+	}
+	bo->ip = bo->start;//reset iterator for further uses
+	mem_unlock(bo_id,1);
+	OBJECT_ID r = obj_CreateEmpty(TYPE_NONE);
+	obj_IncRefCount(r);
+	return(r);
+}
+
+void iter_InitGenerator(ITER_ID iter_id,VM_ID vm_id,BLOCK_ID bo_id)
+{
+	iter_object *iter = (iter_object*)mem_lock(iter_id);
+	iter->tag = bo_id;
+	obj_IncRefCount(bo_id);
+	block_object *bo = (block_object*)mem_lock(bo_id);
+	bo->ip = bo->start;
+	mem_unlock(bo_id,1);
+	iter->block_stack = stack_Create();
+	iter->iter_func = &iter_Generator;
+	mem_unlock(iter_id,1);
+}
+
+OBJECT_ID iter_CFGenerator(ITER_ID iter_id,VM_ID vm_id)
+{
+	iter_object *iter = (iter_object*)mem_lock(iter_id);
+	CFUNCTION_ID cfo = iter->tag;
+	mem_unlock(iter_id,0);
+	OBJECT_ID r = vm_StartCFunctionObject(vm_id,cfo,0,0);
+	obj_IncRefCount(r);
+	return(r);
+}
+
+void iter_InitCFGenerator(ITER_ID iter_id,VM_ID vm_id,CFUNCTION_ID cfo_id)
+{
+	iter_object *iter = (iter_object*)mem_lock(iter_id);
+	iter->tag = cfo_id;
+	obj_IncRefCount(cfo_id);
+	iter->block_stack = stack_Create();
+	iter->iter_func = &iter_CFGenerator;
+	mem_unlock(iter_id,1);
+}
+
+OBJECT_ID iter_MGenerator(ITER_ID iter_id,VM_ID vm_id)
+{
+	iter_object *iter = (iter_object*)mem_lock(iter_id);
+	METHOD_ID mo = iter->tag;
+	mem_unlock(iter_id,0);
+	OBJECT_ID r = vm_StartMethodObject(vm_id,mo,0,0);
+	obj_IncRefCount(r);
+	return(r);
+}
+
+void iter_InitMGenerator(ITER_ID iter_id,VM_ID vm_id,METHOD_ID mo_id)
+{
+	iter_object *iter = (iter_object*)mem_lock(iter_id);
+	iter->tag = mo_id;
+	obj_IncRefCount(mo_id);
+	iter->block_stack = stack_Create();
+	iter->iter_func = &iter_MGenerator;
+	mem_unlock(iter_id,1);
+}
+
+OBJECT_ID iter_Iteration(ITER_ID iter_id,VM_ID vm_id)
+{
+	iter_object *iter = (iter_object*)mem_lock(iter_id);
+	TUPLE_ID it = iter->tag;
+	mem_unlock(iter_id,0);
+	OBJECT_ID next = tuple_GetNextItem(it);
+	if(next == 0 || obj_GetType(next) == TYPE_NONE)
+	{
+		tuple_ResetIteration(it);
+		if(next == 0)
 		{
-			object *r = CreateEmptyObject( TYPE_NONE);
-			gc_IncRefCount(r);
+			OBJECT_ID r = obj_CreateEmpty(TYPE_NONE);
+			obj_IncRefCount(r);
 			return(r);
 		}
-
 	}
-	gc_IncRefCount(next);
+	obj_IncRefCount(next);
 	return(next);
 }
 
-void iter_InitIteration(iter_object *iter,struct _vm *vm,tuple_object *to)
+void iter_InitIteration(ITER_ID iter_id,VM_ID vm_id,TUPLE_ID to_id)
 {
-	ResetIteration((object*)to);
-	iter->tag = (object*)to;
-	//debug_printf(DEBUG_ALL,"incrementing ref_count in iter_InitIteration() - to\n");
-	gc_IncRefCount((object*)to);
-	iter->block_stack = NULL;
+	iter_object *iter = (iter_object*)mem_lock(iter_id);
+	tuple_ResetIteration(to_id);
+	iter->tag = to_id;
+	obj_IncRefCount(to_id);
+	iter->block_stack = 0;
 	iter->iter_func = &iter_Iteration;
+	mem_unlock(iter_id,1);
 }
 
 

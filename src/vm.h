@@ -65,6 +65,7 @@ except
 */
 #include "features.h"
 #include "types.h"
+#include "memory.h"
 #include "object.h"
 #include "opcodes.h"
 #include "stack.h"
@@ -79,9 +80,6 @@ except
 
 #include "debug.h"
 
-#ifdef USE_DEBUGGING
-#include "assert.h"
-#endif
 
 #if defined(USE_DEBUGGING) || defined(USE_ARDUINO_OPCODE_DEBUGGING)
 extern const opcode opcodes[];
@@ -105,15 +103,15 @@ extern "C"  {
 
 typedef struct _vm
 {
-	stack *blocks; //execution frame stack
-	tuple_object *globals;//dictionary of globals
-	object *(*interrupt_handler) (struct _vm *vm,stack *stack);
-	object *(*import_module_handler) (struct _vm *vm,char *module_name);
-	object *(*exception_handler) (struct _vm *vm,struct _object *exception);
-	object *(*step_handler) (struct _vm *vm);//TODO implement step handler to execute external work functions
+	STACK_ID blocks; //execution frame stack
+	TUPLE_ID globals;//dictionary of globals
+	OBJECT_ID(*interrupt_handler) (VM_ID vm_id,STACK_ID stack);
+	OBJECT_ID(*import_module_handler) (VM_ID vm_id,BYTES_ID module_name);
+	OBJECT_ID(*exception_handler) (VM_ID vm_id,OBJECT_ID exception);
+	OBJECT_ID(*step_handler) (VM_ID vm_id);//TODO implement step handler to execute external work functions
 	//#ifndef USE_ARDUINO_FUNCTIONS
 	NUM error_code;
-	char *error_message;
+	BYTES_ID error_message;
 	//#endif
 	BOOL interrupt_vm;
 	BOOL running;
@@ -125,73 +123,79 @@ typedef struct _vm
 
 //BOOL vm_ObjectExists(vm *vm, object  *obj);
 
-#ifdef USE_DEBUGGING
-void vm_DumpStackTree(vm *vm);
-#endif
+//#ifdef USE_DEBUGGING
+//void vm_DumpStackTree(VM_ID vm_id);
+//#endif
 
-object *vm_ExecuteCFunctionByName(vm *vm, char *name, tuple_object *locals,tuple_object *kw_locals);
+OBJECT_ID vm_ExecuteCFunctionByName(VM_ID vm_id, BYTES_ID name, TUPLE_ID locals_id,TUPLE_ID kw_locals_id);
 
-vm *vm_Init(code_object *co);//init vm and set global object if given
+VM_ID vm_Init(CODE_ID co_id);//init vm and set global object if given
 
-NUM vm_Close(vm *vm);//close vm and free all of its used memory
+NUM vm_Close(VM_ID vm_id);//close vm and free all of its used memory
 
-void vm_FreeGlobals(vm *vm);
+void vm_SetImportModuleHandler(VM_ID vm_id, OBJECT_ID(*import_module_handler) (VM_ID vm_id,BYTES_ID module_name));
 
-void vm_AddGlobal(vm *vm,object *key,object *global);//add a global object
+void vm_SetExceptionHandler(VM_ID vm_id, OBJECT_ID(*exception_handler) (VM_ID vm_id,OBJECT_ID exception));
 
-void vm_RemoveGlobal(vm *vm, object *key);//remove a global object
+void vm_SetInterruptHandler(VM_ID vm_id, OBJECT_ID(*interrupt_handler) (VM_ID vm_id,STACK_ID stack));
 
-object *vm_GetGlobal(vm *vm, object *key);//retrieve a global object
+void vm_SetStepHandler(VM_ID vm_id, OBJECT_ID(*step_handler) (VM_ID vm_id));
 
-object *vm_GetGlobalByIndex(vm *vm, INDEX i);
+void vm_FreeGlobals(VM_ID vm_id);
 
-void vm_SetInterrupt(vm*vm,object *(*interrupt_func) (struct _vm *vm,stack *stack)); //set interrupt handler function
+void vm_AddGlobal(VM_ID vm_id,OBJECT_ID key,OBJECT_ID global);//add a global object
 
-void vm_Interrupt(vm *vm, object *(*interrupt_func) (struct _vm *vm,stack *stack)); //interrupt vm and call interrupt handler afterwards
+void vm_RemoveGlobal(VM_ID vm_id, OBJECT_ID key);//remove a global object
 
-void vm_Continue(vm *vm);//continue vm execution
+OBJECT_ID vm_GetGlobal(VM_ID vm_id, OBJECT_ID key);//retrieve a global object
 
-void vm_Exit(vm *vm,char *message,NUM code); //exit vm
+OBJECT_ID vm_GetGlobalByIndex(VM_ID vm_id, INDEX i);
 
-void vm_Stop(vm *vm); //pause vm execution
+void vm_Interrupt(VM_ID vm_id, OBJECT_ID(*interrupt_func) (VM_ID vm_id,STACK_ID stack)); //interrupt vm and call interrupt handler afterwards
 
-object *vm_Step(vm *vm);//single step vm //TODO rename to vm_Step
+void vm_Continue(VM_ID vm_id);//continue vm execution
 
-object *vm_RunPYC(vm *vm,stream *f,BOOL free_object);
+void vm_Exit(VM_ID vm_id,BYTES_ID message,NUM code); //exit vm
 
-object *vm_RunRPYC(vm *vm,stream *f ,BOOL free_object);
+void vm_Stop(VM_ID vm_id); //pause vm execution
 
-object *vm_RunRPYCPlus(vm *vm,stream *f ,BOOL free_object);
+OBJECT_ID vm_Step(VM_ID vm_id);//single step vm
 
-object *vm_RunFunction(vm *vm,char *name, tuple_object *locals,tuple_object *kw_locals);//call a python function from C
+OBJECT_ID vm_RunPYC(VM_ID vm_id,STREAM_ID f,BOOL free_object);
 
-object *vm_RunObject(vm *vm, object *obj, tuple_object *locals,tuple_object *kw_locals);//run a python object if possible
+OBJECT_ID vm_RunRPYC(VM_ID vm_id,STREAM_ID f ,BOOL free_object);
 
-#ifdef USE_DEBUGGING
-object *vm_InteractiveRunObject(vm *vm, object *obj,  tuple_object *locals,tuple_object *kw_locals);
-#endif
+OBJECT_ID vm_RunRPYCPlus(VM_ID vm_id,STREAM_ID f ,BOOL free_object);
 
-object *vm_StartMethod(vm *vm,object *key,class_instance_object *cio,tuple_object *locals,tuple_object *kw_locals);
+OBJECT_ID vm_RunFunction(VM_ID vm_id,BYTES_ID name_id, TUPLE_ID locals_id,TUPLE_ID kw_locals_id);//call a python function from C
 
-object *vm_RunMethod(vm *vm,object *key,class_instance_object *cio,tuple_object *locals,tuple_object *kw_locals);
+OBJECT_ID vm_RunObject(VM_ID vm_id, OBJECT_ID obj_id, TUPLE_ID locals_id,TUPLE_ID kw_locals_id);//run a python object if possible
 
-object *vm_StartObject(vm *vm,object *obj, tuple_object *locals,tuple_object *kw_locals);
+//#ifdef USE_DEBUGGING
+//OBJECT_ID vm_InteractiveRunObject(VM_ID vm_id, OBJECT_ID obj,  TUPLE_ID locals_id,TUPLE_ID kw_locals_id);
+//#endif
 
-object *vm_StartObjectCopy(vm *vm,object *o, tuple_object *locals,tuple_object *kw_locals);
+OBJECT_ID vm_StartMethod(VM_ID vm_id,OBJECT_ID key,CLASS_INSTANCE_ID cio_id,TUPLE_ID locals_id,TUPLE_ID kw_locals_id);
 
-block_object *vm_StartCodeObject(vm *vm,code_object *co, tuple_object *locals,tuple_object *kw_locals);
+OBJECT_ID vm_RunMethod(VM_ID vm_id,OBJECT_ID key,CLASS_INSTANCE_ID cio,TUPLE_ID locals_id,TUPLE_ID kw_locals_id);
 
-block_object *vm_StartClassObject(vm *vm,class_object *co,tuple_object *locals,tuple_object *kw_locals);
+OBJECT_ID vm_StartObject(VM_ID vm_id,OBJECT_ID obj_id, TUPLE_ID locals_id,TUPLE_ID kw_locals_id);
 
-object *vm_StartFunctionObject(vm *vm,function_object *fo,tuple_object *locals,tuple_object *kw_locals);//run a python function object 
+OBJECT_ID vm_StartObjectCopy(VM_ID vm_id,OBJECT_ID obj_id, TUPLE_ID locals_id,TUPLE_ID kw_locals_id);
 
-object *vm_StartCFunctionObject(vm *vm,cfunction_object *cfo,tuple_object *locals,tuple_object *kw_locals);//run a c function object 
+BLOCK_ID vm_StartCodeObject(VM_ID vm_id,CODE_ID co_id, TUPLE_ID locals_id,TUPLE_ID kw_locals_id);
 
-object *vm_StartMethodObject(vm *vm,method_object *mo,tuple_object *locals,tuple_object *kw_locals);
+BLOCK_ID vm_StartClassObject(VM_ID vm_id,CLASS_ID class_id,TUPLE_ID locals_id,TUPLE_ID kw_locals_id);
 
-#ifdef USE_DEBUGGING
-void vm_DumpCode(vm *vm,BOOL dump_descriptions,BOOL from_start);//dump human readable code of the vm's actual running block 
-#endif
+OBJECT_ID vm_StartFunctionObject(VM_ID vm_id,FUNCTION_ID fo_id,TUPLE_ID locals_id,TUPLE_ID kw_locals_id);//run a python function object 
+
+OBJECT_ID vm_StartCFunctionObject(VM_ID vm_id,CFUNCTION_ID cfo_id,TUPLE_ID locals_id,TUPLE_ID kw_locals_id);//run a c function object 
+
+OBJECT_ID vm_StartMethodObject(VM_ID vm_id,METHOD_ID mo_id,TUPLE_ID locals_id,TUPLE_ID kw_locals_id);
+
+//#ifdef USE_DEBUGGING
+//void vm_DumpCode(VM_ID vm_id,BOOL dump_descriptions,BOOL from_start);//dump human readable code of the vm's actual running block 
+//#endif
 
 #ifdef __cplusplus
 } 

@@ -47,12 +47,12 @@ void __stdcall Sleep(unsigned long);
 #include "../debug.h"
 
 
-object *fmod_playSound(vm *vm,tuple_object *locals,tuple_object *kw_locals); //(filename,mode); - returns id object used in other functions
-object *fmod_Sleep(vm *vm,tuple_object *locals,tuple_object *kw_locals);
-object *fmod_Init(vm *vm,tuple_object *locals,tuple_object *kw_locals);
-object *fmod_Close(vm *vm,tuple_object *locals,tuple_object *kw_locals);
+OBJECT_ID fmod_playSound(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals); //(filename,mode); - returns id object used in other functions
+OBJECT_ID mod_Sleep(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals);
+OBJECT_ID fmod_Init(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals);
+OBJECT_ID fmod_Close(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals);
 
-void AddFmodGlobals(vm *vm);
+void AddFmodGlobals(VM_ID vm);
 
 
 

@@ -23,12 +23,14 @@
 #ifndef NUMOPS_H
 #define NUMOPS_H
 
+#include "types.h"
 #ifdef __cplusplus
 extern "C"  {
 #endif
 
+INT num_pow(INT base,INT exp);
 
-long long_pow(long base, long exp);
+//long long_pow(long base, long exp);
 
 short num_short(unsigned char a, unsigned char b);
 

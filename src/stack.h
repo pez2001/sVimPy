@@ -35,57 +35,49 @@ extern "C"  {
 #endif
 
 
-#define STACK_TYPE *object;
+#define STACK_TYPE OBJECT_ID
 
-//TODO remove redundant stack struct
-// #define stack ptr_list
+STACK_ID stack_Create(void);/*returns id_list*/
 
-typedef struct _stack
-{
-	ptr_list *list;
-} stack;
+void stack_Close(STACK_ID stack, BOOL free_objects);
 
-struct _object;
+OBJECT_ID stack_Pop(STACK_ID stack);/*id_list*/
 
-stack *stack_Init(void); //TODO rename to Create
+void stack_Push(STACK_ID stack, OBJECT_ID x);
 
-struct _object *stack_Pop(stack *stack);
+void stack_Clear(STACK_ID stack, BOOL free_objects);
 
-void stack_Push(stack *stack, struct _object * x);
+OBJECT_ID stack_Get(STACK_ID stack,INDEX index);
 
-void stack_Close(stack *stack, BOOL free_objects);
+NUM stack_Pointer(STACK_ID stack);
 
-void stack_Clear(stack *stack, BOOL free_objects);
+OBJECT_ID stack_Top(STACK_ID stack);
 
-struct _object *stack_Get(stack *stack,INDEX index);
+OBJECT_ID stack_Bottom(STACK_ID stack);
 
-NUM stack_Pointer(stack *stack);
+void stack_SetBottom(STACK_ID stack, OBJECT_ID x);
 
-struct _object *stack_Top(stack *stack);
+void stack_SetTop(STACK_ID stack, OBJECT_ID x);
 
-struct _object *stack_Bottom(stack *stack);
+OBJECT_ID stack_Second(STACK_ID stack);
 
-void stack_SetBottom(stack *stack, struct _object * x);
+void stack_SetSecond(STACK_ID stack, OBJECT_ID x);
 
-void stack_SetTop(stack *stack, struct _object * x);
+OBJECT_ID stack_Third(STACK_ID stack);
 
-struct _object *stack_Second(stack *stack);
+void stack_SetThird(STACK_ID stack, OBJECT_ID x);
 
-void stack_SetSecond(stack *stack, struct _object * x);
-
-struct _object *stack_Third(stack *stack);
-
-void stack_SetThird(stack *stack, struct _object * x);
-
-void stack_Adjust(stack *stack, REL_NUM by);
+void stack_Adjust(STACK_ID stack, REL_NUM by);
 
 #ifdef USE_DEBUGGING
-void stack_Dump(stack *stack);
+void stack_Dump(STACK_ID stack);
 #endif
 
-BOOL stack_IsEmpty(stack *stack);
+BOOL stack_IsEmpty(STACK_ID stack);
 
-BOOL stack_Contains(stack *stack, struct _object * x);
+BOOL stack_Contains(STACK_ID stack, OBJECT_ID x);
+
+NUM stack_GetLen(STACK_ID stack);
 
 #ifdef __cplusplus
 } 

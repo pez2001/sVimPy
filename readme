@@ -83,8 +83,9 @@ Features include:
 		+ caching  for near zero byte 
 			memory usage interpretation 
 			of python code
-	0.91  stream printing + sd-fat support
-	0.92  add missing internal functions used by classes
+	0.91  vm interface exposed to python code
+	0.92  stream printing + sd-fat support
+	0.93  add missing internal functions used by classes
 	0.95  use buildhive for automatic release generation
 			(packaging + web deploy)
 	0.99  source clean up 

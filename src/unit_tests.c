@@ -29,83 +29,84 @@ int debug_level = 0;
 void ptr_tests(void)
 {
 	printf("testing ptr list functions\n");
-	ptr_list *p = ptr_CreateList(0, 0);
-
-	ptr_Insert(p,0,(void*)2);
-	ptr_Insert(p,0,(void*)1);
-	for (NUM i = 0; i < p->num; i++)
-		printf("%d ", (int)p->items[i]);
-	ptr_Pop(p);
-	ptr_Pop(p);
+	LIST_ID p = list_Create(0, 0);
+	
+	list_Insert(p,0,(MEM_ID)2);
+	list_Insert(p,0,(MEM_ID)1);
+	for(NUM i = 0; i < list_GetLen(p); i++)
+		printf("%d ", (int)list_Get(p,i));
+	list_Pop(p);
+	list_Pop(p);
 	printf("\n");
 		
-	ptr_Push(p, (void*)1);
-	ptr_Push(p, (void*)2);
-	ptr_Push(p, (void*)3);
-	ptr_Push(p, (void*)4);
+	list_Push(p, (MEM_ID)1);
+	list_Push(p, (MEM_ID)2);
+	list_Push(p, (MEM_ID)3);
+	list_Push(p, (MEM_ID)4);
 	printf("push(1,2,3,4):\n");
-	for (NUM i = 0; i < p->num; i++)
-		printf("%d ", (int)p->items[i]);
+	for(NUM i = 0; i < list_GetLen(p); i++)
+		printf("%d ", (int)list_Get(p,i));
 	printf("\n");
-	int x =(int)ptr_Pop(p);
+	int x =(int)list_Pop(p);
 
 	printf("pop(): %d\n", x);
-	ptr_Push(p,  (void*)5);
+	list_Push(p,  (MEM_ID)5);
 	printf("push(5):\n");
-	for (NUM i = 0; i < p->num; i++)
-		printf("%d ", p->items[i]);
+	for(NUM i = 0; i < list_GetLen(p); i++)
+		printf("%d ", list_Get(p,i));
 	printf("\n");
-	int r = (int)ptr_Remove(p, 2);
+	int r = (int)list_Remove(p, 2);
 
 	printf("remove(2): %d\n", r);
-	for (NUM i = 0; i < p->num; i++)
-		printf("%d ",(int)p->items[i]);
+	for(NUM i = 0; i < list_GetLen(p); i++)
+		printf("%d ",(int)list_Get(p,i));
 	printf("\ninserting\n");
-	ptr_Insert(p, 3, (void*)66);
+	list_Insert(p, 3, (MEM_ID)66);
 	printf("insert 3,66:\n");
-	for (NUM i = 0; i < p->num; i++)
-		printf("%d ",(int)p->items[i]);
+	for(NUM i = 0; i < list_GetLen(p); i++)
+		printf("%d ",(int)list_Get(p,i));
 	printf("\ninserting\n");
-	ptr_Insert(p, 0, (void*)99);
+	list_Insert(p, 0, (MEM_ID)99);
 	printf("insert 0,99:\n");
-	for (NUM i = 0; i < p->num; i++)
-		printf("%d ",(int)p->items[i]);
+	for(NUM i = 0; i < list_GetLen(p); i++)
+		printf("%d ",(int)list_Get(p,i));
 	printf("\n");
-	ptr_Set(p, 1,(void*)22);
+	list_Set(p, 1,(MEM_ID)22);
 	printf("set 1,22:\n");
-	for (NUM i = 0; i < p->num; i++)
-		printf("%d ",(int)p->items[i]);
+	for(NUM i = 0; i < list_GetLen(p); i++)
+		printf("%d ",(int)list_Get(p,i));
 	printf("\n");
-	ptr_Queue(p, (void*)88);
+	list_Queue(p, (MEM_ID)88);
 	printf("queue(88):\n");
-	for (NUM i = 0; i < p->num; i++)
-		printf("%d ",(int)p->items[i]);
+	for(NUM i = 0; i < list_GetLen(p); i++)
+		printf("%d ",(int)list_Get(p,i));
 	printf("\n");
 
-	ptr_Clear(p);
-	ptr_Push(p, 0);
-	for (NUM i = 0; i < 20000; i++)
-		ptr_Push(p, (void*)1);
-	for (NUM i = 0; i < 20000; i++)
-		ptr_Pop(p);
-	printf("first:%d \n", (int)ptr_Pop(p));
-	printf("top:%d\n", p->num);
+	list_Clear(p);
+	list_Push(p, 0);
+	for(NUM i = 0; i < 20000; i++)
+		list_Push(p, (MEM_ID)1);
+	for(NUM i = 0; i < 20000; i++)
+		list_Pop(p);
+	printf("first:%d \n", (int)list_Pop(p));
+	printf("top:%d\n", list_GetLen(p));
 
-	for (NUM i = 0; i < 20000; i++)
+	for(NUM i = 0; i < 20000; i++)
 	{
-		ptr_Push(p, (void*)0);
-		ptr_Pop(p);
+		list_Push(p, (MEM_ID)0);
+		list_Pop(p);
 	}
 
-	ptr_CloseList(p);
+	list_Close(p);
 	printf("ptr tests thru\n");
 }
 
 void stream_tests(void)
 {
 	long pyc_magic = MAGIC;
+	streams_Init();
 	printf("stream tests\n");
-	stream *f = stream_CreateFromFile("tests/test52.pyc","rb");
+	STREAM_ID f = stream_CreateFromFile(mem_create_string("tests/test52.pyc"),mem_create_string("rb"));
 	
 	if (!stream_Open(f))
 	{
@@ -123,7 +124,7 @@ void stream_tests(void)
 	printf("read magic:%d\n",magic);
 	stream_Free(f);
 	
-	stream *m = stream_CreateFromBytes((char*)&test_pyc,TEST_PYC_LEN);
+	STREAM_ID m = stream_CreateFromBytes(mem_create((char*)&test_pyc,TEST_PYC_LEN),TEST_PYC_LEN);
 	printf("opening mstream\n");
 	if (!stream_Open(m))
 	{
@@ -140,11 +141,12 @@ void stream_tests(void)
 	}
 	printf("read magic:%d\n",mmagic);
 	stream_Free(m);
+	streams_Close();
 	printf("stream tests done\n");
 }
 #endif
 
-void OpenPYC(stream *f, vm *vm)
+void OpenPYC(STREAM_ID f, VM_ID vm)
 {
 	// char *b = (char*)mem_malloc(3);
 	// char *bh = (char*)mem_malloc(4);
@@ -171,7 +173,7 @@ void OpenPYC(stream *f, vm *vm)
 	   printf("file date: %s\n", bt); strftime(bt,100,"%H:%M:%S \n",ti);
 	   printf("file time: %s\n", bt); mem_free(bt); //8 bytes into the file */
 	//printf("reading object\n");
-	object *obj = stream_ReadObject(f);
+	OBJECT_ID obj = stream_ReadObject(f);
 	//object *obj = NULL;
 	//return;
 	//printf("read pyc\n");
@@ -180,47 +182,49 @@ void OpenPYC(stream *f, vm *vm)
 	// printf("objects num: %d\n",objects_num);
 	// printf("max objects : %d\n",objects_max);
 	// printf("objects headers total size : %d\n",objects_header_total);
-	object *global_key = (object*)CreateUnicodeObject(str_Copy(((code_object*)obj)->name));
+	code_object *co = (code_object*)mem_lock(obj);
+	OBJECT_ID global_key = obj_CreateUnicode(mem_copy(co->name));
+	mem_unlock(obj,0);
 	vm_AddGlobal(vm, global_key,obj);
 	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_DUMP_OBJECT) > 0)
-		DumpObject(obj, 0);
+		obj_Dump(obj, 0,1);
 	#endif
-	object *ret = NULL;
+	OBJECT_ID ret = 0;
 	#ifdef USE_DEBUGGING
-	if((debug_level & DEBUG_INTERACTIVE) > 0)
-		ret = vm_InteractiveRunObject(vm, obj, NULL,NULL);	
-	else
-		ret = vm_RunObject(vm, obj, NULL,NULL);
+	//if((debug_level & DEBUG_INTERACTIVE) > 0)
+	//	ret = vm_InteractiveRunObject(vm, obj, 0,0);	
+	//else
+		ret = vm_RunObject(vm, obj, 0,0);
 	#else
-	ret = vm_RunObject(vm, obj, NULL,NULL);	
+	ret = vm_RunObject(vm, obj, 0,0);	
 	#endif
 	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_ALL,"\n");
 	#endif
-	if (ret != NULL)
+	if (ret != 0)
 	{
 		#ifdef USE_DEBUGGING
 		if((debug_level & DEBUG_DUMP_OBJECT) > 0)
-			DumpObject(ret, 0);
+			obj_Dump(ret, 0,1);
 		#endif
-		gc_DecRefCount(ret);
+		obj_DecRefCount(ret);
 	}
 	#ifdef USE_DEBUGGING
 	//debug_printf(DEBUG_VERBOSE_TESTS,"object executed:%s\n", filename);
 	if((debug_level & DEBUG_DUMP_OBJECT) > 0)
-		DumpObject(obj,0);
+		obj_Dump(obj,0,1);
 	debug_printf(DEBUG_VERBOSE_TESTS,"cleaning up object\n");
 	#endif
 	//DumpObject(obj,0);
-	gc_DecRefCount(obj);
+	obj_DecRefCount(obj);
 	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_VERBOSE_TESTS,"removing object from globals\n");
 	#endif
 	vm_RemoveGlobal(vm,global_key);
 	//printf("freeing stream\n");
 	stream_Free(f);
-	gc_Clear();
+	obj_ClearGC();
 	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_VERBOSE_TESTS,"pyc executed\n");
 	#endif
@@ -254,7 +258,7 @@ void brute_test(void)
 	//debug_level |= DEBUG_COUNT_OBJECTS;
 	#endif
 	
-	vm *vm = vm_Init(NULL);
+	VM_ID vm = vm_Init(0);
 
 	// printf("Calling all Unit Tests\n");
 
@@ -282,135 +286,135 @@ void brute_test(void)
 	//OpenPYC(stream_CreateFromFile("tests/blink.pyc"), vm);
 
 	//stream test
-	stream *m = stream_CreateFromBytes((char*)&test_pyc,TEST_PYC_LEN);
+	STREAM_ID m = stream_CreateFromBytes(mem_create((char*)&test_pyc,TEST_PYC_LEN),TEST_PYC_LEN);
 	OpenPYC(m,vm);
 	
-	OpenPYC(stream_CreateFromFile("tests/test52.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test52.pyc"),mem_create_string("rb")), vm);
 	
 	//generators
-	OpenPYC(stream_CreateFromFile("tests/test25.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test24b.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test24.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test25.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test24b.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test24.pyc"),mem_create_string("rb")), vm);
 	
 	
-	OpenPYC(stream_CreateFromFile("tests/test26.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test20.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test26.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test20.pyc"),mem_create_string("rb")), vm);
 	
 	//simple generator with yield
-	OpenPYC(stream_CreateFromFile("tests/test59.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test59.pyc"),mem_create_string("rb")), vm);
 
 	
 	//iters
-	OpenPYC(stream_CreateFromFile("tests/test61.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test60.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test61.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test60.pyc"),mem_create_string("rb")), vm);
 
 	//print + recursion
-	OpenPYC(stream_CreateFromFile("tests/test17.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test8.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test9.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test12.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test11.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test17.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test8.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test9.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test12.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test11.pyc"),mem_create_string("rb")), vm);
 	
 	//function parameters
-	OpenPYC(stream_CreateFromFile("tests/test50.pyc","rb"), vm);//with keywords unordered
-	OpenPYC(stream_CreateFromFile("tests/test49b.pyc","rb"), vm);//kw unordered
-	OpenPYC(stream_CreateFromFile("tests/test49.pyc","rb"), vm);//kw
-	OpenPYC(stream_CreateFromFile("tests/test48.pyc","rb"), vm);//var
-	OpenPYC(stream_CreateFromFile("tests/test47.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test46.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test_functions.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test36.pyc","rb"), vm);//call_function_var
-	OpenPYC(stream_CreateFromFile("tests/test37.pyc","rb"), vm);//call_function_kw
-	OpenPYC(stream_CreateFromFile("tests/test38.pyc","rb"), vm);//call_function_var_kw 
-	OpenPYC(stream_CreateFromFile("tests/test39.pyc","rb"), vm);//call_function
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test50.pyc"),mem_create_string("rb")), vm);//with keywords unordered
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test49b.pyc"),mem_create_string("rb")), vm);//kw unordered
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test49.pyc"),mem_create_string("rb")), vm);//kw
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test48.pyc"),mem_create_string("rb")), vm);//var
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test47.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test46.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test_functions.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test36.pyc"),mem_create_string("rb")), vm);//call_function_var
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test37.pyc"),mem_create_string("rb")), vm);//call_function_kw
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test38.pyc"),mem_create_string("rb")), vm);//call_function_var_kw 
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test39.pyc"),mem_create_string("rb")), vm);//call_function
 	
 	//pos + kw defaults
-	OpenPYC(stream_CreateFromFile("tests/test55c.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test55b.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test55.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test55c.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test55b.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test55.pyc"),mem_create_string("rb")), vm);
 
 	//kw defaults
-	OpenPYC(stream_CreateFromFile("tests/test54.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test54.pyc"),mem_create_string("rb")), vm);
 
 	//storing of globals/vars and deletion of globals/vars
-	OpenPYC(stream_CreateFromFile("tests/test21ba2.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test21.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test21b.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test21ba.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test21ba3.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test21bb.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test21c.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test21d.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test21e.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test21a.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test21ba2.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test21.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test21b.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test21ba.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test21ba3.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test21bb.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test21c.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test21d.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test21e.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test21a.pyc"),mem_create_string("rb")), vm);
 	
 	//loops + recursion
-	OpenPYC(stream_CreateFromFile("tests/test35.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test34.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test33.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test35.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test34.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test33.pyc"),mem_create_string("rb")), vm);
 
 	//nested tuple printing
-	OpenPYC(stream_CreateFromFile("tests/test51.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test51.pyc"),mem_create_string("rb")), vm);
 	
 	//comparing
-	OpenPYC(stream_CreateFromFile("tests/test_compare.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test_compare.pyc"),mem_create_string("rb")), vm);
 
 	//globals
-	OpenPYC(stream_CreateFromFile("tests/test58.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test58.pyc"),mem_create_string("rb")), vm);
 
 	//closures and deref opcodes
-	OpenPYC(stream_CreateFromFile("tests/test57.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test29.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test57.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test29.pyc"),mem_create_string("rb")), vm);
 	
 	//brute ops + closures
-	OpenPYC(stream_CreateFromFile("tests/test32.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test32.pyc"),mem_create_string("rb")), vm);
 
 	//simple stuff
-	OpenPYC(stream_CreateFromFile("tests/test1.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test2.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test3.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test6.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test13.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test15.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test16.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test18.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test19.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test22.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test7.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test5.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test4.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test27.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test28.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test23.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test56.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test1.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test2.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test3.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test6.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test13.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test15.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test16.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test18.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test19.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test22.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test7.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test5.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test4.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test27.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test28.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test23.pyc)"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test56.pyc"),mem_create_string("rb")), vm);
 	
 	
 	//while loop + break + continue
-	OpenPYC(stream_CreateFromFile("tests/test_while.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test_while.pyc"),mem_create_string("rb")), vm);
 
 	//ellipsis object
-	OpenPYC(stream_CreateFromFile("tests/test43.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test40.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test43.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test40.pyc"),mem_create_string("rb")), vm);
 
 	//most binary ops test
-	OpenPYC(stream_CreateFromFile("tests/test14.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test14b.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test14f.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test14bf.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test14.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test14b.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test14f.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test14bf.pyc"),mem_create_string("rb")), vm);
 
 	//floats
-	OpenPYC(stream_CreateFromFile("tests/test44.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test42.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test41.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test44.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test42.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test41.pyc"),mem_create_string("rb")), vm);
 
 	//dictionaries
-	OpenPYC(stream_CreateFromFile("tests/test30.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/test31.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test30.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/test31.pyc"),mem_create_string("rb")), vm);
 	
 	
 	//brute prime (classless it takes longer because of range
-	OpenPYC(stream_CreateFromFile("tests/e20.pyc","rb"), vm);
-	OpenPYC(stream_CreateFromFile("tests/e_small.pyc","rb"), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/e20.pyc"),mem_create_string("rb")), vm);
+	OpenPYC(stream_CreateFromFile(mem_create_string("tests/e_small.pyc"),mem_create_string("rb")), vm);
 	
 	//OpenPYC(stream_CreateFromFile("tests/e_med.pyc","rb"), vm);
 	
@@ -433,132 +437,124 @@ void brute_test(void)
 	debug_printf(DEBUG_VERBOSE_TESTS,"closing memory manager\n");
 	#endif
 	mem_Close();
-	if((debug_level & DEBUG_MEMORY)>0)
-		printf("%d memory chunks leaked\n", mem_chunks_num);
 	#endif
 
 
 }
 
-object *ImportModule(struct _vm *vm,char *module_name)
+OBJECT_ID ImportModule(VM_ID vm,STRING_ID module_name)
 {
 	long pyc_magic = MAGIC;
-	char *path = str_Copy("tests/");
-	char *mod_path = str_Cat(path,module_name);
-	char *filename = str_Cat(mod_path,".pyc");
-	#ifdef USE_DEBUGGING
-	assert(mem_free(path));
-	assert(mem_free(mod_path));
-	#else
-	free(path);
-	free(mod_path);
-	#endif
-
+	BYTES_ID path = mem_create_string("tests/");
+	BYTES_ID mod_path = str_Cat(path,module_name);
+	BYTES_ID ext = mem_create_string(".pyc");
+	BYTES_ID filename = str_Cat(mod_path,ext);
+	mem_free(path);
+	mem_free(mod_path);
+	mem_free(ext);
 	
 	//printf("trying to import module:%s\n",filename);
-	stream *f = stream_CreateFromFile(filename,"rb");
+	STREAM_ID f = stream_CreateFromFile(filename,mem_create_string("rb"));
 	if (!stream_Open(f))
-		return(NULL);
+		return(0);
 	long magic =stream_ReadLong(f);
-	if (magic != pyc_magic)
-		return(NULL);
+	if(magic != pyc_magic)
+		return(0);
 	stream_ReadLong(f);//skip time
-	object *obj = stream_ReadObject(f);
-	if(obj->type != TYPE_CODE)
+	OBJECT_ID obj = stream_ReadObject(f);
+	if(obj_GetType(obj) != TYPE_CODE)
 	{
-		#ifdef USE_DEBUGGING
-		assert(mem_free(filename));
-		#else
-		free(filename);
-		#endif
-		gc_IncRefCount(obj);
-		gc_DecRefCount(obj);
-		return(NULL);
-	}else
-	((code_object*)obj)->co_flags ^=	CO_MODULE_ROOT;
-	
-	#ifdef USE_DEBUGGING
-	assert(mem_free(filename));
-	#else
-	free(filename);
-	#endif
+		mem_free(filename);
+		//obj_IncRefCount(obj);
+		obj_DecRefCount(obj);
+		return(0);
+	}
+	else
+	{
+		code_object *o = (code_object*)mem_lock(obj);
+		o->co_flags ^=	CO_MODULE_ROOT;
+		mem_unlock(obj,1);
+	}
+	mem_free(filename);
 	stream_Free(f);
 	return(obj);
 }
 
-object *CatchException(struct _vm *vm,struct _object *exception)
+OBJECT_ID CatchException(VM_ID vm,OBJECT_ID exception)
 {
 	printf("caught exception:");
-	object *msg_name = (object*)CreateUnicodeObject(str_Copy("message"));
-	gc_IncRefCount(msg_name);
-	object *message = GetAttribute(exception,msg_name);
-	gc_DecRefCount(msg_name);
-	PrintObject(message);
+	UNICODE_ID msg_name = obj_CreateUnicode(mem_create_string("message"));
+	obj_IncRefCount(msg_name);
+	OBJECT_ID message = obj_GetAttribute(exception,msg_name);
+	obj_DecRefCount(msg_name);
+	obj_Print(message);
+	unicode_object *m = (unicode_object*)mem_lock(message);
 	printf("\n");
-
-	//vm_Close(vm);
-	vm_Exit(vm,((unicode_object*)message)->value,1);
-	return(NULL);
-	//exit;
-	//return(CreateEmptyObject(TYPE_NONE));
+	vm_Exit(vm,m->value,1);
+	mem_unlock(message,0);
+	return(0);
 }
 
 NUM AtomicOpenPYC(char *filename)
 {
 	printf("executing object:%s\n", filename);
-	printf("sVimPy Python Output\n{\n");
 
 	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_VERBOSE_TESTS,"vm_Init\n");
 	#endif
-	vm *vm = vm_Init(NULL);
-	vm->import_module_handler = &ImportModule;
-	vm->exception_handler = &CatchException;
+	VM_ID vm = vm_Init(0);
+	vm_SetImportModuleHandler(vm,&ImportModule);
+	vm_SetExceptionHandler(vm,&CatchException);
 	long pyc_magic = MAGIC;
-	stream *f = stream_CreateFromFile(filename,"rb");
-	if (!stream_Open(f))
+	STREAM_ID f = stream_CreateFromFile(mem_create_string(filename),mem_create_string("rb"));
+	if(!stream_Open(f))
 	{
 		printf("error opening pyc file: %s\n",filename);
 		return(1);
 	}
 	long magic = stream_ReadLong(f);
-	if (magic != pyc_magic)
+	if(magic != pyc_magic)
 	{
 		printf("error wrong file magic: %s\n",filename);
 		return(1);
 	}
 	stream_ReadLong(f);//skip time
-	object *obj = stream_ReadObject(f);
-	object *global_key = (object*)CreateUnicodeObject(str_Copy(((code_object*)obj)->name));
+	OBJECT_ID obj = stream_ReadObject(f);
+	code_object *co = (code_object*)mem_lock(obj);
+	OBJECT_ID global_key = obj_CreateUnicode(mem_copy(co->name));
+	obj_IncRefCount(global_key);
+	mem_unlock(obj,0);
 	vm_AddGlobal(vm, global_key,obj);
 	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_DUMP_OBJECT) > 0)
-		DumpObject(obj, 0);
+		obj_Dump(obj, 0,1);
 	#endif
-	object *ret = NULL;
-	#ifdef USE_DEBUGGING
-	if((debug_level & DEBUG_INTERACTIVE) > 0)
-		ret = vm_InteractiveRunObject(vm, obj, NULL,NULL);
-	else
-		ret = vm_RunObject(vm, obj, NULL,NULL);
-	#else
-	ret = vm_RunObject(vm, obj, NULL,NULL);
-	#endif
+	OBJECT_ID ret = 0;
+	//#ifdef USE_DEBUGGING
+	//if((debug_level & DEBUG_INTERACTIVE) > 0)
+	//	ret = vm_InteractiveRunObject(vm, obj, 0,0);
+	//else
+	//	ret = vm_RunObject(vm, obj, 0,0);
+	//#else
+	printf("sVimPy Python Output\n{\n");
+	ret = vm_RunObject(vm, obj, 0,0);
+	//#endif
 	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_ALL,"\n");
 	#endif
-	if (ret != NULL)
+	if (ret != 0)
 	{
 		#ifdef USE_DEBUGGING
 		if((debug_level & DEBUG_DUMP_OBJECT) > 0)
-			DumpObject(ret, 0);
+			obj_Dump(ret, 0,1);
 		#endif
-		gc_DecRefCount(ret);
+		obj_DecRefCount(ret);
 	}
+	printf("}\n");
 	#ifdef USE_DEBUGGING
 	//debug_printf(DEBUG_VERBOSE_TESTS,"object executed:%s\n", filename);
 	if((debug_level & DEBUG_DUMP_OBJECT) > 0)
-		DumpObject(obj,0);
+		obj_Dump(obj,0,0);
 	debug_printf(DEBUG_VERBOSE_TESTS,"cleaning up object:%s\n",filename);
 	#endif
 	//DumpObject(obj,0);
@@ -566,11 +562,12 @@ NUM AtomicOpenPYC(char *filename)
 	debug_printf(DEBUG_VERBOSE_TESTS,"removing object from globals\n");
 	#endif
 	vm_RemoveGlobal(vm,global_key);
-
+	obj_DecRefCount(global_key);
+	//obj_ClearGC();
 	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_VERBOSE_TESTS,"freeing object now\n");
 	#endif
-	gc_DecRefCount(obj);
+	obj_DecRefCount(obj);
 	//printf("freeing stream\n");
 	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_VERBOSE_TESTS,"freeing stream\n");
@@ -584,7 +581,6 @@ NUM AtomicOpenPYC(char *filename)
 		DumpUnsupportedOpCodes();
 	#endif
 	
-	printf("}\n");
 	/*
 	printf("Original Python Output\n{\n");
 	char *py_cmd = NULL;
@@ -604,14 +600,18 @@ NUM AtomicOpenPYC(char *filename)
 	free(py_cmdf);
 	#endif
 	*/
-	if(vm->error_message != NULL)
-		printf("error occured:\n%s\n",vm->error_message);
+	struct _vm *v = (struct _vm*)mem_lock(vm);
+	if(v->error_message != 0)
+	{
+		char *m = (char*)mem_lock(v->error_message);
+		printf("error occured:\n%s\n",m);
+		mem_unlock(v->error_message,0);
+	}
+	mem_unlock(vm,0);
+	//mem_DebugHeapWalk(0,1);
 	NUM exit_code = vm_Close(vm);
+
 	printf("vm exit code:%d\n",exit_code);
-	#ifdef USE_DEBUGGING
-	if((debug_level & DEBUG_MEMORY)>0)
-		printf("%d memory chunks leaked\n", mem_chunks_num);
-	#endif
 	return(exit_code);
 }
 
@@ -643,7 +643,7 @@ NUM atomic_test(void)
 	printf("Atomic Tests Version : %d.%d-%d\n",MAJOR_VERSION,MINOR_VERSION,BUILD+1);
 	#endif
 
-//AtomicOpenPYC("tests/PlayNew.pyc");
+	//AtomicOpenPYC("tests/PlayNew.pyc");
 		//testing seperated function var spaces
 	//AtomicOpenPYC("tests/test_sep_method.pyc");
 	//return;
@@ -660,57 +660,201 @@ NUM atomic_test(void)
 	//if(exit_code)
 	//	return(exit_code);
 	//return(exit_code);
+	
+	//open file test + if_iter with sentinel
+	exit_code = AtomicOpenPYC("tests/test_open.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test_functions.pyc"); //leaking lists containing single items
+	if(exit_code)
+		return(exit_code);
+	//return(0);
+	exit_code = AtomicOpenPYC("tests/test45.pyc");
+	if(exit_code)
+		return(exit_code);
+	//return(0);
 
-	printf("executing arduino object:tests/blink.pyc\n");
+	
+	//function parameters
+	exit_code = AtomicOpenPYC("tests/test46.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test47.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test50.pyc");//with keywords unordered
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test49b.pyc");//kw unordered
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test49.pyc");//kw
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test48.pyc");//var
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test36.pyc");//call_function_var
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test37.pyc");//call_function_kw
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test38.pyc");//call_function_var_kw 
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test39.pyc");//call_function
+	if(exit_code)
+		return(exit_code);
+
+	//comparing
+	exit_code = AtomicOpenPYC("tests/test_compare.pyc");
+	if(exit_code)
+		return(exit_code);
+
+	
+	
+	//storing of globals/vars and deletion of globals/vars
+	exit_code = AtomicOpenPYC("tests/test21ba2.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test21.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test21b.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test21ba.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test21ba3.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test21bb.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test21c.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test21d.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test21e.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test21a.pyc");
+	if(exit_code)
+		return(exit_code);
+	
+
+	//test generators
+	exit_code = AtomicOpenPYC("tests/test20.pyc");
+	if(exit_code)
+		return(exit_code);
+
+	
+	//kw defaults
+	exit_code = AtomicOpenPYC("tests/test54.pyc");
+	if(exit_code)
+		return(exit_code);
+	
+	
+	//pos + kw defaults
+	exit_code = AtomicOpenPYC("tests/test55c.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test55b.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test55.pyc");
+	if(exit_code)
+		return(exit_code);
+	//return;
+
+	
+
+	//simple print 
+	exit_code = AtomicOpenPYC("tests/test_print.pyc");
+	if(exit_code)
+		return(exit_code);
+
+	exit_code = AtomicOpenPYC("tests/prng_single.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/prng.pyc");
+	if(exit_code)
+		return(exit_code);
+	//return(0);
+
+	printf("executing arduino object:tests/fade_min.pyc\n");
 	printf("sVimPy Python Output\n{\n");
-	vm *vm = vm_Init(NULL);
-	vm->import_module_handler = &ImportModule;
-	vm->exception_handler = &CatchException;
+	VM_ID vm = vm_Init(0);
+	vm_SetImportModuleHandler(vm, &ImportModule);
+	vm_SetExceptionHandler(vm,&CatchException);
 	long pyc_magic = MAGIC;
-	stream *f = stream_CreateFromFile("tests/fade_min.pyc","rb");
+	STREAM_ID f = stream_CreateFromFile(mem_create_string("tests/fade_min.pyc"),mem_create_string("rb"));
 	if(!stream_Open(f))
 	{
-		printf("error opening pyc file: tests/blink.pyc\n");
+		printf("error opening pyc file: tests/fade_min.pyc\n");
 		return(1);
 	}
 	long magic = stream_ReadLong(f);
 	if (magic != pyc_magic)
 	{
-		printf("error wrong file magic: tests/blink.pyc\n");
+		printf("error wrong file magic: tests/fade_min.pyc\n");
 		return(1);
 	}
 	stream_ReadLong(f);//skip time
-	object *obj = stream_ReadObject(f);
-	object *global_key = (object*)CreateUnicodeObject(str_Copy(((code_object*)obj)->name));
+	OBJECT_ID obj = stream_ReadObject(f);
+	code_object *co = (code_object*)mem_lock(obj);
+	OBJECT_ID global_key = obj_CreateUnicode(mem_copy(co->name));
+	mem_unlock(obj,0);
 	vm_AddGlobal(vm, global_key,obj);
-	object *ret = vm_RunObject(vm, obj, NULL,NULL);
+	obj_IncRefCount(global_key);
+	OBJECT_ID ret = vm_RunObject(vm, obj, 0,0);
 	printf("ran module main\n");
-	if(ret != NULL)
-		gc_DecRefCount(ret);
-		
-	vm_RunFunction(vm,"setup",NULL,NULL);
+	if(ret != 0)
+		obj_DecRefCount(ret);
+	BYTES_ID ssetup = mem_create_string("setup");	
+	BYTES_ID sloop = mem_create_string("loop");	
+	OBJECT_ID sr = vm_RunFunction(vm,ssetup,0,0);
+	obj_DecRefCount(sr);
 	printf("ran setup\n");
-	for(INDEX i = 0;i<100;i++) //execute one hundred test loops
-		vm_RunFunction(vm,"loop",NULL,NULL);
+	for(INDEX i = 0;i<10;i++) //execute one hundred test loops
+	{
+		OBJECT_ID lr = vm_RunFunction(vm,sloop,0,0);
+		obj_DecRefCount(lr);
+	}
 	printf("ran loops\n");
-	
+	mem_free(ssetup);
+	mem_free(sloop);
 	vm_RemoveGlobal(vm,global_key);
-	gc_DecRefCount(obj);
+	obj_DecRefCount(global_key);
+	obj_DecRefCount(obj);
 	stream_Free(f);
 	printf("}\n");
-	if(vm->error_message != NULL)
-		printf("error occured:\n%s\n",vm->error_message);
+	struct _vm *v = (struct _vm*)mem_lock(vm);
+	if(v->error_message != 0)
+	{
+		char *m = (char*)mem_lock(v->error_message);
+		printf("error occured:\n%s\n",m);
+		mem_unlock(v->error_message,0);
+	}
+	mem_unlock(vm,0);
 	exit_code = vm_Close(vm);
 	printf("vm exit code:%d\n",exit_code);
+	if(exit_code)
+		return(exit_code);
 	//return(exit_code);
 
 	printf("executing arduino object:fade_min.h\n");
 	printf("sVimPy Python Output\n{\n");
-	vm = vm_Init(NULL);
-	vm->import_module_handler = &ImportModule;
-	vm->exception_handler = &CatchException;
+	vm = vm_Init(0);
+	vm_SetImportModuleHandler(vm,&ImportModule);
+	vm_SetExceptionHandler(vm, &CatchException);
 	//stream *f = stream_CreateFromFile("tests/fade_min.pyc","rb");
-	f = stream_CreateFromBytes(((char*)&fade_min),FADE_MIN_LEN);
+	MEM_ID fade_mem = mem_create((char*)&fade_min,FADE_MIN_LEN);
+	f = stream_CreateFromBytes(fade_mem,FADE_MIN_LEN);
 	if(!stream_Open(f))
 	{
 		printf("error opening pyc file: fade_min\n");
@@ -724,34 +868,55 @@ NUM atomic_test(void)
 	//}
 	//stream_ReadLong(f);//skip time
 	obj = stream_ReadObject(f);
-	global_key = (object*)CreateUnicodeObject(str_Copy(((code_object*)obj)->name));
+	co = (code_object*)mem_lock(obj);
+	global_key = obj_CreateUnicode(mem_copy(co->name));
+	mem_unlock(obj,0);
 	vm_AddGlobal(vm, global_key,obj);
-	ret = vm_RunObject(vm, obj, NULL,NULL);
+	obj_IncRefCount(global_key);
+	ret = vm_RunObject(vm, obj, 0,0);
 	printf("ran module main\n");
-	if(ret != NULL)
-		gc_DecRefCount(ret);
+	if(ret != 0)
+		obj_DecRefCount(ret);
 		
-	vm_RunFunction(vm,"setup",NULL,NULL);
+	ssetup = mem_create_string("setup");	
+	sloop = mem_create_string("loop");	
+	sr = vm_RunFunction(vm,ssetup,0,0);
+	obj_DecRefCount(sr);
 	printf("ran setup\n");
-	for(INDEX i = 0;i<1000000;i++) //execute one hundred test loops
-		vm_RunFunction(vm,"loop",NULL,NULL);
+	for(INDEX i = 0;i<100;i++) //execute one hundred test loops
+	{
+		OBJECT_ID lr = vm_RunFunction(vm,sloop,0,0);
+		obj_DecRefCount(lr);
+	}
 	printf("ran loops\n");
+	mem_free(ssetup);
+	mem_free(sloop);
 	
 	vm_RemoveGlobal(vm,global_key);
-	gc_DecRefCount(obj);
+	obj_DecRefCount(global_key);
+	obj_DecRefCount(obj);
 	stream_Free(f);
+	mem_free(fade_mem);
 	printf("}\n");
-	if(vm->error_message != NULL)
-		printf("error occured:\n%s\n",vm->error_message);
+	v = (struct _vm*)mem_lock(vm);
+	if(v->error_message != 0)
+	{
+		char *m = (char*)mem_lock(v->error_message);
+		printf("error occured:\n%s\n",m);
+		mem_unlock(v->error_message,0);
+	}
+	mem_unlock(vm,0);
 	exit_code = vm_Close(vm);
 	printf("vm exit code:%d\n",exit_code);
-	return(exit_code);
-
-
-
-	exit_code = AtomicOpenPYC("tests/queens2a.pyc");
 	if(exit_code)
 		return(exit_code);
+	//return(exit_code);
+
+
+
+	//exit_code = AtomicOpenPYC("tests/queens2a.pyc");
+	//if(exit_code)
+	//	return(exit_code);
 	//return(exit_code);
 	exit_code = AtomicOpenPYC("tests/test32b.pyc");
 	if(exit_code)
@@ -834,10 +999,6 @@ NUM atomic_test(void)
 	//AtomicOpenPYC("tests/Play.pyc");//old version without class support
 	//AtomicOpenPYC("tests/PlayNew.pyc");
 
-	//open file test + if_iter with sentinel
-	exit_code = AtomicOpenPYC("tests/test_open.pyc");
-	if(exit_code)
-		return(exit_code);
 
 	//module name set test
 	exit_code = AtomicOpenPYC("tests/test_main.pyc");
@@ -847,9 +1008,6 @@ NUM atomic_test(void)
 	//append ops + generators
 	//AtomicOpenPYC("tests/test53.pyc", vm);
 	exit_code = AtomicOpenPYC("tests/test_yield.pyc");
-	if(exit_code)
-		return(exit_code);
-	exit_code = AtomicOpenPYC("tests/test45.pyc");
 	if(exit_code)
 		return(exit_code);
 
@@ -862,23 +1020,7 @@ NUM atomic_test(void)
 		return(exit_code);
 
 	
-	//pos + kw defaults
-	exit_code = AtomicOpenPYC("tests/test55c.pyc");
-	if(exit_code)
-		return(exit_code);
-	exit_code = AtomicOpenPYC("tests/test55b.pyc");
-	if(exit_code)
-		return(exit_code);
-	exit_code = AtomicOpenPYC("tests/test55.pyc");
-	if(exit_code)
-		return(exit_code);
-	//return;
 
-	//kw defaults
-	exit_code = AtomicOpenPYC("tests/test54.pyc");
-	if(exit_code)
-		return(exit_code);
-	
 
 	//simple stuff
 	exit_code = AtomicOpenPYC("tests/test57.pyc");
@@ -943,9 +1085,6 @@ NUM atomic_test(void)
 	exit_code = AtomicOpenPYC("tests/test26.pyc");
 	if(exit_code)
 		return(exit_code);
-	exit_code = AtomicOpenPYC("tests/test20.pyc");
-	if(exit_code)
-		return(exit_code);
 	exit_code = AtomicOpenPYC("tests/test24b.pyc");
 	if(exit_code)
 		return(exit_code);
@@ -968,41 +1107,6 @@ NUM atomic_test(void)
 
 	//brute ops + closures
 	exit_code = AtomicOpenPYC("tests/test32.pyc");
-	if(exit_code)
-		return(exit_code);
-
-	//function parameters
-	exit_code = AtomicOpenPYC("tests/test_functions.pyc");
-	if(exit_code)
-		return(exit_code);
-	exit_code = AtomicOpenPYC("tests/test50.pyc");//with keywords unordered
-	if(exit_code)
-		return(exit_code);
-	exit_code = AtomicOpenPYC("tests/test49b.pyc");//kw unordered
-	if(exit_code)
-		return(exit_code);
-	exit_code = AtomicOpenPYC("tests/test49.pyc");//kw
-	if(exit_code)
-		return(exit_code);
-	exit_code = AtomicOpenPYC("tests/test48.pyc");//var
-	if(exit_code)
-		return(exit_code);
-	exit_code = AtomicOpenPYC("tests/test47.pyc");
-	if(exit_code)
-		return(exit_code);
-	exit_code = AtomicOpenPYC("tests/test46.pyc");
-	if(exit_code)
-		return(exit_code);
-	exit_code = AtomicOpenPYC("tests/test36.pyc");//call_function_var
-	if(exit_code)
-		return(exit_code);
-	exit_code = AtomicOpenPYC("tests/test37.pyc");//call_function_kw
-	if(exit_code)
-		return(exit_code);
-	exit_code = AtomicOpenPYC("tests/test38.pyc");//call_function_var_kw 
-	if(exit_code)
-		return(exit_code);
-	exit_code = AtomicOpenPYC("tests/test39.pyc");//call_function
 	if(exit_code)
 		return(exit_code);
 
@@ -1062,37 +1166,6 @@ NUM atomic_test(void)
 	if(exit_code)
 		return(exit_code);
 
-	//storing of globals/vars and deletion of globals/vars
-	exit_code = AtomicOpenPYC("tests/test21ba2.pyc");
-	if(exit_code)
-		return(exit_code);
-	exit_code = AtomicOpenPYC("tests/test21.pyc");
-	if(exit_code)
-		return(exit_code);
-	exit_code = AtomicOpenPYC("tests/test21b.pyc");
-	if(exit_code)
-		return(exit_code);
-	exit_code = AtomicOpenPYC("tests/test21ba.pyc");
-	if(exit_code)
-		return(exit_code);
-	exit_code = AtomicOpenPYC("tests/test21ba3.pyc");
-	if(exit_code)
-		return(exit_code);
-	exit_code = AtomicOpenPYC("tests/test21bb.pyc");
-	if(exit_code)
-		return(exit_code);
-	exit_code = AtomicOpenPYC("tests/test21c.pyc");
-	if(exit_code)
-		return(exit_code);
-	exit_code = AtomicOpenPYC("tests/test21d.pyc");
-	if(exit_code)
-		return(exit_code);
-	exit_code = AtomicOpenPYC("tests/test21e.pyc");
-	if(exit_code)
-		return(exit_code);
-	exit_code = AtomicOpenPYC("tests/test21a.pyc");
-	if(exit_code)
-		return(exit_code);
 	
 	//loops + recursion
 	exit_code = AtomicOpenPYC("tests/test35.pyc");
@@ -1110,10 +1183,6 @@ NUM atomic_test(void)
 	if(exit_code)
 		return(exit_code);
 	
-	//comparing
-	exit_code = AtomicOpenPYC("tests/test_compare.pyc");
-	if(exit_code)
-		return(exit_code);
 
 	//closures and deref opcodes
 	exit_code = AtomicOpenPYC("tests/test57.pyc");
@@ -1183,6 +1252,7 @@ NUM atomic_test(void)
 	exit_code = AtomicOpenPYC("tests/e_max.pyc");
 	if(exit_code)
 		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/Queens2a.pyc");
 	//exit_code = AtomicOpenPYC("tests/e_huge.pyc");
 	//if(exit_code)
 	//	return(exit_code);
@@ -1212,5 +1282,5 @@ int main(int argc, char *argv[])
 	//AtomicOpenPYC("tests/test_functions.pyc");
 	//AtomicOpenPYC("tests/test_function_kw.pyc");
 	//	AtomicOpenPYC("tests/e_med.pyc");
-	return (exit_code);
+	return(exit_code);
 }

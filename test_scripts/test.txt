@@ -1,0 +1,5 @@
+This is just an output example
+for testing the internal file class.
+Nothing special here... move on.
+Seriously there is no real content here.
+Close your Textviewer now, this is a total waste of time.

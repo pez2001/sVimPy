@@ -45,6 +45,6 @@ struct _vm;
 #endif
 
 #ifdef USE_INTERNAL_CLASSES
-void AddInternalClasses(struct _vm *vm);
+void AddInternalClasses(VM_ID vm);
 #endif
 #endif

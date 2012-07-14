@@ -35,10 +35,8 @@
 #include "garbage.h"
 
 #include "debug.h"
-#ifdef USE_DEBUGGING
-#include "assert.h"
 #include "memory.h"
-#endif
+#include "tuples.h"
 
 #ifdef __cplusplus
 extern "C"  {
@@ -101,10 +99,19 @@ struct _object;
 struct _tuple_object;
 struct _code_object;
 
+//obj_Free forward declaration needed for class deconstructor calling
+OBJECT_ID vm_RunMethod(VM_ID vm_id,OBJECT_ID key,CLASS_INSTANCE_ID cio,TUPLE_ID locals_id,TUPLE_ID kw_locals_id);
+
+
 #ifndef USE_ARDUINO_FUNCTIONS
 #pragma pack(push)				/* push current alignment to stack */
-#pragma pack(210)					/* set alignment to 1 byte boundary */
+#pragma pack(1)					/* set alignment to 1 byte boundary */
 #endif
+
+
+//TODO 
+// clearer distinguishing of BYTES_ID & STRING_ID
+
 
 
 //general object header struct
@@ -114,9 +121,6 @@ typedef struct _object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
-	#ifdef USE_LOCKING
-	OBJECT_LOCK_COUNT lock_count;
-	#endif
 } object;
 
 //tag object struct
@@ -128,9 +132,6 @@ typedef struct _tag_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
-	#ifdef USE_LOCKING
-	OBJECT_LOCK_COUNT lock_count;
-	#endif
 	void *tag;
 } tag_object;
 
@@ -141,9 +142,6 @@ typedef struct _int_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
-	#ifdef USE_LOCKING
-	OBJECT_LOCK_COUNT lock_count;
-	#endif
 	INT value;
 } int_object;
 
@@ -154,9 +152,6 @@ typedef struct _float_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
-	#ifdef USE_LOCKING
-	OBJECT_LOCK_COUNT lock_count;
-	#endif
 	FLOAT value;
 } float_object;
 
@@ -168,10 +163,7 @@ typedef struct _unicode_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
-	#ifdef USE_LOCKING
-	OBJECT_LOCK_COUNT lock_count;
-	#endif
-	char *value;
+	BYTES_ID value;/* char* */
 }unicode_object;
 
 //kv object struct
@@ -183,11 +175,8 @@ typedef struct _kv_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
-	#ifdef USE_LOCKING
-	OBJECT_LOCK_COUNT lock_count;
-	#endif
-	void *value;
-	void *key;
+	OBJECT_ID value;/*object*/
+	OBJECT_ID key;/*object*/
 } kv_object;				// TO OPTIMIZE MEMORY USAGE -> only used in tuples 
 
 //code object struct
@@ -200,21 +189,18 @@ typedef struct _code_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
-	#ifdef USE_LOCKING
-	OBJECT_LOCK_COUNT lock_count;
-	#endif
-	char *name;
+	BYTES_ID name; /* char* */
 	NUM argcount;
 	NUM kwonlyargcount;
 	NUM nlocals;
 	NUM stacksize;
 	long co_flags; //TODO minimize storage here
-	object *code;
-	object *consts;
-	object *names;
-	object *varnames;
-	object *freevars;
-	object *cellvars;
+	STRING_ID code;/*string object*/
+	TUPLE_ID consts;/*tuple_object*/
+	TUPLE_ID names;/*tuple_object*/
+	TUPLE_ID varnames;/*tuple_object*/
+	TUPLE_ID freevars;/*tuple_object*/
+	TUPLE_ID cellvars;/*tuple_object*/
 	// object *filename;
 	// object *name;
 	// object *lnotab;
@@ -230,11 +216,8 @@ typedef struct _class_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
-	#ifdef USE_LOCKING
-	OBJECT_LOCK_COUNT lock_count;
-	#endif
-	code_object *code;
-	object *base_classes;
+	CODE_ID code;/*code_object*/
+	TUPLE_ID base_classes;/*tuple_object*/
 } class_object;
 
 //class instance object struct
@@ -245,12 +228,9 @@ typedef struct _class_instance_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
-	#ifdef USE_LOCKING
-	OBJECT_LOCK_COUNT lock_count;
-	#endif
-	class_object *instance_of;	
-	object *methods;
-	object *vars;
+	CLASS_ID instance_of;/*class_object*/
+	TUPLE_ID methods;/*tuple_object*/
+	TUPLE_ID vars;/*tuple_object*/
 } class_instance_object;
 
 //method object struct
@@ -262,11 +242,8 @@ typedef struct _method_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
-	#ifdef USE_LOCKING
-	OBJECT_LOCK_COUNT lock_count;
-	#endif
-	object *func;
-	class_instance_object *instance;
+	CODE_ID func;/*code_object*/
+	CLASS_INSTANCE_ID instance;/*class_instance_object*/
 } method_object;
 
 //string object struct
@@ -279,10 +256,7 @@ typedef struct _string_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
-	#ifdef USE_LOCKING
-	OBJECT_LOCK_COUNT lock_count;
-	#endif
-	char *content;
+	BYTES_ID content;/*char* */
 	NUM len;
 } string_object;
 
@@ -294,11 +268,8 @@ typedef struct _tuple_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
-	#ifdef USE_LOCKING
-	OBJECT_LOCK_COUNT lock_count;
-	#endif
 	INDEX ptr;
-	ptr_list *list;
+	LIST_ID list; /*id_list*/ //TODO switch ptr_list to MEM_ID
 } tuple_object;
 
 //function object struct
@@ -310,10 +281,7 @@ typedef struct _function_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
-	#ifdef USE_LOCKING
-	OBJECT_LOCK_COUNT lock_count;
-	#endif
-	struct _code_object *func;
+	CODE_ID func;/*code_object*/
 } function_object;
 
 //cfunction object struct
@@ -325,10 +293,7 @@ typedef struct _cfunction_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
-	#ifdef USE_LOCKING
-	OBJECT_LOCK_COUNT lock_count;
-	#endif
-	struct _object* (*func) (struct _vm *vm,struct _tuple_object *locals,struct _tuple_object *kw_locals);
+	OBJECT_ID (*func) (VM_ID vm_id,TUPLE_ID locals,TUPLE_ID kw_locals);
 } cfunction_object;
 
 //iter object struct
@@ -339,12 +304,9 @@ typedef struct _iter_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
-	#ifdef USE_LOCKING
-	OBJECT_LOCK_COUNT lock_count;
-	#endif
-	object *tag;//used for storage of iter options and index ptr
-	object *(*iter_func)(struct _iter_object *iter,struct _vm *vm);
-	struct _stack *block_stack;//iters will save blocks on stack when yielding
+	OBJECT_ID tag;//used for storage of iter options and index ptr  => object*
+	OBJECT_ID (*iter_func)(OBJECT_ID iter,VM_ID vm_id);
+	STACK_ID block_stack;/*stack*/  //iters will save blocks on stack when yielding
 } iter_object;
 
 //block object struct
@@ -355,213 +317,100 @@ typedef struct _block_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
-	#ifdef USE_LOCKING
-	OBJECT_LOCK_COUNT lock_count;
-	#endif
-	code_object *code;
+	CODE_ID code; /*code_object*/
 	INDEX start;
 	INDEX ip;
 	NUM len;
-	struct _stack *stack;
+	STACK_ID stack;/*stack*/
 } block_object;
-
-#ifdef USE_LOCKING
-/*
-typedef struct _cache_object
-{
-	OBJECT_TYPE type;
-	OBJECT_REF_COUNT ref_count;
-	#ifdef USE_LOCKING
-	OBJECT_REF_COUNT lock_count;
-	#endif
-	//object *object;
-	STREAM_NUM stream_pos;
-} cache_object;
-*/
-
-//proxy object struct
-//used for virtual caching objects in streams
-//normal size = 9 + 8 
-//avr size = 4 + 4
-typedef struct _proxy_object
-{
-	OBJECT_TYPE type;
-	OBJECT_REF_COUNT ref_count;
-	#ifdef USE_LOCKING
-	OBJECT_LOCK_COUNT lock_count;
-	#endif
-	void *ref;//object* or stream_pos/512
-	void *is_cached; // == 0 -> not cached use ref as object*  > 0 -> pointer stream where object is cached ,ref is the position(mmc sector address 512 bytes aligned) in the stream 
-} proxy_object;
-#endif
 
 #ifndef USE_ARDUINO_FUNCTIONS
 #pragma pack(pop)				/* restore original alignment from stack */
 #endif
 
+//object *GetAttributeByName(object *obj,char *name);
+
 void obj_Init(void);
+
+void obj_SetVM(VM_ID vm_id);
 
 void obj_Close(void);
 
-object *AllocObject(void);
+OBJECT_ID obj_Alloc(OBJECT_TYPE type,OBJECT_REF_COUNT ref_count);
 
-block_object *AllocBlockObject(void);
+OBJECT_ID obj_CreateTag(void *tag);
 
-kv_object *AllocKVObject(void);
+OBJECT_ID obj_CreateInt(INT value);
 
-#ifdef USE_LOCKING
-proxy_object *AllocProxyObject(void);
-#endif
+OBJECT_ID obj_CreateFloat(FLOAT value);
 
-tag_object *AllocTagObject(void);
+OBJECT_ID obj_CreateUnicode(MEM_ID value); /*char* */
 
-string_object *AllocStringObject(void);
+OBJECT_ID obj_CreateTuple(NUM num);
 
-tuple_object *AllocTupleObject(void);
+OBJECT_ID obj_CreateString(MEM_ID bytes,NUM len); /*char* */
 
-unicode_object *AllocUnicodeObject(void);
+OBJECT_ID obj_CreateKV(OBJECT_ID key,OBJECT_ID value);
 
-code_object *AllocCodeObject(void);
+OBJECT_ID obj_CreateEmpty(char type);
 
-class_object *AllocClassObject(void);
+OBJECT_ID obj_CreateFunction(OBJECT_ID function_code,OBJECT_ID defaults,OBJECT_ID kw_defaults,OBJECT_ID closure);
 
-class_instance_object *AllocClassInstanceObject(void);
+OBJECT_ID obj_CreateCFunction(OBJECT_ID (*func) (VM_ID vm_id,OBJECT_ID locals,OBJECT_ID kw_locals));
 
-iter_object *AllocIterObject(void);
+OBJECT_ID obj_CreateMethod(OBJECT_ID func,OBJECT_ID class_instance);
 
-int_object *AllocIntObject(void);
+OBJECT_ID obj_CreateClass(OBJECT_ID code,OBJECT_ID base_classes);
 
-float_object *AllocFloatObject(void);
+OBJECT_ID obj_CreateCode(MEM_ID name); /*char* */
 
-function_object *AllocFunctionObject(void);
+OBJECT_ID obj_CreateClassInstance(OBJECT_ID instance_of);
 
-cfunction_object *AllocCFunctionObject(void);
+OBJECT_ID obj_CreateIter(void);
 
-method_object *AllocMethodObject(void);
+OBJECT_ID obj_ConvertToKV(OBJECT_ID obj); /*returns kv_object*/
 
-#ifdef USE_LOCKING
-proxy_object *CreateProxyObject(void);
-#endif
+OBJECT_ID obj_ConvertToValuedKV(OBJECT_ID key,OBJECT_ID value);
 
-tag_object *CreateTagObject(void *tag);
+void obj_Print(OBJECT_ID obj);
 
-int_object *CreateIntObject(INT value);
+void obj_PrintTabs(char num);
 
-float_object *CreateFloatObject(FLOAT value);
+void obj_Dump(OBJECT_ID obj_id, char level,char verbosity);
 
-unicode_object *CreateUnicodeObject(char *value);
+BOOL obj_Compare(OBJECT_ID a,OBJECT_ID b);//TODO add tuple compare
 
-tuple_object *CreateTuple(NUM num);
+OBJECT_ID obj_Copy(OBJECT_ID obj_id);
 
-string_object *CreateStringObject(char *bytes,NUM len);
+OBJECT_ID obj_GetAttribute(OBJECT_ID obj,OBJECT_ID key);
 
-kv_object *CreateKVObject(object *key,object *value);
+void obj_SetAttribute(OBJECT_ID obj,OBJECT_ID key,OBJECT_ID value);
 
-object *CreateEmptyObject(char type);
+OBJECT_ID obj_GetClassMethod(OBJECT_ID _class,OBJECT_ID key);
 
-function_object *CreateFunctionObject(code_object *function_code,tuple_object *defaults,tuple_object *kw_defaults,tuple_object *closure);
+OBJECT_ID obj_GetClassVar(OBJECT_ID _class,OBJECT_ID key);
 
-cfunction_object *CreateCFunctionObject(struct _object* (*func) (struct _vm *vm,struct _tuple_object *locals,struct _tuple_object *kw_locals));//,tuple_object *defaults,tuple_object *kw_defaults);//used for in-python storage of external calls
+void obj_AddCodeName(OBJECT_ID code_object,OBJECT_ID key,OBJECT_ID value);
 
-method_object *CreateMethodObject(object *func,class_instance_object *instance);
+void obj_AddCodeFunction(OBJECT_ID code_object,BYTES_ID name,OBJECT_ID func);
 
-class_object *CreateClassObject(code_object *code,object *base_classes);//char *name,
+void obj_AddCodeCFunction(OBJECT_ID code_object,BYTES_ID name, OBJECT_ID (*func) (VM_ID vm_id,OBJECT_ID locals,OBJECT_ID kw_locals));
 
-code_object *CreateCodeObject(char *name);
+NUM obj_GetUnicodeLen(OBJECT_ID obj);
 
-class_instance_object *CreateClassInstanceObject(class_object *instance_of);
+void obj_IncRefCount(OBJECT_ID obj_id);
 
-iter_object *CreateIterObject(void);
+void obj_DecRefCount(OBJECT_ID obj_id);
 
-#ifdef USE_LOCKING
-object *LockObject(object *obj);
+BOOL obj_HasNoRefs(OBJECT_ID obj);
 
-void UnlockObject(object *obj);
-#endif
+BOOL obj_HasRefs(OBJECT_ID obj);
 
-object *CopyObject(object *obj);
+void obj_Free(OBJECT_ID obj);
 
-BOOL CompareObjects(object *a,object *b);
+void obj_ClearGC(void);
 
-kv_object *ConvertToKVObject(object *key);
-
-kv_object *ConvertToKVObjectValued(object *key,object *value);
-
-//object *DissolveRef(object *obj);
-
-void PrintObject(object *obj);
-
-#ifndef USE_ARDUINO_FUNCTIONS
-void FullDumpObject(object * obj, char level);
-#else
-void FullDumpObjectArduino(object * obj, char level);
-#endif
-
-#ifdef USE_DEBUGGING
-void DumpObject(object *obj, char level);
-
-char *DumpObjectXml(object *obj, char level);
-#endif
-
-void AddCodeName(object *co,object *key,object *value);
-
-void AddCodeFunction(object *co,char *name,object *func);
-
-void AddCodeCFunction(object *co,char *name,	struct _object* (*func) (struct _vm *vm,struct _tuple_object *locals,struct _tuple_object *kw_locals));
-
-
-//TODO tuple functions -> move to tuples.c 
-void ClearDictValues(object *tuple);
-
-void ConvertToDict(object *tuple);
-
-object *GetNextItem(object *tuple);
-
-void ResetIteration(object *tuple);
-
-void SetItem(object *tuple, INDEX index, object *obj);
-
-object *GetItem(object *tuple, INDEX index);
-
-INDEX GetItemIndexByName(object *tuple, char *name);
-
-void SetDictItem(object *tuple,object *key,object *value);
-
-void SetDictItemByIndex(object *tuple,INDEX index,object *value);
-
-object *GetDictItem(object *tuple,object *key);
-
-object *GetDictItemByIndex(object *tuple,INDEX index);
-
-object *GetDictItemByName(object *tuple,char *name);
-
-NUM GetTupleLen(object *tuple);
-
-INDEX GetDictItemIndex(object *tuple,object *key);
-
-INDEX GetItemIndex(object *tuple,object *obj);
-
-object *GetAttribute(object *obj,object *key);
-
-//object *GetAttributeByName(object *obj,char *name);
-
-void SetAttribute(object *obj,object *key,object *value);
-
-object *GetClassMethod(object *_class,object *key);
-
-object *GetClassVar(object *_class,object *key);
-
-void AppendDictItem(object *tuple,object *key,object *value);
-
-void AppendItem(object *tuple,object *value);
-
-void InsertItem(object *tuple,INDEX index,object *value);
-
-void ClearDictValues(object *tuple);
-
-void DeleteItem(object *tuple, INDEX index);
-
-void DeleteDictItem(object *tuple,object *key);
+OBJECT_TYPE obj_GetType(OBJECT_ID obj);
 
 #ifdef __cplusplus
 } 

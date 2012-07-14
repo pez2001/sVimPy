@@ -23,269 +23,295 @@
 #include "lists.h"
 
 
-ptr_list *ptr_CreateList(NUM num, unsigned char flags)
+LIST_ID list_Create(NUM num, unsigned char flags)
 {
-	#ifdef USE_DEBUGGING
-	ptr_list *tmp = (ptr_list*) mem_malloc(sizeof(ptr_list), "ptr_CreateList() return");
+	#ifdef USE_MEMORY_DEBUGGING
+	MEM_ID tmp = mem_malloc_debug(sizeof(id_list),MEM_POOL_CLASS_STATIC, "list_Create() return");
 	#else
-	ptr_list *tmp = (ptr_list*) malloc(sizeof(ptr_list));
+	MEM_ID tmp = mem_malloc(sizeof(id_list),MEM_POOL_CLASS_STATIC);
 	#endif
-	if (num)
+	id_list *l = (id_list*)mem_lock(tmp);
+	if(num)
 	{
-		#ifdef USE_DEBUGGING
-		tmp->items = (void **)mem_malloc(num * sizeof(void *),"ptr_CreateList() items");
+		#ifdef USE_MEMORY_DEBUGGING
+		l->items = mem_malloc_debug(num * sizeof(OBJECT_ID),MEM_POOL_CLASS_DYNAMIC,"list_Create() items");
 		#else
-		tmp->items = (void **)malloc(num * sizeof(void *));
+		l->items = mem_malloc(num * sizeof(OBJECT_ID),MEM_POOL_CLASS_DYNAMIC);
 		#endif
-		memset(tmp->items,0,num*sizeof(void*));
+		OBJECT_ID *i = (OBJECT_ID*)mem_lock(l->items);
+		memset(i,0,num*sizeof(OBJECT_ID));
+		mem_unlock(l->items,1);
 	}
 	else
-		tmp->items = NULL;
-	printf("ptr.x: %x, ptr.i.x: %d\r\n",tmp,tmp->items);
-	tmp->num = num;
-	tmp->flags = flags;
-	return (tmp);
+		l->items = 0;
+	l->num = num;
+	l->flags = flags;
+	mem_unlock(tmp,1);
+	return(tmp);
 }
 
-/*
-ptr_list_with_tag *ptr_CreateTaggedList(NUM num, int flags)
+void list_Close(LIST_ID list)
 {
-	return (NULL);
-}
-*/
-
-void ptr_CloseList(ptr_list *list)
-{
-	if (list->num > 0 )//|| list->num != NULL)
-	{
-		#ifdef USE_DEBUGGING
-		//assert(mem_free(list->items));
-		mem_free(list->items);
-		#else
-		free(list->items);
-		#endif
-	}
-	#ifdef USE_DEBUGGING
-	//assert(mem_free(list));
+	id_list *l = (id_list*)mem_lock(list);
+	if(l->num > 0)
+		mem_free(l->items);
+	mem_unlock(list,0);
 	mem_free(list);
-	#else
-	free(list);
-	#endif
 }
 
-void ptr_Push(ptr_list *list, void *ptr)
+void list_Push(LIST_ID list, OBJECT_ID obj)
 {
-	if (!list->num)
+	id_list *l = (id_list*)mem_lock(list);
+	if(!l->num)
 	{
-		list->num = 1;
-		#ifdef USE_DEBUGGING
-		list->items = (void**)mem_malloc(list->num * sizeof(void*),"ptr_Push() items");
+		l->num = 1;
+		#ifdef USE_MEMORY_DEBUGGING
+		l->items = mem_malloc_debug(l->num * sizeof(OBJECT_ID),MEM_POOL_CLASS_DYNAMIC,"list_Push() items");
 		#else
-		list->items = (void**)malloc(list->num * sizeof(void*));
+		l->items = mem_malloc(l->num * sizeof(OBJECT_ID),MEM_POOL_CLASS_DYNAMIC);
 		#endif
-		list->items[0] = ptr;
-		printf("li: %x\r\n",list->items);
+		OBJECT_ID *i = (OBJECT_ID*)mem_lock(l->items);	
+		i[0] = obj;
+		mem_unlock(l->items,1);
 	}
 	else
 	{
-		#ifdef USE_DEBUGGING
-		list->items = (void**)mem_realloc(list->items,(list->num + 1) * sizeof(void*));
-		#else
-		list->items = (void**)realloc(list->items,(list->num + 1) * sizeof(void*));
-		#endif
-		printf("li: %x\r\n",list->items);
-		list->items[list->num] = ptr;
-		list->num++;
+		l->items = mem_realloc(l->items,(l->num + 1) * sizeof(OBJECT_ID));
+		OBJECT_ID *i = (OBJECT_ID*)mem_lock(l->items);	
+		i[l->num] = obj;
+		mem_unlock(l->items,1);
+		l->num++;
 	}
+	mem_unlock(list,1);
 }
 
-void *ptr_Pop(ptr_list *list)
+OBJECT_ID list_Pop(LIST_ID list)
 {
-	if (list->num)
+	id_list *l = (id_list*)mem_lock(list);
+	if(l->num)
 	{
-		// printf("ptr pop:%d\n",list->num-1);
-		void *tmp = ptr_Remove(list, list->num - 1);
+		OBJECT_ID tmp = list_Remove(list, l->num - 1);
+		mem_unlock(list,0);
 		return (tmp);
 	}
-	return (NULL);
+	mem_unlock(list,0);
+	return (0);
 }
 
-BOOL ptr_Insert(ptr_list *list, INDEX index, void *ptr)
+BOOL list_Insert(LIST_ID list, INDEX index, OBJECT_ID obj)
 {
-	if(index == 0 && !list->num)
+	id_list *l = (id_list*)mem_lock(list);
+	if(index == 0 && !l->num)
 	{
-		ptr_Push(list, ptr);
+		list_Push(list, obj);
 	}
-	else if(index <= list->num - 1)
+	else if(index <= l->num - 1)
 	{
-		list->num++;
-		#ifdef USE_DEBUGGING
-		list->items = (void **)mem_realloc(list->items, (list->num) * sizeof(void *));
-		#else
-		list->items = (void **)realloc(list->items, (list->num) * sizeof(void *));
-		#endif
-		printf("li: %x\r\n",list->items);
-		// int len = (list->num-1) - index;
-		// if(len)
-		// {
-		for(NUM i = list->num - 2; i >= index; i--)
+		l->num++;
+		l->items = mem_realloc(l->items, (l->num) * sizeof(OBJECT_ID));
+		for(NUM i = l->num - 2; i >= index; i--)
 		{
-			ptr_MoveDown(list, i);
-			// memcpy(&list->items[index+1],&list->items[index],len *
-			// sizeof(void*));
+			list_MoveDown(list, i);
 		}
-		list->items[index] = ptr;
+		OBJECT_ID *i = (OBJECT_ID*)mem_lock(l->items);	
+		i[index] = obj;
+		mem_unlock(l->items,1);
+		mem_unlock(list,1);
 		return (1);
 	}
-	else if(index > list->num - 1)
-		ptr_Push(list, ptr);
-
+	else if(index > l->num - 1)
+		list_Push(list, obj);
+	mem_unlock(list,1);
 	return(0);
 }
 
-void ptr_MoveUp(ptr_list *list, INDEX index)
+void list_MoveUp(LIST_ID list, INDEX index)
 {
-	if (!list->num)
-		return;
-	if (index < list->num && index > 0)
+	id_list *l = (id_list*)mem_lock(list);
+	if(!l->num)
 	{
-		list->items[index - 1] = list->items[index];
+		mem_unlock(list,0);
+		return;
 	}
+	if(index < l->num && index > 0)
+	{
+		OBJECT_ID *i = (OBJECT_ID*)mem_lock(l->items);	
+		i[index - 1] = i[index];
+		mem_unlock(l->items,1);
+	}
+	mem_unlock(list,0);
 }
 
-void ptr_MoveDown(ptr_list *list, INDEX index)
+void list_MoveDown(LIST_ID list, INDEX index)
 {
-	if (!list->num)
-		return;
-	if (index < list->num - 1 && index >= 0)
+	id_list *l = (id_list*)mem_lock(list);
+	if(!l->num)
 	{
-		list->items[index + 1] = list->items[index];
+		mem_unlock(list,0);
+		return;
 	}
+	if(index < l->num - 1 && index >= 0)
+	{
+		OBJECT_ID *i = (OBJECT_ID*)mem_lock(l->items);	
+		i[index + 1] = i[index];
+		mem_unlock(l->items,1);
+	}
+	mem_unlock(list,0);
 }
 
-void *ptr_Remove(ptr_list *list, INDEX index)
+OBJECT_ID list_Remove(LIST_ID list, INDEX index)
 {
-	if (!list->num)
-		return (NULL);
-	if (index < list->num)
+	id_list *l = (id_list*)mem_lock(list);
+	if(!l->num)
 	{
-		void *tmp = list->items[index];
-
-		// int len = (list->num-1) - index;
-		// if(len)
-		// {
-		for (NUM i = list->num - 1; i > index; i--)
+		mem_unlock(list,0);
+		return(0);
+	}
+	if(index < l->num)
+	{
+		OBJECT_ID *i = (OBJECT_ID*)mem_lock(l->items);	
+		OBJECT_ID tmp = i[index];
+		for(NUM i = l->num - 1; i > index; i--)
 		{
-			// printf("move up\n");
-			ptr_MoveUp(list, i);
-			// memcpy(&list->items[index],&list->items[index+1],len *
-			// sizeof(void*));
+			list_MoveUp(list, i);
 		}
-		if ((list->num - 1 )== 0)
+		if((l->num - 1) == 0)
 		{
-			//printf("freeing empty list\n");
-			#ifdef USE_DEBUGGING
-			//assert(mem_free(list->items));
-			mem_free(list->items);
-			#else
-			free(list->items);
-			#endif
-			list->items = NULL;
-			list->num = 0;
+			mem_unlock(l->items,0);
+			mem_free(l->items);
+			l->items = 0;
+			l->num = 0;
 		}
 		else
 		{
-			#ifdef USE_DEBUGGING
-			list->items =	(void**)mem_realloc(list->items, (list->num - 1) * sizeof(void *));
-			#else
-			list->items =	(void**)realloc(list->items, (list->num - 1) * sizeof(void *));
-			#endif
-			list->num--;
+			mem_unlock(l->items,1);
+			l->items =	mem_realloc(l->items, (l->num - 1) * sizeof(OBJECT_ID));
+			l->num--;
 		}
-		// printf("top:%d\n",list->num);
-		return (tmp);
+		mem_unlock(list,1);
+		return(tmp);
 	}
-	return (NULL);
-}
-
-void ptr_Clear(ptr_list *list)
-{
-	if (list->num)
-	{
-		#ifdef USE_DEBUGGING
-		//assert(mem_free(list->items));
-		mem_free(list->items);
-		#else
-		free(list->items);
-		#endif
-		list->items = NULL;
-	}
-	list->num = 0;
-}
-
-NUM ptr_GetNum(ptr_list *list)
-{
-	return (list->num);
-}
-
-void *ptr_Get(ptr_list *list, INDEX index)
-{
-	if (index < list->num)
-		return (list->items[index]);
-	else
-		return (NULL);
-}
-
-void ptr_Set(ptr_list *list, INDEX index, void *ptr)
-{
-	if (index < list->num)
-		list->items[index] = ptr;
-}
-
-void ptr_Queue(ptr_list *list, void *ptr)
-{
-	ptr_Insert(list, 0, ptr);
-}
-
-void *ptr_Dequeue(ptr_list *list)
-{
-	if (!list->num)
-		return (NULL);
-	void *tmp = ptr_Get(list, 0);
-
-	ptr_Remove(list, 0);
-	return (tmp);
-}
-
-BOOL ptr_Contains(ptr_list *list,void *ptr)
-{
-	for(int i=0;i<list->num;i++)
-	{	
-		if(list->items[i] == ptr)
-			return(1);
-	}
+	mem_unlock(list,0);
 	return(0);
 }
 
-INDEX ptr_GetIndex(ptr_list *list, void *ptr)
+void list_Clear(LIST_ID list)
 {
-	for(int i=0;i<list->num;i++)
-	{	
-		if(list->items[i] == ptr)
-			return(i);
+	id_list *l = (id_list*)mem_lock(list);
+	if(l->num)
+	{
+		mem_free(l->items);
+		l->items = 0;
 	}
+	l->num = 0;
+	mem_unlock(list,1);
+}
+
+NUM list_GetLen(LIST_ID list)
+{
+	id_list *l = (id_list*)mem_lock(list);
+	NUM r = l->num;
+	mem_unlock(list,0);
+	return(r);
+}
+
+OBJECT_ID list_Get(LIST_ID list, INDEX index)
+{
+	OBJECT_ID r = 0;
+	id_list *l = (id_list*)mem_lock(list);
+	if(index < l->num)
+	{
+		OBJECT_ID *i = (OBJECT_ID*)mem_lock(l->items);	
+		r = i[index];
+		mem_unlock(l->items,0);
+	}
+	mem_unlock(list,0);
+	return(r);
+}
+
+void list_Set(LIST_ID list, INDEX index, OBJECT_ID obj)
+{
+	id_list *l = (id_list*)mem_lock(list);
+	//printf("%d items in tuple\n",l->num);
+	if(index < l->num)
+	{
+		OBJECT_ID *i = (OBJECT_ID*)mem_lock(l->items);	
+		i[index] = obj;
+		//printf("set %d item in tuple to :%d\n",index,obj);
+		mem_unlock(l->items,1);
+	}
+	mem_unlock(list,0);
+}
+
+void list_Queue(LIST_ID list, OBJECT_ID obj)
+{
+	list_Insert(list, 0, obj);
+}
+
+OBJECT_ID list_Dequeue(LIST_ID list)
+{
+	/*id_list *l = (id_list*)mem_lock(list);
+	if(!l->num)
+	{
+		mem_unlock(list,0);
+		return(0);
+	}
+	mem_unlock(list,0);
+	OBJECT_ID tmp = list_Get(list, 0);
+	list_Remove(list, 0);
+	return(tmp);
+	*/
+	return(list_Remove(list, 0));
+}
+
+BOOL list_Contains(LIST_ID list,OBJECT_ID obj)
+{
+	id_list *l = (id_list*)mem_lock(list);
+	OBJECT_ID *ic = (OBJECT_ID*)mem_lock(l->items);	
+	for(int i=0;i<l->num;i++)
+	{	
+		if(ic[i] == obj)
+		{
+			mem_unlock(l->items,0);
+			mem_unlock(list,0);
+			return(1);
+		}
+	}
+	mem_unlock(l->items,0);
+	mem_unlock(list,0);
+	return(0);
+}
+
+INDEX list_GetIndex(LIST_ID list, OBJECT_ID obj)
+{
+	id_list *l = (id_list*)mem_lock(list);
+	OBJECT_ID *ic = (OBJECT_ID*)mem_lock(l->items);	
+	for(int i=0;i<l->num;i++)
+	{	
+		if(ic[i] == obj)
+		{
+			mem_unlock(l->items,0);
+			mem_unlock(list,0);
+			return(i);
+		}
+	}
+	mem_unlock(l->items,0);
+	mem_unlock(list,0);
 	return(-1);
 }
 
-void ptr_RemoveItem(ptr_list *list, void *ptr)
+void list_RemoveItem(LIST_ID list, OBJECT_ID obj)
 {
-	INDEX index = ptr_GetIndex(list,ptr);
+	INDEX index = list_GetIndex(list,obj);
 	if(index != -1)
-		ptr_Remove(list,index);
+		list_Remove(list,index);
 }
 
-BOOL ptr_IsEmpty(ptr_list * list)
+BOOL list_IsEmpty(LIST_ID list)
 {
-	return (!list->num);
+	id_list *l = (id_list*)mem_lock(list);
+	BOOL r = !l->num;
+	mem_unlock(list,0);
+	return(r);
 }
 

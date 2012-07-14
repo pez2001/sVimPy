@@ -24,106 +24,106 @@
 
 #ifdef USE_INTERNAL_CLASSES
 
-object *ic_file_close(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID ic_file_close(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
-	//printf("file close called\n");
-	object *self = GetItem((object*)locals,0);
-	//DumpObject(self,0);
-	//DumpObject(((class_object*)((class_instance_object*)self)->instance_of)->code->names,0);
-	unicode_object *file_name = CreateUnicodeObject(str_Copy("__file__"));
-	object *file_tag = GetAttribute(self,(object*)file_name);
-	//DumpObject(file_tag,0);
-	gc_IncRefCount((object*)file_name);
-	gc_DecRefCount((object*)file_name);
-	if(file_tag->type == TYPE_TAG && ((tag_object*)file_tag)->tag != NULL);
+	OBJECT_ID self = tuple_GetItem(locals,0);
+	UNICODE_ID file_name = obj_CreateUnicode(mem_create_string("__file__"));
+	OBJECT_ID file_tag = obj_GetAttribute(self,file_name);
+	obj_IncRefCount(file_name);
+	obj_DecRefCount(file_name);
+	if(obj_GetType(file_tag) == TYPE_TAG)
 	{
-		//printf("stream @ %x\n",((tag_object*)file_tag)->tag);
-		stream_Free(((tag_object*)file_tag)->tag);
+		//#ifdef USE_MEMORY_LOCK_DEBUGGING
+		//tag_object *ft = (tag_object*)mem_lock_debug(file_tag,"ic_file_close taglock - stream freeing");
+		//#else
+		tag_object *ft = (tag_object*)mem_lock(file_tag);
+		//#endif
+		if(ft->tag != NULL)
+		{
+			stream_Free((STREAM_ID)ft->tag);
+		}
+		//#ifdef USE_MEMORY_LOCK_DEBUGGING
+		//mem_unlock_debug(file_tag,0,"ic_file_close taglock - stream freeing");
+		//#else
+		mem_unlock(file_tag,0);
+		//#endif
 	}
-	object *tmp =CreateEmptyObject(TYPE_NONE);
-	return (tmp);
+	OBJECT_ID tmp = obj_CreateEmpty(TYPE_NONE);
+	return(tmp);
 }
 
-object *ic_file_readline(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID ic_file_readline(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
-	//printf("readline called\n");
-	object *self = GetItem((object*)locals,0);
-	//DumpObject(self,0);
-	//DumpObject(((class_object*)((class_instance_object*)self)->instance_of)->code->names,0);
-	unicode_object *file_name = CreateUnicodeObject(str_Copy("__file__"));
-	object *file_tag = GetAttribute(self,(object*)file_name);
-	//DumpObject(file_tag,0);
-	gc_IncRefCount((object*)file_name);
-	gc_DecRefCount((object*)file_name);
-	if(file_tag->type == TYPE_TAG && ((tag_object*)file_tag)->tag != NULL);
+	OBJECT_ID self = tuple_GetItem(locals,0);
+	UNICODE_ID file_name = obj_CreateUnicode(mem_create_string("__file__"));
+	OBJECT_ID file_tag_id = obj_GetAttribute(self,file_name);
+	obj_IncRefCount(file_name);
+	obj_DecRefCount(file_name);
+	tag_object *file_tag = (tag_object*)mem_lock(file_tag_id);
+	if(file_tag->type == TYPE_TAG && file_tag->tag != NULL);
 	{
-		//printf("stream @ %x\n",((tag_object*)file_tag)->tag);
-		char buf[512];
+		MEM_ID buf_id = mem_create_buf(512);
+		char *buf = (char*)mem_lock(buf_id);
 		INDEX i = 0;
 		while(i<512)
 		{
-			if(!stream_Read(((tag_object*)file_tag)->tag,&buf[i],1))
+			if(!stream_Read((STREAM_ID)file_tag->tag,buf_id,i,1))
 			{
-				//printf("eof\n");
 				break;
 			}
 			if(buf[i] == '\n')
 			{
-				//printf("eol\n");
 				break;
 			}
 			i++;
 		}
-		//printf("line len:%d\n",i);
 		if(i>0)
 		{
 			buf[i] = 0;
-			//printf("readline(%d):%s\n",i,&buf);
-			unicode_object *line = CreateUnicodeObject(str_Copy((char*)&buf));
-			return((object*)line);
+			UNICODE_ID line = obj_CreateUnicode(mem_create_string(buf));
+			mem_unlock(buf_id,1);
+			mem_free(buf_id);
+			mem_unlock(file_tag_id,0);
+			return(line);
 		}
+		mem_unlock(buf_id,1);
+		mem_free(buf_id);
+		mem_unlock(file_tag_id,0);
 	}	
-	
-	object *tmp =CreateEmptyObject(TYPE_NONE);
-	return (tmp);
+	OBJECT_ID tmp = obj_CreateEmpty(TYPE_NONE);
+	return(tmp);
 }
 
-class_object *ic_CreateFileClass(void)
+CLASS_ID ic_CreateFileClass(void)
 {
-
-	code_object *file = CreateCodeObject(str_Copy("file_code"));
-	AddCodeCFunction((object*)file,"readline",&ic_file_readline);
-	AddCodeCFunction((object*)file,"__del__",&ic_file_close);
-	class_object *file_class = CreateClassObject(file,NULL);		
+	CODE_ID file = obj_CreateCode(mem_create_string("file_code"));
+	obj_AddCodeCFunction(file,mem_create_string("readline"),&ic_file_readline);
+	obj_AddCodeCFunction(file,mem_create_string("__del__"),&ic_file_close);
+	CLASS_ID file_class = obj_CreateClass(file,0);		
 	return(file_class);
 }
 
-
-object *ic_assertion_error_init(struct _vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID ic_assertion_error_init(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
-	//printf("file close called\n");
-	object *self = GetItem((object*)locals,0);
-	object *exception_message = GetItem((object*)locals,1);
-	//PrintObject(exception_message);
-	SetAttribute(self,(object*)CreateUnicodeObject(str_Copy("message")),exception_message);
-	object *tmp =CreateEmptyObject(TYPE_NONE);
-	return (tmp);
+	OBJECT_ID self = tuple_GetItem(locals,0);
+	OBJECT_ID exception_message = tuple_GetItem(locals,1);
+	obj_SetAttribute(self,obj_CreateUnicode(mem_create_string("message")),exception_message);
+	OBJECT_ID tmp = obj_CreateEmpty(TYPE_NONE);
+	return(tmp);
 }
 
-
-class_object *ic_CreateAssertionErrorClass(void)
+CLASS_ID ic_CreateAssertionErrorClass(void)
 {
-
-	code_object *assertion_error_code = CreateCodeObject(str_Copy("assertion_error_code"));
-	AddCodeCFunction((object*)assertion_error_code,"__init__",&ic_assertion_error_init);
+	CODE_ID assertion_error_code = obj_CreateCode(mem_create_string("assertion_error_code"));
+	obj_AddCodeCFunction(assertion_error_code,mem_create_string("__init__"),&ic_assertion_error_init);
 	//AddCodeCFunction((object*)file,"__del__",&ic_file_close);
-	class_object *assert_class = CreateClassObject(assertion_error_code,NULL);		
+	CLASS_ID assert_class = obj_CreateClass(assertion_error_code,0);		
 	return(assert_class);
 }
 
-void AddInternalClasses(struct _vm *vm)
+void AddInternalClasses(VM_ID vm)
 {
-	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy("file_class")),(object*)ic_CreateFileClass());
-	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy("AssertionError")),(object*)ic_CreateAssertionErrorClass());
+	vm_AddGlobal(vm,obj_CreateUnicode(mem_create_string("file_class")),ic_CreateFileClass());
+	vm_AddGlobal(vm,obj_CreateUnicode(mem_create_string("AssertionError")),ic_CreateAssertionErrorClass());
 }
 #endif

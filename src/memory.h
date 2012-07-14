@@ -23,11 +23,14 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
+#include "features.h"
+#include "types.h"
+
 #include "stdio.h"
 #include "stdlib.h"
 
-#include "assert.h"
 #include "debug.h"
+
 
 
 /*
@@ -68,12 +71,66 @@ remember sorting of ids can speed up things
 
 
 
+//lock objects only if non global member vars are accessed
+//check if object is a cached_object
+//if it is -> load object from storage into memory
+//return loaded object
+//increases lock count of object
+
+//this way caching would leave freed pointers arround hmmm
+//implement a small proxy object to get arround freed pointers problem
+
+//unlock objects after usage of lock and access to member vars is no longer needed
+//decreases lock count of object
+//if lock count reached zero and object is a non global type check if object should be cached
+
+
+
+
+typedef struct _cache_object
+{
+	OBJECT_TYPE type;
+	OBJECT_REF_COUNT ref_count;
+	#ifdef USE_LOCKING
+	OBJECT_REF_COUNT lock_count;
+	#endif
+	//object *object;
+	STREAM_NUM stream_pos;
+} cache_object;
+
+
+//proxy object struct
+//used for virtual caching objects in streams
+//normal size = 9 + 8 
+//avr size = 4 + 4
+typedef struct _proxy_object
+{
+	OBJECT_TYPE type;
+	OBJECT_REF_COUNT ref_count;
+	#ifdef USE_LOCKING
+	OBJECT_LOCK_COUNT lock_count;
+	#endif
+	void *ref;//object* or stream_pos/512
+	void *is_cached; // == 0 -> not cached use ref as object*  > 0 -> pointer stream where object is cached ,ref is the position(mmc sector address 512 bytes aligned) in the stream 
+} proxy_object;
+
+
+
+
 */
 
+#define MEM_SIZE 1024
+
+#define MEM_POOL_CLASS_STATIC 1
+#define MEM_POOL_CLASS_DYNAMIC 2
+#define MEM_POOL_CLASS_PERMANENT 4
+//var string space
+#define MEM_POOL_CLASS_VAR 128
 
 
 
-#ifdef USE_DEBUGGING
+
+
 
 #ifdef __cplusplus
 extern "C"  {
@@ -87,26 +144,68 @@ typedef struct
 	char *description;
 	long size;
 	int is_freed;
+	long locks;
+	//int is_removed;
 } mem_chunk;
 
 #define MAX_MEM_CHUNKS 200000000
 
 void mem_Init(void);
 
-void mem_Close(void);
+BOOL mem_Close(void);
 
-void *mem_malloc(size_t size, char *description);
+BOOL mem_DebugHeapWalk(BOOL show_leaked,BOOL show_locked);
 
-void *mem_realloc(void *ptr, size_t size);
+#ifdef USE_MEMORY_DEBUGGING
 
-int mem_free(void *ptr);
+	MEM_ID mem_malloc_debug(size_t size,MEM_POOL_CLASS_ID pool_class, char *description);
+
+#else
+
+	MEM_ID mem_malloc(size_t size,MEM_POOL_CLASS_ID pool_class);
+
+#endif
+
+MEM_ID mem_realloc(MEM_ID ptr, size_t size);
+
+MEM_ID mem_copy(MEM_ID src);
+
+MEM_ID mem_create(char *bytes,INT len);
+
+MEM_ID mem_create_buf(INT len);
+
+MEM_ID mem_create_string(char *string);
+
+BOOL mem_compare(MEM_ID a,MEM_ID b);
+
+void mem_set(MEM_ID src,char value,INT len);
+
+BOOL mem_copy_to(MEM_ID dst,char *bytes,INT len);
+
+BOOL mem_copy_from(MEM_ID src,char *bytes,INT len);
+
+BOOL mem_copy_to_offset(MEM_ID dst,NUM dst_offset,char *bytes,INT len);
+
+BOOL mem_copy_from_offset(MEM_ID src,NUM src_offset,char *bytes,INT len);
+
+void mem_free(MEM_ID ptr);
+
+//#ifdef USE_MEMORY_LOCK_DEBUGGING
+
+//	void *mem_lock_debug(MEM_ID ptr,char *key);
+	
+//	void mem_unlock_debug(MEM_ID ptr,BOOL is_dirty,char *key);
+
+//#else
+
+	void *mem_lock(MEM_ID ptr);
+
+	void mem_unlock(MEM_ID ptr,BOOL is_dirty);
+
+	void *mem_lock_segment(MEM_ID ptr,NUM offset,NUM len); //only lock a portion of the total memory chunk , to enable huge tuples, etc
+//#endif
 
 #ifdef __cplusplus
 } 
 #endif
-
-
-
-#endif
-
 #endif

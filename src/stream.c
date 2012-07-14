@@ -22,52 +22,71 @@
 
 #include "stream.h"
 
-ptr_list *stream_types;
-streams *stream_globals;
+MEM_ID stream_types;/*id_list*/
+MEM_ID stream_globals;
 
-stream *AllocStream(void)
+STREAM_ID AllocStream(void)
 {
-	#ifdef USE_DEBUGGING
-	return((stream*) mem_malloc(sizeof(stream), "AllocStream() return"));
+	#ifdef USE_MEMORY_DEBUGGING
+	return(mem_malloc_debug(sizeof(stream),MEM_POOL_CLASS_STATIC, "AllocStream() return"));
 	#else
-	return((stream*) malloc(sizeof(stream)));
+	return(mem_malloc(sizeof(stream),MEM_POOL_CLASS_STATIC));
 	#endif
 }
 
-streams *AllocStreams(void)
+MEM_ID AllocStreams(void)
 {
-	#ifdef USE_DEBUGGING
-	return((streams*) mem_malloc(sizeof(streams), "AllocStreams() return"));
+	#ifdef USE_MEMORY_DEBUGGING
+	return(mem_malloc_debug(sizeof(streams),MEM_POOL_CLASS_STATIC, "AllocStreams() return"));
 	#else
-	return((streams*) malloc(sizeof(streams)));
+	return(mem_malloc(sizeof(streams),MEM_POOL_CLASS_STATIC));
 	#endif
 }
 
-stream_type *AllocStreamType(void)
+MEM_ID AllocStreamType(void)
 {
-	#ifdef USE_DEBUGGING
-	return((stream_type*) mem_malloc(sizeof(stream_type), "AllocStreamType() return"));
+	#ifdef USE_MEMORY_DEBUGGING
+	return(mem_malloc_debug(sizeof(stream_type),MEM_POOL_CLASS_STATIC, "AllocStreamType() return"));
 	#else
-	return((stream_type*) malloc(sizeof(stream_type)));
+	return(mem_malloc(sizeof(stream_type),MEM_POOL_CLASS_STATIC));
 	#endif
 }
 
-char *AllocStreamBytes(STREAM_NUM len)
+MEM_ID AllocStreamBytes(STREAM_NUM len)
 {
-	#ifdef USE_DEBUGGING
-	return((char*) mem_malloc(len, "AllocStreamBytes() return"));
+	#ifdef USE_MEMORY_DEBUGGING
+	return(mem_malloc_debug(len,MEM_POOL_CLASS_DYNAMIC, "AllocStreamBytes() return"));
 	#else
-	return((char*) malloc(len));
+	return(mem_malloc(len),MEM_POOL_CLASS_DYNAMIC);
+	#endif
+}
+
+MEM_ID AllocFileStreamTag(void)
+{
+	#ifdef USE_MEMORY_DEBUGGING
+	return(mem_malloc_debug(sizeof(file_stream_tag),MEM_POOL_CLASS_STATIC, "AllocFileStreamTag() return"));
+	#else
+	return(mem_malloc(sizeof(file_stream_tag),MEM_POOL_CLASS_STATIC));
+	#endif
+}
+
+MEM_ID AllocByteStreamTag(void)
+{
+	#ifdef USE_MEMORY_DEBUGGING
+	return(mem_malloc_debug(sizeof(byte_stream_tag),MEM_POOL_CLASS_STATIC, "AllocByteStreamTag() return"));
+	#else
+	return(mem_malloc(sizeof(byte_stream_tag),MEM_POOL_CLASS_STATIC));
 	#endif
 }
 
 void streams_Init(void)
 {
-	stream_types = ptr_CreateList(0,0);
+	stream_types = list_Create(0,0);
 	stream_globals = AllocStreams();
 	
 	//memory stream
-	stream_type *mtype = AllocStreamType();
+	MEM_ID mtype_id = AllocStreamType();
+	stream_type *mtype = (stream_type*)mem_lock(mtype_id);
 	mtype->type = STREAM_TYPE_MEMORY;
 	mtype->stream_open = NULL;
 	mtype->stream_close = NULL;
@@ -81,10 +100,12 @@ void streams_Init(void)
 	//mtype->stream_write = &stream_memory_write;
 	//mtype->stream_seek = &stream_memory_seek;
 	//mtype->stream_getpos = &stream_memory_getpos;
-	ptr_Push(stream_types,mtype);
+	mem_unlock(mtype_id,1);
+	list_Push(stream_types,mtype_id);
 	//file stream
 	#ifndef USE_ARDUINO_FUNCTIONS
-	stream_type *ftype = AllocStreamType();
+	MEM_ID ftype_id = AllocStreamType();
+	stream_type *ftype = (stream_type*)mem_lock(ftype_id);
 	ftype->type = STREAM_TYPE_FILE;
 	ftype->stream_open = &stream_file_open;
 	ftype->stream_close = &stream_file_close;
@@ -93,12 +114,14 @@ void streams_Init(void)
 	ftype->stream_write = &stream_file_write;
 	ftype->stream_seek = &stream_file_seek;
 	ftype->stream_getpos = &stream_file_getpos;
-	ptr_Push(stream_types,ftype);
+	mem_unlock(ftype_id,1);
+	list_Push(stream_types,ftype_id);
 	#endif
 	
 	#ifdef USE_ARDUINO_FUNCTIONS
 	//arduino flash memory stream
-	stream_type *fmtype = AllocStreamType();
+	MEM_ID fmtype_id = AllocStreamType();
+	stream_type *fmtype = (stream_type*)mem_lock(fmtype_id);
 	fmtype->type = STREAM_TYPE_FLASH_MEMORY;
 	fmtype->stream_open = NULL;
 	fmtype->stream_close = NULL;
@@ -112,9 +135,8 @@ void streams_Init(void)
 	//fmtype->stream_write = &stream_flash_memory_write;
 	//fmtype->stream_seek = &stream_flash_memory_seek;
 	//fmtype->stream_getpos = &stream_flash_memory_getpos;
-	ptr_Push(stream_types,fmtype);
-
-	
+	mem_unlock(fmtype_id,1);
+	list_Push(stream_types,fmtype_id);
 	//arduino serial stream
 
 	#endif
@@ -122,19 +144,26 @@ void streams_Init(void)
 
 }
 
-struct _stream_type *streams_GetStreamType(STREAM_TYPE_ID id)
+MEM_ID stream_GetType(STREAM_TYPE_ID id)/*returns struct _stream_type **/
 {
 	INDEX i = 0;	
 	do
 	{
-		if(((struct _stream_type*)stream_types->items[i])->type == id)
-			return(stream_types->items[i]);
+		MEM_ID ti = list_Get(stream_types,i);
+		stream_type *t = (stream_type*)mem_lock(ti);
+		
+		if(t->type == id)
+		{
+			mem_unlock(ti,0);
+			return(ti);
+		}
+		mem_unlock(ti,0);
 		i++;
-	}while(i < stream_types->num);
+	}while(i < list_GetLen(stream_types));
 	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_ALL,"stream type not defined:%c\n",id);
 	#endif
-	return(NULL);
+	return(0);
 }
 
 void streams_Close(void)
@@ -142,66 +171,50 @@ void streams_Close(void)
 	INDEX i = 0;	
 	do
 	{
-		#ifdef USE_DEBUGGING
-		assert(mem_free(stream_types->items[i]));
-		#else
-		free(stream_types->items[i]);
-		#endif		
+		mem_free(list_Get(stream_types,i));
 		i++;
-	}while(i < stream_types->num);
-	ptr_CloseList(stream_types);
-	#ifdef USE_DEBUGGING
-	assert(mem_free(stream_globals));
-	#else
-	free(stream_globals);
-	#endif		
+	}while(i < list_GetLen(stream_types));
+	list_Close(stream_types);
+	mem_free(stream_globals);
 }
 
 #ifndef USE_ARDUINO_FUNCTIONS
-stream *stream_CreateFromFile(char *filename,char *flags)
+STREAM_ID stream_CreateFromFile(BYTES_ID filename,BYTES_ID flags)//(char *filename,char *flags); //will create a copy of filename returns stream*
 {
-	stream *str = AllocStream();
-	ptr_list *fopt = ptr_CreateList(0,0);
-	char *fname = str_Copy(filename);
-	ptr_Push(fopt,fname);
-	str->type = streams_GetStreamType(STREAM_TYPE_FILE);
-	str->tags = fopt;
-	str->flags = str_Copy(flags);
-	return(str);
+	MEM_ID str_id = AllocStream();
+	stream *str = (stream*)mem_lock(str_id);
+	//MEM_ID fname = mem_copy(filename);
+	str->type = stream_GetType(STREAM_TYPE_FILE);
+	str->tag = AllocFileStreamTag();
+	file_stream_tag *fst = (file_stream_tag*)mem_lock(str->tag);
+	//fst->filename = fname;
+	fst->filename = filename;
+	mem_unlock(str->tag,1);
+	str->flags = flags;
+	mem_unlock(str_id,1);
+	return(str_id);
 }
 #endif
 
-stream *stream_CreateFromBytes(char *bytes ,STREAM_NUM len)
+STREAM_ID stream_CreateFromBytes(BYTES_ID bytes,STREAM_NUM len)//(char *bytes ,STREAM_NUM len); //will use bytes directly - remember to free bytes after stream closing
 {
-	stream *str = AllocStream();
-	ptr_list *mopt = ptr_CreateList(0,0);
-	ptr_Push(mopt,bytes);
-	ptr_Push(mopt,(void*)len);
-	STREAM_NUM offset = 0;
-	ptr_Push(mopt,(void*)offset);
-	//printf("getting stream type\n");
-	str->type = streams_GetStreamType(STREAM_TYPE_MEMORY);
-	str->flags = NULL;
-	/*tuple_object *b = CreateTuple(4,0);
-	string_object s* = CreateStringObject(bytes,len,0);
-	SetItem((object*)b,0,(object*)s);
-	int_object *ioffset = CreateIntObject(offset,0);
-	SetItem((object*)seq,1,(object*)istep);
-	int_object *ipos = CreateIntObject(start,0);
-	SetItem((object*)seq,2,(object*)ipos);
-	int_object *istart = CreateIntObject(start,0);
-	SetItem((object*)seq,3,(object*)istart);
-	iter->tag = (object*)seq;
-    */
-	//printf("got stream type\n");
-	//pri
-	//printf("open:%x\n",str->type->stream_open);
-	str->tags = mopt;
-	return(str);
+	MEM_ID str_id = AllocStream();
+	stream *str = (stream*)mem_lock(str_id);
+	str->tag = AllocByteStreamTag();
+	byte_stream_tag *bst = (byte_stream_tag*)mem_lock(str->tag);
+	bst->bytes = bytes;
+	//printf("bytes:%x\n",bytes);
+	bst->len = len;
+	bst->offset = 0;
+	mem_unlock(str->tag,1);
+	str->type = stream_GetType(STREAM_TYPE_MEMORY);
+	str->flags = 0;
+	mem_unlock(str_id,1);
+	return(str_id);
 }
-
+/*
 #ifdef USE_ARDUINO_FUNCTIONS
-stream *stream_CreateFromFlashBytes(char *bytes ,STREAM_NUM len)
+MEM_ID stream_CreateFromFlashBytes(MEM_ID bytes,STREAM_NUM len)//(char *bytes ,STREAM_NUM len);
 {
 	stream *str = AllocStream();
 	ptr_list *mopt = ptr_CreateList(0,0);
@@ -217,168 +230,289 @@ stream *stream_CreateFromFlashBytes(char *bytes ,STREAM_NUM len)
 	return(str);
 }
 #endif
-
-stream *stream_CreateStandardOutput(void)
+*/
+STREAM_ID stream_CreateStandardOutput(void)
 {
-	stream * str = AllocStream();
-	str->type = streams_GetStreamType(STREAM_TYPE_STANDARD_OUTPUT);
-	str->tags = NULL;
-	return(str);
+	STREAM_ID str_id = AllocStream();
+	stream *str = (stream*)mem_lock(str_id);
+	str->type = stream_GetType(STREAM_TYPE_STANDARD_OUTPUT);
+	str->tag = 0;
+	mem_unlock(str_id,1);
+	return(str_id);
 }
 
-stream *stream_CreateStandardInput(void)
+STREAM_ID stream_CreateStandardInput(void)
 {
-	stream * str = AllocStream();
-	str->type = streams_GetStreamType(STREAM_TYPE_STANDARD_INPUT);
-	str->tags = NULL;
-	return(str);
+	STREAM_ID str_id = AllocStream();
+	stream *str = (stream*)mem_lock(str_id);
+	str->type = stream_GetType(STREAM_TYPE_STANDARD_INPUT);
+	str->tag = 0;
+	mem_unlock(str_id,1);
+	return(str_id);
 }
 
-stream *stream_CreateDebugOutput(void)
+STREAM_ID stream_CreateDebugOutput(void)
 {
-	stream * str = AllocStream();
-	str->type = streams_GetStreamType(STREAM_TYPE_DEBUG_OUTPUT);
-	str->tags = NULL;
-	return(str);
+	STREAM_ID str_id = AllocStream();
+	stream *str = (stream*)mem_lock(str_id);
+	str->type = stream_GetType(STREAM_TYPE_DEBUG_OUTPUT);
+	str->tag = 0;
+	mem_unlock(str_id,1);
+	return(str_id);
 }
 
 //stream access functions
 
-BOOL stream_Open(struct _stream *stream)
+BOOL stream_Open(STREAM_ID stream)
 {
-	if(stream->type->stream_open == NULL)
+	struct _stream *str = (struct _stream*)mem_lock(stream);
+	stream_type *str_type = (stream_type*)mem_lock(str->type);
+	if(str_type->stream_open == NULL)
+	{
+		mem_unlock(str->type,0);
+		mem_unlock(stream,0);
 		return(1);
-	BOOL b = stream->type->stream_open(stream);
+	}
+	BOOL b = str_type->stream_open(stream);
+	mem_unlock(str->type,0);
+	mem_unlock(stream,0);
 	return(b);
 }
 
-BOOL stream_Close(struct _stream *stream)
+BOOL stream_Close(STREAM_ID stream)
 {
-	if(stream->type->stream_close == NULL)
+	struct _stream *str = (struct _stream*)mem_lock(stream);
+	stream_type *str_type = (stream_type*)mem_lock(str->type);
+	if(str_type->stream_close == NULL)
+	{
+		mem_unlock(str->type,0);
+		mem_unlock(stream,0);
 		return(1);
-	return(stream->type->stream_close(stream));
+	}
+	BOOL b = str_type->stream_close(stream);
+	mem_unlock(str->type,0);
+	mem_unlock(stream,0);
+	return(b);
 }
 
-BOOL stream_Free(struct _stream *stream)
+BOOL stream_Free(STREAM_ID stream)
 {
-	if(stream->type->stream_free == NULL)
+	struct _stream *str = (struct _stream*)mem_lock(stream);
+	stream_type *str_type = (stream_type*)mem_lock(str->type);
+	if(str_type->stream_free == NULL)
+	{
+		mem_unlock(str->type,0);
+		mem_unlock(stream,0);
 		return(1);
-	return(stream->type->stream_free(stream));
+	}
+	BOOL (*stream_free)(STREAM_ID stream) = str_type->stream_free;
+	mem_unlock(str->type,0);
+	mem_unlock(stream,0);
+	BOOL b = stream_free(stream);
+	//mem_DebugHeapWalk(0,1);
+	return(b);
 }
 
-BOOL stream_Read(struct _stream *stream,void *ptr,STREAM_NUM len)
+BOOL stream_Read(STREAM_ID stream,MEM_ID ptr,STREAM_NUM ptr_offset,STREAM_NUM len)
 {
-	if(stream->type->stream_read == NULL)
-		return(0);
-	return(stream->type->stream_read(stream,ptr,len));
+	struct _stream *str = (struct _stream*)mem_lock(stream);
+	stream_type *str_type = (stream_type*)mem_lock(str->type);
+	if(str_type->stream_read == NULL)
+	{
+		mem_unlock(str->type,0);
+		mem_unlock(stream,0);
+		return(1);
+	}
+	BOOL b = str_type->stream_read(stream,ptr,ptr_offset,len);
+	mem_unlock(str->type,0);
+	mem_unlock(stream,0);
+	return(b);
 }
 
-BOOL stream_Write(struct _stream *stream,void *ptr ,STREAM_NUM len)
+BOOL stream_Write(STREAM_ID stream,MEM_ID ptr ,STREAM_NUM ptr_offset,STREAM_NUM len)
 {
-	if(stream->type->stream_write == NULL)
-		return(0);
-	return(stream->type->stream_write(stream,ptr,len));
+	struct _stream *str = (struct _stream*)mem_lock(stream);
+	stream_type *str_type = (stream_type*)mem_lock(str->type);
+	if(str_type->stream_write == NULL)
+	{
+		mem_unlock(str->type,0);
+		mem_unlock(stream,0);
+		return(1);
+	}
+	BOOL b = str_type->stream_write(stream,ptr,ptr_offset,len);
+	mem_unlock(str->type,0);
+	mem_unlock(stream,0);
+	return(b);
 }
 
-BOOL stream_Seek(struct _stream *stream,STREAM_NUM offset,STREAM_ORIGIN origin)
+BOOL stream_Seek(STREAM_ID stream,STREAM_NUM offset,STREAM_ORIGIN origin)
 {
-	if(stream->type->stream_seek == NULL)
-		return(0);
-	return(stream->type->stream_seek(stream,offset,origin));
+	struct _stream *str = (struct _stream*)mem_lock(stream);
+	stream_type *str_type = (stream_type*)mem_lock(str->type);
+	if(str_type->stream_seek == NULL)
+	{
+		mem_unlock(str->type,0);
+		mem_unlock(stream,0);
+		return(1);
+	}
+	BOOL b = str_type->stream_seek(stream,offset,origin);
+	mem_unlock(str->type,0);
+	mem_unlock(stream,0);
+	return(b);
 }
 
-INT stream_GetPos(struct _stream *stream)
+INT      stream_GetPos(STREAM_ID stream)
 {
-	if(stream->type->stream_getpos == NULL)
+	struct _stream *str = (struct _stream*)mem_lock(stream);
+	stream_type *str_type = (stream_type*)mem_lock(str->type);
+	if(str_type->stream_getpos == NULL)
+	{
+		mem_unlock(str->type,0);
+		mem_unlock(stream,0);
 		return(-1);
-	return(stream->type->stream_getpos(stream));
+	}
+	INT b = str_type->stream_getpos(stream);
+	mem_unlock(str->type,0);
+	mem_unlock(stream,0);
+	return(b);
 }
 //file stream functions
 
 #ifndef USE_ARDUINO_FUNCTIONS
-BOOL stream_file_open(struct _stream *stream)
+BOOL stream_file_open(STREAM_ID stream)
 {
 	FILE *f;
-	char *filename = (char*)ptr_Get(stream->tags,0);
-	#if defined(USE_DEBUGGING)
+	struct _stream *str = (struct _stream*)mem_lock(stream);
+	file_stream_tag *str_tag = (file_stream_tag*)mem_lock(str->tag);
+	char *filename = (char*)mem_lock(str_tag->filename);
+	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_VERBOSE_TESTS,"opened file:%s\n",filename);
 	#endif
-	if(stream->flags != NULL)
-	f = fopen(filename, stream->flags);
+	//printf("opening: %s\n",filename);
+	if(str->flags != 0)
+	{
+		char *flags = (char*)mem_lock(str->flags);
+		f = fopen(filename, flags);
+		mem_unlock(str->flags,0);
+	}
 	else
 		f = fopen(filename, "rb");
-	
-	if (f == NULL)
-		return(0);
-	ptr_Push(stream->tags,f);
-	return(1);
-}
-
-BOOL stream_file_close(struct _stream *stream)
-{
-	if(stream->tags->num<=1)
-		return(0);
-	FILE *f = (FILE*)ptr_Pop(stream->tags);
-	fclose(f);
-	return(1);
-}
-
-BOOL stream_file_free(struct _stream *stream)
-{
-	if(stream->tags->num> 1)
-		stream_file_close(stream);
-	char *filename = ptr_Pop(stream->tags);
-	#ifdef USE_DEBUGGING
-	assert(mem_free(filename));
-	#else
-	free(filename);
-	#endif		
-	
-	ptr_CloseList(stream->tags);
-	//if(stream->flags != NULL)
-	//	printf("stream flags:[%s]\n",stream->flags);
-	#ifdef USE_DEBUGGING
-	if(stream->flags != NULL)
-		assert(mem_free(stream->flags));
-	assert(mem_free(stream));
-	#else
-	if(stream->flags != NULL)
-		free(stream->flags);
-	free(stream);
-	#endif		
-
-	return(1);
-}
-
-BOOL stream_file_read(struct _stream *stream,void *ptr,STREAM_NUM len)
-{
-	if(stream->tags->num<=1)
-		return(0);
-	FILE *f = (FILE*)ptr_Get(stream->tags,1);
-	if(fread(ptr, len, 1, f) != 1)
+	mem_unlock(str_tag->filename,0);
+	if(f == NULL)
 	{
-		//printf("eof\n");
+		mem_unlock(str->tag,0);
+		mem_unlock(stream,0);
 		return(0);
 	}
-	//printf("read data\n");
+	str_tag->file = f;
+	mem_unlock(str->tag,1);
+	mem_unlock(stream,0);
+	//printf("file opened successfully:%x\n",f);
 	return(1);
 }
 
-BOOL stream_file_write(struct _stream *stream,void *ptr ,STREAM_NUM len)
+BOOL stream_file_close(STREAM_ID stream)
 {
-	if(stream->tags->num<=1)
+	struct _stream *str = (struct _stream*)mem_lock(stream);
+	file_stream_tag *str_tag = (file_stream_tag*)mem_lock(str->tag);
+	if(str_tag->file == 0)
+	{
+		mem_unlock(str->tag,0);
+		mem_unlock(stream,0);
 		return(0);
-	FILE *f = (FILE*)ptr_Get(stream->tags,1);
-	if(fwrite(ptr, len, 1, f) != 1)
-		return(0);
+	}
+	FILE *f = (FILE*)str_tag->file;
+	fclose(f);
+	str_tag->file = 0;
+	mem_unlock(str->tag,1);
+	mem_unlock(stream,0);
+	//mem_free
 	return(1);
 }
 
-BOOL stream_file_seek(struct _stream *stream,STREAM_NUM offset,STREAM_ORIGIN origin)
-{ 
-	if(stream->tags->num<=1)
+BOOL stream_file_free(STREAM_ID stream)
+{
+	struct _stream *str = (struct _stream*)mem_lock(stream);
+	file_stream_tag *str_tag = (file_stream_tag*)mem_lock(str->tag);
+	if(str_tag->file != 0)
+	{
+		FILE *f = (FILE*)str_tag->file;
+		fclose(f);
+	}
+	if(str_tag->filename != 0)
+		mem_free(str_tag->filename);
+	mem_unlock(str->tag,0);
+	if(str->flags != 0)
+		mem_free(str->flags);
+	mem_free(str->tag);
+	mem_unlock(stream,0);
+	mem_free(stream);
+	return(1);
+}
+
+BOOL stream_file_read(STREAM_ID stream,MEM_ID ptr,STREAM_NUM ptr_offset,STREAM_NUM len)
+{
+	struct _stream *str = (struct _stream*)mem_lock(stream);
+	file_stream_tag *str_tag = (file_stream_tag*)mem_lock(str->tag);
+	//printf("tag f:%x\n",str_tag->file);
+	if(str_tag->file == 0)
+	{
+		mem_unlock(str->tag,0);
+		mem_unlock(stream,0);
 		return(0);
-	FILE *f = (FILE*)ptr_Get(stream->tags,1);
+	}
+	FILE *f = (FILE*)str_tag->file;
+	char *bytes = (char*)mem_lock(ptr);
+	//printf("bytes:%x,f:%x,str_tag:%x,str:%x,len:%d,ptr_offset:%d\n",bytes,f,str_tag,str,len,ptr_offset);
+	if(fread(bytes+ptr_offset, len, 1, f) != 1)
+	{
+		mem_unlock(ptr,0);
+		mem_unlock(str->tag,0);
+		mem_unlock(stream,0);
+		return(0);
+	}
+	mem_unlock(ptr,1);
+	mem_unlock(str->tag,0);
+	mem_unlock(stream,0);
+	return(1);
+}
+
+BOOL stream_file_write(STREAM_ID stream,MEM_ID ptr ,STREAM_NUM ptr_offset,STREAM_NUM len)
+{
+	struct _stream *str = (struct _stream*)mem_lock(stream);
+	file_stream_tag *str_tag = (file_stream_tag*)mem_lock(str->tag);
+	if(str_tag->file != 0)
+	{
+		mem_unlock(str->tag,0);
+		mem_unlock(stream,0);
+		return(0);
+	}
+	FILE *f = (FILE*)str_tag->file;
+	char *bytes = (char*)mem_lock(ptr);
+	if(fwrite(bytes+ptr_offset, len, 1, f) != 1)
+	{
+		mem_unlock(ptr,0);
+		mem_unlock(str->tag,0);
+		mem_unlock(stream,0);
+		return(0);
+	}
+	mem_unlock(ptr,0);
+	mem_unlock(str->tag,0);
+	mem_unlock(stream,0);
+	return(1);
+}
+
+BOOL stream_file_seek(STREAM_ID stream,STREAM_NUM offset,STREAM_ORIGIN origin)
+{ 
+	struct _stream *str = (struct _stream*)mem_lock(stream);
+	file_stream_tag *str_tag = (file_stream_tag*)mem_lock(str->tag);
+	if(str_tag->file != 0)
+	{
+		mem_unlock(str->tag,0);
+		mem_unlock(stream,0);
+		return(0);
+	}
+	FILE *f = (FILE*)str_tag->file;
 	int org = 0;
 	if(origin == STREAM_ORIGIN_SET)
 		org = SEEK_SET;
@@ -386,17 +520,29 @@ BOOL stream_file_seek(struct _stream *stream,STREAM_NUM offset,STREAM_ORIGIN ori
 		org = SEEK_CUR;
 	else if(origin == STREAM_ORIGIN_END)
 		org = SEEK_END;
-	return(fseek(f,offset,org));
+	BOOL r = fseek(f,offset,org);
+	mem_unlock(str->tag,0);
+	mem_unlock(stream,0);
+	return(r);
 }
 
-INT stream_file_getpos(struct _stream *stream)
+INT stream_file_getpos(STREAM_ID stream)
 { 
-	if(stream->tags->num<=1)
+	struct _stream *str = (struct _stream*)mem_lock(stream);
+	file_stream_tag *str_tag = (file_stream_tag*)mem_lock(str->tag);
+	if(str_tag->file != 0)
+	{
+		mem_unlock(str->tag,0);
+		mem_unlock(stream,0);
 		return(0);
-	FILE *f = (FILE*)ptr_Get(stream->tags,1);
+	}
+	FILE *f = (FILE*)str_tag->file;
 	if(feof(f))
 		return(-1);//triple usage of getpos as feof detector and error detector
-	return(ftell(f));
+	INT r = ftell(f);
+	mem_unlock(str->tag,0);
+	mem_unlock(stream,0);
+	return(r);
 }
 #endif
 /*
@@ -410,32 +556,31 @@ BOOL stream_memory_close(struct _stream *stream)
 	return(1);
 }
 */
-BOOL stream_memory_free(struct _stream *stream)
+BOOL stream_memory_free(STREAM_ID stream)
 {
-	ptr_CloseList(stream->tags);
-	#ifdef USE_DEBUGGING
-	if(stream->flags != NULL)
-		assert(mem_free(stream->flags));
-	assert(mem_free(stream));
-	#else
-	if(stream->flags != NULL)
-		free(stream->flags);
-	free(stream);
-	#endif		
+	struct _stream *str = (struct _stream*)mem_lock(stream);
+	if(str->flags != 0)
+		mem_free(str->flags);
+	mem_free(str->tag);
+	mem_unlock(stream,0);
+	mem_free(stream);
 	return(1);
 }
 
-BOOL stream_memory_read(struct _stream *stream,void *ptr,STREAM_NUM len)
+BOOL stream_memory_read(STREAM_ID stream,MEM_ID ptr,STREAM_NUM ptr_offset,STREAM_NUM len)
 {
-	char *bytes = (char*)ptr_Get(stream->tags,0);
-	STREAM_NUM slen  = (char*)ptr_Get(stream->tags,1);
-	STREAM_NUM offset = (STREAM_NUM)ptr_Get(stream->tags,2);
-	//printf("o:%d,slen:%d,len:%d\n",offset,slen,len);
-	if( (offset + len) > slen )
+	struct _stream *str = (struct _stream*)mem_lock(stream);
+	byte_stream_tag *str_tag = (byte_stream_tag*)mem_lock(str->tag);
+	char *bytes = (char*)mem_lock(str_tag->bytes);
+	//printf("read from bytes:%x,tag offset:%d,len:%d,tag len:%d\n",bytes,str_tag->offset,len,str_tag->len);
+	if((str_tag->offset + len) > str_tag->len)
 		return(0);
-	//	printf("error reading memory out of bounds\n");
-	memcpy(ptr,(bytes+offset),len);
-	ptr_Set(stream->tags,2,(void*)(offset+len));
+	//printf("reading\n");
+	mem_copy_to_offset(ptr,ptr_offset,(bytes+str_tag->offset),len);
+	str_tag->offset = (str_tag->offset+len);
+	mem_unlock(str_tag->bytes,0);
+	mem_unlock(str->tag,1);
+	mem_unlock(stream,0);
 	return(1);
 }
 /*
@@ -453,6 +598,7 @@ INT stream_memory_getpos(struct _stream *stream)
 	return(0);
 }
 */
+/*
 #ifdef USE_ARDUINO_FUNCTIONS
 /*
 BOOL stream_flash_memory_open(struct _stream *stream)
@@ -465,6 +611,7 @@ BOOL stream_flash_memory_close(struct _stream *stream)
 	return(1);
 }
 */
+/*
 BOOL stream_flash_memory_free(struct _stream *stream)
 {
 	ptr_CloseList(stream->tags);
@@ -503,52 +650,72 @@ INT stream_flash_memory_getpos(struct _stream *stream)
 	return(0);
 }
 */
+/*
 #endif
+*/
 
 
-
-long stream_ReadLong(struct _stream *f) //TODO move to streams
+long stream_ReadLong(STREAM_ID stream)
 {
 	long r = 0;
-	stream_Read(f,&r, 4);
-	return (r);
+	BYTES_ID l = mem_create_buf(4);
+	stream_Read(stream,l, 0,4);
+	//printf("b:%d\n",b);
+	mem_copy_from(l,(char*)&r,4);
+	mem_free(l);
+	return(r);
 }
 
-FLOAT stream_ReadFloat(struct _stream *f)
+FLOAT stream_ReadFloat(STREAM_ID stream)
 {
 	float r = 0;
 	double t = 0;
-	stream_Read(f, &t,8);
+	BYTES_ID l = mem_create_buf(8);
+	stream_Read(stream, l,0,8);
+	mem_copy_from(l,(char*)&t,8);
+	mem_free(l);
 	r = (FLOAT)t;
-	return (r);
+	return(r);
 }
 
-char stream_ReadChar(struct _stream *f)
+char stream_ReadChar(STREAM_ID stream)
 {
 	char r = 0;
-	stream_Read(f,&r,1);
-	return (r);
+	BYTES_ID l = mem_create_buf(8);
+	stream_Read(stream,l,0,1);
+	mem_copy_from(l,(char*)&r,1);
+	mem_free(l);
+	return(r);
 }
 
-void stream_WriteLong(long l,struct _stream *f)
+void stream_WriteLong(long l,STREAM_ID stream)
 {
-	stream_Write(f,&l,4);
+	BYTES_ID lb = mem_create_buf(4);
+	mem_copy_to(lb,(char*)&l,4);
+	stream_Write(stream,lb,0,4);
+	mem_free(lb);
 }
 
-void stream_WriteFloat(FLOAT fl,struct _stream *f)
+void stream_WriteFloat(FLOAT fl,STREAM_ID stream)
 {
+	BYTES_ID lb = mem_create_buf(4);
 	double d = (double)fl;
-	stream_Write(f,&d,8);
+	mem_copy_to(lb,(char*)&d,8);
+	stream_Write(stream,lb,0,8);
+	mem_free(lb);
 }
 
-void stream_WriteChar(char c,struct _stream *f)
+void stream_WriteChar(char c,STREAM_ID stream)
 {
-	stream_Write(f,&c,1);
+	BYTES_ID lb = mem_create_buf(1);
+	mem_copy_to(lb,(char*)&c,1);
+	stream_Write(stream,lb,0,1);
+	mem_free(lb);
 }
 
-struct _object *stream_ReadObject(struct _stream *f)
+OBJECT_ID stream_ReadObject(STREAM_ID stream)
 {
-	OBJECT_TYPE type = stream_ReadChar(f);
+	OBJECT_TYPE type = stream_ReadChar(stream);
 
 	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_CREATION,"reading object with type:%c\n",type);
@@ -561,199 +728,150 @@ struct _object *stream_ReadObject(struct _stream *f)
 		case TYPE_FALSE:
 		case TYPE_ELLIPSIS:
 		{
-		/*
-		// printf("allocating empty object\n");
-		object *obj = AllocObject();
-		obj->type = type;
-		//obj->flags = 0;
-		obj->ref_count = 1;
-		// printf("allocated empty object @%x\n",obj);
-		*/
-		object *obj = CreateEmptyObject(type);
-		gc_IncRefCount(obj);
-		return (obj);
+			OBJECT_ID obj_id = obj_CreateEmpty(type);
+			obj_IncRefCount(obj_id);
+			return (obj_id);
 		}
-	case TYPE_CODE:
-       {	
-		code_object *co = AllocCodeObject();
-		co->type = TYPE_CODE;
-		co->ref_count = 1;
-		co->argcount = (NUM)stream_ReadLong(f);
-		co->kwonlyargcount = (NUM)stream_ReadLong(f);
-		co->nlocals = (NUM)stream_ReadLong(f);
-		co->stacksize = (NUM)stream_ReadLong(f);
-		co->co_flags = stream_ReadLong(f);
-		co->code = stream_ReadObject(f);
-		co->consts = stream_ReadObject(f);
-		co->names = stream_ReadObject(f);
-		co->varnames = stream_ReadObject(f);
-		co->freevars = stream_ReadObject(f);
-		co->cellvars = stream_ReadObject(f);
-		ConvertToDict(co->freevars); //TODO only needed as long deref and closure opcodes are not implemented using references
-		ConvertToDict(co->cellvars);
-		object *tmp_filename = stream_ReadObject(f);
-		gc_DecRefCount(tmp_filename);	// TO DECREASE MEMORY USAGE
-		object *tmp_name = stream_ReadObject(f);
-		co->name = str_Copy(((unicode_object *)tmp_name)->value);
-		gc_DecRefCount(tmp_name);
-		stream_ReadLong(f);//firstlineno
-		object *tmp_lnotab = stream_ReadObject(f);
-		gc_DecRefCount(tmp_lnotab);	// TO DECREASE MEMORY USAGE
-		gc_Clear();
-		//FullDumpObjectArduino(co,0);
-		return((object*)co);
+		case TYPE_CODE:
+        {	
+			OBJECT_ID co_id = obj_Alloc(TYPE_CODE,1);
+			code_object *co = (code_object*)mem_lock(co_id);
+			co->argcount = (NUM)stream_ReadLong(stream);
+			co->kwonlyargcount = (NUM)stream_ReadLong(stream);
+			co->nlocals = (NUM)stream_ReadLong(stream);
+			co->stacksize = (NUM)stream_ReadLong(stream);
+			co->co_flags = stream_ReadLong(stream);
+			co->code = stream_ReadObject(stream);
+			co->consts = stream_ReadObject(stream);
+			co->names = stream_ReadObject(stream);
+			co->varnames = stream_ReadObject(stream);
+			co->freevars = stream_ReadObject(stream);
+			co->cellvars = stream_ReadObject(stream);
+			tuple_ConvertToDict(co->freevars); //TODO only needed as long deref and closure opcodes are not implemented using references
+			tuple_ConvertToDict(co->cellvars);
+			OBJECT_ID tmp_filename = stream_ReadObject(stream);
+			obj_DecRefCount(tmp_filename);	// TO DECREASE MEMORY USAGE
+			OBJECT_ID tmp_name_id = stream_ReadObject(stream);
+			unicode_object *tmp_name = (unicode_object*)mem_lock(tmp_name_id);
+			co->name = mem_copy(tmp_name->value);
+			mem_unlock(tmp_name_id,0);
+			obj_DecRefCount(tmp_name_id);
+			stream_ReadLong(stream);//firstlineno
+			OBJECT_ID tmp_lnotab = stream_ReadObject(stream);
+			obj_DecRefCount(tmp_lnotab);	// TO DECREASE MEMORY USAGE
+			obj_ClearGC();
+			mem_unlock(co_id,1);
+			//obj_Dump(co_id,1,1);
+			return(co_id);
 		}
 		break;
-	case TYPE_STRING:
+		case TYPE_STRING:
 		{
-		string_object *obj = AllocStringObject();
-
-		obj->ref_count = 1;
-
-		NUM n;
-		// printf("reading string chunk\n");
-		n = (NUM)stream_ReadLong(f);
-		if (n > 0)
-		{
-			#ifdef USE_DEBUGGING
-			char *string = (char *)mem_malloc(n, "ReadObject() string");
-			#else
-			char *string = (char *)malloc(n);
-			#endif
-
-			// printf("str_ptr=%x\n",(unsigned long)string);
-			stream_Read(f,string, n);
-
-			// printf("str_so_ptr=%x\n",(unsigned long)so);
-			obj->len = n;
-			obj->content = string;
-			// free(string); 
-
-			 //printf("read string:\"%s\"\r\n",obj->content);
-			//printf("n:%d\n",obj->len);
-			obj->type = TYPE_STRING;
-		}
-		else
-		{
-			// printf ("read empty string\n");
-			obj->content = NULL;
-			obj->type = TYPE_NULL;
-			obj->len = 0;
-		}
-		return((object*)obj);
-		}
-		break;
-	case TYPE_TUPLE:
-		{
-		// printf("reading tuple\n");
-		INT n = (INT)stream_ReadLong(f);
-		tuple_object *to = AllocTupleObject();
-		to->ref_count = 1;
-		to->ptr = 0;
-
-		// printf("items_num:%d\n",n);
-		if (n > 0)
-		{
-			//to->items =
-			//	(object **) mem_malloc(n * sizeof(object *),
-			//						   "ReadObject() to->items");
-			to->list = ptr_CreateList(n,PTR_STATIC_LIST);
-			for (NUM i = 0; i < n; i++)
+			OBJECT_ID obj_id = obj_Alloc(TYPE_STRING,1);
+			string_object *obj = (string_object*)mem_lock(obj_id);
+			NUM n;
+			n = (NUM)stream_ReadLong(stream);
+			if(n > 0)
 			{
-				object *tuple = stream_ReadObject(f);
-
-				//if (i == 0)
-				//{
-				//	to->ptr = tuple;
-					// printf("setting tuple's iterate over ptr\n");
-				//}
-				// printf("object type:%c\n",tuple->type);
-				to->list->items[i] = tuple;
+				#ifdef USE_MEMORY_DEBUGGING
+				MEM_ID string = mem_malloc_debug(n,MEM_POOL_CLASS_DYNAMIC, "ReadObject() string");
+				#else
+				MEM_ID string = mem_malloc(n,MEM_POOL_CLASS_DYNAMIC);
+				#endif
+				stream_Read(stream,string,0, n);
+				obj->len = n;
+				obj->content = string;
 			}
-		}
-		else
-		 to->list = NULL;
-		//to->num = n;
-		//to->flags = 0;
-		to->type = TYPE_TUPLE;
-		return((object*)to);
-		}
-		break;
-	case TYPE_UNICODE:
-		{
-		// printf("reading unicode\n");
-		unicode_object *obj = AllocUnicodeObject();
-		obj->ref_count = 1;
-
-		NUM n = (NUM)stream_ReadLong(f);
-		// printf("len:%d\n",n);
-		#ifdef USE_DEBUGGING
-		char *unicode_string = (char *)mem_malloc(n + 1, "ReadObject() unicode_string");
-		#else
-		char *unicode_string = (char *)malloc(n + 1);
-		#endif
-		memset(unicode_string, 0, n + 1);
-		stream_Read(f,unicode_string, n);
-		//printf("read unicode string:%s\n",unicode_string);
-		// uo->len = n;
-		//obj->flags = 0;
-		obj->value = unicode_string;
-		obj->type = TYPE_UNICODE;
-		return((object*)obj);
+			else
+			{
+				obj->content = 0;
+				//obj->type = TYPE_NULL;
+				obj->len = 0;
+			}
+			mem_unlock(obj_id,1);
+			return(obj_id);
 		}
 		break;
-	case TYPE_BINARY_FLOAT:
+		case TYPE_TUPLE:
 		{
-		float_object *obj = AllocFloatObject();
-		FLOAT n = (FLOAT)stream_ReadFloat(f);
-		obj->ref_count = 1;
-		//obj->flags = 0;
-		obj->value = n;
-		//printf("read float:%7g\n",obj->value);
-		obj->type = TYPE_BINARY_FLOAT;
-		return((object*)obj);
+			INT n = (INT)stream_ReadLong(stream);
+			//printf("reading %d tuple items\n",n);
+			OBJECT_ID to_id = obj_Alloc(TYPE_TUPLE,1);
+			tuple_object *to = (tuple_object*)mem_lock(to_id);
+			to->ptr = 0;
+			if(n > 0)
+			{
+				to->list = list_Create(n,LIST_STATIC);
+				//printf("created tuple list:%d\n",to->list);
+				for (NUM i = 0; i < n; i++)
+				{
+					OBJECT_ID tuple = stream_ReadObject(stream);
+					//obj_Dump(tuple,1,1);
+					list_Set(to->list,i,tuple);
+				}
+				//obj_Dump(to_id,1,1);
+			}
+			else
+				to->list = 0;
+			mem_unlock(to_id,1);
+			//obj_Dump(to_id,1,1);
+			return(to_id);
 		}
 		break;
-	case TYPE_INT:
+		case TYPE_UNICODE:
 		{
-		// printf("reading int\n");
-		int_object *obj = AllocIntObject();
-		INT n = (INT)stream_ReadLong(f);
-		obj->ref_count = 1;
-		//obj->flags = 0;
-		obj->value = n;
-		obj->type = TYPE_INT;
-		return((object*)obj);
+			OBJECT_ID obj_id = obj_Alloc(TYPE_UNICODE,1);
+			unicode_object *obj= (unicode_object*)mem_lock(obj_id);
+			NUM n = (NUM)stream_ReadLong(stream);
+			#ifdef USE_MEMORY_DEBUGGING
+			MEM_ID unicode_string = mem_malloc_debug(n + 1,MEM_POOL_CLASS_DYNAMIC, "ReadObject() unicode_string");
+			#else
+			MEM_ID unicode_string = mem_malloc(n + 1,MEM_POOL_CLASS_DYNAMIC);
+			#endif
+			mem_set(unicode_string, 0, n + 1);
+			stream_Read(stream,unicode_string, 0,n);
+			obj->value = unicode_string;
+			mem_unlock(obj_id,1);
+			return(obj_id);
 		}
 		break;
-	default:
+		case TYPE_BINARY_FLOAT:
 		{
-		/*
-		object *obj = AllocObject();
-		obj->ref_count = 1;
-		obj->type = TYPE_UNKNOWN;
-		#ifdef USE_DEBUGGING
-		debug_printf(DEBUG_ALL,"unknown chunk type:%c\n", type);
-		#endif
-		return(obj);
-		*/
-		object *obj = CreateEmptyObject(TYPE_UNKNOWN);
-		gc_IncRefCount(obj);
-		return (obj);
+			OBJECT_ID obj_id = obj_Alloc(TYPE_BINARY_FLOAT,1);
+			float_object *obj= (float_object*)mem_lock(obj_id);
+			FLOAT n = (FLOAT)stream_ReadFloat(stream);
+			obj->value = n;
+			mem_unlock(obj_id,1);
+			return(obj_id);
+		}
+		break;
+		case TYPE_INT:
+		{
+			OBJECT_ID obj_id = obj_Alloc(TYPE_INT,1);
+			int_object *obj= (int_object*)mem_lock(obj_id);
+			INT n = (INT)stream_ReadLong(stream);
+			obj->value = n;
+			mem_unlock(obj_id,1);
+			return(obj_id);
+		}
+		break;
+		default:
+		{
+			OBJECT_ID obj_id = obj_CreateEmpty(TYPE_UNKNOWN);
+			obj_IncRefCount(obj_id);
+			return(obj_id);
 		}
 	}
-	// printf("read object\r\n"); 
-	return (NULL);
+	return(0);
 }
 
-void stream_WriteObject(struct _object *obj,struct _stream *f)
+void stream_WriteObject(OBJECT_ID obj_id,STREAM_ID stream)
 {
-	stream_WriteChar(obj->type,f);
+	object *obj = (object*)mem_lock(obj_id);
+	stream_WriteChar(obj->type,stream);
 	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_CREATION,"writing object with type:%c\n",obj->type);
 	#endif
-	//printf("writing object:\n");
-	//DumpObject(obj,0);
 	switch(obj->type)
 	{
 		case TYPE_NONE:
@@ -762,103 +880,105 @@ void stream_WriteObject(struct _object *obj,struct _stream *f)
 		case TYPE_FALSE:
 		case TYPE_ELLIPSIS:
 		{
-		return;
+			mem_unlock(obj_id,0);
+			return;
 		}
 	case TYPE_CODE:
        {
-		stream_WriteLong(((code_object*)obj)->argcount,f);
-		stream_WriteLong(((code_object*)obj)->kwonlyargcount,f);
-		stream_WriteLong(((code_object*)obj)->nlocals,f);
-		stream_WriteLong(((code_object*)obj)->stacksize,f);
-		stream_WriteLong(((code_object*)obj)->co_flags,f);
-		stream_WriteObject(((code_object*)obj)->code,f);
-		stream_WriteObject(((code_object*)obj)->consts,f);
-		stream_WriteObject(((code_object*)obj)->names,f);
-		stream_WriteObject(((code_object*)obj)->varnames,f);
-		stream_WriteObject(((code_object*)obj)->freevars,f);
-		stream_WriteObject(((code_object*)obj)->cellvars,f);
-		unicode_object *filename = CreateUnicodeObject("");
-		gc_IncRefCount((object*)filename);
-		stream_WriteObject((object*)filename,f);
-		gc_DecRefCount((object*)filename);
-		unicode_object *name = CreateUnicodeObject(((code_object*)obj)->name);
-		gc_IncRefCount((object*)name);
-		stream_WriteObject((object*)name,f);
-		gc_DecRefCount((object*)name);
-		stream_WriteLong(0,f);
-		object *lnotab = CreateEmptyObject(TYPE_NONE);
-		gc_IncRefCount((object*)lnotab);
-		stream_WriteObject(lnotab,f);
-		gc_DecRefCount(lnotab);
-		gc_Clear();
-		return;
+			stream_WriteLong(((code_object*)obj)->argcount,stream);
+			stream_WriteLong(((code_object*)obj)->kwonlyargcount,stream);
+			stream_WriteLong(((code_object*)obj)->nlocals,stream);
+			stream_WriteLong(((code_object*)obj)->stacksize,stream);
+			stream_WriteLong(((code_object*)obj)->co_flags,stream);
+			stream_WriteObject(((code_object*)obj)->code,stream);
+			stream_WriteObject(((code_object*)obj)->consts,stream);
+			stream_WriteObject(((code_object*)obj)->names,stream);
+			stream_WriteObject(((code_object*)obj)->varnames,stream);
+			stream_WriteObject(((code_object*)obj)->freevars,stream);
+			stream_WriteObject(((code_object*)obj)->cellvars,stream);
+			OBJECT_ID filename = obj_CreateUnicode(mem_create("",1));
+			obj_IncRefCount(filename);
+			stream_WriteObject(filename,stream);
+			obj_DecRefCount(filename);
+			OBJECT_ID name = obj_CreateUnicode(((code_object*)obj)->name);
+			obj_IncRefCount(name);
+			stream_WriteObject(name,stream);
+			obj_DecRefCount(name);
+			stream_WriteLong(0,stream);
+			OBJECT_ID lnotab = obj_CreateEmpty(TYPE_NONE);
+			obj_IncRefCount(lnotab);
+			stream_WriteObject(lnotab,stream);
+			obj_DecRefCount(lnotab);
+			obj_ClearGC();
+			mem_unlock(obj_id,0);
+			return;
 		}
 	case TYPE_STRING:
 		{
-		NUM n = ((string_object*)obj)->len;
-		stream_WriteLong(n,f);
-		if (n > 0)
-		{
-			stream_Write(f,((string_object*)obj)->content, n);
-		}
-		return;
+			NUM n = ((string_object*)obj)->len;
+			stream_WriteLong(n,stream);
+			if(n > 0)
+			{
+				stream_Write(stream,((string_object*)obj)->content,0, n);
+			}
+			mem_unlock(obj_id,0);
+			return;
 		}
 	case TYPE_TUPLE:
 		{
-		if(((tuple_object*)obj)->list != NULL)
-		{
-			INT n = ((tuple_object*)obj)->list->num;
-			stream_WriteLong(n,f);
-			//printf("tuple items:%d\n",n);
-			if (n > 0)
+			INT n = tuple_GetLen(obj_id);
+			stream_WriteLong(n,stream);
+			if(n > 0)
 			{
-				for (NUM i = 0; i < n; i++)
+				for(NUM i = 0; i < n; i++)
 				{
-					stream_WriteObject(((tuple_object*)obj)->list->items[i],f);
+					stream_WriteObject(tuple_GetItem(obj_id,i),stream);
 				}
 			}
-		}
-		else
-			stream_WriteLong(0,f);
-		
-		//printf("written tuple\n");
-		return;
+			else
+				stream_WriteLong(0,stream);
+			mem_unlock(obj_id,0);
+			return;
 		}
 	case TYPE_UNICODE:
 		{
-		NUM n = strlen(((unicode_object*)obj)->value);
-		stream_WriteLong(n,f);
-		if(n > 0)
-		{
-			stream_Write(f,((unicode_object*)obj)->value, n);
-		}
-		return;
+			NUM n = obj_GetUnicodeLen(obj_id);
+			stream_WriteLong(n,stream);
+			if(n > 0)
+			{
+				stream_Write(stream,((unicode_object*)obj)->value, 0,n);
+			}
+			mem_unlock(obj_id,0);
+			return;
 		}
 	case TYPE_BINARY_FLOAT:
 		{
-		stream_WriteFloat(((float_object*)obj)->value,f);
-		return;
+			stream_WriteFloat(((float_object*)obj)->value,stream);
+			mem_unlock(obj_id,0);
+			return;
 		}
 	case TYPE_INT:
 		{
-		stream_WriteLong(((int_object*)obj)->value,f);
-		return;
+			stream_WriteLong(((int_object*)obj)->value,stream);
+			mem_unlock(obj_id,0);
+			return;
 		}
 	default:
 		{
-		#ifdef USE_DEBUGGING
-		debug_printf(DEBUG_ALL,"unknown chunk type:%c\n", obj->type);
-		#endif
-		return;
+			#ifdef USE_DEBUGGING
+			debug_printf(DEBUG_ALL,"unknown chunk type:%c\n", obj->type);
+			#endif
+			mem_unlock(obj_id,0);
+			return;
 		}
 	}
 }
 
 #ifndef USE_ARDUINO_FUNCTIONS
 //same as above , but using a reduced code object layout
-struct _object *stream_ReadObjectPlus(struct _stream *f)
+OBJECT_ID stream_ReadObjectPlus(STREAM_ID stream)
 {
-	OBJECT_TYPE type = stream_ReadChar(f);
+	OBJECT_TYPE type = stream_ReadChar(stream);
 
 	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_CREATION,"reading object with type:%c\n",type);
@@ -871,149 +991,136 @@ struct _object *stream_ReadObjectPlus(struct _stream *f)
 		case TYPE_FALSE:
 		case TYPE_ELLIPSIS:
 		{
-		/*
-		object *obj = AllocObject();
-		obj->type = type;
-		obj->ref_count = 1;
-		*/
-		object *obj = CreateEmptyObject(type);
-		gc_IncRefCount(obj);
-		return (obj);
+			OBJECT_ID obj_id = obj_CreateEmpty(type);
+			obj_IncRefCount(obj_id);
+			return (obj_id);
 		}
-	case TYPE_CODE:
+		case TYPE_CODE:
        {	
-		code_object *co = AllocCodeObject();
-		co->type = TYPE_CODE;
-		co->ref_count = 1;
-		co->stacksize = 0;
-
-		co->argcount = (NUM)stream_ReadLong(f);
-		co->kwonlyargcount = (NUM)stream_ReadLong(f);
-		co->nlocals = (NUM)stream_ReadLong(f);
-		co->co_flags = stream_ReadLong(f);
-		co->code = stream_ReadObjectPlus(f);
-		co->consts = stream_ReadObjectPlus(f);
-		co->names = stream_ReadObjectPlus(f);
-		co->varnames = stream_ReadObjectPlus(f);
-		co->freevars = stream_ReadObjectPlus(f);
-		co->cellvars = stream_ReadObjectPlus(f);
-		ConvertToDict(co->freevars); //TODO only needed as long deref and closure opcodes are not implemented using references
-		ConvertToDict(co->cellvars);
-		object *tmp_name = stream_ReadObjectPlus(f);
-		co->name = str_Copy(((unicode_object *)tmp_name)->value);
-		gc_DecRefCount(tmp_name);
-		gc_Clear();
-		return((object*)co);
+			OBJECT_ID co_id = obj_Alloc(TYPE_CODE,1);
+			code_object *co = (code_object*)mem_lock(co_id);
+			co->stacksize = 0;
+			co->argcount = (NUM)stream_ReadLong(stream);
+			co->kwonlyargcount = (NUM)stream_ReadLong(stream);
+			co->nlocals = (NUM)stream_ReadLong(stream);
+			co->co_flags = stream_ReadLong(stream);
+			co->code = stream_ReadObjectPlus(stream);
+			co->consts = stream_ReadObjectPlus(stream);
+			co->names = stream_ReadObjectPlus(stream);
+			co->varnames = stream_ReadObjectPlus(stream);
+			co->freevars = stream_ReadObjectPlus(stream);
+			co->cellvars = stream_ReadObjectPlus(stream);
+			tuple_ConvertToDict(co->freevars); //TODO only needed as long deref and closure opcodes are not implemented using references
+			tuple_ConvertToDict(co->cellvars);
+			OBJECT_ID tmp_name_id = stream_ReadObjectPlus(stream);
+			unicode_object *tmp_name = (unicode_object*)mem_lock(tmp_name_id);
+			co->name = mem_copy(tmp_name->value);
+			mem_unlock(tmp_name_id,0);
+			obj_DecRefCount(tmp_name_id);
+			obj_ClearGC();
+			mem_unlock(co_id,1);
+			return(co_id);
 		}
 		break;
-	case TYPE_STRING:
+		case TYPE_STRING:
 		{
-		string_object *obj = AllocStringObject();
-		obj->ref_count = 1;
-		NUM n;
-		n = (NUM)stream_ReadLong(f);
-		if (n > 0)
-		{
-			#ifdef USE_DEBUGGING
-			char *string = (char *)mem_malloc(n, "ReadObject() string");
-			#else
-			char *string = (char *)malloc(n);
-			#endif
-			stream_Read(f,string, n);
-			obj->len = n;
-			obj->content = string;
-			obj->type = TYPE_STRING;
-		}
-		else
-		{
-			obj->content = NULL;
-			obj->type = TYPE_NULL;
-			obj->len = 0;
-		}
-		return((object*)obj);
-		}
-		break;
-	case TYPE_TUPLE:
-		{
-		INT n = (INT)stream_ReadLong(f);
-		tuple_object *to = AllocTupleObject();
-		to->ref_count = 1;
-		to->ptr = 0;
-		if (n > 0)
-		{
-			to->list = ptr_CreateList(n,PTR_STATIC_LIST);
-			for (NUM i = 0; i < n; i++)
+			OBJECT_ID obj_id = obj_Alloc(TYPE_STRING,1);
+			string_object *obj = (string_object*)mem_lock(obj_id);
+			NUM n;
+			n = (NUM)stream_ReadLong(stream);
+			if (n > 0)
 			{
-				object *tuple = stream_ReadObjectPlus(f);
-				to->list->items[i] = tuple;
+				#ifdef USE_MEMORY_DEBUGGING
+				MEM_ID string = mem_malloc_debug(n,MEM_POOL_CLASS_DYNAMIC, "ReadObject() string");
+				#else
+				MEM_ID string = mem_malloc(n,MEM_POOL_CLASS_DYNAMIC);
+				#endif
+				stream_Read(stream,string, 0,n);
+				obj->len = n;
+				obj->content = string;
 			}
-		}
-		else
-		 to->list = NULL;
-		to->type = TYPE_TUPLE;
-		return((object*)to);
-		}
-		break;
-	case TYPE_UNICODE:
-		{
-		unicode_object *obj = AllocUnicodeObject();
-		obj->ref_count = 1;
-
-		NUM n = (NUM)stream_ReadLong(f);
-		#ifdef USE_DEBUGGING
-		char *unicode_string = (char *)mem_malloc(n + 1, "ReadObject() unicode_string");
-		#else
-		char *unicode_string = (char *)malloc(n + 1);
-		#endif
-		memset(unicode_string, 0, n + 1);
-		stream_Read(f,unicode_string, n);
-		obj->value = unicode_string;
-		obj->type = TYPE_UNICODE;
-		return((object*)obj);
+			else
+			{
+				obj->content = 0;
+				//obj->type = TYPE_NULL;
+				obj->len = 0;
+			}
+			mem_unlock(obj_id,1);
+			return(obj_id);
 		}
 		break;
-	case TYPE_BINARY_FLOAT:
+		case TYPE_TUPLE:
 		{
-		float_object *obj = AllocFloatObject();
-		FLOAT n = (FLOAT)stream_ReadFloat(f);
-		obj->ref_count = 1;
-		obj->value = n;
-		obj->type = TYPE_BINARY_FLOAT;
-		return((object*)obj);
+			INT n = (INT)stream_ReadLong(stream);
+			OBJECT_ID to_id = obj_Alloc(TYPE_TUPLE,1);
+			tuple_object *to = (tuple_object*)mem_lock(to_id);
+			to->ptr = 0;
+			if (n > 0)
+			{
+				to->list = list_Create(n,LIST_STATIC);
+				for (NUM i = 0; i < n; i++)
+				{
+					OBJECT_ID tuple = stream_ReadObject(stream);
+					list_Set(to->list,i,tuple);
+				}
+			}
+			else
+				to->list = 0;
+			mem_unlock(to_id,1);
+			return(to_id);
 		}
 		break;
-	case TYPE_INT:
+		case TYPE_UNICODE:
 		{
-		int_object *obj = AllocIntObject();
-		INT n = (INT)stream_ReadLong(f);
-		obj->ref_count = 1;
-		obj->value = n;
-		obj->type = TYPE_INT;
-		return((object*)obj);
+			OBJECT_ID obj_id = obj_Alloc(TYPE_UNICODE,1);
+			unicode_object *obj= (unicode_object*)mem_lock(obj_id);
+			NUM n = (NUM)stream_ReadLong(stream);
+			#ifdef USE_MEMORY_DEBUGGING
+			MEM_ID unicode_string = mem_malloc_debug(n + 1,MEM_POOL_CLASS_DYNAMIC, "ReadObject() unicode_string");
+			#else
+			MEM_ID unicode_string = mem_malloc(n + 1,MEM_POOL_CLASS_DYNAMIC);
+			#endif
+			mem_set(unicode_string, 0, n + 1);
+			stream_Read(stream,unicode_string, 0,n);
+			obj->value = unicode_string;
+			mem_unlock(obj_id,1);
+			return(obj_id);
+		}
+		break;
+		case TYPE_BINARY_FLOAT:
+		{
+			OBJECT_ID obj_id = obj_Alloc(TYPE_BINARY_FLOAT,1);
+			float_object *obj= (float_object*)mem_lock(obj_id);
+			FLOAT n = (FLOAT)stream_ReadFloat(stream);
+			obj->value = n;
+			mem_unlock(obj_id,1);
+			return(obj_id);
+		}
+		break;
+		case TYPE_INT:
+		{
+			OBJECT_ID obj_id = obj_Alloc(TYPE_INT,1);
+			int_object *obj= (int_object*)mem_lock(obj_id);
+			INT n = (INT)stream_ReadLong(stream);
+			obj->value = n;
+			mem_unlock(obj_id,1);
+			return(obj_id);
 		}
 		break;
 	default:
 		{
-		/*
-		object *obj = AllocObject();
-		obj->ref_count = 1;
-		obj->type = TYPE_UNKNOWN;
-		#ifdef USE_DEBUGGING
-		debug_printf(DEBUG_ALL,"unknown chunk type:%c\n", type);
-		#endif
-		return(obj);
-		*/
-		object *obj = CreateEmptyObject(TYPE_UNKNOWN);
-		gc_IncRefCount(obj);
-		return (obj);
+			OBJECT_ID obj_id = obj_CreateEmpty(TYPE_UNKNOWN);
+			obj_IncRefCount(obj_id);
+			return(obj_id);
 		}
 	}
-	return (NULL);
+	return(0);
 }
 
-void stream_WriteObjectPlus(struct _object *obj,struct _stream *f)
+void stream_WriteObjectPlus(OBJECT_ID obj_id,STREAM_ID stream)
 {
-	stream_WriteChar(obj->type,f);
+	object *obj = (object*)mem_lock(obj_id);
+	stream_WriteChar(obj->type,stream);
 	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_CREATION,"writing object with type:%c\n",obj->type);
 	#endif
@@ -1026,81 +1133,86 @@ void stream_WriteObjectPlus(struct _object *obj,struct _stream *f)
 		case TYPE_FALSE:
 		case TYPE_ELLIPSIS:
 		{
-		return;
+			mem_unlock(obj_id,0);
+			return;
 		}
-	case TYPE_CODE:
+		case TYPE_CODE:
        {
-		stream_WriteLong(((code_object*)obj)->argcount,f);
-		stream_WriteLong(((code_object*)obj)->kwonlyargcount,f);
-		stream_WriteLong(((code_object*)obj)->nlocals,f);
-		stream_WriteLong(((code_object*)obj)->co_flags,f);
-		stream_WriteObject(((code_object*)obj)->code,f);
-		stream_WriteObject(((code_object*)obj)->consts,f);
-		stream_WriteObject(((code_object*)obj)->names,f);
-		stream_WriteObject(((code_object*)obj)->varnames,f);
-		stream_WriteObject(((code_object*)obj)->freevars,f);
-		stream_WriteObject(((code_object*)obj)->cellvars,f);
-		unicode_object *name = CreateUnicodeObject(((code_object*)obj)->name);
-		gc_IncRefCount((object*)name);
-		stream_WriteObject((object*)name,f);
-		gc_DecRefCount((object*)name);
-		gc_Clear();
-		return;
+			stream_WriteLong(((code_object*)obj)->argcount,stream);
+			stream_WriteLong(((code_object*)obj)->kwonlyargcount,stream);
+			stream_WriteLong(((code_object*)obj)->nlocals,stream);
+			stream_WriteLong(((code_object*)obj)->co_flags,stream);
+			stream_WriteObject(((code_object*)obj)->code,stream);
+			stream_WriteObject(((code_object*)obj)->consts,stream);
+			stream_WriteObject(((code_object*)obj)->names,stream);
+			stream_WriteObject(((code_object*)obj)->varnames,stream);
+			stream_WriteObject(((code_object*)obj)->freevars,stream);
+			stream_WriteObject(((code_object*)obj)->cellvars,stream);
+			OBJECT_ID name = obj_CreateUnicode(((code_object*)obj)->name);
+			obj_IncRefCount(name);
+			stream_WriteObject(name,stream);
+			obj_DecRefCount(name);
+			obj_ClearGC();
+			mem_unlock(obj_id,0);
+			return;
 		}
-	case TYPE_STRING:
+		case TYPE_STRING:
 		{
-		NUM n = ((string_object*)obj)->len;
-		stream_WriteLong(n,f);
-		if (n > 0)
-		{
-			stream_Write(f,((string_object*)obj)->content, n);
-		}
-		return;
-		}
-	case TYPE_TUPLE:
-		{
-		if(((tuple_object*)obj)->list != NULL)
-		{
-			INT n = ((tuple_object*)obj)->list->num;
-			stream_WriteLong(n,f);
-			if (n > 0)
+			NUM n = ((string_object*)obj)->len;
+			stream_WriteLong(n,stream);
+			if(n > 0)
 			{
-				for (NUM i = 0; i < n; i++)
+				stream_Write(stream,((string_object*)obj)->content, 0,n);
+			}	
+			mem_unlock(obj_id,0);
+			return;
+		}
+		case TYPE_TUPLE:
+		{
+			INT n = tuple_GetLen(obj_id);
+			stream_WriteLong(n,stream);
+			if(n > 0)
+			{
+				for(NUM i = 0; i < n; i++)
 				{
-					stream_WriteObject(((tuple_object*)obj)->list->items[i],f);
+					stream_WriteObject(tuple_GetItem(obj_id,i),stream);
 				}
 			}
+			else
+				stream_WriteLong(0,stream);
+			mem_unlock(obj_id,0);
+			return;
 		}
-		else
-			stream_WriteLong(0,f);
-		return;
-		}
-	case TYPE_UNICODE:
+		case TYPE_UNICODE:
 		{
-		NUM n = strlen(((unicode_object*)obj)->value);
-		stream_WriteLong(n,f);
-		if(n > 0)
-		{
-			stream_Write(f,((unicode_object*)obj)->value, n);
+			NUM n = obj_GetUnicodeLen(obj_id);
+			stream_WriteLong(n,stream);
+			if(n > 0)
+			{
+				stream_Write(stream,((unicode_object*)obj)->value, 0,n);
+			}
+			mem_unlock(obj_id,0);
+			return;
 		}
-		return;
-		}
-	case TYPE_BINARY_FLOAT:
+		case TYPE_BINARY_FLOAT:
 		{
-		stream_WriteFloat(((float_object*)obj)->value,f);
-		return;
+			stream_WriteFloat(((float_object*)obj)->value,stream);
+			mem_unlock(obj_id,0);
+			return;
 		}
-	case TYPE_INT:
+		case TYPE_INT:
 		{
-		stream_WriteLong(((int_object*)obj)->value,f);
-		return;
+			stream_WriteLong(((int_object*)obj)->value,stream);
+			mem_unlock(obj_id,0);
+			return;
 		}
-	default:
+		default:
 		{
-		#ifdef USE_DEBUGGING
-		debug_printf(DEBUG_ALL,"unknown chunk type:%c\n", obj->type);
-		#endif
-		return;
+			#ifdef USE_DEBUGGING
+			debug_printf(DEBUG_ALL,"unknown chunk type:%c\n", obj->type);
+			#endif
+			mem_unlock(obj_id,0);
+			return;
 		}
 	}
 }
