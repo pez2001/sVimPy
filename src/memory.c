@@ -112,7 +112,6 @@ void mem_PopLock(MEM_ID ptr)
 	mem_locks = (MEM_ID*) realloc(mem_locks,(mem_locks_top+1)*sizeof(MEM_ID));
 }
 
-
 /*
 MEM_ID mem_RemoveChunk(MEM_ID chunk)
 {
@@ -159,12 +158,13 @@ BOOL mem_DebugHeapWalk(BOOL show_leaked,BOOL show_locked)
 
 BOOL mem_Close(void)
 {
-	printf("mem chunks allocated:%d\n",mem_chunks_num);
-	printf("mem chunks locked:%d\n",mem_locks_num);
-	printf("mem chunks unlocked:%d\n",mem_unlocks_num);
-	printf("locks peaked @ %d\n",mem_max_locked);
-	printf("heap peaked @ %d\n",mem_max_locked_size);
-	BOOL r = mem_DebugHeapWalk(1,1);
+	//printf("mem chunks allocated:%d\n",mem_chunks_num);
+	//printf("mem chunks locked:%d\n",mem_locks_num);
+	//printf("mem chunks unlocked:%d\n",mem_unlocks_num);
+	//printf("locks peaked @ %d\n",mem_max_locked);
+	//printf("heap peaked @ %d\n",mem_max_locked_size);
+	//BOOL r = mem_DebugHeapWalk(1,1);
+	BOOL r = 0;
 	for(long i = 0;i<mem_chunks_num;i++)
 	{
 		if(!mem_chunk_items[i]->is_freed)
@@ -214,7 +214,6 @@ void *mem_lock(MEM_ID ptr)
 	mem_PushLock(ptr);
 	return(mem_chunk_items[ptr]->ptr);
 }
-
 
 void mem_unlock(MEM_ID ptr,BOOL is_dirty)
 {
@@ -283,7 +282,6 @@ BOOL mem_copy_to_offset(MEM_ID dst,NUM dst_offset,char *bytes,INT len)
 	memcpy((void*)(((char*)mem_chunk_items[dst]->ptr)+dst_offset),(void*)bytes,len);
 	return(1);
 }
-
 
 BOOL mem_copy_from_offset(MEM_ID src,NUM src_offset,char *bytes,INT len)
 {

@@ -74,14 +74,14 @@ int main(int argc, char *argv[])
 	{
 		printf("input pyc filename:%s\n",input_filename);
 		printf("output filename:%s\n",output_filename);
-		gc_Init(NULL);
+		mem_Init();
 		obj_Init();
 		streams_Init();
 		long pyc_magic = MAGIC;
-		stream *f = stream_CreateFromFile(input_filename,"rb");
+		STREAM_ID f = stream_CreateFromFile(mem_create_string(input_filename),mem_create_string("rb"));
 		if (!stream_Open(f))
 			return(1);
-		stream *o = stream_CreateFromFile(output_filename,"wb+");
+		STREAM_ID o = stream_CreateFromFile(mem_create_string(output_filename),mem_create_string("wb+"));
 		if (!stream_Open(o))
 			return(1);
 		printf("files opened\n");
@@ -90,7 +90,9 @@ int main(int argc, char *argv[])
 		if(magic != pyc_magic)	
 			return(1);
 		stream_ReadLong(f);//skip time
-		object *obj = stream_ReadObject(f);
+		OBJECT_ID obj = stream_ReadObject(f);
+		
+		//obj_SetAttribute(obj, //TODO remove doc strings from objects
 		if(format_rpyc)
 		{
 			stream_WriteObject(obj,o);
@@ -105,10 +107,9 @@ int main(int argc, char *argv[])
 		stream_Free(o);
 		streams_Close();
 		obj_Close();
-		gc_Close();
 	}
 	else
 		printf(compress_pyc_helpmsg);
 
-	return (0);
+	return(0);
 }

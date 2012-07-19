@@ -70,13 +70,14 @@
 
 #define MEM_ID long
 #define MEM_POOL_CLASS_ID char
-
+#define CACHE_STORAGE_TYPE_ID char
 
 #define BYTES_ID MEM_ID
 #define VM_ID MEM_ID
 #define STREAM_ID MEM_ID
 #define STACK_ID MEM_ID
 #define LIST_ID MEM_ID
+#define CACHE_STORE_ID MEM_ID
 
 //python type ids
 #define OBJECT_ID MEM_ID

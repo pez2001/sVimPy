@@ -148,6 +148,35 @@ typedef struct
 	//int is_removed;
 } mem_chunk;
 
+
+typedef struct _cache_store_type
+{
+	CACHE_STORAGE_TYPE_ID type;
+	BOOL (*store_open)(CACHE_STORE_ID store);
+	BOOL (*store_close)(CACHE_STORE_ID store);
+	BOOL (*store_delete)(CACHE_STORE_ID store,MEM_ID mem);	
+	BOOL (*store_read)(CACHE_STORE_ID store,MEM_ID mem ,NUM offset,NUM len);
+	BOOL (*store_write)(CACHE_STORE_ID store,MEM_ID mem,NUM offset,NUM len);
+	BOOL (*store_contains)(CACHE_STORE_ID store,MEM_ID mem);
+	NUM (*store_getsize)(CACHE_STORE_ID store,MEM_ID mem);
+	NUM (*store_getfree)(CACHE_STORE_ID store); 
+} store_type;
+
+typedef struct _cache_store
+{
+	MEM_ID type;
+	LIST_ID tag;
+}cache_store;
+
+
+BOOL mem_cache_store(MEM_ID mem);
+
+BOOL mem_cache_retrieve(MEM_ID mem);
+
+BOOL mem_cache_delete(MEM_ID mem);
+
+
+
 #define MAX_MEM_CHUNKS 200000000
 
 void mem_Init(void);

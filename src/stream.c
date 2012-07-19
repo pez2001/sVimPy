@@ -481,7 +481,7 @@ BOOL stream_file_write(STREAM_ID stream,MEM_ID ptr ,STREAM_NUM ptr_offset,STREAM
 {
 	struct _stream *str = (struct _stream*)mem_lock(stream);
 	file_stream_tag *str_tag = (file_stream_tag*)mem_lock(str->tag);
-	if(str_tag->file != 0)
+	if(str_tag->file == 0)
 	{
 		mem_unlock(str->tag,0);
 		mem_unlock(stream,0);
@@ -489,8 +489,10 @@ BOOL stream_file_write(STREAM_ID stream,MEM_ID ptr ,STREAM_NUM ptr_offset,STREAM
 	}
 	FILE *f = (FILE*)str_tag->file;
 	char *bytes = (char*)mem_lock(ptr);
+	//printf("writing data[%s]\n",bytes);
 	if(fwrite(bytes+ptr_offset, len, 1, f) != 1)
 	{
+		//printf("written data to file\n");
 		mem_unlock(ptr,0);
 		mem_unlock(str->tag,0);
 		mem_unlock(stream,0);
@@ -1124,6 +1126,7 @@ void stream_WriteObjectPlus(OBJECT_ID obj_id,STREAM_ID stream)
 	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_CREATION,"writing object with type:%c\n",obj->type);
 	#endif
+	//printf("writing object with type:%c\n",obj->type);
 
 	switch(obj->type)
 	{
@@ -1142,15 +1145,15 @@ void stream_WriteObjectPlus(OBJECT_ID obj_id,STREAM_ID stream)
 			stream_WriteLong(((code_object*)obj)->kwonlyargcount,stream);
 			stream_WriteLong(((code_object*)obj)->nlocals,stream);
 			stream_WriteLong(((code_object*)obj)->co_flags,stream);
-			stream_WriteObject(((code_object*)obj)->code,stream);
-			stream_WriteObject(((code_object*)obj)->consts,stream);
-			stream_WriteObject(((code_object*)obj)->names,stream);
-			stream_WriteObject(((code_object*)obj)->varnames,stream);
-			stream_WriteObject(((code_object*)obj)->freevars,stream);
-			stream_WriteObject(((code_object*)obj)->cellvars,stream);
+			stream_WriteObjectPlus(((code_object*)obj)->code,stream);
+			stream_WriteObjectPlus(((code_object*)obj)->consts,stream);
+			stream_WriteObjectPlus(((code_object*)obj)->names,stream);
+			stream_WriteObjectPlus(((code_object*)obj)->varnames,stream);
+			stream_WriteObjectPlus(((code_object*)obj)->freevars,stream);
+			stream_WriteObjectPlus(((code_object*)obj)->cellvars,stream);
 			OBJECT_ID name = obj_CreateUnicode(((code_object*)obj)->name);
 			obj_IncRefCount(name);
-			stream_WriteObject(name,stream);
+			stream_WriteObjectPlus(name,stream);
 			obj_DecRefCount(name);
 			obj_ClearGC();
 			mem_unlock(obj_id,0);
@@ -1175,7 +1178,7 @@ void stream_WriteObjectPlus(OBJECT_ID obj_id,STREAM_ID stream)
 			{
 				for(NUM i = 0; i < n; i++)
 				{
-					stream_WriteObject(tuple_GetItem(obj_id,i),stream);
+					stream_WriteObjectPlus(tuple_GetItem(obj_id,i),stream);
 				}
 			}
 			else
