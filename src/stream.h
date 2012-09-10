@@ -63,7 +63,7 @@ struct _stream;
 
 typedef struct _stream_type
 {
-	STREAM_TYPE_ID type;
+	TYPE type;
 	BOOL (*stream_open)(STREAM_ID stream);/* struct _stream* stream*/
 	BOOL (*stream_close)(STREAM_ID stream);
 	BOOL (*stream_free)(STREAM_ID stream);	
@@ -75,7 +75,7 @@ typedef struct _stream_type
 
 typedef struct _stream
 {
-	MEM_ID type;/*struct _stream_type*/
+	STREAM_TYPE_ID type;/*struct _stream_type*/
 	//STREAM_FLAG flags;
 	MEM_ID flags;/*char **/
 	MEM_ID tag;/*id_list*/
@@ -107,7 +107,7 @@ void streams_Init(void);
 
 void streams_Close(void);
 
-MEM_ID stream_GetType(STREAM_TYPE_ID id);/*returns struct _stream_type **/
+STREAM_TYPE_ID stream_GetType(TYPE id);/*returns struct _stream_type **/
 
 
 STREAM_ID stream_CreateFromFile(BYTES_ID filename,BYTES_ID flags);//(char *filename,char *flags); //will create a copy of filename returns stream*

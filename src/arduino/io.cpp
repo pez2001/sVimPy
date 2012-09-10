@@ -24,124 +24,154 @@
 
 #ifdef USE_ARDUINO_FUNCTIONS
 
-object *a_pinMode(vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID a_pinMode(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
  //pin,mode
-	object *pin = GetItem((object*)locals,0);
-	object *mode = GetItem((object*)locals,1);
-	//printf("pinMode\n");
-	//TODO only a temp solution
-	if(pin->type == TYPE_KV)
-		pin = (object*)((kv_object*)pin)->value;
-	if(mode->type == TYPE_KV)
-		mode = (object*)((kv_object*)mode)->value;
-	if(pin->type == TYPE_INT && mode->type == TYPE_INT)
-		pinMode(((int_object*)pin)->value,((int_object*)mode)->value);
-	//printf("pinMode: %d to %d\n",((int_object*)pin)->value,((int_object*)mode)->value);
-	object *tmp =CreateEmptyObject(TYPE_NONE);
-	return (tmp);	
+	if(tuple_GetLen(locals) < 2)
+	{
+		OBJECT_ID tmp = obj_CreateEmpty(TYPE_NONE);
+		return(tmp);	
+	}
+	OBJECT_ID pin = tuple_GetItem(locals,0);
+	OBJECT_ID mode = tuple_GetItem(locals,1);
+	if(obj_GetType(pin) == TYPE_KV)
+	{
+		kv_object *kpin = (kv_object*)mem_lock(pin);
+		OBJECT_ID old = pin;
+		pin = kpin->value;
+		mem_unlock(old,0);
+	}
+	if(obj_GetType(mode) == TYPE_KV)
+	{
+		kv_object *kmode = (kv_object*)mem_lock(mode);
+		OBJECT_ID old = mode;
+		mode = kmode->value;
+		mem_unlock(old,0);
+	}
+	if(obj_GetType(pin) == TYPE_INT && obj_GetType(mode) == TYPE_INT)
+	{
+		int_object *ipin = (int_object*)mem_lock(pin);
+		int_object *imode = (int_object*)mem_lock(mode);
+		printf("pinMode: %d to %d\n",ipin->value,imode->value);
+		pinMode(ipin->value,imode->value);
+		mem_unlock(mode,0);
+		mem_unlock(pin,0);
+	}
+	OBJECT_ID tmp = obj_CreateEmpty(TYPE_NONE);
+	return(tmp);	
 }
 
-object *a_digitalRead(vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID a_digitalRead(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
- //pin
-	//printf("digitalRead\n");
-	object *pin = GetItem((object*)locals,0);
+	OBJECT_ID pin = tuple_GetItem(locals,0);
 	int r = 0;
-	if(pin->type == TYPE_INT)
-		r = digitalRead(((int_object*)pin)->value);
-	int_object *tmp = CreateIntObject(r);
-	return ((object*)tmp);	
-	
+	if(obj_GetType(pin) == TYPE_INT)
+	{
+		int_object *ipin = (int_object*)mem_lock(pin);
+		printf("digitalRead: %d\n",ipin->value);
+		r = digitalRead(ipin->value);
+		mem_unlock(pin,0);
+	}
+	INT_ID tmp = obj_CreateInt(r);
+	return(tmp);	
 }
 
-object *a_digitalWrite(vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID a_digitalWrite(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
- //pin,value
-	if(locals->list->num < 2)
+ 	if(tuple_GetLen(locals) < 2)
 	{
-		//printf("not enough args for digitalWrite();\r\n");
-		object *tmp =CreateEmptyObject(TYPE_NONE);
-		return (tmp);	
+		OBJECT_ID tmp = obj_CreateEmpty(TYPE_NONE);
+		return(tmp);	
 	}
-	object *pin = GetItem((object*)locals,0);
-	object *val = GetItem((object*)locals,1);
-    //PrintObject(pin);
-	//printf("\r\nval:");
-	//PrintObject(val);
-	//printf("\r\n");
-	//printf("pt:%c,vt:%c\r\n",pin->type,val->type);
-	//printf("digitalWrite\n");
-	//TODO only a temp solution
-	if(pin->type == TYPE_KV)
-		pin =(object*) ((kv_object*)pin)->value;
-	if(val->type == TYPE_KV)
+	OBJECT_ID pin = tuple_GetItem(locals,0);
+	OBJECT_ID val = tuple_GetItem(locals,1);
+	if(obj_GetType(pin) == TYPE_KV)
 	{
-		val = (object*) ((kv_object*)val)->value;
-		//printf("pt:%c,vt:%c\r\n",pin->type,val->type);
-		//printf("val:%d\r\n",((int_object*)val)->value);
+		kv_object *kpin = (kv_object*)mem_lock(pin);
+		OBJECT_ID old = pin;
+		pin = kpin->value;
+		mem_unlock(old,0);
 	}
-	if((pin->type == TYPE_INT) && (val->type == TYPE_INT))
+	if(obj_GetType(val) == TYPE_KV)
 	{
-		//printf("dw:\r\n");
-		//printf("pin:%d\r\n",((int_object*)pin)->value);
-		//printf("val:%d\r\n",((int_object*)val)->value);
-		digitalWrite(((int_object*)pin)->value,((int_object*)val)->value);
-		//pinMode(9,OUTPUT);
-		//digitalWrite(9,((int_object*)val)->value);
+		kv_object *kval = (kv_object*)mem_lock(val);
+		OBJECT_ID old = val;
+		val = kval->value;
+		mem_unlock(old,0);
 	}
-	object *tmp =CreateEmptyObject(TYPE_NONE);
-	return (tmp);	
+	if(obj_GetType(pin) == TYPE_INT && obj_GetType(val) == TYPE_INT)
+	{
+		int_object *ipin = (int_object*)mem_lock(pin);
+		int_object *ival = (int_object*)mem_lock(val);
+		printf("digitalWrite pin: %d val: %d\n",ipin->value,ival->value);
+		digitalWrite(ipin->value,ival->value);
+		mem_unlock(val,0);
+		mem_unlock(pin,0);
+	}
+	OBJECT_ID tmp = obj_CreateEmpty(TYPE_NONE);
+	return(tmp);	
 }
 
-object *a_analogRead(vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID a_analogRead(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
- //pin
- 	//printf("analogRead\n");
- 	object *pin = GetItem((object*)locals,0);
+ 	OBJECT_ID pin = tuple_GetItem(locals,0);
 	int r = 0;
-	if(pin->type == TYPE_INT)
-		r = analogRead(((int_object*)pin)->value);
-	int_object *tmp =CreateIntObject(r);
-	return ((object*)tmp);	
+	if(obj_GetType(pin) == TYPE_INT)
+	{
+		int_object *ipin = (int_object*)mem_lock(pin);
+		printf("analogRead: %d\n",ipin->value);
+		r = analogRead(ipin->value);
+		mem_unlock(pin,0);
+	}
+	INT_ID tmp = obj_CreateInt(r);
+	return(tmp);	
 }
 
-object *a_analogWrite(vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID a_analogWrite(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
- //pin,value
- 	//printf("analogWrite\n");
-	object *pin = GetItem((object*)locals,0);
-	object *val = GetItem((object*)locals,1);
-	if(pin->type == TYPE_KV)
-		pin =(object*) ((kv_object*)pin)->value;
-	if(val->type == TYPE_KV)
-		val = (object*) ((kv_object*)val)->value;
-	printf("vx:%x\r\n",val);
-	if(pin->type == TYPE_INT && val->type == TYPE_INT)
-		analogWrite(((int_object*)pin)->value,((int_object*)val)->value);
-	object *tmp =CreateEmptyObject(TYPE_NONE);
-	return (tmp);	
+	OBJECT_ID pin = tuple_GetItem(locals,0);
+	OBJECT_ID val = tuple_GetItem(locals,1);
+	if(obj_GetType(pin) == TYPE_KV)
+	{
+		kv_object *kpin = (kv_object*)mem_lock(pin);
+		OBJECT_ID old = pin;
+		pin = kpin->value;
+		mem_unlock(old,0);
+	}
+	if(obj_GetType(val) == TYPE_KV)
+	{
+		kv_object *kval = (kv_object*)mem_lock(val);
+		OBJECT_ID old = val;
+		val = kval->value;
+		mem_unlock(old,0);
+		//printf("kv'd value\n");
+	}
+	if(obj_GetType(pin) == TYPE_INT && obj_GetType(val) == TYPE_INT)
+	{
+		int_object *ipin = (int_object*)mem_lock(pin);
+		int_object *ival = (int_object*)mem_lock(val);
+		//obj_Dump(val,1,1);
+		//obj_Print(val);
+		printf("analogWrite pin: %d, value: %d\n",ipin->value,ival->value);
+		//printf("value: %d\n",ival->value);
+		analogWrite(ipin->value,ival->value);
+		mem_unlock(val,0);
+		mem_unlock(pin,0);
+	}
+	OBJECT_ID tmp = obj_CreateEmpty(TYPE_NONE);
+	return(tmp);	
 }
 
-object *a_delay(vm *vm,tuple_object *locals,tuple_object *kw_locals)
+OBJECT_ID a_delay(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
- //ms
- 	//printf("delay\n");
- 	object *ms = GetItem((object*)locals,0);
-	if(ms->type == TYPE_KV)
-	{
-		ms = (object*) ((kv_object*)ms)->value;
-		//printf("pt:%c,vt:%c\r\n",pin->type,val->type);
-		//printf("val:%d\r\n",((int_object*)val)->value);
-	}
-	if(ms->type == TYPE_INT)
-	{
-		//printf("delay:%d\r\n",((int_object*)ms)->value);
-		delay(((int_object*)ms)->value - 5);
-	}
-	//delay(8);
-	object *tmp =CreateEmptyObject(TYPE_NONE);
-	return (tmp);	
+ 	OBJECT_ID ms_id = tuple_GetItem(locals,0);
+	int_object *ms = (int_object*)mem_lock(ms_id);
+	printf("delay: %d\n",ms->value);
+	//TODO add delay here
+	delay(ms->value);
+	mem_unlock(ms_id,0);
+	OBJECT_ID tmp = obj_CreateEmpty(TYPE_NONE);
+	return(tmp);	
 }
 /*
 object *a_serialprint(vm *vm,tuple_object *locals,tuple_object *kw_locals)
@@ -166,22 +196,25 @@ object *a_serialBegin(vm *vm,tuple_object *locals,tuple_object *kw_locals)
 	return (tmp);	
 }
 */
-void AddArduinoGlobal(vm *vm)
+void AddArduinoGlobal(VM_ID vm)
 {
-	code_object *a_globals = CreateCodeObject(str_Copy("arduino"));
-	AddCodeCFunction((object*)a_globals,"pinMode",&a_pinMode);
-	AddCodeCFunction((object*)a_globals,"digitalRead",&a_digitalRead);
-	AddCodeCFunction((object*)a_globals,"digitalWrite",&a_digitalWrite);
-	AddCodeCFunction((object*)a_globals,"analogRead",&a_analogRead);
-	AddCodeCFunction((object*)a_globals,"analogWrite",&a_analogWrite);
-	AddCodeCFunction((object*)a_globals,"delay",&a_delay);
-	//AddCodeCFunction((object*)a_globals,"Serial.print",&a_serialprint);
-	//AddCodeCFunction((object*)a_globals,"Serial.Begin",&a_serialBegin);
-	AddCodeName((object*)a_globals,(object*)CreateUnicodeObject(str_Copy("INPUT")),(object*)CreateIntObject(0));
-	AddCodeName((object*)a_globals,(object*)CreateUnicodeObject(str_Copy("OUTPUT")),(object*)CreateIntObject(1));
-	AddCodeName((object*)a_globals,(object*)CreateUnicodeObject(str_Copy("LOW")),(object*)CreateIntObject(0));
-	AddCodeName((object*)a_globals,(object*)CreateUnicodeObject(str_Copy("HIGH")),(object*)CreateIntObject(1));
-	vm_AddGlobal(vm,(object*)CreateUnicodeObject(str_Copy("arduino")),(object*)a_globals);
+	CODE_ID a_globals = obj_CreateCode(mem_create_string("arduino"));
+	//printf("created a_global\r\n");
+	obj_AddCodeCFunction(a_globals,mem_create_string("pinMode"),&a_pinMode);
+	//printf("added pinMode\r\n");
+	obj_AddCodeCFunction(a_globals,mem_create_string("digitalRead"),&a_digitalRead);
+	obj_AddCodeCFunction(a_globals,mem_create_string("digitalWrite"),&a_digitalWrite);
+	obj_AddCodeCFunction(a_globals,mem_create_string("analogRead"),&a_analogRead);
+	obj_AddCodeCFunction(a_globals,mem_create_string("analogWrite"),&a_analogWrite);
+	obj_AddCodeCFunction(a_globals,mem_create_string("delay"),&a_delay);
+	//obj_AddCodeCFunction(a_globals,mem_create_string("Serial.print"),&a_serialprint);
+	//obj_AddCodeCFunction(a_globals,mem_create_string("Serial.Begin"),&a_serialBegin);
+	obj_AddCodeName(a_globals,obj_CreateUnicode(mem_create_string("INPUT")),obj_CreateInt(0));
+	obj_AddCodeName(a_globals,obj_CreateUnicode(mem_create_string("OUTPUT")),obj_CreateInt(1));
+	obj_AddCodeName(a_globals,obj_CreateUnicode(mem_create_string("LOW")),obj_CreateInt(0));
+	obj_AddCodeName(a_globals,obj_CreateUnicode(mem_create_string("HIGH")),obj_CreateInt(1));
+	vm_AddGlobal(vm,obj_CreateUnicode(mem_create_string("arduino")),a_globals);
 }
+
 
 #endif

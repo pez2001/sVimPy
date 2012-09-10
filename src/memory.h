@@ -19,17 +19,27 @@
  * THIS SOFTWARE IS SUPPLIED AS IT IS WITHOUT ANY WARRANTY!
  *
  */
-
 #ifndef MEMORY_H
 #define MEMORY_H
 
 #include "features.h"
 #include "types.h"
 
-#include "stdio.h"
-#include "stdlib.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include "debug.h"
+
+//#include "debug.h"
+#include "memory_store.h"
+
+#ifndef USE_ARDUINO_FUNCTIONS
+#ifndef USE_MEMORY_MANAGER_PASS
+#ifndef USE_MEMORY_MANAGER_DEBUG
+#include "cache_file.h"
+#endif
+#endif
+#endif
 
 
 
@@ -50,71 +60,6 @@ list pool for ptr lists etc
 
 cache for memory chunks addressable by id stored in streams
 
-alloc function
-free function
-access function
-egress function (for handling memory chunk caching
-
-
-object chunk header :
-unsigned char size
-unsigned short id
-char[] chunk_data
-
-string chunk header : 
-unsigned short size
-unsigned short id
-char[] string
-
-
-remember sorting of ids can speed up things
-
-
-
-//lock objects only if non global member vars are accessed
-//check if object is a cached_object
-//if it is -> load object from storage into memory
-//return loaded object
-//increases lock count of object
-
-//this way caching would leave freed pointers arround hmmm
-//implement a small proxy object to get arround freed pointers problem
-
-//unlock objects after usage of lock and access to member vars is no longer needed
-//decreases lock count of object
-//if lock count reached zero and object is a non global type check if object should be cached
-
-
-
-
-typedef struct _cache_object
-{
-	OBJECT_TYPE type;
-	OBJECT_REF_COUNT ref_count;
-	#ifdef USE_LOCKING
-	OBJECT_REF_COUNT lock_count;
-	#endif
-	//object *object;
-	STREAM_NUM stream_pos;
-} cache_object;
-
-
-//proxy object struct
-//used for virtual caching objects in streams
-//normal size = 9 + 8 
-//avr size = 4 + 4
-typedef struct _proxy_object
-{
-	OBJECT_TYPE type;
-	OBJECT_REF_COUNT ref_count;
-	#ifdef USE_LOCKING
-	OBJECT_LOCK_COUNT lock_count;
-	#endif
-	void *ref;//object* or stream_pos/512
-	void *is_cached; // == 0 -> not cached use ref as object*  > 0 -> pointer stream where object is cached ,ref is the position(mmc sector address 512 bytes aligned) in the stream 
-} proxy_object;
-
-
 
 
 */
@@ -124,6 +69,7 @@ typedef struct _proxy_object
 #define MEM_POOL_CLASS_STATIC 1
 #define MEM_POOL_CLASS_DYNAMIC 2
 #define MEM_POOL_CLASS_PERMANENT 4
+#define MEM_POOL_CLASS_BUFFER 8
 //var string space
 #define MEM_POOL_CLASS_VAR 128
 
@@ -132,9 +78,6 @@ typedef struct _proxy_object
 
 
 
-#ifdef __cplusplus
-extern "C"  {
-#endif
 
 
 
@@ -142,80 +85,75 @@ typedef struct
 {
 	void *ptr;
 	char *description;
+	unsigned char pool_class;
 	long size;
 	int is_freed;
 	long locks;
 	//int is_removed;
 } mem_chunk;
 
+#ifdef __cplusplus
+extern "C"  {
+#endif
 
-typedef struct _cache_store_type
-{
-	CACHE_STORAGE_TYPE_ID type;
-	BOOL (*store_open)(CACHE_STORE_ID store);
-	BOOL (*store_close)(CACHE_STORE_ID store);
-	BOOL (*store_delete)(CACHE_STORE_ID store,MEM_ID mem);	
-	BOOL (*store_read)(CACHE_STORE_ID store,MEM_ID mem ,NUM offset,NUM len);
-	BOOL (*store_write)(CACHE_STORE_ID store,MEM_ID mem,NUM offset,NUM len);
-	BOOL (*store_contains)(CACHE_STORE_ID store,MEM_ID mem);
-	NUM (*store_getsize)(CACHE_STORE_ID store,MEM_ID mem);
-	NUM (*store_getfree)(CACHE_STORE_ID store); 
-} store_type;
-
-typedef struct _cache_store
-{
-	MEM_ID type;
-	LIST_ID tag;
-}cache_store;
-
-
-BOOL mem_cache_store(MEM_ID mem);
-
-BOOL mem_cache_retrieve(MEM_ID mem);
-
-BOOL mem_cache_delete(MEM_ID mem);
-
-
-
-#define MAX_MEM_CHUNKS 200000000
 
 void mem_Init(void);
 
+BOOL mem_SetCache(struct _cache_store *store);
+
 BOOL mem_Close(void);
+
+void mem_Dump(MEM_ID mem);
 
 BOOL mem_DebugHeapWalk(BOOL show_leaked,BOOL show_locked);
 
 #ifdef USE_MEMORY_DEBUGGING
 
-	MEM_ID mem_malloc_debug(size_t size,MEM_POOL_CLASS_ID pool_class, char *description);
+	MEM_ID mem_malloc_debug(MEM_NUM size,MEM_POOL_CLASS_ID pool_class, char *description);
 
 #else
 
-	MEM_ID mem_malloc(size_t size,MEM_POOL_CLASS_ID pool_class);
+	MEM_ID mem_malloc(MEM_NUM size,MEM_POOL_CLASS_ID pool_class);
 
 #endif
 
-MEM_ID mem_realloc(MEM_ID ptr, size_t size);
+char *mem_malloc_ptr(MEM_NUM size,MEM_ID ptr);
+
+void mem_set_pool_class(MEM_ID mem, MEM_POOL_CLASS_ID pool_class);
+
+void mem_unset_pool_class(MEM_ID mem, MEM_POOL_CLASS_ID pool_class);
+
+MEM_ID mem_realloc(MEM_ID ptr, MEM_NUM size);
 
 MEM_ID mem_copy(MEM_ID src);
 
-MEM_ID mem_create(char *bytes,INT len);
+MEM_ID mem_create(char *bytes,MEM_NUM len);
 
-MEM_ID mem_create_buf(INT len);
+MEM_ID mem_add(char *bytes,MEM_NUM len);
+
+MEM_ID mem_create_buf(MEM_NUM len);
 
 MEM_ID mem_create_string(char *string);
 
 BOOL mem_compare(MEM_ID a,MEM_ID b);
 
-void mem_set(MEM_ID src,char value,INT len);
+void mem_set(MEM_ID src,char value,MEM_NUM len);
 
-BOOL mem_copy_to(MEM_ID dst,char *bytes,INT len);
+BOOL mem_copy_to(MEM_ID dst,char *bytes,MEM_NUM len);
 
-BOOL mem_copy_from(MEM_ID src,char *bytes,INT len);
+BOOL mem_copy_from(MEM_ID src,char *bytes,MEM_NUM len);
 
-BOOL mem_copy_to_offset(MEM_ID dst,NUM dst_offset,char *bytes,INT len);
+BOOL mem_copy_to_offset(MEM_ID dst,MEM_NUM dst_offset,char *bytes,MEM_NUM len);
 
-BOOL mem_copy_from_offset(MEM_ID src,NUM src_offset,char *bytes,INT len);
+BOOL mem_copy_from_offset(MEM_ID src,MEM_NUM src_offset,char *bytes,MEM_NUM len);
+
+MEM_NUM mem_get_size(MEM_ID ptr);
+
+void *mem_get_ptr(MEM_ID ptr);
+
+void mem_set_ptr(MEM_ID ptr,void *dst);
+
+void mem_set_size(MEM_ID ptr,MEM_NUM size);
 
 void mem_free(MEM_ID ptr);
 
@@ -227,11 +165,11 @@ void mem_free(MEM_ID ptr);
 
 //#else
 
-	void *mem_lock(MEM_ID ptr);
+void *mem_lock(MEM_ID ptr);
 
-	void mem_unlock(MEM_ID ptr,BOOL is_dirty);
+void mem_unlock(MEM_ID ptr,BOOL is_dirty);
 
-	void *mem_lock_segment(MEM_ID ptr,NUM offset,NUM len); //only lock a portion of the total memory chunk , to enable huge tuples, etc
+void *mem_lock_segment(MEM_ID ptr,MEM_NUM offset,MEM_NUM len); //only lock a portion of the total memory chunk , to enable huge tuples, etc
 //#endif
 
 #ifdef __cplusplus

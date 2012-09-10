@@ -28,6 +28,13 @@
 #include "features.h"
 #include "memory.h"
 
+
+#ifdef __cplusplus
+extern "C"  {
+#endif
+
+
+
 BOOL tuple_IsTuple(TUPLE_ID tuple);
 
 NUM tuple_GetLen(TUPLE_ID tuple);
@@ -35,6 +42,8 @@ NUM tuple_GetLen(TUPLE_ID tuple);
 void tuple_ClearDictValues(TUPLE_ID tuple);
 
 void tuple_ConvertToDict(TUPLE_ID tuple);
+
+void tuple_Clear(TUPLE_ID tuple);
 
 void tuple_ResetIteration(TUPLE_ID tuple);
 
@@ -69,5 +78,12 @@ void tuple_InsertItem(TUPLE_ID tuple,INDEX index,OBJECT_ID value);
 void tuple_DeleteItem(TUPLE_ID tuple, INDEX index);
 
 void tuple_DeleteDictItem(TUPLE_ID tuple,OBJECT_ID key);
+
+
+#ifdef __cplusplus
+} 
+#endif
+
+
 
 #endif

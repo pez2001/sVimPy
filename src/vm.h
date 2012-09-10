@@ -159,18 +159,24 @@ void vm_Exit(VM_ID vm_id,BYTES_ID message,NUM code); //exit vm
 
 void vm_Stop(VM_ID vm_id); //pause vm execution
 
-OBJECT_ID vm_Step(VM_ID vm_id);//single step vm
+//OBJECT_ID vm_Step(VM_ID vm_id);//single step vm
+
+NUM vm_GetBlockLevel(VM_ID vm_id);
+
+OBJECT_ID vm_Step(VM_ID vm_id,BOOL exit_after_reaching_block_level);//single step vm - if 1 exit on return if block level matches the parameter 
 
 OBJECT_ID vm_RunPYC(VM_ID vm_id,STREAM_ID f,BOOL free_object);
 
 OBJECT_ID vm_RunRPYC(VM_ID vm_id,STREAM_ID f ,BOOL free_object);
 
+#ifndef USE_ARDUINO_FUNCTIONS
 OBJECT_ID vm_RunRPYCPlus(VM_ID vm_id,STREAM_ID f ,BOOL free_object);
-
+#endif
 OBJECT_ID vm_RunFunction(VM_ID vm_id,BYTES_ID name_id, TUPLE_ID locals_id,TUPLE_ID kw_locals_id);//call a python function from C
 
 OBJECT_ID vm_RunObject(VM_ID vm_id, OBJECT_ID obj_id, TUPLE_ID locals_id,TUPLE_ID kw_locals_id);//run a python object if possible
 
+OBJECT_ID vm_RunFunctionObject(VM_ID vm_id, FUNCTION_ID func_id, TUPLE_ID locals_id,TUPLE_ID kw_locals_id);//run a python function object
 //#ifdef USE_DEBUGGING
 //OBJECT_ID vm_InteractiveRunObject(VM_ID vm_id, OBJECT_ID obj,  TUPLE_ID locals_id,TUPLE_ID kw_locals_id);
 //#endif

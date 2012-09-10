@@ -44,6 +44,11 @@ void obj_Init(void)
 	obj_FALSE = obj_Alloc(TYPE_FALSE,1);
 	obj_ELLIPSIS = obj_Alloc(TYPE_ELLIPSIS,1);
 	obj_UNKNOWN = obj_Alloc(TYPE_UNKNOWN,1);
+	//mem_set_pool_class(obj_NONE,MEM_POOL_CLASS_PERMANENT);
+	//mem_set_pool_class(obj_TRUE,MEM_POOL_CLASS_PERMANENT);
+	//mem_set_pool_class(obj_FALSE,MEM_POOL_CLASS_PERMANENT);
+	//mem_set_pool_class(obj_ELLIPSIS,MEM_POOL_CLASS_PERMANENT);
+	//mem_set_pool_class(obj_UNKNOWN,MEM_POOL_CLASS_PERMANENT);
 	garbage = list_Create(0,0);
 	garbage_vm = 0;
 }
@@ -244,7 +249,7 @@ OBJECT_ID obj_Alloc(OBJECT_TYPE type,OBJECT_REF_COUNT ref_count)
 	return(obj);
 }
 
-OBJECT_ID obj_CreateTag(void *tag)
+OBJECT_ID obj_CreateTag(INT tag)
 {
 	OBJECT_ID r = obj_Alloc(TYPE_TAG,0);
 	tag_object *l = (tag_object*)mem_lock(r);
@@ -596,7 +601,7 @@ OBJECT_ID obj_ConvertToValuedKV(OBJECT_ID key,OBJECT_ID value)
 	return(obj_CreateKV(key,value));
 }
 
-#ifndef USE_ARDUINO_FUNCTIONS
+//#ifndef USE_ARDUINO_FUNCTIONS
 void obj_Print(OBJECT_ID obj)
 {
 	if(obj != 0)
@@ -607,6 +612,27 @@ void obj_Print(OBJECT_ID obj)
 		//case TYPE_PROXY:
 		//	PrintObject(((proxy_object*)obj)->ref);
 		//	break;
+		case TYPE_ITER:
+			printf("Iter");
+			break;
+		case TYPE_CLASS:
+			printf("Class");
+			break;
+		case TYPE_METHOD:
+			printf("Method");
+			break;
+		case TYPE_CLASS_INSTANCE:
+			printf("Class Instance");
+			break;
+		case TYPE_CFUNCTION:
+			printf("CFunction");
+			break;
+		case TYPE_FUNCTION:
+			printf("Function");
+			break;
+		case TYPE_CODE:
+			printf("Code");
+			break;
 		case TYPE_ELLIPSIS:
 			printf("Ellipsis");
 			break;
@@ -626,7 +652,11 @@ void obj_Print(OBJECT_ID obj)
 			printf("%7g", ((float_object*)o)->value);
 			break;
 		case TYPE_KV:
+			//printf("[key:");
+			obj_Print(((kv_object*)o)->key);
+			printf(":");
 			obj_Print(((kv_object*)o)->value);
+			//printf("]\r\n");
 			break;
 		case TYPE_UNICODE:
 			{
@@ -637,6 +667,11 @@ void obj_Print(OBJECT_ID obj)
 			break;
 		case TYPE_TUPLE:
 			{
+				if(tuple_GetLen(obj) == 0)
+				{
+					printf("()");
+					return;
+				 }
 				for(NUM i = 0;i<tuple_GetLen(obj);i++)
 				{
 					if(i != 0)
@@ -651,7 +686,7 @@ void obj_Print(OBJECT_ID obj)
 		mem_unlock(obj,0);
 	}
 }
-#endif
+//#endif
 
 #ifdef USE_DEBUGGING	
 
@@ -962,6 +997,7 @@ void obj_Dump(OBJECT_ID obj_id, char level,char verbosity)
 		break;
 	default:
 		{
+			obj_PrintTabs(level);
 			debug_printf(DEBUG_ALL,"<type id=\"%c\">unknown</type>\n", obj->type);
 			obj_PrintTabs(level);
 			debug_printf(DEBUG_ALL,"</object>\n");
@@ -1047,6 +1083,8 @@ BOOL obj_Compare(OBJECT_ID a,OBJECT_ID b)//TODO add tuple compare
 
 OBJECT_ID obj_Copy(OBJECT_ID obj_id)
 {	
+	if(obj_id == 0)
+		return(0);
 	object *obj = (object*)mem_lock(obj_id);
 	switch(obj->type)
 	{
@@ -1264,7 +1302,7 @@ OBJECT_ID obj_GetClassMethod(OBJECT_ID _class,OBJECT_ID key)
 		code_object *cco = (code_object*)mem_lock(((class_object*)c)->code);
 		r = tuple_GetDictItem(cco->names,key);
 		mem_unlock(((class_object*)c)->code,0);
-		if(!(obj_GetType(r) == TYPE_FUNCTION || obj_GetType(r) == TYPE_CFUNCTION))
+		if( !(obj_GetType(r) == TYPE_FUNCTION || obj_GetType(r) == TYPE_CFUNCTION) )
 			r = 0;
 		if(r == 0)//TODO check if this still works
 		{	
@@ -1313,22 +1351,30 @@ void obj_AddCodeName(OBJECT_ID code_object,OBJECT_ID key,OBJECT_ID value)
 	{
 		c->names = obj_CreateTuple(0);
 		obj_IncRefCount(c->names);
+		//printf("created tuple\r\n");
 	}
+	//printf("checked code names\r\n");
+
 	OBJECT_ID kv = obj_CreateKV(key,value);
+	//printf("created kv\r\n");
 	tuple_AppendItem(c->names,kv);
+	//printf("appended item\r\n");
 	mem_unlock(code_object,1);
+	//printf("unlocked code\r\n");
 }
 
 void obj_AddCodeFunction(OBJECT_ID code_object,BYTES_ID name,OBJECT_ID func)
 {
 	//OBJECT_ID key = obj_CreateUnicode(mem_copy(name));
 	OBJECT_ID key = obj_CreateUnicode(name);
+	//printf("created key object\r\n");
 	obj_AddCodeName(code_object,key,func);
 }
 
 void obj_AddCodeCFunction(OBJECT_ID code_object,BYTES_ID name, OBJECT_ID (*func) (VM_ID vm_id,OBJECT_ID locals,OBJECT_ID kw_locals))
 {
 	OBJECT_ID cfo = obj_CreateCFunction(func);
+	//printf("created function object\r\n");
 	obj_AddCodeFunction(code_object,name,cfo);
 }
 
@@ -1353,7 +1399,7 @@ void obj_IncRefCount(OBJECT_ID obj_id)
 	#ifdef USE_DEBUGGING
 	if((debug_level & DEBUG_GC) > 0)
 	{
-		debug_printf(DEBUG_GC,"%d : %d refs (incremented:%c)\n",obj_id,obj->ref_count,obj->type);
+		debug_printf(DEBUG_GC,"\"%d\" : %d refs (incremented:%c)\n",obj_id,obj->ref_count,obj->type);
 	}
 	#endif
 	mem_unlock(obj_id,1);
@@ -1365,13 +1411,13 @@ void obj_DecRefCount(OBJECT_ID obj_id)
 		return;
 	object *obj = (object*)mem_lock(obj_id);
 	#ifdef USE_DEBUGGING
-	if(obj->type == TYPE_NONE && obj->ref_count == 1)
-		debug_printf(DEBUG_VERBOSE_TESTS,"WARNING global object ref_count reached 1\n");
+	//if(obj->type == TYPE_NONE && obj->ref_count == 1)
+	//	debug_printf(DEBUG_VERBOSE_TESTS,"WARNING global object ref_count reached 1\n");
 	#endif
 	//if(obj->type == TYPE_NONE)
 	//	printf("global NONE object ref_count:%d about to be decremented\n",obj->ref_count);
 	if(obj->ref_count == 1)
-	 {
+	{
 		obj->ref_count--;
 		if(!list_Contains(garbage,obj_id))
 		{
@@ -1379,7 +1425,7 @@ void obj_DecRefCount(OBJECT_ID obj_id)
 			if((debug_level & DEBUG_GC) > 0)
 			{
 				//debug_printf(DEBUG_GC,"object has no refs anymore -> put into gc\n");
-				debug_printf(DEBUG_GC,"%d : 0 refs (decremented[GC]:%c - pushed to GC)\n",obj_id,obj->type);
+				debug_printf(DEBUG_GC,"\"%d\" : 0 refs (decremented[GC]:%c - pushed to GC)\n",obj_id,obj->type);
 				//DumpObject(obj,0);
 			}
 			#endif
@@ -1388,7 +1434,7 @@ void obj_DecRefCount(OBJECT_ID obj_id)
 		}
 		mem_unlock(obj_id,1);
 		return;
-	 }
+	}
 	if(obj->ref_count > 1)
 		obj->ref_count--;
 	else
@@ -1396,6 +1442,8 @@ void obj_DecRefCount(OBJECT_ID obj_id)
 			#ifdef USE_DEBUGGING
 			debug_printf(DEBUG_ALL,"possibly freed object is still be referenced by objects: %d\n",obj_id);
 			obj_Dump(obj_id,0,0);
+			//char *m = 0;
+			//m[0] = 'x';
 			if((debug_level & DEBUG_GC) > 0)
 			{
 				debug_printf(DEBUG_GC,"possibly freed object is still be referenced by objects: %d\n",obj_id);
@@ -1403,7 +1451,7 @@ void obj_DecRefCount(OBJECT_ID obj_id)
 			#endif
 	}
 	#ifdef USE_DEBUGGING
-	debug_printf(DEBUG_GC,"%d : %d refs (decremented[GC]:%c)\n",obj_id,obj->ref_count,obj->type);
+	debug_printf(DEBUG_GC,"\"%d\" : %d refs (decremented[GC]:%c)\n",obj_id,obj->ref_count,obj->type);
 	#endif
 	mem_unlock(obj_id,1);
 }
@@ -1502,6 +1550,9 @@ void obj_Free(OBJECT_ID obj_id)
 				#ifdef USE_DEBUGGING
 				debug_printf(DEBUG_VERBOSE_FREEING,"freeing unicode object %d\n",obj_id);
 				#endif
+				//printf("freeing unicode object(%d):",obj_id);
+				//obj_Print(obj_id);
+				//printf("\n");
 				mem_free(((unicode_object*)obj)->value);
 			}
 			break;
@@ -1574,7 +1625,7 @@ void obj_Free(OBJECT_ID obj_id)
 	mem_unlock(obj_id,0);
 	mem_free(obj_id);
 	#ifdef USE_DEBUGGING
-	debug_printf(DEBUG_FREEING,"freed object:%x\n",obj_id);
+	debug_printf(DEBUG_FREEING,"freed object:%d\n",obj_id);
 	#endif
 }
 

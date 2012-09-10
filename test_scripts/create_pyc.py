@@ -1,1 +1,1 @@
-from test_open import * 
+from test_map import * 

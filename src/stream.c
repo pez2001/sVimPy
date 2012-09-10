@@ -43,7 +43,7 @@ MEM_ID AllocStreams(void)
 	#endif
 }
 
-MEM_ID AllocStreamType(void)
+STREAM_TYPE_ID AllocStreamType(void)
 {
 	#ifdef USE_MEMORY_DEBUGGING
 	return(mem_malloc_debug(sizeof(stream_type),MEM_POOL_CLASS_STATIC, "AllocStreamType() return"));
@@ -57,7 +57,7 @@ MEM_ID AllocStreamBytes(STREAM_NUM len)
 	#ifdef USE_MEMORY_DEBUGGING
 	return(mem_malloc_debug(len,MEM_POOL_CLASS_DYNAMIC, "AllocStreamBytes() return"));
 	#else
-	return(mem_malloc(len),MEM_POOL_CLASS_DYNAMIC);
+	return(mem_malloc(len,MEM_POOL_CLASS_DYNAMIC));
 	#endif
 }
 
@@ -117,7 +117,7 @@ void streams_Init(void)
 	mem_unlock(ftype_id,1);
 	list_Push(stream_types,ftype_id);
 	#endif
-	
+	/*
 	#ifdef USE_ARDUINO_FUNCTIONS
 	//arduino flash memory stream
 	MEM_ID fmtype_id = AllocStreamType();
@@ -140,11 +140,12 @@ void streams_Init(void)
 	//arduino serial stream
 
 	#endif
+	*/
 	//standard io
 
 }
 
-MEM_ID stream_GetType(STREAM_TYPE_ID id)/*returns struct _stream_type **/
+STREAM_TYPE_ID stream_GetType(TYPE id)/*returns struct _stream_type **/
 {
 	INDEX i = 0;	
 	do
@@ -432,21 +433,27 @@ BOOL stream_file_close(STREAM_ID stream)
 
 BOOL stream_file_free(STREAM_ID stream)
 {
+	//printf("freeing stream\n");
 	struct _stream *str = (struct _stream*)mem_lock(stream);
 	file_stream_tag *str_tag = (file_stream_tag*)mem_lock(str->tag);
 	if(str_tag->file != 0)
 	{
-		FILE *f = (FILE*)str_tag->file;
-		fclose(f);
+		//printf("closing file\n");
+		//FILE *f = (FILE*)str_tag->file;
+		fclose(str_tag->file);
 	}
+	//printf("flags:%s\n",str->flags);
+	//printf("freeing filename :%s\n",str_tag->filename);
 	if(str_tag->filename != 0)
 		mem_free(str_tag->filename);
 	mem_unlock(str->tag,0);
+	//printf("freeing flags\n");
 	if(str->flags != 0)
 		mem_free(str->flags);
 	mem_free(str->tag);
 	mem_unlock(stream,0);
 	mem_free(stream);
+	//printf("freed stream\n");
 	return(1);
 }
 
@@ -718,6 +725,7 @@ void stream_WriteChar(char c,STREAM_ID stream)
 OBJECT_ID stream_ReadObject(STREAM_ID stream)
 {
 	OBJECT_TYPE type = stream_ReadChar(stream);
+	//printf("reading object with type:%c\n",type);
 
 	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_CREATION,"reading object with type:%c\n",type);

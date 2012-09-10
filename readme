@@ -84,6 +84,7 @@ Features include:
 			memory usage interpretation 
 			of python code
 	0.91  vm interface exposed to python code
+	0.92  vm command interface (to execute python code via serial interfaces,etc)
 	0.92  stream printing + sd-fat support
 	0.93  add missing internal functions used by classes
 	0.95  use buildhive for automatic release generation

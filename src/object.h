@@ -74,7 +74,6 @@ extern "C"  {
 #define TYPE_ITER 'R'
 #define TYPE_CLASS_INSTANCE '*'
 #define TYPE_CLASS '&'
-//#define TYPE_EXCEPTION 'E'
 #define TYPE_METHOD 'M'
 #define TYPE_TAG 't'
 
@@ -132,7 +131,7 @@ typedef struct _tag_object
 {
 	OBJECT_TYPE type;
 	OBJECT_REF_COUNT ref_count;
-	void *tag;
+	INT tag;
 } tag_object;
 
 //integer object struct
@@ -338,7 +337,7 @@ void obj_Close(void);
 
 OBJECT_ID obj_Alloc(OBJECT_TYPE type,OBJECT_REF_COUNT ref_count);
 
-OBJECT_ID obj_CreateTag(void *tag);
+OBJECT_ID obj_CreateTag(INT tag);
 
 OBJECT_ID obj_CreateInt(INT value);
 

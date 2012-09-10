@@ -455,15 +455,18 @@ OBJECT_ID ImportModule(VM_ID vm,STRING_ID module_name)
 	
 	//printf("trying to import module:%s\n",filename);
 	STREAM_ID f = stream_CreateFromFile(filename,mem_create_string("rb"));
-	if (!stream_Open(f))
+	if(!stream_Open(f))
 		return(0);
+	//printf("reading module contents\n");
 	long magic =stream_ReadLong(f);
 	if(magic != pyc_magic)
 		return(0);
 	stream_ReadLong(f);//skip time
 	OBJECT_ID obj = stream_ReadObject(f);
+	//printf("read object\n");
 	if(obj_GetType(obj) != TYPE_CODE)
 	{
+		//printf("not a code object\n");
 		mem_free(filename);
 		//obj_IncRefCount(obj);
 		obj_DecRefCount(obj);
@@ -471,12 +474,16 @@ OBJECT_ID ImportModule(VM_ID vm,STRING_ID module_name)
 	}
 	else
 	{
+		//printf("setting root flag\n");
 		code_object *o = (code_object*)mem_lock(obj);
 		o->co_flags ^=	CO_MODULE_ROOT;
 		mem_unlock(obj,1);
+		//printf("set root flag\n");
 	}
-	mem_free(filename);
+	//mem_free(filename);
+	//printf("freed filename\n");
 	stream_Free(f);
+	//printf("returning imported module\n");
 	return(obj);
 }
 
@@ -488,8 +495,10 @@ OBJECT_ID CatchException(VM_ID vm,OBJECT_ID exception)
 	OBJECT_ID message = obj_GetAttribute(exception,msg_name);
 	obj_DecRefCount(msg_name);
 	obj_Print(message);
+	//printf("\nmessage:%d\n",message);
 	unicode_object *m = (unicode_object*)mem_lock(message);
 	printf("\n");
+	//printf("message val:%d\n",m->value);
 	vm_Exit(vm,m->value,1);
 	mem_unlock(message,0);
 	return(0);
@@ -540,7 +549,7 @@ NUM AtomicOpenPYC(char *filename)
 	ret = vm_RunObject(vm, obj, 0,0);
 	//#endif
 	#ifdef USE_DEBUGGING
-	debug_printf(DEBUG_ALL,"\n");
+	//debug_printf(DEBUG_ALL,"\n");
 	#endif
 	if (ret != 0)
 	{
@@ -604,7 +613,7 @@ NUM AtomicOpenPYC(char *filename)
 	if(v->error_message != 0)
 	{
 		char *m = (char*)mem_lock(v->error_message);
-		printf("error occured:\n%s\n",m);
+		printf("an error occured:\n%s\n",m);
 		mem_unlock(v->error_message,0);
 	}
 	mem_unlock(vm,0);
@@ -659,6 +668,33 @@ NUM atomic_test(void)
 	//exit_code = AtomicOpenPYC("tests/");
 	//if(exit_code)
 	//	return(exit_code);
+	//return(exit_code);
+	
+	//exit_code = AtomicOpenPYC("tests/e_med.pyc");
+	//if(exit_code)
+	//	return(exit_code);
+		
+	exit_code = AtomicOpenPYC("tests/test_map.pyc");
+	if(exit_code)
+		return(exit_code);
+	return(exit_code);
+
+	exit_code = AtomicOpenPYC("tests/test45.pyc");
+	if(exit_code)
+		return(exit_code);
+		
+	exit_code = AtomicOpenPYC("tests/prng.pyc");
+	if(exit_code)
+		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/prng_single.pyc");
+	if(exit_code)
+		return(exit_code);
+	
+	//exceptions
+	exit_code = AtomicOpenPYC("tests/test_assert.pyc");
+	if(exit_code != 1)
+		return(1);
+	exit_code = 0;
 	//return(exit_code);
 	
 	//open file test + if_iter with sentinel
@@ -778,12 +814,6 @@ NUM atomic_test(void)
 	if(exit_code)
 		return(exit_code);
 
-	exit_code = AtomicOpenPYC("tests/prng_single.pyc");
-	if(exit_code)
-		return(exit_code);
-	exit_code = AtomicOpenPYC("tests/prng.pyc");
-	if(exit_code)
-		return(exit_code);
 	//return(0);
 
 	printf("executing arduino object:tests/fade_min.pyc\n");
@@ -1233,6 +1263,10 @@ NUM atomic_test(void)
 	if(exit_code)
 		return(exit_code);
 	
+	exit_code = AtomicOpenPYC("tests/Queens2a.pyc");
+	if(exit_code)
+		return(exit_code);
+
 	//brute prime
 	exit_code = AtomicOpenPYC("tests/e20.pyc");
 	if(exit_code)
@@ -1250,9 +1284,6 @@ NUM atomic_test(void)
 	if(exit_code)
 		return(exit_code);
 	exit_code = AtomicOpenPYC("tests/e_max.pyc");
-	if(exit_code)
-		return(exit_code);
-	exit_code = AtomicOpenPYC("tests/Queens2a.pyc");
 	//exit_code = AtomicOpenPYC("tests/e_huge.pyc");
 	//if(exit_code)
 	//	return(exit_code);

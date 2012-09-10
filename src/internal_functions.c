@@ -44,23 +44,24 @@ OBJECT_ID StringMultiply(OBJECT_ID a_id,OBJECT_ID b_id)//TODO check string alloc
 	mem_unlock(b_id,0);
 
 	char *as = (char*)mem_lock(as_id);
-	
+	NUM mlen = (strlen(as)*bi) + 1;
 	#ifdef USE_MEMORY_DEBUGGING
-	BYTES_ID tmp_id = mem_malloc_debug((strlen(as)*bi) + 1,MEM_POOL_CLASS_DYNAMIC, "str_Multiply() return");
+	BYTES_ID tmp_id = mem_malloc_debug(mlen,MEM_POOL_CLASS_DYNAMIC, "str_Multiply() return");
 	#else
-	BYTES_ID tmp_id = mem_malloc((strlen(as)*bi) + 1,MEM_POOL_CLASS_DYNAMIC);
+	BYTES_ID tmp_id = mem_malloc(mlen,MEM_POOL_CLASS_DYNAMIC);
 	#endif
 	char *tmp = (char*)mem_lock(tmp_id);
 	
-	memset(tmp,0,(strlen(as)*bi) + 1);
+	memset(tmp,0,mlen);
 
 	for(INDEX i = 0;i< bi;i++)
 	{
 		memcpy(tmp+(i*strlen(as)), as, strlen(as));
 	}
-	OBJECT_ID r = obj_CreateUnicode(tmp_id);//TODO mem_create_string_copy
+	//memset(tmp,'Z',mlen-1);
 	mem_unlock(tmp_id,1);
 	mem_unlock(as_id,0);
+	OBJECT_ID r = obj_CreateUnicode(tmp_id);//TODO mem_create_string_copy
 	return(r);
 }
 
@@ -668,9 +669,13 @@ OBJECT_ID if_open(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 	//#ifndef USE_ARDUINO_FUNCTIONS
 	OBJECT_ID x_id = tuple_GetItem(locals,0);
 	unicode_object *x = (unicode_object*)mem_lock(x_id);
-	STREAM_ID fs = stream_CreateFromFile(x->value,mem_create_string("rb")); //TODO check for leaks
+	char *fx = (char*)mem_lock(x->value);
+	STREAM_ID fs = stream_CreateFromFile(mem_create_string(fx),mem_create_string("rb")); //TODO check for leaks
+	mem_unlock(x->value,0);
 	mem_unlock(x_id,0);
 	stream_Open(fs);
+	//OBJECT_ID fs_i  = obj_CreateInt(fs);
+	//printf("created fs i:%d, @ %d\n",fs_i,&fs_i);
 	TAG_ID file_tag = obj_CreateTag(fs);
 	UNICODE_ID file_name = obj_CreateUnicode(mem_create_string("__file__"));
 	obj_SetAttribute(file_instance_id,file_name,file_tag);	
@@ -753,7 +758,7 @@ OBJECT_ID if_range(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 	}
 	return(iter);
 }
-#ifndef USE_ARDUINO_FUNCTIONS
+//#ifndef USE_ARDUINO_FUNCTIONS
 OBJECT_ID if_print(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
 	BOOL printed_something = 0;
@@ -800,7 +805,7 @@ OBJECT_ID if_print(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 	OBJECT_ID tmp = obj_CreateEmpty(TYPE_NONE);
 	return(tmp);
 }
-#endif
+//#endif
 
 OBJECT_ID if_sum(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 {
@@ -979,6 +984,100 @@ OBJECT_ID if_len(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 	debug_printf(DEBUG_VERBOSE_STEP,"returning len:%d\n",ilen);
 	#endif
 	return(len);
+}
+
+OBJECT_ID if_globals(VM_ID vm_id,TUPLE_ID locals,TUPLE_ID kw_locals)
+{
+	struct _vm *vm = (struct _vm*)mem_lock(vm_id);
+	OBJECT_ID globals_id = vm->globals;
+	mem_unlock(vm_id,0);
+	#ifdef USE_DEBUGGING
+	debug_printf(DEBUG_VERBOSE_STEP,"returning  globals:%d\n",globals_id);
+	#endif
+	return(globals_id);
+}
+
+OBJECT_ID if_eval(VM_ID vm_id,TUPLE_ID locals,TUPLE_ID kw_locals)
+{
+	if(tuple_GetLen(locals) != 1)
+	{
+		OBJECT_ID tmp = obj_CreateEmpty(TYPE_NONE);
+		return(tmp);
+	}
+	OBJECT_ID co = tuple_GetItem(locals,0);
+	#ifdef USE_DEBUGGING
+	debug_printf(DEBUG_VERBOSE_STEP,"eval co:%d\n",co);
+	#endif
+	OBJECT_ID r = vm_RunObject(vm_id,co,0,0);
+	return(r);
+}
+
+OBJECT_ID if_type(VM_ID vm_id,TUPLE_ID locals,TUPLE_ID kw_locals)
+{
+	if(tuple_GetLen(locals) != 1)
+	{
+		OBJECT_ID tmp = obj_CreateEmpty(TYPE_NONE);
+		return(tmp);
+	}
+	OBJECT_ID t = tuple_GetItem(locals,0);
+	#ifdef USE_DEBUGGING
+	debug_printf(DEBUG_VERBOSE_STEP,"type :%d\n",t);
+	#endif
+	NUM ti = obj_GetType(t);
+	INT_ID tid = obj_CreateInt(ti);
+	return(tid);
+}
+
+OBJECT_ID if_id(VM_ID vm_id,TUPLE_ID locals,TUPLE_ID kw_locals)
+{
+	if(tuple_GetLen(locals) != 1)
+	{
+		OBJECT_ID tmp = obj_CreateEmpty(TYPE_NONE);
+		return(tmp);
+	}
+	OBJECT_ID i = tuple_GetItem(locals,0);
+	#ifdef USE_DEBUGGING
+	debug_printf(DEBUG_VERBOSE_STEP,"id:%d\n",i);
+	#endif
+	INT_ID id = obj_CreateInt(i);
+	return(id);
+}
+
+OBJECT_ID if_map(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
+{
+	FUNCTION_ID f = tuple_GetItem(locals,0);
+	ITER_ID iter = iter_CreateIter(tuple_GetItem(locals,1),vm);
+	obj_IncRefCount(iter);
+	OBJECT_ID r_id = obj_CreateTuple(0);
+	OBJECT_ID flocals = obj_CreateTuple(0);
+	obj_IncRefCount(flocals);
+	OBJECT_ID n = 0;
+	//printf("map tuple:\n");
+	//obj_Print(locals);
+	//printf("\n");
+	do
+	{
+		n = iter_NextNow(iter,vm);
+		if(obj_GetType(n)!= TYPE_NONE)
+		{
+			tuple_AppendItem(flocals,n);
+			//obj_Print(flocals);
+			//printf("\n");
+			//printf("running map function\n");
+			//obj_Dump(f,1,1);
+			OBJECT_ID mod = vm_RunFunctionObject(vm,f,flocals,0);
+			//printf("ran map function\n");
+			//obj_Print(mod);
+			//printf("\n");
+			tuple_AppendItem(r_id,mod);
+			obj_DecRefCount(mod);
+			tuple_Clear(flocals);
+		}
+	}while(obj_GetType(n) != TYPE_NONE);
+	obj_DecRefCount(iter);
+	obj_DecRefCount(flocals);
+	//obj_Print(r_id);
+	return(r_id);
 }
 
 OBJECT_ID if_min(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
@@ -1185,13 +1284,6 @@ OBJECT_ID if_iter(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
 	OBJECT_ID tmp = obj_CreateEmpty(TYPE_NONE);
 	return(tmp);
 }
-/*
-OBJECT_ID if_map(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals)
-{
-	OBJECT_ID tmp = obj_CreateEmpty(TYPE_NONE);
-	return(tmp);
-}
-*/
 
 #ifndef USE_ARDUINO_FUNCTIONS
 
@@ -1383,18 +1475,29 @@ void AddArduinoGlobal(VM_ID vm)
 
 void AddInternalFunctions(VM_ID vm)
 {
+	//printf("functions initiating\r\n");
 	vm_AddGlobal(vm,obj_CreateUnicode(mem_create_string("list")),obj_CreateCFunction(&if_list));
+	//printf("functions 1 initiated\r\n");
 	vm_AddGlobal(vm,obj_CreateUnicode(mem_create_string("range")),obj_CreateCFunction(&if_range));
 	vm_AddGlobal(vm,obj_CreateUnicode(mem_create_string("pow")),obj_CreateCFunction(&if_pow));
-	#ifndef USE_ARDUINO_FUNCTIONS
+	//#ifndef USE_ARDUINO_FUNCTIONS
 	vm_AddGlobal(vm,obj_CreateUnicode(mem_create_string("print")),obj_CreateCFunction(&if_print));
-	#endif
+	//#endif
+	//printf("functions 2 initiated\r\n");
+	vm_AddGlobal(vm,obj_CreateUnicode(mem_create_string("eval")),obj_CreateCFunction(&if_eval));
+	vm_AddGlobal(vm,obj_CreateUnicode(mem_create_string("map")),obj_CreateCFunction(&if_map));
+	vm_AddGlobal(vm,obj_CreateUnicode(mem_create_string("globals")),obj_CreateCFunction(&if_globals));
+	vm_AddGlobal(vm,obj_CreateUnicode(mem_create_string("id")),obj_CreateCFunction(&if_id));
+	vm_AddGlobal(vm,obj_CreateUnicode(mem_create_string("type")),obj_CreateCFunction(&if_type));
+	//vm_AddGlobal(vm,obj_CreateUnicode(mem_create_string("locals")),obj_CreateCFunction(&if_locals));
 	vm_AddGlobal(vm,obj_CreateUnicode(mem_create_string("sum")),obj_CreateCFunction(&if_sum));
 	vm_AddGlobal(vm,obj_CreateUnicode(mem_create_string("next")),obj_CreateCFunction(&if_next));
+	#ifndef USE_ARDUINO_FUNCTIONS
+	vm_AddGlobal(vm,obj_CreateUnicode(mem_create_string("custom_code")),obj_CreateCFunction(&custom_code));
 	#ifdef USE_INTERNAL_CLASSES
 	vm_AddGlobal(vm,obj_CreateUnicode(mem_create_string("open")),obj_CreateCFunction(&if_open));
 	#endif
+	#endif
 	vm_AddGlobal(vm,obj_CreateUnicode(mem_create_string("iter")),obj_CreateCFunction(&if_iter));
-	vm_AddGlobal(vm,obj_CreateUnicode(mem_create_string("custom_code")),obj_CreateCFunction(&custom_code));
 }
 

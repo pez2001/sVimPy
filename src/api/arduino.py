@@ -1,6 +1,8 @@
-/* 
+"""
  * sVimPy - small Virtual interpreting machine for Python
  * (c) 2012 by Tim Theede aka Pez2001 <pez2001@voyagerproject.de> / vp
+ *
+ * python arduino api wrapper
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,34 +20,18 @@
  *
  * THIS SOFTWARE IS SUPPLIED AS IT IS WITHOUT ANY WARRANTY!
  *
- */
+"""
 
+INPUT = 0
+OUTPUT = 1
+LOW = 0
+HIGH = 1
 
-#ifndef ARDUINO_IO_H
-#define ARDUINO_IO_H
-
-#ifdef USE_ARDUINO_FUNCTIONS
-
-#include "../features.h"
-#include "../types.h"
-#include "../object.h"
-#include "../stack.h"
-#include "../vm.h"
-#include "../debug.h"
-
-
-#include "libarduino/arduino.h"
-
-OBJECT_ID a_pinMode(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals);
-OBJECT_ID a_digitalRead(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals);
-OBJECT_ID a_digitalWrite(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals);
-OBJECT_ID a_analogRead(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals);
-OBJECT_ID a_analogWrite(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals);
-OBJECT_ID a_delay(VM_ID vm,TUPLE_ID locals,TUPLE_ID kw_locals);
-//object *a_serialprint(vm *vm,tuple_object *locals,tuple_object *kw_locals); //(message);
-//object *a_serialBegin(vm *vm,tuple_object *locals,tuple_object *kw_locals); //(baudrate);
-
-void AddArduinoGlobal(VM_ID vm);
-
-#endif
-#endif
+def pinMode(pin,mode):pass
+def digitalRead(pin):pass
+def digitalWrite(pin,value):pass
+def analogRead(pin):pass
+def analogWrite(pin,value):pass
+def delay(ms):pass
+def serialPrintln(message):pass
+def serialBegin(baudrate):pass

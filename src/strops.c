@@ -93,7 +93,7 @@ BYTES_ID str_FromChar(char c)
 	#ifdef USE_MEMORY_DEBUGGING
 	BYTES_ID tmp_id = mem_malloc_debug(2, MEM_POOL_CLASS_STATIC,"str_FromChar() return");
 	#else
-	BYTES_ID tmp_id = mem_malloc(MEM_POOL_CLASS_STATIC);
+	BYTES_ID tmp_id = mem_malloc(2, MEM_POOL_CLASS_STATIC);
 	#endif
 	char *tmp = (char*)mem_lock(tmp_id);
 	

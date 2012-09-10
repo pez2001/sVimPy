@@ -22,6 +22,27 @@
 
 #include "tuples.h"
 
+void tuple_Clear(TUPLE_ID tuple)
+{
+	if(tuple == 0)
+		return;
+	tuple_object *tp = (tuple_object*)mem_lock(tuple);
+	if(tp->type != TYPE_TUPLE)
+	{
+		mem_unlock(tuple,0);
+		return;
+	}
+	if(tp->list != 0)
+	{
+		for(INDEX i = 0; i < tuple_GetLen(tuple); i++)
+		{
+			tuple_SetItem(tuple,i,0);
+		}
+		list_Clear(tp->list);
+		tp->ptr = 0;
+	}
+	mem_unlock(tuple,1);
+}
 
 void tuple_AppendDictItem(TUPLE_ID tuple,OBJECT_ID key,OBJECT_ID value)
 {
@@ -55,8 +76,11 @@ void tuple_AppendItem(TUPLE_ID tuple,OBJECT_ID value)
 	}
 	if(tp->list == 0)
 		tp->list = list_Create(0,0);
+	//printf("pushing object on tuple\r\n");
 	list_Push(tp->list,value);
+	//printf("unlocking tuple\r\n");
 	mem_unlock(tuple,1);
+	//printf("unlocked dirty tuple\r\n");
 	obj_IncRefCount(value);
 }
 
@@ -72,8 +96,8 @@ void tuple_InsertItem(TUPLE_ID tuple,INDEX index,OBJECT_ID value)
 	}
 	if(tp->list == 0)
 		tp->list = list_Create(0,0);
-	mem_unlock(tuple,1);
 	list_Insert(tp->list,index,value);
+	mem_unlock(tuple,1);
 	obj_IncRefCount(value);
 }
 
@@ -340,11 +364,13 @@ INDEX tuple_GetItemIndexByName(TUPLE_ID tuple, BYTES_ID name)
 
 OBJECT_ID tuple_GetDictItemByName(TUPLE_ID tuple,BYTES_ID name)
 {
+	//obj_Print(tuple);
 	if(tuple == 0 || name == 0 || tuple_GetLen(tuple) == 0)
 		return(0);
 	for (INDEX i = 0; i < tuple_GetLen(tuple); i++)
 	{		
 		OBJECT_ID it_id = tuple_GetItem(tuple,i);
+		//obj_Print(it_id);
 		object *it = (object*)mem_lock(it_id);
 		if(it_id == 0)
 			continue;
@@ -355,6 +381,7 @@ OBJECT_ID tuple_GetDictItemByName(TUPLE_ID tuple,BYTES_ID name)
 			object *key = (object*)mem_lock(key_id);
 			if(key->type == TYPE_UNICODE && mem_compare(((unicode_object*)key)->value, name)) 
 			{
+				//printf("checked item:%s\r\n",((unicode_object*)key)->value);
 				mem_unlock(key_id,0);
 				mem_unlock(it_id,0);
 				return(value_id);

@@ -62,17 +62,22 @@ void list_Close(LIST_ID list)
 void list_Push(LIST_ID list, OBJECT_ID obj)
 {
 	id_list *l = (id_list*)mem_lock(list);
+	//printf("locked list:%d\r\n",l->num);
 	if(!l->num)
 	{
 		l->num = 1;
+		//printf("allocating items\r\n");
 		#ifdef USE_MEMORY_DEBUGGING
 		l->items = mem_malloc_debug(l->num * sizeof(OBJECT_ID),MEM_POOL_CLASS_DYNAMIC,"list_Push() items");
 		#else
 		l->items = mem_malloc(l->num * sizeof(OBJECT_ID),MEM_POOL_CLASS_DYNAMIC);
 		#endif
+		//printf("alloced items\r\n");
 		OBJECT_ID *i = (OBJECT_ID*)mem_lock(l->items);	
+		//printf("locked items\r\n");
 		i[0] = obj;
 		mem_unlock(l->items,1);
+		//printf("unlocked items\r\n");
 	}
 	else
 	{

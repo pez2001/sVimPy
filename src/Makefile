@@ -40,8 +40,8 @@ endif
 MAJOR_VERSION = 0
 MINOR_VERSION = 8
 #builds are counted since version 0.5 roughly
-BUILD = 258
-DEBUG_BUILD = 1542
+BUILD = 260
+DEBUG_BUILD = 1901
 
 #CFLAGS= -Ilibraries/fmod -W -w -O2 -std=c99 -DBUILD=$(BUILD) -DMAJOR_VERSION=$(MAJOR_VERSION) -DMINOR_VERSION=$(MINOR_VERSION)
 CFLAGS= -W -w -O2 -std=c99 -DBUILD=$(BUILD) -DMAJOR_VERSION=$(MAJOR_VERSION) -DMINOR_VERSION=$(MINOR_VERSION) -lm
@@ -108,14 +108,14 @@ ARDUINO_LIB_OBJ = $(ARDUINO_LIB_DIR)/wiring.ao $(ARDUINO_LIB_DIR)/wiring_analog.
 ARDUINO_CXXSRC = $(ARDUINO_LIB_DIR)/WMath.cpp $(ARDUINO_LIB_DIR)/WString.cpp
 #ARDUINO_LIB_CXX_OBJ = $(ARDUINO_LIB_DIR)/HardwareSerial.aopp $(ARDUINO_LIB_DIR)/WMath.aopp $(ARDUINO_LIB_DIR)/Print.aopp $(ARDUINO_LIB_DIR)/Stream.aopp $(ARDUINO_LIB_DIR)/Tone.aopp $(ARDUINO_LIB_DIR)/WString.aopp
 ARDUINO_LIB_CXX_OBJ = $(ARDUINO_LIB_DIR)/WMath.aopp $(ARDUINO_LIB_DIR)/WString.aopp
-ARDUINO_VM_OBJ = vm.ao strops.ao numops.ao opcodes.ao object.ao memory.ao stack.ao lists.ao internal_functions.ao internal_classes.ao stream.ao tuples.ao debug.ao iterators.ao
+ARDUINO_VM_OBJ = vm.ao strops.ao numops.ao opcodes.ao object.ao memory.ao memory_store.ao stack.ao lists.ao internal_functions.ao internal_classes.ao stream.ao tuples.ao debug.ao iterators.ao
 
 
-VM_FILES = vm.c strops.c numops.c opcodes.c object.c memory.c stack.c lists.c internal_functions.c internal_classes.c stream.c tuples.c debug.c iterators.c types.c
+VM_FILES = vm.c strops.c numops.c opcodes.c object.c memory.c memory_store.c cache_file.c stack.c lists.c internal_functions.c internal_classes.c stream.c tuples.c debug.c iterators.c types.c
 VM_BINS = vm.a
-VM_INCLUDE_FILES = vm.h strops.h numops.h opcodes.h object.h memory.h stack.h lists.h internal_functions.h internal_classes.h stream.h tuples.h debug.h iterators.h types.h
-VM_OBJ = vm.o strops.o numops.o opcodes.o object.o memory.o stack.o lists.o internal_functions.o internal_classes.o stream.o tuples.o debug.o iterators.o types.o
-VM_DEBUG_OBJ = vm.do strops.do numops.do opcodes.do object.do memory.do stack.do lists.do internal_functions.do internal_classes.do stream.do tuples.do debug.do iterators.do types.do
+VM_INCLUDE_FILES = vm.h strops.h numops.h opcodes.h object.h memory.h memory_store.h cache_file.h stack.h lists.h internal_functions.h internal_classes.h stream.h tuples.h debug.h iterators.h types.h
+VM_OBJ = vm.o strops.o numops.o opcodes.o object.o memory.o memory_store.o cache_file.o stack.o lists.o internal_functions.o internal_classes.o stream.o tuples.o debug.o iterators.o types.o
+VM_DEBUG_OBJ = vm.do strops.do numops.do opcodes.do object.do memory.do memory_store.do cache_file.do stack.do lists.do internal_functions.do internal_classes.do stream.do tuples.do debug.do iterators.do types.do
 
 #UT_FILES = unit_tests.c libraries/fmod_wrapper.c
 #UT_OBJ = unit_tests.o libraries/fmod_wrapper.o

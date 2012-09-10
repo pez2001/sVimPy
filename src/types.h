@@ -28,39 +28,47 @@
 
 #include "features.h"
 
+#define TYPE char
+
+#define MEM_NUM unsigned long
+
 #define OBJECT_TYPE char
 #define OBJECT_FLAGS unsigned char
 //#define OBJECT_REF_COUNT unsigned short
 
 //stream 
 #ifdef USE_ARDUINO_FUNCTIONS
-#define STREAM_NUM unsigned short
-#define OBJECT_REF_COUNT short
-#define OBJECT_LOCK_COUNT unsigned char
-// used in INDEXING situations
-#define INDEX short 
-//used in enum over array and total numbers
-//#define NUM unsigned short
-#define NUM short
-//used in relative calcs
-#define REL_NUM short
+	#define STREAM_NUM unsigned short
+	#define OBJECT_REF_COUNT short
+	#define OBJECT_LOCK_COUNT unsigned char
+	// used in INDEXING situations
+	#define INDEX short 
+	//used in enum over array and total numbers
+	//#define NUM unsigned short
+	#define NUM short
+	//used in relative calcs
+	#define REL_NUM short
 #else
-#define STREAM_NUM long 
-#define OBJECT_REF_COUNT long
-#define OBJECT_LOCK_COUNT long
-// used in INDEXING situations
-#define INDEX long 
-//used in enum over array and total numbers
-//#define NUM unsigned short
-#define NUM long
-//used in relative calcs
-#define REL_NUM long
+	#define STREAM_NUM long 
+	#define OBJECT_REF_COUNT long
+	#define OBJECT_LOCK_COUNT long
+	// used in INDEXING situations
+	#define INDEX long 
+	//used in enum over array and total numbers
+	//#define NUM unsigned short
+	#define NUM long
+	//used in relative calcs
+	#define REL_NUM long
 #endif
 
-#define STREAM_TYPE_ID char
 
 //standard int size
-#define INT long long
+
+#ifdef USE_ARDUINO_FUNCTIONS
+	#define INT long
+#else
+	#define INT long long
+#endif
 //standard floating number size
 #define FLOAT float
 
@@ -68,9 +76,19 @@
 //used for boolean comparisons
 #define BOOL unsigned char
 
-#define MEM_ID long
+#ifdef USE_ARDUINO_FUNCTIONS
+	#define MEM_ID unsigned short
+#else
+	#ifdef USE_MEMORY_MANAGER_PASS
+		#define MEM_ID void*
+	#else
+		#define MEM_ID unsigned long
+	#endif
+#endif
+
 #define MEM_POOL_CLASS_ID char
-#define CACHE_STORAGE_TYPE_ID char
+
+#define STREAM_TYPE_ID MEM_ID
 
 #define BYTES_ID MEM_ID
 #define VM_ID MEM_ID
@@ -78,6 +96,7 @@
 #define STACK_ID MEM_ID
 #define LIST_ID MEM_ID
 #define CACHE_STORE_ID MEM_ID
+#define CACHE_STORE_TYPE_ID MEM_ID
 
 //python type ids
 #define OBJECT_ID MEM_ID

@@ -87,8 +87,10 @@ int __attribute__((OS_main)) main(void)
 	stdout = &uartout;
 	printf("in:%4d\r\n",get_free_memory());
 	//debug_level = 0;
-	vm *vm = vm_Init(NULL);
-	AddArduinoGlobal(vm);
+	VM_ID vm = vm_Init(0);
+	printf("ina:%4d\r\n",get_free_memory());
+	
+	//AddArduinoGlobal(vm);
 		//setup(vm);
 	//debug_level |= DEBUG_VERBOSE_TESTS;	
 	//debug_level |= DEBUG_SHOW_OPCODES;
@@ -110,11 +112,12 @@ int __attribute__((OS_main)) main(void)
 	//delay(1000);
 	//stream *m = stream_CreateFromFlashBytes(((char*)&blink),BLINK_LEN);
 	//stream *m = stream_CreateFromFlashBytes(((char*)&fade_min),FADE_MIN_LEN);
-	stream *m = stream_CreateFromBytes(((char*)&fade_min),FADE_MIN_LEN);
+	STREAM_ID m = stream_CreateFromBytes(mem_add((char*)&fade_min,FADE_MIN_LEN),FADE_MIN_LEN);
+	//STREAM_ID m = stream_CreateFromBytes(mem_add((char*)&blink,BLINK_LEN),BLINK_LEN);
 	//stream *m = stream_CreateFromFlashBytes(((char*)&blink),BLINK_LEN);
 	//Serial.println("stream");
 	//Serial.println(get_free_memory());
-	//printf("cs:%4d\n",get_free_memory());
+	printf("cs:%4d\r\n",get_free_memory());
 	//delay(1000);
 	//debug_printf(DEBUG_ALL,"run pyc\r\n");
 	//Serial.print("run");
@@ -123,8 +126,9 @@ int __attribute__((OS_main)) main(void)
 	printf("rp:%4d\r\n",get_free_memory());
 	//debug_printf(DEBUG_ALL,"run thru\r\n");
 	//Serial.println("thru");
-	vm_RunFunction(vm,"setup",NULL,NULL);
+	vm_RunFunction(vm,mem_create_string("setup"),0,0);
 	printf("rf:%4d\r\n",get_free_memory());
+	delay(1000);
 	//debug_printf(DEBUG_ALL,"called setup\r\n");
 	//vm_Close(vm);
 	//Serial.println("done");
@@ -134,7 +138,7 @@ int __attribute__((OS_main)) main(void)
 	{
 		//digitalWrite(13,HIGH);
 		
-		vm_RunFunction(vm,"loop",NULL,NULL);
+		vm_RunFunction(vm,mem_create_string("loop"),0,0);
 		//delay(500);
 		//digitalWrite(13,LOW);
 		//delay(500);

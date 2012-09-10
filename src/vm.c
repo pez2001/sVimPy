@@ -251,10 +251,20 @@ VM_ID vm_Init(CODE_ID co_id)//init vm and set global object if given
 	debug_printf(DEBUG_VERBOSE_TESTS,"mem_Init\n");
 	#endif	
 	mem_Init();
+	//printf("memory initiated\r\n");
+
+	#ifndef USE_ARDUINO_FUNCTIONS
+	#ifndef USE_MEMORY_MANAGER_PASS
+	#ifndef USE_MEMORY_MANAGER_DEBUG
+	cf_SetFileCache("svimpy.cache");
+	#endif
+	#endif
+	#endif
 	#ifdef USE_DEBUGGING
-	debug_printf(DEBUG_VERBOSE_TESTS,"obj_Init\n");
+	debug_printf(DEBUG_VERBOSE_TESTS,"obj_Init\r\n");
 	#endif	
 	obj_Init();
+	//printf("objects initiated\r\n");
 	#ifdef USE_MEMORY_DEBUGGING
 	VM_ID tmp_id = mem_malloc_debug(sizeof(vm),MEM_POOL_CLASS_PERMANENT,  "vm_Init() return");
 	#else
@@ -279,19 +289,27 @@ VM_ID vm_Init(CODE_ID co_id)//init vm and set global object if given
 	debug_printf(DEBUG_VERBOSE_TESTS,"streams_Init\n");
 	#endif	
 	streams_Init();
+	//printf("streams initiated\r\n");
+
+	#ifdef USE_DEBUGGING
+	debug_printf(DEBUG_VERBOSE_TESTS,"AddInternalClasses\n");
+	#endif
+	#ifdef USE_INTERNAL_CLASSES
+	AddInternalClasses(tmp_id);
+	//printf("classes initiated\r\n");
+	#endif
 
 	#ifdef USE_DEBUGGING
 	debug_printf(DEBUG_VERBOSE_TESTS,"AddInternalFunctions\n");
 	#endif
 	#ifdef USE_INTERNAL_FUNCTIONS
 	AddInternalFunctions(tmp_id);
+	//printf("functions initiated\r\n");
 	#endif
-	#ifdef USE_INTERNAL_CLASSES
-	AddInternalClasses(tmp_id);
-	#endif
-	#ifndef USE_ARDUINO_FUNCTIONS
+	//#ifndef USE_ARDUINO_FUNCTIONS
 	AddArduinoGlobal(tmp_id);
-	#endif
+	//printf("arduino initiated\r\n");
+	//#endif
 	//AddArduinoFunctions(vm);
 	//AddArduinoGlobals(vm);
 	//#endif
@@ -333,10 +351,11 @@ NUM vm_Close(VM_ID vm_id)//close vm and free all of its used memory
 	#endif
 	obj_Close();
 	#ifdef USE_DEBUGGING
-	if(mem_Close())
+	debug_printf(DEBUG_VERBOSE_TESTS,"closing memory manager\n");
+	#endif
+	if(!mem_Close())
 		if(code == 0)
 			code = 101;
-	#endif
 	return(code);
 }
 
@@ -462,7 +481,8 @@ OBJECT_ID vm_StartObjectCopy(VM_ID vm_id,OBJECT_ID obj_id, TUPLE_ID locals_id,TU
 			}
 		}
 		*/
-	}else if(obj->type == TYPE_CFUNCTION)
+	}
+	else if(obj->type == TYPE_CFUNCTION)
 	{
 		mem_unlock(obj_id,0);
 		OBJECT_ID r = vm_StartObject(vm_id,obj_id,locals_id,kw_locals_id);
@@ -639,6 +659,7 @@ BLOCK_ID vm_StartClassObject(VM_ID vm_id,CLASS_ID class_id,TUPLE_ID locals_id,TU
 	if(code->code != 0)
 	{
 		STRING_ID bytecodes_id = code->code;
+		OBJECT_ID varnames_id = code->varnames;
 		mem_unlock(ccode,0);
 		bo_id = obj_Alloc(TYPE_BLOCK,0);
 		block_object *bo =(block_object*)mem_lock(bo_id);
@@ -653,14 +674,14 @@ BLOCK_ID vm_StartClassObject(VM_ID vm_id,CLASS_ID class_id,TUPLE_ID locals_id,TU
 		bo->len = bytecodes->len;
 		mem_unlock(bytecodes_id,0);
 		bo->stack = stack_Create();		// co->stacksize
-		mem_unlock(bo_id,1);
 		struct _vm *vm = (struct _vm*)mem_lock(vm_id);
 		stack_Push(vm->blocks,bo_id);
 		mem_unlock(vm_id,0);
 		stack_Push(bo->stack,class_id);//push class to be retrieved later by OPCODE_RETURN_VALUE
+		mem_unlock(bo_id,1);
 		if(locals_id != 0)
 		{
-			tuple_SetDictItemByIndex(code->varnames,0,locals_id);
+			tuple_SetDictItemByIndex(varnames_id,0,locals_id);
 		}
 	}
 	else
@@ -837,7 +858,7 @@ OBJECT_ID vm_RunMethod(VM_ID vm_id,OBJECT_ID key,CLASS_INSTANCE_ID cio,TUPLE_ID 
 		ret = vm_StartFunctionObject(vm_id,m,l,kw_locals_id);
 		while(ret == 0 && s != n) //TODO replace this construct with a more streamlined version without the need to call step in a loop
 		{
-			ret = vm_Step(vm_id);
+			ret = vm_Step(vm_id,0);//TODO just change to 1
 			struct _vm *vm = (struct _vm*)mem_lock(vm_id);
 			n = stack_GetLen(vm->blocks);
 			mem_unlock(vm_id,0);
@@ -1192,6 +1213,7 @@ OBJECT_ID vm_RunFunction(VM_ID vm_id,BYTES_ID name_id, TUPLE_ID locals_id,TUPLE_
 	{	
 			if(obj_GetType(vm_GetGlobalByIndex(vm_id,i)) == TYPE_CODE)
 			{
+				//printf("checking global:%d\r\n",i);
 				OBJECT_ID fcode_id = vm_GetGlobalByIndex(vm_id,i);
 				code_object *fcode = (code_object*)mem_lock(fcode_id);
 				f = tuple_GetDictItemByName(fcode->names,name_id);
@@ -1203,10 +1225,11 @@ OBJECT_ID vm_RunFunction(VM_ID vm_id,BYTES_ID name_id, TUPLE_ID locals_id,TUPLE_
 	mem_unlock(vm_id,0);
 	if(obj_GetType(f) == TYPE_FUNCTION)
 	{
+		//printf("starting function:%d\r\n",f);
 		OBJECT_ID ret = vm_StartFunctionObject(vm_id,f,locals_id,kw_locals_id);
 		ret = 0;
 			while(ret == 0)
-				ret = vm_Step(vm_id);
+				ret = vm_Step(vm_id,0);
 		return(ret);
 	}
 	return(0);
@@ -1248,7 +1271,10 @@ OBJECT_ID vm_RunRPYC(VM_ID vm_id,STREAM_ID f ,BOOL free_object)
 		return(0);//TODO maybe return an empty object for simplification
 	OBJECT_ID obj = stream_ReadObject(f);
 	OBJECT_ID global_key = obj_CreateUnicode(mem_create_string("__main__"));
+	obj_IncRefCount(global_key);
 	vm_AddGlobal(vm_id, global_key,obj);
+	//obj_Print(global_key);
+	//obj_Print(obj);
 	OBJECT_ID ret = vm_RunObject(vm_id, obj,0,0);
 	
 	if(ret != 0)
@@ -1259,6 +1285,7 @@ OBJECT_ID vm_RunRPYC(VM_ID vm_id,STREAM_ID f ,BOOL free_object)
 	{
 		obj_DecRefCount(obj);
 		vm_RemoveGlobal(vm_id,global_key);
+		obj_DecRefCount(global_key);
 		stream_Free(f);
 		return(0);
 	}
@@ -1266,6 +1293,7 @@ OBJECT_ID vm_RunRPYC(VM_ID vm_id,STREAM_ID f ,BOOL free_object)
 	return(obj);
 }
 
+#ifndef USE_ARDUINO_FUNCTIONS
 OBJECT_ID vm_RunRPYCPlus(VM_ID vm_id,STREAM_ID f ,BOOL free_object)
 {
 	BOOL r = stream_Open(f);
@@ -1289,6 +1317,25 @@ OBJECT_ID vm_RunRPYCPlus(VM_ID vm_id,STREAM_ID f ,BOOL free_object)
 	stream_Free(f);
 	return(obj);
 }
+#endif
+
+NUM vm_GetBlockLevel(VM_ID vm_id)
+{
+	struct _vm *vm = (struct _vm*)mem_lock(vm_id);
+	NUM blevel = stack_GetLen(vm->blocks);
+	mem_unlock(vm_id,0);
+	return(blevel);
+}
+
+OBJECT_ID vm_RunFunctionObject(VM_ID vm_id, FUNCTION_ID func_id, TUPLE_ID locals_id,TUPLE_ID kw_locals_id)//run a python function object
+{
+	NUM blevel = vm_GetBlockLevel(vm_id);
+	vm_StartFunctionObject(vm_id,func_id,locals_id,kw_locals_id);
+	OBJECT_ID ret = 0;
+	while(ret == 0)
+		ret = vm_Step(vm_id,blevel+1);
+	return(ret);
+}
 
 OBJECT_ID vm_RunObject(VM_ID vm_id, OBJECT_ID obj_id, TUPLE_ID locals_id,TUPLE_ID kw_locals_id)//run a python object if possible
 {
@@ -1304,11 +1351,11 @@ OBJECT_ID vm_RunObject(VM_ID vm_id, OBJECT_ID obj_id, TUPLE_ID locals_id,TUPLE_I
 	vm_StartObject(vm_id,obj_id,locals_id,kw_locals_id);
 	OBJECT_ID ret = 0;
 	while(ret == 0)
-		ret = vm_Step(vm_id);
+		ret = vm_Step(vm_id,0);
 	return(ret);
 }
 
-OBJECT_ID vm_Step(VM_ID vm_id)
+OBJECT_ID vm_Step(VM_ID vm_id,BOOL exit_after_reaching_block_level)
 {
 	struct _vm *vm = (struct _vm*)mem_lock(vm_id);
 	BLOCK_ID bo_id = stack_Top(vm->blocks);
@@ -1320,6 +1367,7 @@ OBJECT_ID vm_Step(VM_ID vm_id)
 		#ifdef USE_DEBUGGING
 		debug_printf(DEBUG_ALL,"stepping non code:%c(%d)\n",obj->type,obj_id);
 		#endif
+		printf("stepping not a code object\r\n");
 		mem_unlock(obj_id,0);
 		mem_unlock(bo_id,0);
 		mem_unlock(vm_id,0);
@@ -1440,7 +1488,19 @@ OBJECT_ID vm_Step(VM_ID vm_id)
 						obj_Dump(ret,0,1);
 					}
 					#endif
-					if(((co->co_flags & CO_SUB_CLASS_ROOT) > 0) )// || (bo->code->co_flags & CO_CLASS_CONSTRUCTOR) > 0))
+					if(exit_after_reaching_block_level == stack_GetLen(vm->blocks))
+					{
+						obj_IncRefCount(ret);
+						//obj_Dump(ret,1,1);
+						mem_unlock(string_id,0);
+						mem_unlock(bytecodes_id,0);
+						mem_unlock(obj_id,1);
+						mem_unlock(bo_id,0);
+						mem_unlock(vm_id,0);
+						obj_ClearGC();
+						return(ret);
+					}
+					else if(((co->co_flags & CO_SUB_CLASS_ROOT) > 0) )// || (bo->code->co_flags & CO_CLASS_CONSTRUCTOR) > 0))
 					{
 						stack_Pop(vm->blocks);
 						co->co_flags |= CO_CLASS_ROOT;
@@ -1709,12 +1769,12 @@ OBJECT_ID vm_Step(VM_ID vm_id)
 
 			if (op_thru)
 			{
-				obj_ClearGC();
 				mem_unlock(string_id,0);
 				mem_unlock(bytecodes_id,0);
 				mem_unlock(obj_id,1);
 				mem_unlock(bo_id,0);
 				mem_unlock(vm_id,0);
+				obj_ClearGC();
 				return(0);
 			}
 
@@ -2019,7 +2079,7 @@ OBJECT_ID vm_Step(VM_ID vm_id)
 				}	
 				break;
 
-				case OPCODE_IMPORT_NAME:
+			case OPCODE_IMPORT_NAME:
 				{
 					OBJECT_ID name = tuple_GetItem(co->names,arg);
 					if(obj_GetType(name) == TYPE_KV)
@@ -2030,15 +2090,28 @@ OBJECT_ID vm_Step(VM_ID vm_id)
 						mem_unlock(old,0);
 					}
 					#ifdef USE_DEBUGGING
-					//if(name->type == TYPE_UNICODE)
+					
+					///if(name->type == TYPE_UNICODE)
 					//	debug_printf(DEBUG_VERBOSE_STEP,"importing: %s\n",((unicode_object*)name)->value);
 					//if((debug_level & DEBUG_VERBOSE_STEP) > 0)
 					//	DumpObject(name,1);
+					if((debug_level & DEBUG_VERBOSE_STEP) > 0)
+					{
+						printf("importing:");
+						obj_Print(name);
+						printf("\n");
+					}
 					#endif
 					OBJECT_ID mc = vm_GetGlobal(vm_id,name);
 					if(mc != 0)
 					{
 						stack_Push(bo->stack,mc);
+						#ifdef USE_DEBUGGING
+						if((debug_level & DEBUG_VERBOSE_STEP) > 0)
+						{
+							printf("already loaded\n");
+						}
+						#endif
 						break;
 					}
 					/*
@@ -2075,6 +2148,12 @@ OBJECT_ID vm_Step(VM_ID vm_id)
 						mem_unlock(name,0);
 						if(module != 0) // found the module push it on stack
 						{
+							#ifdef USE_DEBUGGING
+							if((debug_level & DEBUG_VERBOSE_STEP) > 0)
+							{
+								printf("module loaded\n");
+							}
+							#endif
 							stack_Push(bo->stack,module);
 							vm_AddGlobal(vm_id, name,module);
 							vm_StartCodeObject(vm_id,module,0,0);
@@ -2306,8 +2385,8 @@ OBJECT_ID vm_Step(VM_ID vm_id)
 					stack_Push(vm->blocks, block_id);
 					bo->ip = block->len;
 					//stack_Push(bo->stack,tos);
-					mem_unlock(block_id,1);
 					stack_Push(block->stack,tos_id);
+					mem_unlock(block_id,1);
 				}
 				break;
 			
@@ -2428,9 +2507,11 @@ OBJECT_ID vm_Step(VM_ID vm_id)
 					}
 					if(lgo == 0)
 					{
+						#ifdef USE_DEBUGGING
 						printf("global:");
 						obj_Print(name);
 						printf(" not found!\n");
+						#endif
 					}
 					stack_Push(bo->stack, lgo);
 					#ifdef USE_DEBUGGING
@@ -2497,10 +2578,10 @@ OBJECT_ID vm_Step(VM_ID vm_id)
 					}
 					else
 						name = tuple_GetItem(co_names,arg);
-					printf("got global name\n");
+					//printf("got global name\n");
 					for(INDEX i=0;i<tuple_GetLen(vm->globals);i++)
 					{	
-						printf("checking global code module %d of %d\n",i,tuple_GetLen(vm->globals));
+						//printf("checking global code module %d of %d\n",i,tuple_GetLen(vm->globals));
 						OBJECT_ID dco_id = tuple_GetDictItemByIndex(vm->globals,i);
 						if(obj_GetType(dco_id) == TYPE_CODE)
 						{
@@ -2509,7 +2590,7 @@ OBJECT_ID vm_Step(VM_ID vm_id)
 							INDEX index = tuple_GetItemIndexByName(dco->names,nn->value);
 							if(index != -1)
 							{
-								printf("setting name:%d\n",index);
+								//printf("setting name:%d\n",index);
 								tuple_SetDictItemByIndex(dco->names,index,0);
 								mem_unlock(name,0);
 								mem_unlock(dco_id,0);
@@ -2518,7 +2599,7 @@ OBJECT_ID vm_Step(VM_ID vm_id)
 							index = tuple_GetItemIndexByName(dco->varnames,nn->value);
 							if(index != -1)
 							{
-								printf("setting varname:%d\n",index);
+								//printf("setting varname:%d\n",index);
 								tuple_SetDictItemByIndex(dco->varnames,index,0);
 							}
 							mem_unlock(name,0);
@@ -3144,12 +3225,12 @@ OBJECT_ID vm_Step(VM_ID vm_id)
 		if(stack_IsEmpty(bo->stack))
 		{
 			stack_Pop(vm->blocks);
-			obj_ClearGC();
 			mem_unlock(string_id,0);
 			mem_unlock(bytecodes_id,0);
 			mem_unlock(obj_id,0);
 			mem_unlock(bo_id,1);
 			mem_unlock(vm_id,0);
+			obj_ClearGC();
 			return(0);
 		}
 		else

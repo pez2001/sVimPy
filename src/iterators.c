@@ -179,7 +179,7 @@ OBJECT_ID iter_NextNow(ITER_ID iter_id,VM_ID vm_id)
 		
 		while(ret == 0)//TODO doesnt stop after one block
 		{
-			ret = vm_Step(vm_id);
+			ret = vm_Step(vm_id,0);
 			if(!stack_Contains(vm->blocks,bo)) //via normal return 
 			//TODO switch to integer comparison to block stack num with the block stack num at the beginning
 			{
