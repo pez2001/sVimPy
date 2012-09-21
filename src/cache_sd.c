@@ -20,15 +20,14 @@
  *
  */
 
-#include "cache_file.h"
+#include "cache_sd.h"
 
 #ifndef USE_MEMORY_MANAGER_PASS
-#ifndef USE_MEMORY_MANAGER_DEBUG
-//basic file cache store
+//sd cache store
 
-file_store_tag *AllocFileStoreTag(void)
+file_store_tag *AllocSDStoreTag(void)
 {
-	return(malloc(sizeof(file_store_tag)));
+	return(malloc(sizeof(sd_store_tag)));
 }
 
 void cf_OpenBlob(cache_store *store,long i)
@@ -47,7 +46,7 @@ void cf_OpenBlob(cache_store *store,long i)
 	//debug_printf(DEBUG_VERBOSE_TESTS,"opened cache file:%s\n",tmp);
 	//#endif
 
-	//printf("opening: %s\n",tmp);
+	printf("opening: %s\n",tmp);
 	f = fopen(tmp, "wb+");
 	free(tmp);
 	free(ext);

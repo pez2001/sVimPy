@@ -674,10 +674,14 @@ NUM atomic_test(void)
 	//if(exit_code)
 	//	return(exit_code);
 		
-	exit_code = AtomicOpenPYC("tests/test_map.pyc");
+	exit_code = AtomicOpenPYC("tests/test_open.pyc");
 	if(exit_code)
 		return(exit_code);
-	return(exit_code);
+
+		exit_code = AtomicOpenPYC("tests/test_map.pyc");
+	if(exit_code)
+		return(exit_code);
+	//return(exit_code);
 
 	exit_code = AtomicOpenPYC("tests/test45.pyc");
 	if(exit_code)
@@ -698,9 +702,6 @@ NUM atomic_test(void)
 	//return(exit_code);
 	
 	//open file test + if_iter with sentinel
-	exit_code = AtomicOpenPYC("tests/test_open.pyc");
-	if(exit_code)
-		return(exit_code);
 	exit_code = AtomicOpenPYC("tests/test_functions.pyc"); //leaking lists containing single items
 	if(exit_code)
 		return(exit_code);
@@ -708,6 +709,10 @@ NUM atomic_test(void)
 	exit_code = AtomicOpenPYC("tests/test45.pyc");
 	if(exit_code)
 		return(exit_code);
+	exit_code = AtomicOpenPYC("tests/test_open.pyc");
+	if(exit_code)
+		return(exit_code);
+	
 	//return(0);
 
 	

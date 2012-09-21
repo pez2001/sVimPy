@@ -1009,18 +1009,48 @@ void mem_Init(void)
 	//mem_chunks = (char**)malloc(1 * sizeof(char*));
 	mem_chunks = NULL;
 	mem_locks = NULL;
+	mem_chunks_free_chain_start = -1;
 	mem_store_InitCacheTypes();
 }
 
+//long mem_GetF
+
 MEM_ID mem_AddChunk(void *ptr)
 {
-	if(mem_chunks_top>0)
-		mem_chunks = (char**) realloc(mem_chunks,(mem_chunks_top+1)*sizeof(char*));
-	else
-		mem_chunks = (char**)malloc(1 * sizeof(char*));
-	mem_chunks[mem_chunks_top] = ptr;
-	mem_chunks_top++;
-	return(mem_chunks_top-1);
+	/*
+		if(mem_chunks_top>0)
+			mem_chunks = (char**) realloc(mem_chunks,(mem_chunks_top+1)*sizeof(char*));
+		else
+			mem_chunks = (char**)malloc(1 * sizeof(char*));
+		mem_chunks[mem_chunks_top] = ptr;
+		mem_chunks_top++;
+		return(mem_chunks_top-1);
+	*/
+	if(mem_chunks_free_chain_start == -1)
+	{
+		//no free entries left ,resize mem_chunks
+		if(mem_chunks_top>0)
+			mem_chunks = (char**) realloc(mem_chunks,(mem_chunks_top+1)*sizeof(char*));
+		else
+			mem_chunks = (char**)malloc(1 * sizeof(char*));
+		mem_chunks[mem_chunks_top] = ptr;
+		mem_chunks_top++;
+		return(mem_chunks_top-1);
+	}else
+	{
+		//got a free ptr id left so use that one
+		long free = mem_chunks_free_chain_start;
+		//printf("reusing ptr with id:%d\n",free);
+		long next = (long)mem_chunks[mem_chunks_free_chain_start];
+		//printf("next ptr has id:%d\n",next);
+		if(next != 0)
+			mem_chunks_free_chain_start = next;
+		else
+			mem_chunks_free_chain_start = -1;
+		mem_chunks[free] = ptr;
+		return(free);
+	}
+	
 }
 
 void mem_PushLock(MEM_ID ptr)
@@ -1104,12 +1134,12 @@ BOOL mem_Close(void)
 {
 	if(cache != NULL)
 	{
-		printf("closing memory store\n");
+		//printf("closing memory store\n");
 		mem_store_Close(cache);
-		printf("freeing memory store\n");
+		//printf("freeing memory store\n");
 		mem_store_Free(cache);
 	}
-	printf("freeing cache types\n");
+	//printf("freeing cache types\n");
 	mem_store_FreeCacheTypes();
 	if(mem_locks != NULL)
 		free(mem_locks);
@@ -1157,15 +1187,23 @@ void mem_free(MEM_ID ptr)
 	if(ptr < mem_chunks_top && mem_chunks[ptr] != 0)
 	{
 		//printf("ptr:%d,locks:%d\n",ptr,mem_HasLocks(ptr));
-		//if(mem_HasLocks(ptr))
+		//if(ptr == 0)
 		//{
 		//	char *tmp = 0;
 		//	tmp[0] = 'c';
 		//}
+		//printf("freed:%d @ %d\n",ptr,mem_chunks[ptr]);
 		free(mem_chunks[ptr]-sizeof(MEM_NUM));
 		//free(mem_chunks[ptr]);
-		mem_chunks[ptr] = 0;
-		//printf("freed:%d\n",ptr);
+		//printf("adding %d to free chain\n",ptr);
+		
+		long free = mem_chunks_free_chain_start;
+		mem_chunks_free_chain_start = ptr;
+		if(free != -1)
+			mem_chunks[ptr] = free;
+		else
+			mem_chunks[ptr] = -1;
+		
 	}
 	//else 
 	//	printf("invalid free call:%d\n",ptr);
@@ -1223,12 +1261,13 @@ void mem_unlock(MEM_ID ptr,BOOL is_dirty)
 		locks_t++;
 	}*/	
 	//printf("unlocking:%d from %d(locks=%d)\n",ptr,mem_chunks[ptr],mem_HasLocks(ptr));
-	if(is_dirty && cache != NULL && !mem_HasLocks(ptr))
+	if(ptr != 0 && is_dirty && cache != NULL && !mem_HasLocks(ptr))
 	{	
-		//if(mem_chunks[ptr] == 0)
-		//	printf("unlocking zero ptr:%d\n",ptr);
 		mem_store_Write(cache,ptr);
+		free(mem_chunks[ptr]-sizeof(MEM_NUM));
+		mem_chunks[ptr] = 0;
 		//mem_free(ptr);
+		
 	}
 }
 
@@ -1405,9 +1444,9 @@ MEM_ID mem_AddChunk(void *ptr,char *description,MEM_NUM size,unsigned char pool_
 	chunk->pool_class = pool_class;
 	//chunk->is_removed = 0;
 	chunk->locks = 0;
-	printf("allocated chunk @ %x\r\n",chunk);
+	//printf("allocated chunk @ %x\r\n",chunk);
 	mem_chunk_items = (mem_chunk**) realloc(mem_chunk_items,(mem_chunks_num+1)*sizeof(mem_chunk*));
-	printf("increased chunks list for chunk: %d\r\n",mem_chunks_num);
+	//printf("increased chunks list for chunk: %d\r\n",mem_chunks_num);
 	mem_chunk_items[mem_chunks_num] = chunk;
 	mem_chunks_num++;
 	return(mem_chunks_num-1);
@@ -1543,12 +1582,12 @@ BOOL mem_Close(void)
 {
 	if(cache != NULL)
 	{
-		printf("closing memory store\n");
+		//printf("closing memory store\n");
 		mem_store_Close(cache);
-		printf("freeing memory store\n");
+		//printf("freeing memory store\n");
 		mem_store_Free(cache);
 	}
-	printf("freeing cache types\n");
+	//printf("freeing cache types\n");
 	mem_store_FreeCacheTypes();
 	printf("mem chunks allocated:%d\n",mem_chunks_num);
 	printf("mem max chunk size:%d\n",mem_max_chunk_size);

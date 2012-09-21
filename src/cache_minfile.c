@@ -20,18 +20,18 @@
  *
  */
 
-#include "cache_file.h"
+#include "cache_minfile.h"
 
 #ifndef USE_MEMORY_MANAGER_PASS
 #ifndef USE_MEMORY_MANAGER_DEBUG
-//basic file cache store
+//minimal file cache store
 
-file_store_tag *AllocFileStoreTag(void)
+file_store_tag *AllocMinFileStoreTag(void)
 {
-	return(malloc(sizeof(file_store_tag)));
+	return(malloc(sizeof(minfile_store_tag)));
 }
 
-void cf_OpenBlob(cache_store *store,long i)
+void cmf_OpenBlob(cache_store *store,long i)
 {
 	file_store_tag *s_tag = (file_store_tag*)store->tag;
 	FILE *f;
@@ -47,7 +47,7 @@ void cf_OpenBlob(cache_store *store,long i)
 	//debug_printf(DEBUG_VERBOSE_TESTS,"opened cache file:%s\n",tmp);
 	//#endif
 
-	//printf("opening: %s\n",tmp);
+	printf("opening: %s\n",tmp);
 	f = fopen(tmp, "wb+");
 	free(tmp);
 	free(ext);
@@ -62,36 +62,36 @@ void cf_OpenBlob(cache_store *store,long i)
 
 }
 
-void cf_CloseBlob(cache_store *store,long i)
+void cmf_CloseBlob(cache_store *store,long i)
 {
 	file_store_tag *s_tag = (file_store_tag*)store->tag;
 	fclose(s_tag->blobs[i]->file);	
 	s_tag->blobs[i]->file = 0;
 }
 
-void cf_FreeBlob(cache_store *store,long i)
+void cmf_FreeBlob(cache_store *store,long i)
 {
 	file_store_tag *s_tag = (file_store_tag*)store->tag;
 	free(s_tag->blobs[i]);
 }
 
-long cf_GetBlob(MEM_ID mem)
+long cmf_GetBlob(MEM_ID mem)
 {
 	return(mem / CF_BLOB_ENTRIES);
 }
-long cf_GetBlobEntry(MEM_ID mem)
+long cmf_GetBlobEntry(MEM_ID mem)
 {
 	return(mem % CF_BLOB_ENTRIES);
 }
 
 
-BOOL cf_SetFileCache(char *filename)
+BOOL cmf_SetFileCache(char *filename)
 {
 	cache_store *c = cf_Create(filename);
 	return(mem_SetCache(c));
 }
 
-BOOL cf_open(cache_store *store)
+BOOL cmf_open(cache_store *store)
 {
 	file_store_tag *s_tag = (file_store_tag*)store->tag;
 
@@ -103,7 +103,7 @@ BOOL cf_open(cache_store *store)
 	return(1);
 }
 
-BOOL cf_close(cache_store *store)
+BOOL cmf_close(cache_store *store)
 {
 	file_store_tag *s_tag = (file_store_tag*)store->tag;
 	if(s_tag->blobs ==	0)
@@ -116,7 +116,7 @@ BOOL cf_close(cache_store *store)
 	return(1);
 }
 
-BOOL cf_free(cache_store *store)
+BOOL cmf_free(cache_store *store)
 {
 	file_store_tag *s_tag = (file_store_tag*)store->tag;
 	if(s_tag->blobs == 0)
@@ -133,17 +133,17 @@ BOOL cf_free(cache_store *store)
 }
 
 
-BOOL cf_delete(cache_store *store,MEM_ID mem)
+BOOL cmf_delete(cache_store *store,MEM_ID mem)
 {
 	return(1);
 }
 
-BOOL cf_clear(cache_store *store)
+BOOL cmf_clear(cache_store *store)
 {
 	return(1);
 }
 
-BOOL cf_read(cache_store *store,MEM_ID mem)
+BOOL cmf_read(cache_store *store,MEM_ID mem)
 {
 	file_store_tag *s_tag = (file_store_tag*)store->tag;
 	long b = cf_GetBlob(mem);
@@ -162,7 +162,7 @@ BOOL cf_read(cache_store *store,MEM_ID mem)
 	return(1);
 }
 
-BOOL cf_write(cache_store *store,MEM_ID mem)
+BOOL cmf_write(cache_store *store,MEM_ID mem)
 {
 	file_store_tag *s_tag = (file_store_tag*)store->tag;
 	long b = cf_GetBlob(mem);
@@ -176,36 +176,36 @@ BOOL cf_write(cache_store *store,MEM_ID mem)
 	return(1);
 }
 
-BOOL cf_read_segment(cache_store *store,MEM_ID mem,NUM offset,NUM len)
+BOOL cmf_read_segment(cache_store *store,MEM_ID mem,NUM offset,NUM len)
 {
 	printf("restoring memory segment: %d (%d,%d)\n",mem,offset,len);
 
 	return(1);
 }
 
-BOOL cf_write_segment(cache_store *store,MEM_ID mem,NUM offset,NUM len)
+BOOL cmf_write_segment(cache_store *store,MEM_ID mem,NUM offset,NUM len)
 {
 	printf("caching memory segment: %d (%d,%d)\n",mem,offset,len);
 	return(1);
 }
 
-BOOL cf_contains(cache_store *store,MEM_ID mem)
+BOOL cmf_contains(cache_store *store,MEM_ID mem)
 {
 	printf("contains memory: %d\n",mem);
 	return(1);
 }
 
-NUM cf_getsize(cache_store *store,MEM_ID mem)
+NUM cmf_getsize(cache_store *store,MEM_ID mem)
 {
 	return(1);
 }
 
-NUM cf_getfree(cache_store *store)
+NUM cmf_getfree(cache_store *store)
 {
 	return(1);
 }
 
-void cf_SetEntry(cache_store *store,MEM_ID mem,unsigned long offset)
+void cmf_SetEntry(cache_store *store,MEM_ID mem,unsigned long offset)
 {
 	file_store_tag *s_tag = (file_store_tag*)store->tag;
 	long b = cf_GetBlob(mem);
@@ -220,7 +220,7 @@ void cf_SetEntry(cache_store *store,MEM_ID mem,unsigned long offset)
 	free(e);
 }
 
-cf_entry *cf_GetEntry(cache_store *store,MEM_ID mem)
+cf_entry *cmf_GetEntry(cache_store *store,MEM_ID mem)
 {
 	file_store_tag *s_tag = (file_store_tag*)store->tag;
 	long b = cf_GetBlob(mem);
@@ -232,7 +232,7 @@ cf_entry *cf_GetEntry(cache_store *store,MEM_ID mem)
 }
 
 
-cache_store *cf_Create(char *filename)
+cache_store *cmf_Create(char *filename)
 {
 	cache_store *s = AllocStore();
 	s->type = mem_store_GetType(STORE_TYPE_FILE);
@@ -245,7 +245,7 @@ cache_store *cf_Create(char *filename)
 	return(s);
 }
 
-store_type *cf_CreateStoreType(void)
+store_type *cmf_CreateStoreType(void)
 {
 	store_type *ftype = AllocStoreType();
 	ftype->type = STORE_TYPE_FILE;

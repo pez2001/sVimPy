@@ -2,9 +2,9 @@
 
 sVimPy is a very small Python virtual machine intended for use in microcontroller projects.
 
-It supports most of the opcodes used in python3k.(except 6 opcodes used in classes,6 used for exception handling,1 to build slices, 1 to unpack objects,1 to yield)
+It supports most of the opcodes used in python3k.(except 1 to build slices, 1 to unpack objects)
 The intended goal is to use this VM in environments like Atmel's ATmega chips (2-8kb RAM).
-Classes,slices and generators are not supported at the moment.
+Slices are not supported at the moment.
 Most data types are supported including floats,ints,strings,tuples,dicts,lists.
 
 The microcontroller bootloader is still missing (no arduinos left for experimentation).
@@ -14,7 +14,7 @@ Features include:
 
  * a stack based VM
  * garbage collection
- * very low memory usage
+ * very low memory usage (includes a memory manager which supports caching)
  * an interactive debugging console
  * dictionaries and tuples
  * iterations 
