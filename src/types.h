@@ -30,7 +30,6 @@
 
 #define TYPE char
 
-#define MEM_NUM unsigned long
 
 #define OBJECT_TYPE char
 #define OBJECT_FLAGS unsigned char
@@ -77,12 +76,18 @@
 #define BOOL unsigned char
 
 #ifdef USE_ARDUINO_FUNCTIONS
-	#define MEM_ID unsigned short
+	//TODO add an extra platform based mem_offset type to be able to use more chunks with less memory waste
+	#define MEM_NUM unsigned short
+	#define MEM_ID unsigned short 
+	#define SMEM_ID short
 #else
 	#ifdef USE_MEMORY_MANAGER_PASS
 		#define MEM_ID void*
+		#define MEM_NUM unsigned long
 	#else
 		#define MEM_ID unsigned long
+		#define SMEM_ID long
+		#define MEM_NUM unsigned long
 	#endif
 #endif
 

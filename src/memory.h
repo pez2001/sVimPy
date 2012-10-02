@@ -64,7 +64,7 @@ cache for memory chunks addressable by id stored in streams
 
 */
 
-#define MEM_SIZE 1024
+//#define MEM_SIZE 1024
 
 #define MEM_POOL_CLASS_STATIC 1
 #define MEM_POOL_CLASS_DYNAMIC 2
@@ -75,7 +75,25 @@ cache for memory chunks addressable by id stored in streams
 
 
 
+#ifdef USE_MEMORY_MANAGER_POOL_DEBUG
 
+typedef struct _mem_chunk_header
+{
+	char locks;//locks num , if set to -1 the chunk is free
+	MEM_ID id
+	MEM_NUM size;
+	//unsigned char pool_class;
+	
+} mem_chunk_header;
+
+typedef struct _mem_free_chunk_header
+{
+	char magic;//if set to -1 its a free chunk
+	MEM_ID next_chunk
+	MEM_NUM size;
+} mem_free_chunk_header;
+
+#endif
 
 
 

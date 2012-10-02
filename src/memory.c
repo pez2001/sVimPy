@@ -1837,19 +1837,81 @@ BOOL mem_copy_from_offset(MEM_ID src,MEM_NUM src_offset,char *bytes,MEM_NUM len)
 #endif
 
 #ifdef USE_MEMORY_MANAGER_POOL_DEBUG
-long mem_chunks_num = 0;
+
+//each chunk has a header
+
+MEM_ID mem_chunks_num = 0;
 long mem_locks_num = 0;
 long mem_unlocks_num = 0;
 long mem_max_locked = 0;
 long mem_max_chunk_size = 0;
 long mem_max_locked_size = 0;
-mem_chunk **mem_chunk_items;
-
-MEM_ID *mem_locks;
-long mem_locks_top = 0;
-
+char *mem_chunks;
+MEM_ID mem_chunks_top = 0;//points to free space
+MEM_ID mem_chunks_start = 0;
+MEM_ID mem_chunks_free_chain_start = 0;//start of the free chunk chain
+MEM_ID mem_chunks_free_chain_end = 0;//last entry of the free chunk chain
 cache_store *cache = NULL;
 
+MEM_ID mem_find_chunk(MEM_ID id) //locates the chunks position by id
+{
+	//search the chunk headers for the correct id
+	//if not found restore chunk from cache
+	//if still not found quit with error
+}
+
+char mem_get_chunk_locks(MEM_ID chunk_pos)
+{
+
+
+}
+
+void mem_set_chunk_locks(MEM_ID chunk_pos,char locks)
+{
+
+
+}
+
+MEM_NUM mem_get_chunk_size(MEM_ID chunk_pos)
+{
+
+
+}
+
+MEM_ID mem_get_chunk_id(MEM_ID chunk_pos)
+{
+
+
+}
+
+MEM_NUM mem_get_free_chunk_size(MEM_ID free_chunk_pos)
+{
+
+
+}
+
+MEM_NUM mem_get_free_chunk_next(MEM_ID free_chunk_pos)
+{
+
+
+}
+
+
+MEM_ID mem_restore_chunk(MEM_ID id)//restore chunk with id
+{
+
+}
+ 
+void mem_add_free_chunk(MEM_ID chunk) //add free chunk to chain and update header and maybe change mem_chunks_free_chain_start
+{
+
+}
+
+void mem_remove_free_chunk(MEM_ID chunk) //remove free chunk from chain and update headers and maybe change mem_chunks_free_chain_start
+{
+
+
+}
 
 BOOL mem_SetCache(cache_store *store)
 {
@@ -1859,20 +1921,18 @@ BOOL mem_SetCache(cache_store *store)
 
 void mem_Init(void)
 {
-/*	#ifdef USE_DEBUGGING
-	if((debug_level & DEBUG_MEMORY) > 0)
-	{
-	}
-	#endif*/
-	mem_chunk_items =	(mem_chunk**) malloc(1 * sizeof(mem_chunk*));
+	mem_chunks = (char*) malloc(MEMORY_POOL_SIZE); // the only malloc call ever 
+	printf("memory located @ %x\n",mem_chunks);
 	mem_chunks_num = 0;
 	mem_locks_num = 0;
 	mem_unlocks_num = 0;
-	mem_locks_top = 0;
 	mem_max_locked = 0;
 	mem_max_chunk_size = 0;
 	mem_max_locked_size = 0;
-	mem_locks = (MEM_ID*) malloc(1 * sizeof(MEM_ID));
+	mem_chunks_start = 0;
+	mem_chunks_top = mem_chunks_start; //alocate some space for locks (can be increased later)
+	mem_chunks_free_chain_start = mem_chunks_top;
+	mem_chunks_free_chain_end = mem_chunks_free_chain_start;
 	mem_store_InitCacheTypes();
 }
 
@@ -1885,26 +1945,6 @@ void mem_set_pool_class(MEM_ID mem, MEM_POOL_CLASS_ID pool_class)
 void mem_unset_pool_class(MEM_ID mem, MEM_POOL_CLASS_ID pool_class)
 {
 	mem_chunk_items[mem]->pool_class &= ~pool_class; //TODO ?
-}
-
-MEM_ID mem_AddChunk(void *ptr,char *description,MEM_NUM size,unsigned char pool_class)
-{
-	return(ptr);
-	
-	mem_chunk *chunk = (mem_chunk*)malloc(sizeof(mem_chunk));
-	chunk->ptr = ptr;
-	chunk->description = description;
-	chunk->size = size;
-	chunk->is_freed = 0;
-	chunk->pool_class = pool_class;
-	//chunk->is_removed = 0;
-	chunk->locks = 0;
-	printf("allocated chunk @ %x\r\n",chunk);
-	mem_chunk_items = (mem_chunk**) realloc(mem_chunk_items,(mem_chunks_num+1)*sizeof(mem_chunk*));
-	printf("increased chunks list for chunk: %d\r\n",mem_chunks_num);
-	mem_chunk_items[mem_chunks_num] = chunk;
-	mem_chunks_num++;
-	return(mem_chunks_num-1);
 }
 
 void mem_PushLock(MEM_ID ptr)
@@ -2051,31 +2091,25 @@ BOOL mem_Close(void)
 	printf("locks peaked @ %d\n",mem_max_locked);
 	printf("heap peaked @ %d\n",mem_max_locked_size);
 	BOOL r = mem_DebugHeapWalk(1,1);
-	//BOOL r = 0;
-	for(long i = 0;i<mem_chunks_num;i++)
-	{
-		if(!mem_chunk_items[i]->is_freed)
-		{
-			free(mem_chunk_items[i]->ptr);
-		}
-		if(mem_chunk_items[i]->description != NULL)
-			free(mem_chunk_items[i]->description);
-		free(mem_chunk_items[i]);
-	}
-	free(mem_chunk_items);
+	free(mem_chunks);
 	return(r);
 }
 
 MEM_ID mem_malloc(MEM_NUM size,MEM_POOL_CLASS_ID pool_class)
 {
-	void *ptr = malloc(size);
-	//printf("allocated @ %x\r\n",ptr);
+//search free list for an entry sufficiently big
+//if no chunk found defrag memory and search again
+//defrag strategy is to locate the first free chunk and cache+free the chunk directly after
+//if no chunk could be located after defraging quit with error 
+//remove chunk from free list
+//add remaining memory to free list and create the header
+	
+	//mem_chunks_free_chain_start
 	if(size > mem_max_chunk_size)
 	{
 		mem_max_chunk_size = size;
 		//printf("chunk size peaked @: %d\n",mem_max_chunk_size);
 	}		
-	return(mem_AddChunk(ptr,NULL,size,pool_class));
 }
 
 MEM_ID mem_malloc_debug(MEM_NUM size,MEM_POOL_CLASS_ID pool_class, char *description)

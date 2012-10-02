@@ -7,7 +7,7 @@ The intended goal is to use this VM in environments like Atmel's ATmega chips (2
 Slices are not supported at the moment.
 Most data types are supported including floats,ints,strings,tuples,dicts,lists.
 
-The microcontroller bootloader is still missing (no arduinos left for experimentation).
+The microcontroller bootloader is still missing.
 
 
 Features include: 
