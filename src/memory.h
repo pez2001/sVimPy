@@ -80,7 +80,7 @@ cache for memory chunks addressable by id stored in streams
 typedef struct _mem_chunk_header
 {
 	char locks;//locks num , if set to -1 the chunk is free
-	MEM_ID id
+	MEM_ID id;
 	MEM_NUM size;
 	//unsigned char pool_class;
 	
@@ -89,7 +89,7 @@ typedef struct _mem_chunk_header
 typedef struct _mem_free_chunk_header
 {
 	char magic;//if set to -1 its a free chunk
-	MEM_ID next_chunk
+	MEM_ID next_chunk;
 	MEM_NUM size;
 } mem_free_chunk_header;
 
